@@ -90,11 +90,11 @@ namespace NetJs.Translator.CSharpToJavascript
                 EnsureImported(node.Type);
                 if (toType != null && fromType != null && NeedBoxing(toType, fromType))
                 {
-                    var metadata = _global.GetRequiredMetadata(fromType);
+                    var metadata = fromType.Kind != SymbolKind.TypeParameter ? _global.GetRequiredMetadata(fromType) : null;
                     CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.BoxName}(");
                     Visit(node.Expression);
                     CurrentTypeWriter.Write(node, ", ");
-                    CurrentTypeWriter.Write(node, metadata.InvocationName ?? fromType.ComputeOutputTypeName(_global));
+                    CurrentTypeWriter.Write(node, metadata?.InvocationName ?? fromType.ComputeOutputTypeName(_global));
                     //Visit(node.Type);
                     CurrentTypeWriter.Write(node, ")");
                 }

@@ -133,6 +133,16 @@ namespace System.Runtime.CompilerServices
             throw null!;
         }
 
+        [NetJs.MemberReplace(nameof(SubtractByteOffset) + "<>(ref T, nint)")]
+        public static ref T SubtractByteOffsetImpl<T>(ref T source, nint byteOffset)
+            where T : allows ref struct
+        {
+            RefOrPointer<object> reff = NetJs.Script.Write<RefOrPointer<object>>("source");
+            reff = reff.AddByteOffset(-(int)byteOffset);// with { _primitiveWindowItems = byteOffset.As<int>() };
+            NetJs.Script.Write("return reff");
+            throw null!;
+        }
+
         [NetJs.MemberReplace(nameof(ByteOffset) + "<>(ref readonly T, ref readonly T)")]
         public static nint ByteOffsetImpl<T>([AllowNull] ref readonly T origin, [AllowNull] ref readonly T target)
             where T : allows ref struct
@@ -140,10 +150,9 @@ namespace System.Runtime.CompilerServices
             RefOrPointer<object> reffo = NetJs.Script.Write<RefOrPointer<object>>("origin");
             RefOrPointer<object> refft = NetJs.Script.Write<RefOrPointer<object>>("target");
             if (reffo.Overlaps(refft))
-                return refft.Subtract(reffo);
+                return (nint)refft.Subtract(reffo);
             return int.MaxValue;
         }
-
 
         [NetJs.MemberReplace(nameof(AreSame) + "<>")]
         public static bool AreSameImpl<T>([AllowNull] ref readonly T left, [AllowNull] ref readonly T right)
@@ -152,6 +161,42 @@ namespace System.Runtime.CompilerServices
             RefOrPointer<object> mleft = NetJs.Script.Write<RefOrPointer<object>>("left");
             RefOrPointer<object> mright = NetJs.Script.Write<RefOrPointer<object>>("right");
             return ReferenceEquals(mleft, mright) || (mleft._parentRef == mright._parentRef && mleft.As<RefOrPointer<object>>()._byteOffset == mright.As<RefOrPointer<object>>()._byteOffset);
+        }
+
+        [NetJs.MemberReplace(nameof(IsAddressGreaterThan) + "<>(ref readonly T, ref readonly T)")]
+        public static bool IsAddressGreaterThanImpl<T>([AllowNull] ref readonly T left, [AllowNull] ref readonly T right)
+            where T : allows ref struct
+        {
+            RefOrPointer<object> mleft = NetJs.Script.Write<RefOrPointer<object>>("left");
+            RefOrPointer<object> mright = NetJs.Script.Write<RefOrPointer<object>>("right");
+            return mleft.Subtract(mright) > 0;
+        }
+
+        [NetJs.MemberReplace(nameof(IsAddressGreaterThanOrEqualTo) + "<>(ref readonly T, ref readonly T)")]
+        public static bool IsAddressGreaterThanOrEqualToImpl<T>([AllowNull] ref readonly T left, [AllowNull] ref readonly T right)
+            where T : allows ref struct
+        {
+            RefOrPointer<object> mleft = NetJs.Script.Write<RefOrPointer<object>>("left");
+            RefOrPointer<object> mright = NetJs.Script.Write<RefOrPointer<object>>("right");
+            return mleft.Subtract(mright) >= 0;
+        }
+
+        [NetJs.MemberReplace(nameof(IsAddressLessThan) + "<>(ref readonly T, ref readonly T)")]
+        public static bool IsAddressLessThanImpl<T>([AllowNull] ref readonly T left, [AllowNull] ref readonly T right)
+            where T : allows ref struct
+        {
+            RefOrPointer<object> mleft = NetJs.Script.Write<RefOrPointer<object>>("left");
+            RefOrPointer<object> mright = NetJs.Script.Write<RefOrPointer<object>>("right");
+            return mleft.Subtract(mright) < 0;
+        }
+
+        [NetJs.MemberReplace(nameof(IsAddressLessThanOrEqualTo) + "<>(ref readonly T, ref readonly T)")]
+        public static bool IsAddressLessThanOrEqualToImpl<T>([AllowNull] ref readonly T left, [AllowNull] ref readonly T right)
+            where T : allows ref struct
+        {
+            RefOrPointer<object> mleft = NetJs.Script.Write<RefOrPointer<object>>("left");
+            RefOrPointer<object> mright = NetJs.Script.Write<RefOrPointer<object>>("right");
+            return mleft.Subtract(mright) <= 0;
         }
 
         [NetJs.MemberReplace(nameof(ReadUnaligned) + "<>(void*)")]

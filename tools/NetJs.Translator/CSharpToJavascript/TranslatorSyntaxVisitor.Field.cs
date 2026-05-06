@@ -111,13 +111,30 @@ namespace NetJs.Translator.CSharpToJavascript
 
         bool TryWriteFieldLayout(CSharpSyntaxNode member, ISymbol field, ITypeSymbol fieldType, string fieldName, string? modifier, string? comment)
         {
-            bool isBootClass = _global.HasAttribute(field.ContainingSymbol, typeof(BootAttribute).FullName, this, true, out _);
+            //bool isBootClass = _global.HasAttribute(field.ContainingSymbol, typeof(BootAttribute).FullName, this, true, out _);
             int fieldOffset = 0;
+            int inlineSize = 0;
             //Dont use field layout for boot classes, as they dont inherit from System.Object really
-            if (!isBootClass && !field.IsStatic && IsFieldStructLayout(member, field, out fieldOffset) && !field.ContainingType.IsType("System.Exception")/*Exception inherit native JS error, not object*/)
+            if (
+                //!isBootClass &&
+                !field.IsStatic &&
+                (IsFieldStructLayout(member, field, out fieldOffset) || _global.IsInlineArray(field.ContainingType, out inlineSize)) &&
+                !field.ContainingType.IsType("System.Exception")/*Exception inherit native JS error, not object*/)
             {
-                CurrentTypeWriter.WriteLine(member, $"/*{comment}*/ {modifier} get {fieldName}() {{ return this.Get{(field.IsStatic ? "S" : "")}Field({fieldOffset}); }}", true);
-                CurrentTypeWriter.WriteLine(member, $"/*{comment}*/ {modifier} set {fieldName}(value) {{ this.Set{(field.IsStatic ? "S" : "")}Field({fieldOffset}, value); }}", true);
+                if (inlineSize > 0)
+                {
+                    //No one is going to reference this fields, no point in creating them
+                    //for (int i = 0; i < inlineSize; i++)
+                    //{
+                    //    CurrentTypeWriter.WriteLine(member, $"/*{comment}*/ {modifier} get {fieldName}${i + 1}() {{ return this.Get{(field.IsStatic ? "S" : "")}Field({i}); }}", true);
+                    //    CurrentTypeWriter.WriteLine(member, $"/*{comment}*/ {modifier} set {fieldName}${i + 1}(value) {{ this.Set{(field.IsStatic ? "S" : "")}Field({i}, value); }}", true);
+                    //}
+                }
+                else
+                {
+                    CurrentTypeWriter.WriteLine(member, $"/*{comment}*/ {modifier} get {fieldName}() {{ return this.Get{(field.IsStatic ? "S" : "")}Field({fieldOffset}); }}", true);
+                    CurrentTypeWriter.WriteLine(member, $"/*{comment}*/ {modifier} set {fieldName}(value) {{ this.Set{(field.IsStatic ? "S" : "")}Field({fieldOffset}, value); }}", true);
+                }
                 return true;
             }
             return false;
@@ -167,7 +184,8 @@ namespace NetJs.Translator.CSharpToJavascript
                 //}
                 bool isLiteralInit = MemberIsLiteralInitialization(var.Initializer, type);
                 bool isFieldLayout = _global.HasAttribute(symbol.ContainingType, typeof(StructLayoutAttribute).FullName!, this, false, out _);
-                if (var.Initializer != null || (type.IsValueType && !type.IsNumericType())/*SpecialType == SpecialType.System_ValueType*/)
+                bool isInlineArray = _global.IsInlineArray(symbol.ContainingType, out var inlineArraySize);
+                if (var.Initializer != null || isInlineArray || (type.IsValueType && !type.IsJsPrimitive())/*SpecialType == SpecialType.System_ValueType*/)
                 {
                     //If we initialize a field from a primary constructor parameter, this is already handled in the primary constructor generator (WritePrimaryConstructor)
                     //We should skip it here
@@ -183,31 +201,67 @@ namespace NetJs.Translator.CSharpToJavascript
                         bool isStaticInit = node.Modifiers.IsStatic() || node.Modifiers.IsConst();
                         CurrentClosure.RegisterTypeInitializer(() =>
                         {
-                            //If we are in a static initilizer, it is safe to use this as it reference the class prototype itself
-                            CurrentTypeWriter.Write(node, $"{(isStaticInit ? "this"/*declaringSymbolMeta.InvocationName + "."*/ : "this")}", true);
-                            CurrentTypeWriter.Write(node, ".");
-                            CurrentTypeWriter.Write(node, fieldName);
-                            CurrentTypeWriter.Write(node, " = ");
-                            //Visit(var.Initializer);
-                            if (var.Initializer != null)
+                            if (isInlineArray)
                             {
-                                if (!TryWriteConstant(node, type, var.Initializer.Value))
-                                    WriteVariableAssignment(node, null, symbol, null, var.Initializer.Value, null);
+                                CurrentTypeWriter.WriteLine(node, $"for (let $i = 0; $i < {inlineArraySize}; $i++)", true);
+                                CurrentTypeWriter.WriteLine(node, "{", true);
+                                CurrentTypeWriter.WriteLine(node, $"this.SetField($i, {defaultValue});", true);
+                                CurrentTypeWriter.WriteLine(node, "}", true);
+                                //for (int i = 0; i < inlineArraySize; i++)
+                                //{
+                                //    CurrentTypeWriter.Write(node, $"{(isStaticInit ? "this"/*declaringSymbolMeta.InvocationName + "."*/ : "this")}", true);
+                                //    CurrentTypeWriter.Write(node, ".");
+                                //    CurrentTypeWriter.Write(node, fieldName);
+                                //    CurrentTypeWriter.Write(node, "$");
+                                //    CurrentTypeWriter.Write(node, (i + 1).ToString());
+                                //    CurrentTypeWriter.Write(node, " = ");
+                                //    //Visit(var.Initializer);
+                                //    if (var.Initializer != null)
+                                //    {
+                                //        if (!TryWriteConstant(node, type, var.Initializer.Value))
+                                //            WriteVariableAssignment(node, null, symbol, null, var.Initializer.Value, null);
+                                //    }
+                                //    else
+                                //    {
+                                //        if (defaultValue != null)
+                                //            CurrentTypeWriter.Write(node, defaultValue);
+                                //        else
+                                //        {
+                                //            CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.DefaultTypeName}({type.ComputeOutputTypeName(_global)})");
+                                //        }
+                                //    }
+                                //    CurrentTypeWriter.WriteLine(node, ";");
+                                //}
                             }
                             else
                             {
-                                if (defaultValue != null)
-                                    CurrentTypeWriter.Write(node, defaultValue);
+                                //If we are in a static initilizer, it is safe to use this as it reference the class prototype itself
+                                CurrentTypeWriter.Write(node, $"{(isStaticInit ? "this"/*declaringSymbolMeta.InvocationName + "."*/ : "this")}", true);
+                                CurrentTypeWriter.Write(node, ".");
+                                CurrentTypeWriter.Write(node, fieldName);
+                                CurrentTypeWriter.Write(node, " = ");
+                                //Visit(var.Initializer);
+                                if (var.Initializer != null)
+                                {
+                                    if (!TryWriteConstant(node, type, var.Initializer.Value))
+                                        WriteVariableAssignment(node, null, symbol, null, var.Initializer.Value, null);
+                                }
                                 else
                                 {
-                                    CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.DefaultTypeName}({type.ComputeOutputTypeName(_global)})");
+                                    if (defaultValue != null)
+                                        CurrentTypeWriter.Write(node, defaultValue);
+                                    else
+                                    {
+                                        CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.DefaultTypeName}({type.ComputeOutputTypeName(_global)})");
+                                    }
                                 }
+                                CurrentTypeWriter.WriteLine(node, ";");
                             }
-                            CurrentTypeWriter.WriteLine(node, ";");
                         }, isStaticInit);
                     }
                 }
-                if (isFieldLayout && TryWriteFieldLayout(var, fieldSymbol ?? (ISymbol)eventSymbol!, fieldSymbol?.Type ?? eventSymbol!.Type, fieldMetadata.OverloadName ?? fieldName, modifier, $"{node.Declaration.Type.ToFullString().Trim()}"))
+                if ((isFieldLayout || isInlineArray) &&
+                    TryWriteFieldLayout(var, fieldSymbol ?? (ISymbol)eventSymbol!, fieldSymbol?.Type ?? eventSymbol!.Type, fieldMetadata.OverloadName ?? fieldName, modifier, $"{node.Declaration.Type.ToFullString().Trim()}"))
                 {
                 }
                 else

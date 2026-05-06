@@ -126,14 +126,14 @@ namespace NetJs.Translator.CSharpToJavascript
             var condition = _global.EvaluateConditionalExpressionAsConstant(node.Condition, this, out var rewittenCondition);
             if (condition == true)
             {
-                CurrentTypeWriter.Write(node, $"/*{node.Condition} ?*/ ", true);
+                CurrentTypeWriter.Write(node, $"/*{node.Condition} ?*/ ");
                 Visit(node.WhenTrue);
-                CurrentTypeWriter.Write(node, $"/* : {node.WhenFalse}*/ ", true);
+                CurrentTypeWriter.Write(node, $"/* : {node.WhenFalse}*/ ");
                 return;
             }
             else if (condition == false)
             {
-                CurrentTypeWriter.Write(node, $"/*{node.Condition} ? {node.WhenTrue} : */ ", true);
+                CurrentTypeWriter.Write(node, $"/*{node.Condition} ? {node.WhenTrue} : */ ");
                 Visit(node.WhenFalse);
                 return;
             }

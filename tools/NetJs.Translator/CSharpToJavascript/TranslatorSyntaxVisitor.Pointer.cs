@@ -39,6 +39,16 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public void WritePointerSubtration(CSharpSyntaxNode node, ExpressionSyntax left, ExpressionSyntax right)
         {
+            //var returnType = _global.GetTypeSymbol(node, this).GetTypeSymbol();
+            ////Pointer sub typically return long, If the parent is a cast though(more likely to int), ignore this cast to long, from
+            //bool ignoreCast = node.Parent.IsKind(SyntaxKind.ParenthesizedExpression) && node.Parent.Parent.IsKind(SyntaxKind.CastExpression);
+            //if (!ignoreCast && SymbolEqualityComparer.Default.Equals(returnType, _global.SystemInt64))
+            //{
+            //    CurrentTypeWriter.Write(node, _global.GlobalName);
+            //    CurrentTypeWriter.Write(node, ".");
+            //    CurrentTypeWriter.Write(node, Constants.CastName);
+            //    CurrentTypeWriter.Write(node, "(");
+            //}
             Visit(left);
             CurrentTypeWriter.Write(node, ".");
             var refOrPointer = (ITypeSymbol)_global.GetTypeSymbol("System.Pointer<>", this);
@@ -47,6 +57,13 @@ namespace NetJs.Translator.CSharpToJavascript
             CurrentTypeWriter.Write(node, $"(");
             VisitNode(right);
             CurrentTypeWriter.Write(node, $")");
+            //if (!ignoreCast && SymbolEqualityComparer.Default.Equals(returnType, _global.SystemInt64))
+            //{
+            //    var metadata = _global.GetRequiredMetadata(_global.SystemInt64);
+            //    CurrentTypeWriter.Write(node, ", ");
+            //    CurrentTypeWriter.Write(node, metadata.InvocationName ?? _global.SystemInt64.ToString());
+            //    CurrentTypeWriter.Write(node, ")");
+            //}
         }
 
         public override void VisitPointerType(PointerTypeSyntax node)

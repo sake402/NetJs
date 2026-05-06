@@ -24,10 +24,6 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitLocalDeclarationStatement(LocalDeclarationStatementSyntax node)
         {
-            if (node.ToString().Contains(" = true)"))
-            {
-
-            }
             CurrentTypeWriter.Write(node, "", true);
             base.VisitLocalDeclarationStatement(node);
             CurrentTypeWriter.WriteLine(node, ";");

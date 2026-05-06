@@ -8,7 +8,7 @@ namespace NetJs.Translator.CSharpToJavascript
 #if DEBUG
         string line = "";
 #endif
-        StringWriter internalWriter = new StringWriter();
+        StringWriter internalWriter = new StringWriter(new StringBuilder(512));
         char lastChar;
         string? lastWord;
         public LinkedListNode<CodeLineWriter> Node { get; set; } = default!;

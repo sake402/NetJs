@@ -15,6 +15,37 @@
     //NetJs.$asm = function (asmName, fn) {
 
     //}
+    function getCoreAssembly() {
+        let spcAssembly = NetJs.$spc.System.AppDomain.GlobalAssemblyRegistry["NetJs.System.Private.CoreLib"];
+        return spcAssembly;
+    }
+    function isValueType(prototype) {
+        var model = prototype.$model;
+        if (model && model.fg) {//value type
+            return (model.fg & (1 << 9)) !== 0;
+        }
+        if (Object.hasOwn(prototype, "$bf")) {
+            var flags = prototype.$bf();
+            if (flags) {
+                return (flags & (1 << 9)) !== 0;
+            }
+        }
+        return null;
+    }
+
+    function isPrimitive(prototype) {
+        var model = prototype.$model;
+        if (model && model.fg) {//ks primitives
+            return (model.fg & (1 << 10)) !== 0;
+        }
+        if (Object.hasOwn(prototype, "$bf")) {
+            var flags = prototype.$bf();
+            if (flags) {
+                return (flags & (1 << 10)) !== 0;
+            }
+        }
+        return null;
+    }
 
     NetJs.$finalizer = function (_this) {
         //TODO: nned a way to map heldValue back to the object being destroyed
@@ -130,7 +161,7 @@
             get: function () {
                 if (runtimeType)
                     return runtimeType;
-                let spcAssembly = NetJs.$spc.System.AppDomain.GlobalAssemblyRegistry["NetJs.System.Private.CoreLib"];
+                let spcAssembly = getCoreAssembly();
                 var model = spcAssembly.GetModel(fullTypeName);
                 runtimeType = NetJs.$spc.System.RuntimeType.Create(spcAssembly, prototype, model, fullTypeName);
                 runtimeType.$do_complete();
@@ -142,11 +173,12 @@
 
     NetJs.$cls = NetJs.$ns;
 
-    NetJs.$dsp = function (lhs, T, getMethod) {
+    NetJs.$dsp = function (lhs, T, getMethod, ...args) {
         var method = (lhs != null ? getMethod(lhs) : null) ?? getMethod(T);
-        return function () {
-            return method.apply(lhs, arguments);
-        }
+        return method.apply(lhs, args);
+        //return function () {
+        //    return method.apply(lhs, arguments);
+        //}
     }
     NetJs.$exp = function (fn) {
         return fn();
@@ -173,51 +205,51 @@
         //if (type && type.Zero) //test long and decimal type
         //return type.Zero;
         var model = prototype.$model;
-        if (model) {
-            if (model.h != 0) {
-                if ((model.fg & (1 << 9)) != 0) {//value type
+        if (isValueType(prototype) === false) {
+            return null;
+        }
+        //var asm = prototype.$asm;
+        //if (asm && (prototype.$fullName || prototype.$fn)) {
+        //    var model = asm.GetModel(prototype.$fullName ?? prototype.$fn);
+        //    if (model.h != 0) {
+        //        if ((model.fg & (1 << 9)) != 0) {//value type
 
-                } else {
-                    return null;
-                }
-            }
-        }
-        var asm = prototype.$asm;
-        if (asm && (prototype.$fullName || prototype.$fn)) {
-            var model = asm.GetModel(prototype.$fullName ?? prototype.$fn);
-            if (model.h != 0) {
-                if ((model.fg & (1 << 9)) != 0) {//value type
-
-                } else {
-                    return null;
-                }
-            }
-        }
-        if (Object.hasOwn(prototype, "$bf")) {
-            var flags = prototype.$bf();
-            if ((flags & (1 << 9)) != 0) { //value type
-            } else {
-                return null;
-            }
-        }
+        //        } else {
+        //            return null;
+        //        }
+        //    }
+        //}
+        //if (Object.hasOwn(prototype, "$bf")) {
+        //    var flags = prototype.$bf();
+        //    if ((flags & (1 << 9)) != 0) { //value type
+        //    } else {
+        //        return null;
+        //    }
+        //}
         return new prototype();
     }
     NetJs.$ref = function (getter, setter, type) {
         return $.$spc.RefOrPointer$$(type)(getter, setter);
     }
-    NetJs.$box = function (value, valueType) {
+    NetJs.$box = function (value, prototype) {
         if (value == null)
             return null;
         if (value.$boxed)
             return value;
-        var instance = new valueType(); //most valuetype link Int32 we want to box have a field called m_value 
+        //if reference type, no need boxing
+        if (isValueType(prototype) == false) {
+            if (isPrimitive(prototype) == true) { //primitive reference type like string still need boxing. This is how we ensure their interfaces works
+            } else
+                return value;
+        }
+        var instance = new prototype(); //most valuetype link Int32 we want to box have a field called m_value 
         instance.m_value = value;
         instance.$boxed = true;
         return instance;
     }
 
     NetJs.$unbox = function (value, valueType) {
-        if (NetJs.$is(value, valueType)) {
+        if (valueType == null || NetJs.$is(value, valueType)) {
             if (!value.$boxed)
                 return value;
             return value.m_value;
@@ -271,8 +303,9 @@
         let assigned = false;
         function assignOut() {
             if (!assigned && outValue) {
-                if (value.$boxed)
+                if (value.$boxed && isValueType(type)) {
                     outValue.$v = value.m_value;
+                }
                 else
                     outValue.$v = value;
             }
@@ -327,20 +360,11 @@
     NetJs.$nsh = function (left, op, right) {
         switch (op) {
             case "<<":
-                if (left >= -2147483648 && left <= 2147483647)
-                    return left << right;
-                else
-                    return Number(BigInt(left) << BigInt(right));
+                return BigInt.asIntN(64, left << BigInt(right));
             case ">>":
-                if (left >= -2147483648 && left <= 2147483647)
-                    return left >> right;
-                else
-                    return Number(BigInt(left) >> BigInt(right));
+                return left >> BigInt(right);
             case ">>>":
-                if (left >= -2147483648 && left <= 2147483647)
-                    return left >>> right;
-                else
-                    return Number(BigInt(left) >>> BigInt(right));
+                return left >>> BigInt(right);
         }
     }
     function typeIsNumber(T) {
@@ -363,15 +387,23 @@
     }
     function tryCastNumeric(value, T) {
         var tvalue = typeof value;
-        if ((tvalue == "number" || tvalue == "bigint") && (typeIsNumber(T) || typeIsLong(T))) {
+        var toLong = typeIsLong(T);
+        var toNumber = typeIsNumber(T);
+        if ((tvalue == "number" || tvalue == "bigint") && (toNumber || toLong)) {
             var min = T.MinValue;
             var max = T.MaxValue;
             //Detect long and ulong overflow, since JavaScript bitwise operation only work on 32 bit signed integer, we need to use BigInt to detect overflow, 
             //but we will still return a number
-            if (/*value < -2147483648 || value > 4294967295 || */min < -2147483648 || min > 4294967295 || max < -2147483648 || max > 4294967295) {
-                //value = Number(BigInt(value) & 0xFFFFFFFFFFFFFFFFn);
+            if (toLong) {
+                if (tvalue == "bigint") { //already bigint
+                    return value;
+                }
+                return BigInt(Math.trunc(value));
             }
             else {
+                if (tvalue == "bigint") {
+                    value = Number(value);
+                }
                 var allBitsSet = T.System$Numerics$IBinaryNumber$$$AllBitsSet;
                 var bitSize = NetJs.$sizeOf(T) * 8;
                 //var greaterThanZero = value > 0;
@@ -504,13 +536,18 @@
         var out = { set $v(v) { mvalue = v; } }
         if (NetJs.$is(value, toType, out))
             return tryCastNumeric(mvalue, toType);
-        if (value instanceof NetJs.$spc.System.IRefOrPointer && NetJs.typeIsNumber(toType)) { //casting pointer to number
+        if (value instanceof NetJs.$spc.System.IRefOrPointer && (typeIsNumber(toType) || typeIsLong(toType))) { //casting pointer to number
             var number = castPtr2Address(value);
-            if (number)
+            if (number) {
+                if (typeIsLong(toType))
+                    return BigInt(number);
                 return number;
+            }
         }
-        if (typeof (value) == "number" && value >= virtualAddressOffset && (toType.name == "Pointer$$" || toType.name == "Ref$$")/*Object.getPrototypeListOf(type).contains(NetJs.$spc.System.IRefOrPointer)*/) { //casting number to pointer
-            var pointer = castAddress2Ptr(value);
+        var tvalue = typeof (value);
+        if ((tvalue == "number" || tvalue == "bigint") && value >= virtualAddressOffset && (toType.name == "Pointer$$" || toType.name == "Ref$$")/*Object.getPrototypeListOf(type).contains(NetJs.$spc.System.IRefOrPointer)*/) { //casting number to pointer
+            var ivalue = tvalue == "bigint" ? Number(value) : value;
+            var pointer = castAddress2Ptr(ivalue);
             if (pointer)
                 return pointer;
         }
@@ -528,6 +565,9 @@
         if (!type)
             return NetJs.$spc.System.Pointer$$;
         return NetJs.$spc.System.Pointer$$(type);
+    }
+    NetJs.$array = function (type, length) {
+        return NetJs.$spc.System.Array.$array(NetJs.$typeOf(type), length);
     }
     NetJs.$equals = function (a, b) {
         if (a === b)

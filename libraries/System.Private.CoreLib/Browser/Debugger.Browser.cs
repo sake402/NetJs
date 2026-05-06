@@ -23,5 +23,12 @@ namespace System.Diagnostics
         {
             return true;
         }
+        
+        [NetJs.MemberReplace(nameof(Log_icall))]
+        private static void Log_icallImpl(int level, ref string category, ref string message)
+        {
+            Window.Window.console.log(message);
+        }
+
     }
 }

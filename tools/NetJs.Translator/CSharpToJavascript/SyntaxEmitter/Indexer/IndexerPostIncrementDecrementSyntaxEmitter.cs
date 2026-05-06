@@ -4,8 +4,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Indexer
 {
-    //Handles like of array[1]++, array[1]-- 
-    //Reexpressed as array[1] = array[1] + 1;
+    //Handles like of array[1]++, array[1]--
 
     sealed class IndexerPostIncrementDecrementSyntaxEmitter : SyntaxEmitter<PostfixUnaryExpressionSyntax>
     {

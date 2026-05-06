@@ -20,8 +20,8 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Numbers
             //Casting a literal number should result in a compile time literal
             if (fromType != null &&
                 toType != null &&
-                fromType.IsJsNativeIntegerNumeric() &&
-                toType.IsJsNativeIntegerNumeric())
+                fromType.IsIntegerNumericType() &&
+                toType.IsIntegerNumericType())
             {
                 var literalValue = visitor.Global.EvaluateConstant(node.Expression, visitor);
                 if (literalValue.HasValue)

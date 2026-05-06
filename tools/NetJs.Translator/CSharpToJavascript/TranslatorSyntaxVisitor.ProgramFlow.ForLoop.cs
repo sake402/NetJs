@@ -30,6 +30,9 @@ namespace NetJs.Translator.CSharpToJavascript
 
             IMethodSymbol? directGetEnumerator = null;
 
+            IMethodSymbol? enumeratorMoveNext = null;
+            IPropertySymbol? enumeratorCurrent = null;
+
             if (enumerationTargetRhsTypeSymbol != null)
             {
                 //enumerableTypeSymbol = enumerableTypeSymbol.Construct([enumerationTargetRhsTypeSymbol]);
@@ -44,6 +47,9 @@ namespace NetJs.Translator.CSharpToJavascript
                     getEnumeratorInvocationName = "GetEnumerator";
                     enumeratorMoveNextInvocationName = "MoveNext";
                     enumeratorCurrentInvocationName = "Current";
+                    var enumeratorType = directGetEnumerator.GetTypeSymbol();
+                    enumeratorMoveNext = (IMethodSymbol)(enumeratorType.GetMembers("MoveNext", _global).FirstOrDefault());
+                    enumeratorCurrent = (IPropertySymbol)(enumeratorType.GetMembers("Current", _global).FirstOrDefault());
                 }
                 else
                 {
@@ -72,11 +78,11 @@ namespace NetJs.Translator.CSharpToJavascript
                     {
                         enumeratorSymbol = enumeratorSymbol.Construct([enumerableItemSymbol]);
                     }
-                    var enumeratorMoveNext = (IMethodSymbol)(enumeratorSymbol.GetMembers("MoveNext", _global).First());
+                    enumeratorMoveNext = (IMethodSymbol)(enumeratorSymbol.GetMembers("MoveNext", _global).First());
                     var enumeratorMoveNextMethodMetadata = _global.GetRequiredMetadata(enumeratorMoveNext);
                     enumeratorMoveNextInvocationName = enumeratorMoveNextMethodMetadata.InvocationName ?? enumeratorMoveNext.Name;
 
-                    var enumeratorCurrent = (IPropertySymbol)(enumeratorSymbol.GetMembers("Current", _global).First());
+                    enumeratorCurrent = (IPropertySymbol)(enumeratorSymbol.GetMembers("Current", _global).First());
                     var enumeratorCurrentMethodMetadata = _global.GetRequiredMetadata(enumeratorCurrent);
                     enumeratorCurrentInvocationName = enumeratorCurrentMethodMetadata.InvocationName ?? enumeratorCurrent.Name;
 
@@ -110,7 +116,7 @@ namespace NetJs.Translator.CSharpToJavascript
             CurrentTypeWriter.WriteLine(node, "{", true);
             if (variable is SyntaxToken identifierName2)
             {
-                CurrentTypeWriter.WriteLine(node, $"var {identifierName2.ValueText} = {enumarableName}.{enumeratorCurrentInvocationName};", true);
+                CurrentTypeWriter.WriteLine(node, $"var {identifierName2.ValueText} = {enumarableName}.{enumeratorCurrentInvocationName}{((enumeratorCurrent?.GetRefKind() ?? RefKind.None) != RefKind.None ? $".{Constants.RefValueName}" : "")};", true);
             }
             else if (variable is TupleExpressionSyntax tp)
             {

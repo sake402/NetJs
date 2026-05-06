@@ -21,8 +21,9 @@ namespace System
             IteratorResult Next();
         }
 
+        [NativeDelegate]
         Func<IGenerator> _getGenerator;
-        public YieldToIterator(Func<IGenerator> getGenerator)
+        public YieldToIterator([NativeDelegate] Func<IGenerator> getGenerator)
         {
             _getGenerator = getGenerator;
         }

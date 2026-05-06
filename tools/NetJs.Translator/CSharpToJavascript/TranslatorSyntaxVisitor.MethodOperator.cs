@@ -12,16 +12,16 @@ namespace NetJs.Translator.CSharpToJavascript
 {
     public partial class TranslatorSyntaxVisitor
     {
-        const string ExplicitOperatorName = "op_Explicit";
-        const string ImplicitOperatorName = "op_Implicit";
+        public const string ExplicitOperatorName = "op_Explicit";
+        public const string ImplicitOperatorName = "op_Implicit";
         //operators we can safely rewite like a += b => a = a + b
         static readonly string[] RewitableOperators = ["+=", "-=", "*=", "/=", "%=", ">>=", "<<=", "|=", "&=", "^="];
-        public bool TryInvokeMethodOperator(CSharpSyntaxNode node, string _operator, ITypeSymbol? leftOperandType, ExpressionSyntax? leftOperand, IEnumerable<ExpressionSyntax> arguments, Action? prologue = null)
+        public bool TryInvokeMethodOperator(CSharpSyntaxNode node, string _operator, ITypeSymbol? leftOperandType, CSharpSyntaxNode? leftOperand, IEnumerable<CSharpSyntaxNode> arguments, Action? prologue = null)
         {
             var conversion = node.FindClosestParent<ConversionOperatorDeclarationSyntax>();
             var conversionMethod = conversion != null ? _global.GetTypeSymbol(conversion, this) : null;
             ITypeSymbol? rightOperandType = null;
-            ExpressionSyntax rightOperand = arguments.First();
+            var rightOperand = arguments.FirstOrDefault();
             if (leftOperand != null)
             {
                 if (leftOperandType == null)
@@ -48,9 +48,6 @@ namespace NetJs.Translator.CSharpToJavascript
                 var operandCodeType = GetExpressionReturnSymbol(rightOperand);
                 rightOperandType = _global.ResolveSymbol(operandCodeType, this)?.GetTypeSymbol();
             }
-            //js can handle native numeric operation, no need to call operator
-            if (leftOperandType != null && rightOperandType != null && leftOperandType.IsJsNativeNumeric() && rightOperandType.IsJsNativeNumeric())
-                return false;
             bool IsAssignmentRewriteCandidate()
             {
                 return true;
@@ -110,7 +107,12 @@ namespace NetJs.Translator.CSharpToJavascript
                 //    return true;
                 //}
             }
-
+            else
+            {
+                //js can handle native numeric operation, no need to call operator
+                if (leftOperandType != null && rightOperandType != null && leftOperandType.IsNumberNumericType() && rightOperandType.IsNumberNumericType())
+                    return false;
+            }
             if (leftOperandType is ITypeSymbol ts)
             {
                 if (ts.IsNullable(out var t))

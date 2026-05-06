@@ -6,7 +6,8 @@
         [NetJs.Name(NetJs.Constants.IsTypeName)]
         public static bool Is(object value)
         {
-            return NetJs.Script.TypeOf(value).NativeEquals("number");
+            var t = NetJs.Script.TypeOf(value);
+            return t.NativeEquals("number") || t.NativeEquals("bigint");
         }
     }
 }

@@ -44,74 +44,74 @@ namespace NetJs.Translator.CSharpToJavascript
             CloseClosure();
         }
 
-        void TryWriteImplementedPropertyGetter(BasePropertyDeclarationSyntax node, IPropertySymbol? propertySymbol, string propertyName)
-        {
-            if (node.ExplicitInterfaceSpecifier == null && propertySymbol != null && propertySymbol.ContainingType.Interfaces.Any())
-            {
-                if (!propertySymbol.IsExtern && !_global.HasAttribute(propertySymbol, typeof(ExternalAttribute).FullName, this, false, out _) && !_global.HasAttribute(propertySymbol.ContainingSymbol, typeof(ExternalAttribute).FullName, this, false, out _))
-                {
-                    var declaringMetadata = _global.GetRequiredMetadata(propertySymbol.ContainingType);
-                    //find the interfaces that this property implements
-                    var implementedProperties = propertySymbol.ContainingType.AllInterfaces
-                        .SelectMany(i => i.GetMembers().OfType<IPropertySymbol>())
-                        .Where(im => propertySymbol.Equals(propertySymbol.ContainingType.FindImplementationForInterfaceMember(im), SymbolEqualityComparer.Default));
-                    foreach (var imp in implementedProperties)
-                    {
-                        if (!imp.IsExtern && !_global.HasAttribute(imp, typeof(ExternalAttribute).FullName, this, false, out _) && !_global.HasAttribute(imp.ContainingSymbol, typeof(ExternalAttribute).FullName, this, false, out _))
-                        {
-                            //var interfaceMetadata = global.ReversedSymbols[imp];
-                            if (imp.GetMethod != null)
-                            {
-                                var implementationSymbol = _global.GetRequiredMetadata(imp);
-                                if (propertySymbol.IsIndexer)
-                                {
-                                    implementationSymbol = _global.GetRequiredMetadata(imp.GetMethod);
-                                }
-                                CurrentTypeWriter.WriteLine(node, $"//Generated explicit interface get implemetation for {imp}", true);
-                                CurrentTypeWriter.WriteLine(node, $"{(imp.GetMethod.IsStatic || propertySymbol.IsStaticCallConvention(_global) ? "static " : "")}{(propertySymbol.IsStaticCallConvention(_global) ? "/*conventional*/ " : "")}{(propertySymbol.IsIndexer ? "" : "get ")}{implementationSymbol.OverloadName}()", true);
-                                CurrentTypeWriter.WriteLine(node, $"{{", true);
-                                CurrentTypeWriter.WriteLine(node, $"return {(imp.GetMethod.IsStatic ? declaringMetadata.InvocationName : "this")}.{propertyName};", true);
-                                CurrentTypeWriter.WriteLine(node, $"}}", true);
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        //void TryWriteImplementedPropertyGetter(BasePropertyDeclarationSyntax node, IPropertySymbol? propertySymbol, string propertyName)
+        //{
+        //    if (node.ExplicitInterfaceSpecifier == null && propertySymbol != null && propertySymbol.ContainingType.Interfaces.Any())
+        //    {
+        //        if (!propertySymbol.IsExtern && !_global.HasAttribute(propertySymbol, typeof(ExternalAttribute).FullName, this, false, out _) && !_global.HasAttribute(propertySymbol.ContainingSymbol, typeof(ExternalAttribute).FullName, this, false, out _))
+        //        {
+        //            var declaringMetadata = _global.GetRequiredMetadata(propertySymbol.ContainingType);
+        //            //find the interfaces that this property implements
+        //            var implementedProperties = propertySymbol.ContainingType.AllInterfaces
+        //                .SelectMany(i => i.GetMembers().OfType<IPropertySymbol>())
+        //                .Where(im => propertySymbol.Equals(propertySymbol.ContainingType.FindImplementationForInterfaceMember(im), SymbolEqualityComparer.Default));
+        //            foreach (var imp in implementedProperties)
+        //            {
+        //                if (!imp.IsExtern && !_global.HasAttribute(imp, typeof(ExternalAttribute).FullName, this, false, out _) && !_global.HasAttribute(imp.ContainingSymbol, typeof(ExternalAttribute).FullName, this, false, out _))
+        //                {
+        //                    //var interfaceMetadata = global.ReversedSymbols[imp];
+        //                    if (imp.GetMethod != null)
+        //                    {
+        //                        var implementationSymbol = _global.GetRequiredMetadata(imp);
+        //                        if (propertySymbol.IsIndexer)
+        //                        {
+        //                            implementationSymbol = _global.GetRequiredMetadata(imp.GetMethod);
+        //                        }
+        //                        CurrentTypeWriter.WriteLine(node, $"//Generated explicit interface get implemetation for {imp}", true);
+        //                        CurrentTypeWriter.WriteLine(node, $"{(imp.GetMethod.IsStatic || propertySymbol.IsStaticCallConvention(_global) ? "static " : "")}{(propertySymbol.IsStaticCallConvention(_global) ? "/*conventional*/ " : "")}{(propertySymbol.IsIndexer ? "" : "get ")}{implementationSymbol.OverloadName}()", true);
+        //                        CurrentTypeWriter.WriteLine(node, $"{{", true);
+        //                        CurrentTypeWriter.WriteLine(node, $"return {(imp.GetMethod.IsStatic ? declaringMetadata.InvocationName : "this")}.{propertyName};", true);
+        //                        CurrentTypeWriter.WriteLine(node, $"}}", true);
+        //                    }
+        //                }
+        //            }
+        //        }
+        //    }
+        //}
 
-        void TryWriteImplementedPropertySetter(BasePropertyDeclarationSyntax node, IPropertySymbol? propertySymbol, string propertyName)
-        {
-            if (node.ExplicitInterfaceSpecifier == null && propertySymbol != null && propertySymbol.ContainingType.Interfaces.Any())
-            {
-                if (!propertySymbol.IsExtern && !_global.HasAttribute(propertySymbol, typeof(ExternalAttribute).FullName, this, false, out _) && !_global.HasAttribute(propertySymbol.ContainingSymbol, typeof(ExternalAttribute).FullName, this, false, out _))
-                {
-                    var declaringMetadata = _global.GetRequiredMetadata(propertySymbol.ContainingType);
-                    //find the interfaces that this property implements
-                    var implementedProperties = propertySymbol.ContainingType.AllInterfaces
-                        .SelectMany(i => i.GetMembers().OfType<IPropertySymbol>())
-                        .Where(im => propertySymbol.Equals(propertySymbol.ContainingType.FindImplementationForInterfaceMember(im), SymbolEqualityComparer.Default));
-                    foreach (var imp in implementedProperties)
-                    {
-                        if (!imp.IsExtern && !_global.HasAttribute(imp, typeof(ExternalAttribute).FullName, this, false, out _) && !_global.HasAttribute(imp.ContainingSymbol, typeof(ExternalAttribute).FullName, this, false, out _))
-                        {
-                            if (imp.SetMethod != null)
-                            {
-                                var symbol = _global.GetRequiredMetadata(imp);
-                                if (propertySymbol.IsIndexer)
-                                {
-                                    symbol = _global.GetRequiredMetadata(imp.SetMethod);
-                                }
-                                CurrentTypeWriter.WriteLine(node, $"//Generated explicit interface set implemetation for {imp}", true);
-                                CurrentTypeWriter.WriteLine(node, $"{(imp.SetMethod.IsStatic || propertySymbol.IsStaticCallConvention(_global) ? "static " : "")}{(propertySymbol.IsStaticCallConvention(_global) ? "/*conventional*/ " : "")}{(propertySymbol.IsIndexer ? "" : "set ")}{symbol.OverloadName}({(propertySymbol.IsIndexer ? "" : "value")})", true);
-                                CurrentTypeWriter.WriteLine(node, $"{{", true);
-                                CurrentTypeWriter.WriteLine(node, $"{(imp.SetMethod.IsStatic ? declaringMetadata.InvocationName : "this")}.{propertyName};", true);
-                                CurrentTypeWriter.WriteLine(node, $"}}", true);
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        //void TryWriteImplementedPropertySetter(BasePropertyDeclarationSyntax node, IPropertySymbol? propertySymbol, string propertyName)
+        //{
+        //    if (node.ExplicitInterfaceSpecifier == null && propertySymbol != null && propertySymbol.ContainingType.Interfaces.Any())
+        //    {
+        //        if (!propertySymbol.IsExtern && !_global.HasAttribute(propertySymbol, typeof(ExternalAttribute).FullName, this, false, out _) && !_global.HasAttribute(propertySymbol.ContainingSymbol, typeof(ExternalAttribute).FullName, this, false, out _))
+        //        {
+        //            var declaringMetadata = _global.GetRequiredMetadata(propertySymbol.ContainingType);
+        //            //find the interfaces that this property implements
+        //            var implementedProperties = propertySymbol.ContainingType.AllInterfaces
+        //                .SelectMany(i => i.GetMembers().OfType<IPropertySymbol>())
+        //                .Where(im => propertySymbol.Equals(propertySymbol.ContainingType.FindImplementationForInterfaceMember(im), SymbolEqualityComparer.Default));
+        //            foreach (var imp in implementedProperties)
+        //            {
+        //                if (!imp.IsExtern && !_global.HasAttribute(imp, typeof(ExternalAttribute).FullName, this, false, out _) && !_global.HasAttribute(imp.ContainingSymbol, typeof(ExternalAttribute).FullName, this, false, out _))
+        //                {
+        //                    if (imp.SetMethod != null)
+        //                    {
+        //                        var symbol = _global.GetRequiredMetadata(imp);
+        //                        if (propertySymbol.IsIndexer)
+        //                        {
+        //                            symbol = _global.GetRequiredMetadata(imp.SetMethod);
+        //                        }
+        //                        CurrentTypeWriter.WriteLine(node, $"//Generated explicit interface set implemetation for {imp}", true);
+        //                        CurrentTypeWriter.WriteLine(node, $"{(imp.SetMethod.IsStatic || propertySymbol.IsStaticCallConvention(_global) ? "static " : "")}{(propertySymbol.IsStaticCallConvention(_global) ? "/*conventional*/ " : "")}{(propertySymbol.IsIndexer ? "" : "set ")}{symbol.OverloadName}({(propertySymbol.IsIndexer ? "" : "value")})", true);
+        //                        CurrentTypeWriter.WriteLine(node, $"{{", true);
+        //                        CurrentTypeWriter.WriteLine(node, $"{(imp.SetMethod.IsStatic ? declaringMetadata.InvocationName : "this")}.{propertyName};", true);
+        //                        CurrentTypeWriter.WriteLine(node, $"}}", true);
+        //                    }
+        //                }
+        //            }
+        //        }
+        //    }
+        //}
 
         void WritePropertySetAccessor(BasePropertyDeclarationSyntax node, string propertyName, AccessorDeclarationSyntax? accessor, ISymbol propertySymbol)
         {
@@ -410,8 +410,8 @@ namespace NetJs.Translator.CSharpToJavascript
                     }
                 }
             }
-            TryWriteImplementedPropertyGetter(node, propertySymbol, propertyName);
-            TryWriteImplementedPropertySetter(node, propertySymbol, propertyName);
+            //TryWriteImplementedPropertyGetter(node, propertySymbol, propertyName);
+            //TryWriteImplementedPropertySetter(node, propertySymbol, propertyName);
         }
 
         public override void VisitIndexerDeclaration(IndexerDeclarationSyntax node)
@@ -514,8 +514,8 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             var mpropertySymbol = (IPropertySymbol)_global.GetTypeSymbol(node, this/*, out _, out _*/);
             var mpropertyMetadata = _global.GetRequiredMetadata(mpropertySymbol.GetMethod!);
-            TryWriteImplementedPropertyGetter(node, mpropertySymbol, $"{mpropertyMetadata?.OverloadName ?? "get_Item"}(...arguments)");
-            TryWriteImplementedPropertySetter(node, mpropertySymbol, $"{mpropertyMetadata?.OverloadName ?? "set_Item"}(...arguments)");
+            //TryWriteImplementedPropertyGetter(node, mpropertySymbol, $"{mpropertyMetadata?.OverloadName ?? "get_Item"}(...arguments)");
+            //TryWriteImplementedPropertySetter(node, mpropertySymbol, $"{mpropertyMetadata?.OverloadName ?? "set_Item"}(...arguments)");
             //base.VisitIndexerDeclaration(node);
         }
 

@@ -66,15 +66,15 @@ namespace System
         public const int MemberShift = 32;
         public const ulong MemberMask = 0xFFFF00000000;
         [NetJs.Template("{value} & 0xFFFF")]
-        public static extern int GetAssemblyHandle(this ulong value);// => (int)(value & AssemblyMask);
+        public static extern int GetAssemblyHandle(this uint value);// => (int)(value & AssemblyMask);
 
         [NetJs.Template("({value} & 0xFFFF0000) >> 16")]
-        public static extern int GetTypeHandle(this ulong value);// => (int)((value & TypeMask) >> TypeShift);
+        public static extern int GetTypeHandle(this uint value);// => (int)((value & TypeMask) >> TypeShift);
 
         [NetJs.Template("Number((BigInt({value}) & 0xFFFF00000000n) >> 32n)")]
-        public static extern int GetMemberHandle(this ulong value);// => (int)((value & MemberMask) >> MemberShift);
+        public static extern int GetMemberHandle(this uint value);// => (int)((value & MemberMask) >> MemberShift);
 
         [NetJs.Template("({value} & (0xFFFF | 0xFFFF0000))")]
-        public static extern int GetAssemblyAndTypeHandle(this ulong value);// => (int)(value & (AssemblyMask | TypeMask));
+        public static extern int GetAssemblyAndTypeHandle(this uint value);// => (int)(value & (AssemblyMask | TypeMask));
     }
 }

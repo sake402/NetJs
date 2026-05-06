@@ -34,6 +34,8 @@
         [InlineConst]
         public const string GenericType = "$gt";
         [InlineConst]
+        public const bool GenericMethodAsFactory = false;
+        [InlineConst]
         public const string IfNotNull = "$ifnn";
         [InlineConst]
         public const string IfNotNullParameterName = "$t";
@@ -55,6 +57,8 @@
         public const string TryCastName = "$tryCast";
         [InlineConst]
         public const string DefaultTypeName = "$default";
+        [InlineConst]
+        public const string CreateArray = "$array";
         [InlineConst]
         public const string BoxName = "$box";
         [InlineConst]

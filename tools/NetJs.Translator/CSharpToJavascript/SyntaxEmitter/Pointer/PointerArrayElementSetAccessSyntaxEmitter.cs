@@ -11,22 +11,24 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Pointer
         {
             if (node.Left is ElementAccessExpressionSyntax elementAccess)
             {
-                var type = visitor.Global.ResolveSymbol(visitor.GetExpressionReturnSymbol(elementAccess.Expression), visitor)?.GetTypeSymbol();
-                if (type != null)
+                if (elementAccess.ArgumentList.Arguments.Count == 1)
                 {
+                    var type = visitor.Global.GetTypeSymbol(elementAccess.Expression, visitor).GetTypeSymbol();
                     if (type.IsPointer(out _))
                     {
+                        var argType = visitor.Global.GetTypeSymbol(elementAccess.ArgumentList.Arguments[0], visitor).GetTypeSymbol();
                         visitor.Visit(elementAccess.Expression);
                         visitor.CurrentTypeWriter.Write(node, ".SetAt(");
-                        int ix = 0;
                         visitor.Visit(node.Right);
                         visitor.CurrentTypeWriter.Write(node, ", ");
-                        foreach (var arg in elementAccess.ArgumentList.Arguments)
+                        if (argType.IsLongNumericType())
                         {
-                            if (ix > 0)
-                                visitor.CurrentTypeWriter.Write(node, ", ");
-                            visitor.Visit(arg);
-                            ix++;
+                            visitor.CurrentTypeWriter.Write(node, "Number(");
+                        }
+                        visitor.Visit(elementAccess.ArgumentList.Arguments[0]);
+                        if (argType.IsLongNumericType())
+                        {
+                            visitor.CurrentTypeWriter.Write(node, ")");
                         }
                         visitor.CurrentTypeWriter.Write(node, ")");
                         return true;

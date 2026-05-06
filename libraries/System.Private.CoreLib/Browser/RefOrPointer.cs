@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using NetJs;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -21,7 +22,7 @@ namespace System
             if (second == null)
                 return 1;
             //Comparing two pointers should point to same memory allocation
-            Debug.Assert(first.As<RefOrPointer<object>>().Overlaps(second));
+            Debug.Assert(first.As<RefOrPointer<object>>().Overlaps(second), "Reference/Pointer must overlap before comparing them");
             return first.As<RefOrPointer<object>>()._arrayOffset - second.As<RefOrPointer<object>>()._arrayOffset;
         }
     }
@@ -31,7 +32,9 @@ namespace System
         //static RefOrPointer<object> _nullRef;
 
         internal T[]? _array;
+        [NativeDelegate]
         internal Func<int?, T> _getter;
+        [NativeDelegate]
         internal Action<T, int?> _setter;
         internal int _byteOffset;
 
@@ -56,7 +59,7 @@ namespace System
             this._parentRef = parent;
         }
 
-        internal RefOrPointer(Func<int?, T> getter, Action<T, int?> setter)
+        internal RefOrPointer([NativeDelegate] Func<int?, T> getter, [NativeDelegate] Action<T, int?> setter)
         {
             this._getter = getter;
             this._setter = setter;
@@ -110,7 +113,7 @@ namespace System
                 {
                     var ratio = Math.DivRem(thisSize, sourceSize);
                     Debug.Assert(ratio.Remainder == 0);
-                    uint numeric = 0;
+                    ulong numeric = 0;
                     var isNumeric = _parentRef.Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric() && Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric();
                     var raw = !isNumeric ? new object[ratio.Quotient] : null;
                     var parentO = _parentRef.As<RefOrPointer<object>>();
@@ -119,7 +122,7 @@ namespace System
                         var value = parentO.GetAt(offset * ratio.Quotient + i);
                         if (isNumeric)
                         {
-                            numeric |= value.As<uint>() << (i * sourceSize * 8);
+                            numeric |= (ulong)value.As<uint>() << (i * sourceSize * 8);
                         }
                         else
                         {
@@ -145,9 +148,9 @@ namespace System
                     else
                     {
                         throw null;
-                        var t = NetJs.Script.Write<T>("new T()")!;
-                        t._fields = raw;
-                        return t;
+                        //var t = NetJs.Script.Write<T>("new T()")!;
+                        //t._fields = raw;
+                        //return t;
                     }
                 }
                 else if (thisSize < sourceSize) //eg byte < int, getting byte from underlying int[]
@@ -155,11 +158,11 @@ namespace System
                     var ratio = Math.DivRem(sourceSize, thisSize);
                     Debug.Assert(ratio.Remainder == 0);
                     var parentO = _parentRef.As<RefOrPointer<object>>();
-                    var d = parentO.GetAt(offset / ratio.Quotient).As<uint>();
+                    var d = (ulong)parentO.GetAt(offset / ratio.Quotient).As<uint>();
                     var i = offset % ratio.Quotient;
                     if (_parentRef.Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric() && Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric())
                     {
-                        return (d >> (8 * i)).As<T>();
+                        return (T)(d >> (8 * i)).As<object>();
                     }
                     else
                     {
@@ -206,12 +209,14 @@ namespace System
                         8 => 0xFFFFFFFFFFFFFFFF,
                         _ => 0
                     };
+                    var parentPrototype = parentO.Type.As<RuntimeType>()._prototype;
                     for (int i = 0; i < ratio.Quotient; i++)
                     {
                         if (isNumeric)
                         {
-                            var mvalue = (value.As<uint>() >> (i * sourceSize * 8)) & mask;
-                            parentO.SetAt(mvalue.As<object>(), offset * ratio.Quotient + i);
+                            var mvalue = ((ulong)value.As<uint>() >> (i * sourceSize * 8)) & mask;
+                            var dvalue = NetJs.Script.Write<object>($"{NetJs.Constants.GlobalName}.{NetJs.Constants.CastName}({nameof(mvalue)}, {nameof(parentPrototype)})");
+                            parentO.SetAt(dvalue, offset * ratio.Quotient + i);
                         }
                         else
                         {
@@ -223,14 +228,14 @@ namespace System
                 {
                     var ratio = Math.DivRem(sourceSize, thisSize);
                     Debug.Assert(ratio.Remainder == 0);
-                    var d = _parentRef.As<RefOrPointer<object>>().GetAt(offset / ratio.Quotient).As<uint>();
+                    var d = (ulong)_parentRef.As<RefOrPointer<object>>().GetAt(offset / ratio.Quotient).As<uint>();
                     var i = offset % ratio.Quotient;
                     var parentO = _parentRef.As<RefOrPointer<object>>();
                     if (_parentRef.Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric() && Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric())
                     {
-                        var maskSet = value.As<uint>();
-                        var maskClear = ~(0xff << (8 * i));
-                        d = (d & maskClear).As<uint>() | (maskSet << (8 * i));
+                        var maskSet = (ulong)value.As<uint>();
+                        var maskClear = ~(0xffUL << (8 * i));
+                        d = (d & maskClear) | (maskSet << (8 * i));
                         var parentPrototype = parentO.Type.As<RuntimeType>()._prototype;
                         var dd = NetJs.Script.Write<object>($"{NetJs.Constants.GlobalName}.{NetJs.Constants.CastName}({nameof(d)}, {nameof(parentPrototype)})");
                         parentO.SetAt(dd, offset / ratio.Quotient);
@@ -278,7 +283,7 @@ namespace System
 
         public void CopyTo(RefOrPointer<T> dst, int count)
         {
-            if (!Array.Is(Value) || !Array.Is(dst.Value))
+            if (!Array<T>.Is(Value) || !Array<T>.Is(dst.Value))
             {
                 throw new InvalidOperationException("Both ref must be an array");
             }
@@ -301,9 +306,9 @@ namespace System
             return this with { _byteOffset = _byteOffset + offset };
         }
 
-        public RefOrPointer<T> Add(int offset)
+        public RefOrPointer<T> Add(long offset)
         {
-            return this with { _byteOffset = _byteOffset + (offset * SizeOfItem) };
+            return this with { _byteOffset = _byteOffset + ((int)offset * SizeOfItem) };
         }
 
         public bool Overlaps(IRefOrPointer? second)
@@ -322,10 +327,10 @@ namespace System
             return ReferenceEquals(parent1, parent2);
         }
 
-        public int Subtract(IRefOrPointer second)
+        public long Subtract(IRefOrPointer second)
         {
             //Subtracting two pointers should point to same memory allocation
-            Debug.Assert(Overlaps(second));
+            Debug.Assert(Overlaps(second), "Reference/Pointer must overlap before comparing them");
             return _arrayOffset - second.As<RefOrPointer<object>>()._arrayOffset;
         }
 

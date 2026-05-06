@@ -6,7 +6,8 @@ using NetJs.Translator;
 using NetJs.Translator.CSharpToJavascript;
 using NetJs.Translator.CSharpToJavascript.SyntaxEmitter;
 using NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Array;
-using NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Index;
+using NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Delegate;
+using NetJs.Translator.CSharpToJavascript.SyntaxEmitter.SystemIndex;
 using NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Indexer;
 using NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Number;
 using NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Numbers;
@@ -49,6 +50,7 @@ namespace NetJs.Translator.CSharpToJavascript
             new UnneccessaryUnsafeAddSyntaxEmitter(),
 
             new StringConstructorSyntaxEmitter(),
+            new StringFirstCharSyntaxEmitter(),
             new RefToStringFirstCharSyntaxEmitter(),
             new RefArgumentToStringFirstCharSyntaxEmitter(),
             new AddressOfStringFirstCharSyntaxEmitter(),
@@ -56,7 +58,7 @@ namespace NetJs.Translator.CSharpToJavascript
             new MaterializeFastAllocatedStringOnAssignmentSyntaxEmitter(),
 
             new PointerCreateSyntaxEmitter(),
-            new PointerArrayElementAccessSyntaxEmitter(),
+            new PointerArrayElementGetAccessSyntaxEmitter(),
             new PointerArrayElementSetAccessSyntaxEmitter(),
             new PointerDereferenceSyntaxEmitter(),
             new PointerPreIncrementDecrementSyntaxEmitter(),
@@ -68,6 +70,8 @@ namespace NetJs.Translator.CSharpToJavascript
 
             new CreateIndexSyntaxEmitter(),
             new ArrayRangeToSubArraySyntaxEmitter(),
+            new ArrayForEachSyntaxEmitter(),
+
             new IndexerPostIncrementDecrementSyntaxEmitter(),
             new IndexerPreIncrementDecrementSyntaxEmitter(),
             new SpanRangeToSliceMethodSyntaxEmitter(),
@@ -79,7 +83,10 @@ namespace NetJs.Translator.CSharpToJavascript
             new Utf8StringLiteralConcatSyntaxEmitter(),
             new Utf8StringLiteralToReadOnlySpanOfByteSyntaxEmitter(),
             new RecursiveOperatorSyntaxEmitter(),
+
             new NumericShiftSyntaxEmitter(),
+            new NotOfBigIntShiftSyntaxEmitter(),
+
             new ImplicitConversionSyntaxEmitter(),
             new UnneccesaryNumericCastSyntaxEmitter(),
             new UnwrapRefOfPointerDereferenceSyntaxEmitter(),
@@ -87,8 +94,10 @@ namespace NetJs.Translator.CSharpToJavascript
             new FixedVariableDeclarationSyntaxEmitter(),
 
             new TruncateIntegerDivisionSyntaxEmitter(),
-            new WrapIntegerMultiplicationSyntaxEmitter(),
+            new WrapIntegerOperationsSyntaxEmitter(),
             new UnsignedNumberComparisonSyntaxEmitter(),
+
+            new MethodDelegateCreateSyntaxEmitter(),
         ];
         public TranslatorSyntaxVisitor(GlobalCompilationVisitor global, SyntaxTree tree)
         {
@@ -113,9 +122,10 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (node != null)
             {
-                if (node.ToString().Equals("(uint)bits[2]"))
-                {
-                }
+                //if (node.ToString() == "list[1] = 25")
+                //{
+
+                //}
                 for (int i = 0; i < s_Emitters.Length; i++)
                 {
                     var emitter = s_Emitters[i];
@@ -295,7 +305,7 @@ namespace NetJs.Translator.CSharpToJavascript
             CurrentTypeWriter.WriteLine(node, "}", true);
         }
 
-        void VisitChildren(IEnumerable<SyntaxNode> nodes, string? separator = null)
+        public void VisitChildren(IEnumerable<SyntaxNode> nodes, string? separator = null)
         {
             int ix = 0;
             foreach (var node in nodes)
@@ -397,9 +407,9 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.FirstOf}(");
                 Visit(node.Left);
-                CurrentTypeWriter.Write(node, ", function(){ ");
+                CurrentTypeWriter.Write(node, ", () => { ");
                 Visit(node.Right);
-                CurrentTypeWriter.Write(node, " }.bind(this))");
+                CurrentTypeWriter.Write(node, " })");
             }
             else if (op == "as")
             {
@@ -695,19 +705,47 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (node.IsKind(SyntaxKind.ArrayInitializerExpression))
             {
-                CurrentTypeWriter.Write(node, "[ ", false);
+                var arrayType = (IArrayTypeSymbol?)_global.TryGetTypeSymbol(node, this)?.GetTypeSymbol();
+                if (arrayType != null)
+                {
+                    WriteCreateArray(node, arrayType.ElementType, lengths: null, bounds: null, values: new CodeNode(() =>
+                    {
+                        CurrentTypeWriter.Write(node, "[");
+                        int ix = 0;
+                        foreach (var i in node.Expressions)
+                        {
+                            if (ix > 0)
+                                CurrentTypeWriter.Write(node, ", ");
+                            Visit(i);
+                            ix++;
+                        }
+                        CurrentTypeWriter.Write(node, "]");
+                    }));
+                }
+                else
+                {
+                    CurrentTypeWriter.Write(node, "[");
+                    int i = 0;
+                    foreach (var n in node.Expressions)
+                    {
+                        if (i > 0)
+                            CurrentTypeWriter.Write(node, ", ");
+                        Visit(n);
+                        i++;
+                    }
+                    CurrentTypeWriter.Write(node, "]");
+                }
             }
-            int i = 0;
-            foreach (var n in node.Expressions)
+            else
             {
-                if (i > 0)
-                    CurrentTypeWriter.Write(node, ", ");
-                Visit(n);
-                i++;
-            }
-            if (node.IsKind(SyntaxKind.ArrayInitializerExpression))
-            {
-                CurrentTypeWriter.Write(node, " ]", false);
+                int i = 0;
+                foreach (var n in node.Expressions)
+                {
+                    if (i > 0)
+                        CurrentTypeWriter.Write(node, ", ");
+                    Visit(n);
+                    i++;
+                }
             }
             //base.VisitInitializerExpression(node);
         }
@@ -914,7 +952,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 if (rhs != null)
                 {
                     var lhs = _global.GetTypeSymbol(node.Expression, this).GetTypeSymbol();
-                    if (IsGenericInterfaceDispatch(lhs, rhs))
+                    if (IsGenericDispatch(lhs, rhs))
                     {
                         Visit(node.WhenNotNull);
                         return;
@@ -1224,13 +1262,19 @@ namespace NetJs.Translator.CSharpToJavascript
         public override void VisitLockStatement(LockStatementSyntax node)
         {
             CurrentTypeWriter.WriteLine(node, "//lock", true);
+            CurrentTypeWriter.WriteLine(node, "try", true);
+            CurrentTypeWriter.WriteLine(node, "{", true);
             CurrentTypeWriter.Write(node, "", true);
             WriteMethodInvocation(node, "System.Threading.Monitor.Enter", methodFilter: (m) => m.Parameters.Length == 1, arguments: [node.Expression]);
             CurrentTypeWriter.WriteLine(node, "");
             Visit(node.Statement);
+            CurrentTypeWriter.WriteLine(node, "}", true);
+            CurrentTypeWriter.WriteLine(node, "finally", true);
+            CurrentTypeWriter.WriteLine(node, "{", true);
             CurrentTypeWriter.Write(node, "", true);
             WriteMethodInvocation(node, "System.Threading.Monitor.Exit", methodFilter: (m) => m.Parameters.Length == 1, arguments: [node.Expression]);
             CurrentTypeWriter.WriteLine(node, "");
+            CurrentTypeWriter.WriteLine(node, "}", true);
             //base.VisitLockStatement(node);
         }
 

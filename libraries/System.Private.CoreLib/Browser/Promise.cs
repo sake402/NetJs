@@ -5,19 +5,19 @@ namespace System
     public interface IPromise
     {
         [Name("then")]
-        IPromise Then(Action<object?> continuation);
+        IPromise Then([NativeDelegate] Action<object?> continuation);
         [Name("then")]
-        IPromise Then(Action<object?> continuation, Action<object?> onRejected);
+        IPromise Then([NativeDelegate] Action<object?> continuation, [NativeDelegate] Action<object?> onRejected);
         [Name("catch")]
-        IPromise Catch(Action<object?> continuation);
+        IPromise Catch([NativeDelegate] Action<object?> continuation);
     }
 
     public interface IPromise<T> : IPromise
     {
         [Name("then")]
-        Promise<T> Then(Action<T> continuation);
+        Promise<T> Then([NativeDelegate] Action<T> continuation);
         [Name("then")]
-        Promise<T> Then(Action<T> continuation, Action<object?> onRejected);
+        Promise<T> Then([NativeDelegate] Action<T> continuation, [NativeDelegate] Action<object?> onRejected);
     }
 
     [Name("Promise")]
@@ -33,20 +33,23 @@ namespace System
     [External]
     public class Promise<T> : Promise, IPromise<T>
     {
+        [NativeDelegate]
         public delegate void Resolver(Union<T, Promise<T>> value);
+        [NativeDelegate]
         public delegate void Rejector(object? readon);
+        [NativeDelegate]
         public delegate void Executor(Resolver resolve, Rejector reject);
         public extern Promise();
         public extern Promise(Executor executor);
         [Name("then")]
-        public extern Promise<T> Then(Action<T> onFullfilled);
+        public extern Promise<T> Then([NativeDelegate] Action<T> onFullfilled);
         [Name("then")]
-        public extern Promise<T> Then(Action<T> onFullfilled, Action<object?> onRejected);
+        public extern Promise<T> Then([NativeDelegate] Action<T> onFullfilled, [NativeDelegate] Action<object?> onRejected);
         [Name("catch")]
-        public extern Promise<T> Catch(Action<object?> continuation);
-        extern IPromise IPromise.Then(Action<object?> continuation);
-        extern IPromise IPromise.Then(Action<object?> continuation, Action<object?> onRejected);
-        extern IPromise IPromise.Catch(Action<object?> continuation);
+        public extern Promise<T> Catch([NativeDelegate] Action<object?> continuation);
+        extern IPromise IPromise.Then([NativeDelegate] Action<object?> continuation);
+        extern IPromise IPromise.Then([NativeDelegate] Action<object?> continuation, [NativeDelegate] Action<object?> onRejected);
+        extern IPromise IPromise.Catch([NativeDelegate] Action<object?> continuation);
 
 
         [Name("all")]

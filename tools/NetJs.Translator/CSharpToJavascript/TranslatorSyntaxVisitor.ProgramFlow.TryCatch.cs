@@ -1,12 +1,13 @@
-﻿using NetJs.Translator.CSharpToJavascript;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using NetJs.Translator.CSharpToJavascript;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace NetJs.Translator.CSharpToJavascript
@@ -22,21 +23,37 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 CurrentTypeWriter.WriteLine(node, "catch($e)", true);
                 CurrentTypeWriter.WriteLine(node, "{", true);
+                int iDeclaration = 0;
                 foreach (var _catch in catches.Where(e => e.Declaration != null))
                 {
-                    CurrentTypeWriter.Write(node, $"if($e instanceof ", true);
+                    CurrentTypeWriter.Write(node, $"{(iDeclaration > 0 ? "else " : "")}if ($e instanceof ", true);
                     Visit(_catch.Declaration!.Type);
-                    //Writer.Write(node, _catch.Declaration!.Type.ToFullString());
+                    CurrentTypeWriter.WriteLine(node, $")");
                     if (!string.IsNullOrEmpty(_catch.Declaration!.Identifier.ValueText))
                     {
-                        CurrentTypeWriter.Write(node, $", {_catch.Declaration!.Identifier.ValueText} = $e");
+                        CurrentTypeWriter.WriteLine(node, "{", true);
+                        CurrentTypeWriter.WriteLine(node, $"let {_catch.Declaration!.Identifier.ValueText} = $e;", true);
+                        VisitChildren(_catch.Block.ChildNodes());
+                        CurrentTypeWriter.WriteLine(node, "}", true);
                     }
-                    CurrentTypeWriter.WriteLine(node, $")");
-                    Visit(_catch.Block);
+                    else
+                    {
+                        Visit(_catch.Block);
+                    }
+                    iDeclaration++;
                 }
+                int iNoDeclaration = 0;
                 foreach (var _catch in catches.Where(e => e.Declaration == null))
                 {
                     Visit(_catch.Block);
+                    iNoDeclaration++;
+                }
+                if (iNoDeclaration == 0)
+                {
+                    CurrentTypeWriter.WriteLine(node, $"else", true);
+                    CurrentTypeWriter.WriteLine(node, "{", true);
+                    CurrentTypeWriter.WriteLine(node, "throw $e;", true);
+                    CurrentTypeWriter.WriteLine(node, "}", true);
                 }
                 CurrentTypeWriter.WriteLine(node, "}", true);
                 VisitChildren(node.ChildNodes().Except([node.Block, .. catches]));

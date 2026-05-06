@@ -11,7 +11,7 @@ namespace System.Reflection
         private static int get_method_attributes(IntPtr handle)
         {
             MethodAttributes attrs = 0;
-            var method = (MethodBase)AppDomain.GetMember(handle.As<ulong>())!;
+            var method = (MethodBase)AppDomain.GetMember(handle.As<uint>())!;
             if (method._model.Flags.TypeHasFlag(MemberFlagsModel.IsPublic))
             {
                 attrs |= MethodAttributes.Public;
@@ -35,10 +35,10 @@ namespace System.Reflection
         private static void get_method_info(IntPtr handle, out MonoMethodInfo info)
         {
             MonoMethodInfo minfo = default!;
-            var method = (MethodBase)AppDomain.GetMember(handle.As<ulong>())!;
-            var dt = AppDomain.GetType(method._model.DeclaringType);
+            var method = (MethodBase)AppDomain.GetMember(handle.As<uint>())!;
+            var dt = AppDomain.GetType(method._model.DeclaringType.As<uint>());
             var rt = (NetJs.Script.IsDefined(method._model.As<MethodModel>().ReturnType) ?
-                AppDomain.GetType(method._model.As<MethodModel>().ReturnType!.Value) :
+                AppDomain.GetType(method._model.As<MethodModel>().ReturnType!.Value.As<uint>()) :
                 null) ?? typeof(void);
             NetJs.Script.Write("minfo.parent = dt");
             NetJs.Script.Write("minfo.ret = rt");
@@ -68,7 +68,10 @@ namespace System.Reflection
         private static ParameterInfo[] get_parameter_info(IntPtr handle, MemberInfo member)
         {
             var method = member.As<RuntimeMethodInfo>();
-            return method._model.As<MethodModel>().Parameters?.Map((p, i, all) => new RuntimeParameterInfo_Partial(p, AppDomain.GetType(p.ParameterType) ?? throw new InvalidOperationException(), method, i).As<RuntimeParameterInfo>()) ?? Array.Empty<ParameterInfo>();
+            return method._model.As<MethodModel>().Parameters
+                ?.Map((p, i, all) => new RuntimeParameterInfo_Partial(p, AppDomain.GetType(p.ParameterType.As<uint>()) ?? throw new InvalidOperationException(), method, i).As<RuntimeParameterInfo>())
+                .AsNetArray() ??
+                Array.Empty<ParameterInfo>();
         }
 
         [NetJs.MemberReplace]

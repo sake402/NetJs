@@ -52,6 +52,8 @@ namespace NetJs
 
         [Template("{value}")]
         public extern static bool IsDefined(object? value);
+        [Template("{value}")]
+        public extern static bool HasValue(object? value);
         [Template("{value} === undefined")]
         public static extern bool IsUndefined(object? value);
         [Template("!{value}")]
@@ -162,8 +164,8 @@ namespace NetJs
         /// </summary>
         /// <param name="obj">The object to test if there is a value.</param>
         /// <returns>true if the object has a value; false otherwise.</returns>
-        [Template("dotnetJs.hasValue({0})")]
-        public static extern bool HasValue(object obj);
+        //[Template("dotnetJs.hasValue({0})")]
+        //public static extern bool HasValue(object obj);
 
         /// <summary>
         /// Checks if the specified object is null.

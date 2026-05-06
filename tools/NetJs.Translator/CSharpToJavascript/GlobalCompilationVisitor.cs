@@ -960,13 +960,14 @@ namespace NetJs.Translator.CSharpToJavascript
                                         if (!overloadedName.Contains("."))
                                         {
                                             overloadedName = declaringTypeMetadata.OverloadName + "." + overloadedName;
-                                            if (overloadedName.StartsWith(GlobalName + "."))
+                                            var assemblySlug = GetAssemblyGlobalSlug(declaringType.ContainingAssembly);
+                                            if (overloadedName.StartsWith(GlobalName + "." + assemblySlug + "."))
                                             {
-                                                overloadedName = overloadedName.Substring(GlobalName.Length + 1);
-                                                if (overloadedName.StartsWith(assemblyNamespace + "."))
-                                                {
-                                                    overloadedName = overloadedName.Substring(assemblyNamespace.Length + 1);
-                                                }
+                                                overloadedName = overloadedName.Substring(GlobalName.Length + 1 + assemblySlug.Length + 1);
+                                                //if (overloadedName.StartsWith(assemblyNamespace + "."))
+                                                //{
+                                                //    overloadedName = overloadedName.Substring(assemblyNamespace.Length + 1);
+                                                //}
                                             }
                                         }
                                     }
@@ -1154,13 +1155,14 @@ namespace NetJs.Translator.CSharpToJavascript
                                         if (!overloadedName.Contains("."))
                                         {
                                             overloadedName = declaringTypeMetadata.OverloadName + "." + overloadedName;
-                                            if (overloadedName.StartsWith(GlobalName + "."))
+                                            var assemblySlug = GetAssemblyGlobalSlug(declaringType.ContainingAssembly);
+                                            if (overloadedName.StartsWith(GlobalName + "." + assemblySlug + "."))
                                             {
-                                                overloadedName = overloadedName.Substring(GlobalName.Length + 1);
-                                                if (overloadedName.StartsWith(assemblyNamespace + "."))
-                                                {
-                                                    overloadedName = overloadedName.Substring(assemblyNamespace.Length + 1);
-                                                }
+                                                overloadedName = overloadedName.Substring(GlobalName.Length + 1 + assemblySlug.Length + 1);
+                                                //if (overloadedName.StartsWith(assemblyNamespace + "."))
+                                                //{
+                                                //    overloadedName = overloadedName.Substring(assemblyNamespace.Length + 1);
+                                                //}
                                             }
                                         }
                                     }
@@ -1707,6 +1709,8 @@ namespace NetJs.Translator.CSharpToJavascript
         public INamedTypeSymbol SystemBoolean => field ??= (INamedTypeSymbol)GetTypeSymbol("System.Boolean", null/*, out _, out _*/);
         public INamedTypeSymbol SystemChar => field ??= (INamedTypeSymbol)GetTypeSymbol("System.Char", null/*, out _, out _*/);
         public INamedTypeSymbol SystemString => field ??= (INamedTypeSymbol)GetTypeSymbol("System.String", null/*, out _, out _*/);
+        public INamedTypeSymbol SystemInt64 => field ??= (INamedTypeSymbol)GetTypeSymbol("System.Int64", null/*, out _, out _*/);
+        public INamedTypeSymbol SystemUInt64 => field ??= (INamedTypeSymbol)GetTypeSymbol("System.UInt64", null/*, out _, out _*/);
         public INamedTypeSymbol SystemType => field ??= (INamedTypeSymbol)GetTypeSymbol("System.Type", null/*, out _, out _*/);
         public INamedTypeSymbol DeletedObject => field ??= (INamedTypeSymbol)GetTypeSymbol("DeletedObject", null/*, out _, out _*/);
 
@@ -2426,13 +2430,48 @@ namespace NetJs.Translator.CSharpToJavascript
             return false;
         }
 
+        public bool IsInlineArray(ISymbol type, out int size)
+        {
+            size = 0;
+            bool isInlineArray = HasAttribute(type, "System.Runtime.CompilerServices.InlineArrayAttribute", null, false, out var args);
+            //bool isInlineArray = HasAttribute(type, typeof(InlineArrayAttribute).FullName, null, false, out var args);
+            if (isInlineArray)
+            {
+                size = (int)args[0];
+                return true;
+            }
+            return false;
+        }
+
+        public bool IsNativeFunction(ISymbol symbol)
+        {
+            if (HasAttribute(symbol, typeof(NativeDelegateAttribute).FullName, null, false, out _))
+                return true;
+            return false;
+        }
+
+        public bool IsExternal(ISymbol symbol, TranslatorSyntaxVisitor? visitor)
+        {
+            if (symbol.IsExtern)
+                return true;
+            if (HasAnyAttribute(symbol, visitor, false, typeof(ExternalAttribute).FullName))
+                return true;
+            if (symbol.ContainingType != null)
+            {
+                return IsExternal(symbol.ContainingType, visitor);
+            }
+            return false;
+        }
+
         public bool ShouldExportType(ISymbol symbol, TranslatorSyntaxVisitor? visitor)
         {
             if (symbol.IsExtern)
                 return false;
+            if (IsInlineArray(symbol, out _))  //replace by array type at runtime
+                return false;
             if (HasAnyAttribute(symbol, visitor, false, typeof(ExternalAttribute).FullName, typeof(NonScriptableAttribute).FullName, typeof(ObjectLiteralAttribute).FullName))
                 return false;
-            if (symbol.ContainingType!= null)
+            if (symbol.ContainingType != null)
             {
                 return ShouldExportType(symbol.ContainingType, visitor);
             }
@@ -2475,10 +2514,6 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public string? GetDefaultValue(TypeSyntax type, TranslatorSyntaxVisitor? visitor, bool createValueInstance = false)
         {
-            if (type.ToString().Contains("IntPtr"))
-            {
-
-            }
             if (type.IsKind(SyntaxKind.NullableType))
                 return "null";
             if (type is PredefinedTypeSyntax id)
@@ -2493,12 +2528,13 @@ namespace NetJs.Translator.CSharpToJavascript
                     case "nuint":
                     case "ushort":
                     case "short":
-                    case "long":
-                    case "ulong":
                     case "double":
                     case "float":
                     case "char":
                         return "0";
+                    case "long":
+                    case "ulong":
+                        return "0n";
                     case "bool":
                         return "false";
                     case "object":
@@ -2528,20 +2564,26 @@ namespace NetJs.Translator.CSharpToJavascript
                 case SpecialType.System_Int32:
                 case SpecialType.System_IntPtr:
                 case SpecialType.System_UIntPtr:
-                case SpecialType.System_Int64:
                 case SpecialType.System_Byte:
                 case SpecialType.System_UInt16:
                 case SpecialType.System_UInt32:
-                case SpecialType.System_UInt64:
                 case SpecialType.System_Single:
                 case SpecialType.System_Double:
                 case SpecialType.System_Char:
                 case SpecialType.System_Enum:
                     return "0";
+                case SpecialType.System_UInt64:
+                case SpecialType.System_Int64:
+                    return "0n";
                 case SpecialType.System_ValueType:
                     if (createValueInstance)
                         return $"new {type.ComputeOutputTypeName(this)}()";
                     return null;
+            }
+            if (IsInlineArray(type, out var inlineSize))
+            {
+                var field = (IFieldSymbol)type.GetMembers().First();
+                return $"{GlobalName}.{Constants.CreateArray}({field.Type.ComputeOutputTypeName(this)}, {inlineSize})";
             }
             if (type.Kind == SymbolKind.TypeParameter)
             {

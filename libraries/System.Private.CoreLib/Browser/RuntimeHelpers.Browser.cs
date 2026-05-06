@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NetJs;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
@@ -43,6 +44,19 @@ namespace System.Runtime.CompilerServices
             return CreateArray(typeof(T), jsArray.As<object[]>(), lengths, lowerBound).As<T[]>();
         }
 
+        /// <summary>
+        /// Ensure the array is constructed from NetJS array type, not js array
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="jsArray"></param>
+        /// <returns></returns>
+        public static T[] EnsureIsNetArray<T>(T[] jsArray)
+        {
+            if (NetJs.Script.InstanceOf(jsArray, typeof(Array)))
+                return jsArray;
+            return CreateArray(typeof(T), jsArray.As<object[]>(), null, null).As<T[]>();
+        }
+
         public static IPromise TaskToPromise(Task task)
         {
             if (NetJs.Script.TypeOf(task).NativeEquals("Promise"))
@@ -63,7 +77,7 @@ namespace System.Runtime.CompilerServices
             });
         }
 
-        public static Ref<T> CreateObjectReference<T>(Func<T> getValue, Action<T>? setValue)
+        public static Ref<T> CreateObjectReference<T>([NativeDelegate] Func<T> getValue, [NativeDelegate] Action<T>? setValue)
         {
             //int? a = 1;
             //var s = Global.IfNotNull(a, aa=>aa.ToString());
@@ -271,7 +285,7 @@ namespace System.Runtime.CompilerServices
                 }
             }
         }
-        
+
         [NetJs.IgnoreGeneric]
         public static Lazy<T> LazyValue<T>(Func<T> getT)
         {

@@ -63,7 +63,7 @@ namespace System
             var value = this;
             if (value == null)
                 throw new NullReferenceException();
-            if (Array.Is(value))
+            if (Array<object>.Is(value))
             {
                 return Array.GetArrayType(value.As<Array>());
             }

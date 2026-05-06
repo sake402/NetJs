@@ -20,7 +20,7 @@ namespace NetJs.Translator.CSharpToJavascript
         /// <param name="elementType"></param>
         /// <param name="lengths"></param>
         /// <param name="bounds"></param>
-        public void WriteCreateArray(CSharpSyntaxNode node, TypeSyntax elementType, CodeNode lengths, CodeNode? bounds, CodeNode? values)
+        public void WriteCreateArray(CSharpSyntaxNode node, TypeSyntax elementType, CodeNode? lengths, CodeNode? bounds, CodeNode? values)
         {
             //if (values != null)
             //{
@@ -30,7 +30,9 @@ namespace NetJs.Translator.CSharpToJavascript
                     CurrentTypeWriter.Write(node, $")");
                 }), values?? new CodeNode(()=>{
                     CurrentTypeWriter.Write(node, $"null");
-                }), lengths, bounds??new CodeNode(()=>{
+                }), lengths??new CodeNode(()=>{
+                    CurrentTypeWriter.Write(node, $"null");
+                }), bounds??new CodeNode(()=>{
                     CurrentTypeWriter.Write(node, $"null");
                 })]);
             //}
@@ -74,7 +76,24 @@ namespace NetJs.Translator.CSharpToJavascript
             //    }
             //}
         }
-
+        public void WriteCreateArray(CSharpSyntaxNode node, ITypeSymbol elementType, CodeNode? lengths, CodeNode? bounds, CodeNode? values)
+        {
+            //if (values != null)
+            //{
+            var typeMetadata = _global.GetMetadata(elementType!);
+            var typeName = typeMetadata?.InvocationName ?? elementType!.Name;
+            WriteMethodInvocation(node, "System.Runtime.CompilerServices.RuntimeHelpers.CreateArray", arguments: [new CodeNode(() => {
+                    CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.TypeOf}(");
+                    CurrentTypeWriter.Write(node, typeName);
+                    CurrentTypeWriter.Write(node, $")");
+                }), values?? new CodeNode(()=>{
+                    CurrentTypeWriter.Write(node, $"null");
+                }), lengths??new CodeNode(()=>{
+                    CurrentTypeWriter.Write(node, $"null");
+                }), bounds??new CodeNode(()=>{
+                    CurrentTypeWriter.Write(node, $"null");
+                })]);
+        }
         public void WriteCreateArray(CSharpSyntaxNode node, TypeSyntax elementType, IEnumerable<int> ranks, IEnumerable<int>? bounds, CodeNode? values)
         {
             //var rankLiterals = ranks.Select(l => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(l)));
@@ -313,7 +332,7 @@ namespace NetJs.Translator.CSharpToJavascript
             bool isBootCode = _global.HasAttribute(symbol, typeof(BootAttribute).FullName, this, false, out _);
 
             //Disable collection expression in boot code as other classes are not available
-            var lhsType = isBootCode ? null : InferLeftHandSideType(node);
+            var lhsType = isBootCode ? null : (InferLeftHandSideType(node) ?? _global.TryGetTypeSymbol(node, this)?.GetTypeSymbol());
             //bool isArrayLHS = false;
             ITypeSymbol? elementType = null;
             if ((lhsType?.IsArray(out elementType) ?? false) || (lhsType?.IsEnumerable(out elementType) ?? false))
@@ -342,10 +361,13 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
                 else
                 {
+                    //if (TryInvokeMethodOperator(node, ImplicitOperatorName, lhsType, null, node.Elements))
+                        //return;
                     WrapStatementsInExpression(node, () =>
                     {
                         var ix = ++CurrentTypeWriter.CurrentClosure.NameManglingSeed;
                         var instanceName = $"$t{ix}";
+                        CurrentTypeWriter.Write(node, "let ");
                         CurrentTypeWriter.Write(node, instanceName, true);
                         CurrentTypeWriter.Write(node, " = ");
                         WriteConstructorCall(node, (INamedTypeSymbol)lhsType, lhsType.GetMembers(".ctor").Cast<IMethodSymbol>().Where(e => e.Parameters.Count() == 0).First());
@@ -376,6 +398,24 @@ namespace NetJs.Translator.CSharpToJavascript
             //base.VisitCollectionExpression(node);
         }
 
+        public override void VisitImplicitArrayCreationExpression(ImplicitArrayCreationExpressionSyntax node)
+        {
+            var arrayType = (IArrayTypeSymbol)_global.GetTypeSymbol(node, this).GetTypeSymbol();
+            WriteCreateArray(node, arrayType.ElementType, lengths: null, bounds: null, values: new CodeNode(() =>
+            {
+                CurrentTypeWriter.Write(node, "[");
+                int ix = 0;
+                foreach (var i in node.Initializer.Expressions)
+                {
+                    if (ix > 0)
+                        CurrentTypeWriter.Write(node, ", ");
+                    Visit(i);
+                    ix++;
+                }
+                CurrentTypeWriter.Write(node, "]");
+            }));
+            //base.VisitImplicitArrayCreationExpression(node);
+        }
 
         public override void VisitArrayType(ArrayTypeSyntax node)
         {

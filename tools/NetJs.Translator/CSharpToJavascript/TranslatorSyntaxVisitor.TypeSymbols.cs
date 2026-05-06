@@ -576,7 +576,7 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             else if (expression is ThisExpressionSyntax _this)
             {
-                var type = expression.FindClosestParent<BaseTypeDeclarationSyntax>() ?? CurentType;
+                var type = expression.FindClosestParent<BaseTypeDeclarationSyntax>() ?? CurrentType;
                 return CodeSymbol.From(type);
             }
             else if (expression is ConditionalExpressionSyntax cond)

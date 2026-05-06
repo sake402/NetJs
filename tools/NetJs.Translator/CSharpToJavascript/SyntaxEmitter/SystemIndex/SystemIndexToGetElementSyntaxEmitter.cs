@@ -2,7 +2,7 @@
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Index
+namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.SystemIndex
 {
     //Handle ArrayLike[^1] syntax. ArrayLike can be eg array, string ...
     //Rewrite as ArrayLike[ArrayLike.Lenght-2]

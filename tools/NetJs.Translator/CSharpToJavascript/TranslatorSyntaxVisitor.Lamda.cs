@@ -47,7 +47,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
             }
             var parameters = string.Join(", ", lamdaParameters?.Select(p => $"/*{p.Type?.ToFullString().Trim() ?? _global.ResolveSymbol(GetIdentifierTypeInScope(p.Identifier.Text), this/*, out _, out _*/)?.GetTypeSymbol()?.Name}*/ {p.Identifier.Text}") ?? Enumerable.Empty<string>());
-            CurrentTypeWriter.WriteLine(node, $"/*{modifiers}*/ function({parameters})");
+            CurrentTypeWriter.WriteLine(node, $"/*{modifiers}*/ ({parameters}) =>");
             CurrentTypeWriter.WriteLine(node, "{", true);
             var child = node.ChildNodes().Where(t => !t.IsKind(SyntaxKind.ParameterList)/* is not ParameterListSyntax*/ && !t.IsKind(SyntaxKind.Parameter)/* is not ParameterSyntax*/);
             bool implicitReturn = false;
@@ -79,7 +79,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 CurrentTypeWriter.EnsureNewLine();
             }
             bool _static = modifiers?.Contains("static") ?? false;
-            CurrentTypeWriter.Write(node, $"}}{(!_static ? ".bind(this)" : "")}", true);
+            CurrentTypeWriter.Write(node, "}", true);
             CloseClosure();
         }
 

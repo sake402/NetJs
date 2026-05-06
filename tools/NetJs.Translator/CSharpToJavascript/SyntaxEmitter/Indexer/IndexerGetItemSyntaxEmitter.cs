@@ -23,7 +23,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Indexer
                 if (expression != null)
                 {
                     var arguments = (node as ElementAccessExpressionSyntax)?.ArgumentList.Arguments ?? (node as ElementBindingExpressionSyntax)!.ArgumentList.Arguments;
-                    var target = visitor.Global.ResolveSymbol(visitor.GetExpressionReturnSymbol(expression), visitor);
+                    var lhsSymbol = visitor.Global.GetTypeSymbol(expression, visitor);
                     CodeNode cExpression = expression;
                     if (conditionalExpression != null && visitor.ConditionalAccessUseIfNotNull(conditionalExpression, out _))
                     {
@@ -40,7 +40,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Indexer
                         bool hasTemplate = bestIndexer.GetTemplateAttribute(visitor.Global) != null;
                         if (!isExtern || hasTemplate)
                         {
-                            visitor.WriteMethodInvocation(node, bestIndexer, null, arguments.Select(a => new CodeNode(a)), cExpression, target, null, false);
+                            visitor.WriteMethodInvocation(node, bestIndexer, null, arguments.Select(a => new CodeNode(a)), cExpression, lhsSymbol, null, false);
                             if (bestIndexer.RefKind != RefKind.None)
                             {
                                 if (node.Parent.IsKind(SyntaxKind.EqualsEqualsToken) ||

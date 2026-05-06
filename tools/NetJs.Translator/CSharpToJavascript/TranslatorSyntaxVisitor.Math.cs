@@ -28,7 +28,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     if (TryInvokeMethodOperator(node, _operator, leftType, left, [left, right]))
                         return true;
                     if ((leftType.Equals(rightType, SymbolEqualityComparer.Default)) || //if both math lhs and rhs are the same, nothing special to do
-                        (leftType.IsJsNativeNumeric() && rightType.IsJsNativeNumeric()) // if we handle both types in native javascript, nothing special to do
+                        (leftType.IsNumberNumericType() && rightType.IsNumberNumericType()) // if we handle both types in native javascript, nothing special to do
                         )
                     {
                         Visit(left);
@@ -64,6 +64,8 @@ namespace NetJs.Translator.CSharpToJavascript
                             Visit(right);
                             return true;
                         }
+                        if (left is LiteralExpressionSyntax) //no point casting a literal expression at runtime
+                            return false;
                         leftCasted = true;
                         newLeft = Cast(left, higherPrecision);
                     }
@@ -79,6 +81,8 @@ namespace NetJs.Translator.CSharpToJavascript
                         {
                             return true;
                         }
+                        if (right is LiteralExpressionSyntax) //no point casting a literal expression at runtime
+                            return false;
                         rightCasted = true;
                         newRight = Cast(right, higherPrecision);
                     }

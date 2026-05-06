@@ -32,7 +32,8 @@ namespace System
         [Name(Constants.EnumMapName)]
         public extern TypePrototype UnderlyingType { get; }
     }
-
+    [NetJs.NativeDelegate]
     public delegate TypePrototype TypePrototypeProvider(object self, TypePrototype[]? genericArgs, TypePrototype? baseType);
+    [NetJs.NativeDelegate]
     public delegate TypePrototype ParameterlessTypePrototypeProvider(object self);
 }

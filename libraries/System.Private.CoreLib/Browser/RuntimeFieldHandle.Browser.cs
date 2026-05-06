@@ -18,7 +18,7 @@ namespace System
             var model = fi.As<RuntimeFieldInfo>()._model.As<FieldModel>();
             if (model.Flags.TypeHasFlag(MemberFlagsModel.IsStatic))
             {
-                var prototype = AppDomain.GetType(model.FieldType)!._prototype;
+                var prototype = AppDomain.GetType(model.FieldType.As<uint>())!._prototype;
                 prototype![model.Name] = value;
             }
             obj![model.Name] = value;
@@ -31,7 +31,7 @@ namespace System
             var model = field.As<RuntimeFieldInfo>()._model.As<FieldModel>();
             if (model.Flags.TypeHasFlag(MemberFlagsModel.IsStatic))
             {
-                var prototype = AppDomain.GetType(model.FieldType)!._prototype;
+                var prototype = AppDomain.GetType(model.FieldType.As<uint>())!._prototype;
                 return prototype![model.Name];
             }
             return obj![model.Name];

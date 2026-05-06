@@ -148,6 +148,14 @@
             <see cref="M:System.Runtime.Loader.AssemblyLoadContext.EnterContextualReflection"/>
             </remarks>
         </member>
+        <member name="M:System.Runtime.CompilerServices.RuntimeHelpers.EnsureIsNetArray``1(``0[])">
+            <summary>
+            Ensure the array is constructed from NetJS array type, not js array
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="jsArray"></param>
+            <returns></returns>
+        </member>
         <member name="M:System.Runtime.CompilerServices.RuntimeHelpers.TryGetHashCode(System.Object)">
             <summary>
             If a hash code has been assigned to the object, it is returned. Otherwise zero is
@@ -145991,6 +145999,11 @@
             Use 'false' (without quotes) to suppress namespace binding (usually with [External] attribute).
             </summary>
         </member>
+        <member name="T:NetJs.NativeDelegateAttribute">
+            <summary>
+            Mark a delegate as being a native javascript function, not wrapped into generated delegate class
+            </summary>
+        </member>
         <member name="T:NetJs.NonScriptableAttribute">
             <summary>
             This attribute can be placed on types in system script assemblies that should not
@@ -146146,18 +146159,6 @@
             <param name="obj">The name of an object, or an expression evaluating to an object.</param>
             <param name="prop">The property to delete.</param>
             <returns>true for all cases except when the property is an own non-configurable property, in which case, false is returned in non-strict mode.</returns>
-        </member>
-        <member name="M:NetJs.Script.HasValue(System.Object)">
-            <summary>
-            Checks if the specified object is undefined. The object passed in should be a local variable, and not a member of a class (to avoid potential script warnings).
-            </summary>
-            <param name="obj">The object to test against undefined.</param>
-            <returns>true if the object is undefined; false otherwise.</returns>
-            <summary>
-            Checks if the object has a value.
-            </summary>
-            <param name="obj">The object to test if there is a value.</param>
-            <returns>true if the object has a value; false otherwise.</returns>
         </member>
         <member name="M:NetJs.Script.IsNull(System.Object)">
             <summary>
@@ -146506,6 +146507,386 @@
             <param name="path">The path with which this error is associated.  This may be null.</param>
             <param name="isDirError">true if error is caused by a directory issue.</param>
             <returns></returns>
+        </member>
+        <member name="T:Window.Attr">
+            <summary>
+            Represents an attribute on an Element.
+            </summary>
+        </member>
+        <member name="T:Window.AudioContext">
+            <summary>
+            Web Audio API AudioContext.
+            </summary>
+        </member>
+        <member name="T:Window.Blob">
+            <summary>
+            Represents a blob (binary data).
+            </summary>
+        </member>
+        <member name="T:Window.Bluetooth">
+            <summary>
+            Web Bluetooth minimal wrappers.
+            </summary>
+        </member>
+        <member name="T:Window.Body">
+            <summary>
+            Common base for Request/Response bodies.
+            </summary>
+        </member>
+        <member name="T:Window.CanvasRenderingContext2D">
+            <summary>
+            2D drawing context.
+            </summary>
+        </member>
+        <member name="T:Window.Clipboard">
+            <summary>
+            Navigator.clipboard
+            </summary>
+        </member>
+        <member name="T:Window.Comment">
+            <summary>
+            Represents a comment node.
+            </summary>
+        </member>
+        <member name="T:Window.Console">
+            <summary>
+            Browser console APIs.
+            </summary>
+        </member>
+        <member name="T:Window.Crypto">
+            <summary>
+            Crypto and SubtleCrypto wrappers.
+            </summary>
+        </member>
+        <member name="T:Window.CustomEvent">
+            <summary>
+            CustomEvent wrapper.
+            </summary>
+        </member>
+        <member name="T:Window.DataView">
+            <summary>
+            Provides a low-level interface for reading/writing multiple number types to an ArrayBuffer.
+            </summary>
+        </member>
+        <member name="T:Window.Document">
+            <summary>
+            Represents the HTML or XML document.
+            </summary>
+        </member>
+        <member name="T:Window.DOMStringList">
+            <summary>
+            Simple DOM string list.
+            </summary>
+        </member>
+        <member name="T:Window.Element">
+            <summary>
+            Represents an Element in the DOM.
+            </summary>
+        </member>
+        <member name="T:Window.Event">
+            <summary>
+            Base DOM Event.
+            </summary>
+        </member>
+        <member name="T:Window.EventSource">
+            <summary>
+            EventSource (Server-Sent Events) wrapper.
+            </summary>
+        </member>
+        <member name="T:Window.EventTarget">
+            <summary>
+            Base class for all event targets (elements, window, document).
+            </summary>
+        </member>
+        <member name="T:Window.Fetch">
+            <summary>
+            Fetch helper (global fetch function).
+            </summary>
+        </member>
+        <member name="T:Window.File">
+            <summary>
+            File extends Blob with filesystem metadata.
+            </summary>
+        </member>
+        <member name="T:Window.FileReader">
+            <summary>
+            FileReader wrapper.
+            </summary>
+        </member>
+        <member name="T:Window.FileSystemFileHandle">
+            <summary>
+            File System Access API handles.
+            </summary>
+        </member>
+        <member name="T:Window.FocusEvent">
+            <summary>
+            Focus event wrapper.
+            </summary>
+        </member>
+        <member name="T:Window.FormData">
+            <summary>
+            FormData collection.
+            </summary>
+        </member>
+        <member name="T:Window.Geolocation">
+            <summary>
+            Geolocation API.
+            </summary>
+        </member>
+        <member name="T:Window.Headers">
+            <summary>
+            Represents Fetch Headers.
+            </summary>
+        </member>
+        <member name="T:Window.History">
+            <summary>
+            History API wrapper.
+            </summary>
+        </member>
+        <member name="T:Window.HTMLCanvasElement">
+            <summary>
+            HTML canvas element.
+            </summary>
+        </member>
+        <member name="T:Window.HTMLElement">
+            <summary>
+            Represents an HTML element.
+            </summary>
+        </member>
+        <member name="T:Window.IDBDatabase">
+            <summary>
+            Represents an open IndexedDB database.
+            </summary>
+        </member>
+        <member name="T:Window.IDBFactory">
+            <summary>
+            Entry point for IndexedDB operations.
+            </summary>
+        </member>
+        <member name="T:Window.IDBIndex">
+            <summary>
+            Index on an object store.
+            </summary>
+        </member>
+        <member name="T:Window.IDBObjectStore">
+            <summary>
+            ObjectStore operations.
+            </summary>
+        </member>
+        <member name="T:Window.IDBOpenDBRequest">
+            <summary>
+            Open/delete DB request.
+            </summary>
+        </member>
+        <member name="T:Window.IDBRequest">
+            <summary>
+            Represents async IDB request.
+            </summary>
+        </member>
+        <member name="T:Window.IDBTransaction">
+            <summary>
+            Represents an IndexedDB transaction.
+            </summary>
+        </member>
+        <member name="T:Window.ImageData">
+            <summary>
+            Image data container.
+            </summary>
+        </member>
+        <member name="T:Window.Int8Array">
+            <summary>
+            Int8Array typed array.
+            </summary>
+        </member>
+        <member name="T:Window.KeyboardEvent">
+            <summary>
+            Keyboard event wrapper.
+            </summary>
+        </member>
+        <member name="T:Window.Location">
+            <summary>
+            Location (window.location) wrapper.
+            </summary>
+        </member>
+        <member name="T:Window.MediaStream">
+            <summary>
+            Media stream (getUserMedia).
+            </summary>
+        </member>
+        <member name="T:Window.MessageChannel">
+            <summary>
+            MessageChannel and MessagePort.
+            </summary>
+        </member>
+        <member name="T:Window.MouseEvent">
+            <summary>
+            Mouse event wrapper.
+            </summary>
+        </member>
+        <member name="T:Window.MutationObserver">
+            <summary>
+            MutationObserver wrapper.
+            </summary>
+        </member>
+        <member name="T:Window.Navigator">
+            <summary>
+            Navigator / user agent wrapper.
+            </summary>
+        </member>
+        <member name="T:Window.Node">
+            <summary>
+            Base DOM Node.
+            </summary>
+        </member>
+        <member name="T:Window.NodeList">
+            <summary>
+            NodeList wrapper.
+            </summary>
+        </member>
+        <member name="T:Window.HTMLCollection">
+            <summary>
+            HTMLCollection wrapper.
+            </summary>
+        </member>
+        <member name="T:Window.DOMTokenList">
+            <summary>
+            DOMTokenList wrapper (classList).
+            </summary>
+        </member>
+        <member name="T:Window.CSSStyleDeclaration">
+            <summary>
+            CSSStyleDeclaration wrapper (element.style)
+            </summary>
+        </member>
+        <member name="T:Window.Notification">
+            <summary>
+            Web Notification API.
+            </summary>
+        </member>
+        <member name="T:Window.Performance">
+            <summary>
+            Performance timing API.
+            </summary>
+        </member>
+        <member name="T:Window.PointerEvent">
+            <summary>
+            Pointer event wrapper.
+            </summary>
+        </member>
+        <member name="T:Window.Promise`1">
+            <summary>
+            JS Promise wrapper (minimal).
+            </summary>
+        </member>
+        <member name="T:Window.PublicKeyCredential">
+            <summary>
+            WebAuthn PublicKeyCredential wrapper.
+            </summary>
+        </member>
+        <member name="T:Window.ReadableStream`1">
+            <summary>
+            Minimal ReadableStream wrapper.
+            </summary>
+        </member>
+        <member name="T:Window.Request">
+            <summary>
+            Represents a Fetch API Request.
+            </summary>
+        </member>
+        <member name="T:Window.Response">
+            <summary>
+            Represents a Fetch API Response.
+            </summary>
+        </member>
+        <member name="T:Window.RTCPeerConnection">
+            <summary>
+            WebRTC peer connection (minimal surface).
+            </summary>
+        </member>
+        <member name="T:Window.ServiceWorker">
+            <summary>
+            ServiceWorker instance.
+            </summary>
+        </member>
+        <member name="T:Window.ServiceWorkerContainer">
+            <summary>
+            Navigator.serviceWorker container.
+            </summary>
+        </member>
+        <member name="T:Window.ServiceWorkerRegistration">
+            <summary>
+            Service worker registration.
+            </summary>
+        </member>
+        <member name="T:Window.Storage">
+            <summary>
+            Storage (localStorage / sessionStorage) wrapper.
+            </summary>
+        </member>
+        <member name="T:Window.Text">
+            <summary>
+            Represents textual content in the DOM.
+            </summary>
+        </member>
+        <member name="T:Window.TouchEvent">
+            <summary>
+            Touch event wrapper.
+            </summary>
+        </member>
+        <member name="T:Window.UIEvent">
+            <summary>
+            UI event (keyboard, mouse wrappers).
+            </summary>
+        </member>
+        <member name="T:Window.Uint8Array">
+            <summary>
+            Uint8Array typed array.
+            </summary>
+        </member>
+        <member name="T:Window.Uint8ClampedArray">
+            <summary>
+            Typed array wrapper used by ImageData.
+            </summary>
+        </member>
+        <member name="T:Window.URL">
+            <summary>
+            URL wrapper.
+            </summary>
+        </member>
+        <member name="T:Window.URLSearchParams">
+            <summary>
+            URLSearchParams wrapper.
+            </summary>
+        </member>
+        <member name="T:Window.USB">
+            <summary>
+            WebUSB minimal wrappers.
+            </summary>
+        </member>
+        <member name="T:Window.WebGLRenderingContext">
+            <summary>
+            Minimal WebGL rendering context.
+            </summary>
+        </member>
+        <member name="T:Window.WebSocket">
+            <summary>
+            WebSocket wrapper.
+            </summary>
+        </member>
+        <member name="T:Window.Window">
+            <summary>
+            Represents the global window object and Browser API surface.
+            </summary>
+        </member>
+        <member name="T:Window.Worker">
+            <summary>
+            Dedicated Worker wrapper.
+            </summary>
+        </member>
+        <member name="T:Window.XMLHttpRequest">
+            <summary>
+            XMLHttpRequest wrapper.
+            </summary>
         </member>
         <member name="T:Internal.PaddingHelpers">
             <summary>A class for common padding constants and eventually routines.</summary>

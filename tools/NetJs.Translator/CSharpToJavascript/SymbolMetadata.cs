@@ -402,7 +402,7 @@ namespace NetJs.Translator.CSharpToJavascript
         static string ComputeInvocatioNameForMethod(IMethodSymbol method, string? overloadName, GlobalCompilationVisitor _global)
         {
             var invocationName = overloadName ?? method.Name;
-            if (method.Arity > 0)
+            if (Constants.GenericMethodAsFactory && method.Arity > 0)
             {
                 if (!_global.HasAttribute(method, typeof(IgnoreGenericAttribute).FullName, null, false, out _))
                 {

@@ -354,7 +354,7 @@ namespace NetJs.Tests
             Debug.Assert(list[1].Equals(20));
             list[1] = 25;
             Debug.Assert(a[1] == 25);
-
+            
             try { list.Add(40); Debug.Assert(false); }
             catch (NotSupportedException) { }
 

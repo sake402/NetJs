@@ -89,6 +89,7 @@ namespace NetJs.Translator.CSharpToJavascript
                         t == "System.Float" ? KnownTypeHandle.SystemFloat :
                         t == "System.Single" ? KnownTypeHandle.SystemSingle :
                         t == "System.Double" ? KnownTypeHandle.SystemDouble :
+                        t == "System.String" ? KnownTypeHandle.SystemString :
                         t == "System.Array" ? KnownTypeHandle.SystemArray : KnownTypeHandle.Unknown;
         }
 

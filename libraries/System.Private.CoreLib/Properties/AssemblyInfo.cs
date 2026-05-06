@@ -5,8 +5,13 @@ using NetJs;
 [assembly: AssemblyHandle(AssemblyHandleAttribute.SystemPrivateCoreLib)]
 
 [assembly: LinkerSubstitution("System.Runtime.Intrinsics.Wasm.WasmBase.IsSupported", "false")]
+[assembly: LinkerSubstitution("System.Runtime.Intrinsics.Wasm.PackedSimd.IsSupported", "false")]
 [assembly: LinkerSubstitution("System.Runtime.Intrinsics.X86.Sse2.IsSupported", "false")]
+[assembly: LinkerSubstitution("System.Runtime.Intrinsics.X86.Sse3.IsSupported", "false")]
 [assembly: LinkerSubstitution("System.PackedSpanHelpers.PackedIndexOfIsSupported", "false")]
+
+[assembly: LinkerSubstitution("System.Buffers.IndexOfAnyAsciiSearcher.IsVectorizationSupported", "false")]
+[assembly: Attached("System.Buffers.IndexOfAnyAsciiSearcher.IsVectorizationSupported", typeof(NonScriptableAttribute))]
 
 [assembly: Attached(typeof(System.Runtime.Intrinsics.ISimdVector<,>), typeof(NonScriptableAttribute))]
 [assembly: Attached(typeof(System.Runtime.Intrinsics.Scalar<>), typeof(NonScriptableAttribute))]

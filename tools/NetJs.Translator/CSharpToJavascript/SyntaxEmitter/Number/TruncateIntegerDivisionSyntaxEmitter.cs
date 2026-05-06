@@ -17,8 +17,8 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Number
                 var rhsType = visitor.Global.TryGetTypeSymbol(node.Left, visitor)?.GetTypeSymbol();
                 if (lhsType != null &&
                     rhsType != null &&
-                    lhsType.IsJsNativeIntegerNumeric() &&
-                    rhsType.IsJsNativeIntegerNumeric())
+                    lhsType.IsIntegerNumericType() &&
+                    rhsType.IsIntegerNumericType())
                 {
                     visitor.CurrentTypeWriter.Write(node, visitor.Global.GlobalName);
                     visitor.CurrentTypeWriter.Write(node, ".trunc(");

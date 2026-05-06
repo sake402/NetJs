@@ -17,5 +17,6 @@ namespace Window
         public extern string[]? languages { get; }
 
         public extern object? clipboard { get; }
+        public extern USB? usb { get; }
     }
 }

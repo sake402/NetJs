@@ -46,9 +46,9 @@ namespace System.Reflection
                 info.set_method = NetJs.Script.IsDefined(model.SetMethod) ? new RuntimeMethodInfo(model.SetMethod!) : null!;
             }
             if (req_info.HasFlag(PInfo.ReflectedType))
-                info.parent = AppDomain.GetType(model.DeclaringType) ?? throw new InvalidOperationException();
+                info.parent = AppDomain.GetType(model.DeclaringType.As<uint>()) ?? throw new InvalidOperationException();
             if (req_info.HasFlag(PInfo.DeclaringType))
-                info.declaring_type = AppDomain.GetType(model.DeclaringType) ?? throw new InvalidOperationException();
+                info.declaring_type = AppDomain.GetType(model.DeclaringType.As<uint>()) ?? throw new InvalidOperationException();
             if (req_info.HasFlag(PInfo.DeclaringType))
             {
                 PropertyAttributes att = default;
@@ -73,7 +73,7 @@ namespace System.Reflection
         internal static object get_default_value(RuntimePropertyInfo prop)
         {
             var model = prop.As<RuntimePropertyInfo>()._model.As<PropertyModel>();
-            var prototype = AppDomain.GetType(model.PropertyType)!._prototype;
+            var prototype = AppDomain.GetType(model.PropertyType.As<uint>())!._prototype;
             return prototype![model.Name]!;
         }
 

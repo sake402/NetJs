@@ -16,7 +16,7 @@ namespace NetJs.Translator.CSharpToJavascript
         public HashSet<INamedTypeSymbol> Dependencies { get; private set; } = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
         Stack<BaseTypeDeclarationSyntax> _currentTypes = new Stack<BaseTypeDeclarationSyntax>();
 
-        BaseTypeDeclarationSyntax CurentType => _currentTypes.Peek();
+        BaseTypeDeclarationSyntax CurrentType => _currentTypes.Peek();
 
         public override void VisitPredefinedType(PredefinedTypeSyntax node)
         {
@@ -48,6 +48,130 @@ namespace NetJs.Translator.CSharpToJavascript
         static bool IsInnerTypeDeclaration(MemberDeclarationSyntax member)
         {
             return member is BaseTypeDeclarationSyntax && member is not ExtensionBlockDeclarationSyntax;
+        }
+
+        List<IMethodSymbol> discriminatedInterfaceMethodImplemented = new List<IMethodSymbol>();
+        void WriteInterfaceImplementations(CSharpSyntaxNode node, ITypeSymbol type)
+        {
+            IEnumerable<INamedTypeSymbol> interfaces = type.AllInterfaces;
+            if (type.BaseType!= null)
+            {
+                interfaces = interfaces.Except(type.BaseType.AllInterfaces);
+            }
+            foreach (var it in interfaces)
+            {
+                foreach (var interfaceMember in it.GetMembers())
+                {
+                    var implementation = type.FindImplementationForInterfaceMember(interfaceMember);
+                    if (implementation != null)
+                    {
+                        if (implementation.Kind == SymbolKind.Property) //implemented via its method get set component
+                        {
+                            continue;
+                        }
+                        if (implementation.Kind == SymbolKind.Method && ((IMethodSymbol)implementation).ExplicitInterfaceImplementations.Any())
+                        {
+                            continue;
+                        }
+                        if (implementation.Kind == SymbolKind.Property && ((IPropertySymbol)implementation).ExplicitInterfaceImplementations.Any())
+                        {
+                            continue;
+                        }
+                        if (!implementation.IsExtern && !_global.HasAttribute(implementation, typeof(ExternalAttribute).FullName, this, false, out _) && !_global.HasAttribute(implementation.ContainingSymbol, typeof(ExternalAttribute).FullName, this, false, out _))
+                        {
+                            var methodMember = ((IMethodSymbol)interfaceMember);
+                            var methodImplementation = ((IMethodSymbol)implementation);
+                            var interfaceMemberMetadata = _global.GetRequiredMetadata(interfaceMember);
+                            ISymbol? memberAssociatedProperty = null;
+                            bool isIndexer = false;
+                            if (interfaceMember.Kind == SymbolKind.Method && (memberAssociatedProperty = methodMember.AssociatedSymbol) != null)
+                            {
+                                if (!((IPropertySymbol)memberAssociatedProperty).IsIndexer)
+                                    interfaceMemberMetadata = _global.GetRequiredMetadata(memberAssociatedProperty);
+                                else
+                                    isIndexer = true;
+                            }
+                            var implementationMetadata = _global.GetRequiredMetadata(implementation);
+                            ISymbol? implementationAssociatedProperty = null;
+                            if (implementation.Kind == SymbolKind.Method && (implementationAssociatedProperty = methodImplementation.AssociatedSymbol) != null)
+                            {
+                                if (!((IPropertySymbol)implementationAssociatedProperty).IsIndexer)
+                                    implementationMetadata = _global.GetRequiredMetadata(implementationAssociatedProperty);
+                                else
+                                    isIndexer = true;
+                            }
+                            OpenClosure(node);
+                            CurrentTypeWriter.WriteLine(node, $"//Generated explicit method implemetation for {interfaceMember}", true);
+                            CurrentTypeWriter.Write(node, $"{(implementation.IsStatic || implementation.IsStaticCallConvention(_global) ? "static " : "")}{(implementation.IsStaticCallConvention(_global) ? "/*conventional*/ " : "")}{(!isIndexer && methodImplementation.MethodKind == MethodKind.PropertyGet ? "get " : !isIndexer && methodImplementation.MethodKind == MethodKind.PropertySet ? "set " : "")}{interfaceMemberMetadata.OverloadName}", true);
+
+                            CurrentTypeWriter.Write(node, $"(", false);
+                            //No need to write method argument explicitly since we use sptread operator on arguments
+                            //WriteMethodDeclarationParameters(node, parameters?.Parameters ?? default);
+                            CurrentTypeWriter.WriteLine(node, $")", false);
+
+                            CurrentTypeWriter.WriteLine(node, $"{{", true);
+
+                            ////For implemented interface members call that may conflict in name:
+                            ////eg if a class implement both IComparer<string> and IComparer<char>
+                            ////the compare implementation methods for both implementation will conflictly be named System$Collections$Generic$IComparer$$$Compare
+                            ////even though one will receive a string and the other a char
+                            ////We need to discriminate the one we intend to call by checking the type Ts passed as a last argument to this
+                            //var conflictingInterfaces = member.ContainingType.AllInterfaces.GroupBy(e => e.OriginalDefinition, SymbolEqualityComparer.Default).Where(a => a.Count() > 1);
+                            //if (conflictingInterfaces.Any())
+                            //{
+                            //    var conflictingMethods = conflictingInterfaces.SelectMany(g => g.SelectMany(i => i.GetMembers().Where(m => m.OriginalDefinition.Equals(implementation.OriginalDefinition, SymbolEqualityComparer.Default))))
+                            //        .Cast<IMethodSymbol>();
+                            //    var conflctingTs = conflictingMethods.Select(m => (m.ContainingType, m.ContainingType.TypeArguments)).ToList();
+                            //    if (implementation.ContainingType.TypeKind == TypeKind.Interface && implementation.ContainingType.TypeArguments.Any() && implementation.ContainingType.TypeArguments.All(a => a is INamedTypeSymbol))
+                            //    {
+                            //        CurrentTypeWriter.WriteLine(node, $"let $ts = arguments[arguments.length-1];", true);
+                            //        foreach (var method in conflictingMethods.Except([implementation]))
+                            //        {
+                            //            discriminatedInterfaceMethodImplemented.Add(member);
+                            //            var ifs = string.Join(" && ", method.ContainingType.TypeArguments.Select((t, i) => $"$ts[{i}] === {t.ComputeOutputTypeName(_global)}"));
+                            //            CurrentTypeWriter.WriteLine(node, $"//Merged and discriminated with method implemetation for {method}", true);
+                            //            CurrentTypeWriter.WriteLine(node, $"if ({ifs})", true);
+                            //            var implementation = methodSymbol.ContainingType.FindImplementationForInterfaceMember(method)!;
+                            //            var implementationMetadata = _global.GetRequiredMetadata(implementation);
+                            //            if (implementation.IsStaticCallConvention(_global))
+                            //            {
+                            //                CurrentTypeWriter.WriteLine(node, $"    return {implementationMetadata.InvocationName}.apply(this, arguments);", true);
+                            //            }
+                            //            else
+                            //            {
+                            //                CurrentTypeWriter.WriteLine(node, $"    return {(!methodSymbol.IsStatic ? "this." : "")}{implementationMetadata.InvocationName}(...arguments);", true);
+                            //            }
+                            //        }
+                            //    }
+                            //}
+                            if (implementation.IsStaticCallConvention(_global))
+                            {
+                                CurrentTypeWriter.WriteLine(node, $"{(interfaceMember.Kind == SymbolKind.Method && interfaceMember is IMethodSymbol method && method.ReturnType != null && method.ReturnType.Name != "void" ? "return " : "")}{implementationMetadata.InvocationName}{(methodImplementation.MethodKind == MethodKind.Ordinary || isIndexer ? ".apply(this, arguments)" : "")};", true);
+                            }
+                            else
+                            {
+                                CurrentTypeWriter.WriteLine(node, $"{(interfaceMember.Kind == SymbolKind.Method && interfaceMember is IMethodSymbol method && method.ReturnType != null && method.ReturnType.Name != "void" ? "return " : "")}{(!interfaceMember.IsStatic ? "this." : "")}{implementationMetadata.InvocationName}{(methodImplementation.MethodKind == MethodKind.Ordinary || isIndexer ? "(...arguments)" : "")};", true);
+                            }
+                            CurrentTypeWriter.WriteLine(node, $"}}", true);
+                            if (implementation.IsStaticCallConvention(_global) && !interfaceMember.IsStatic)
+                            {
+                                CurrentTypeWriter.WriteLine(node, $"//Static convention instance redirect", true);
+                                CurrentTypeWriter.Write(node, $"{interfaceMemberMetadata.OverloadName}", true);
+                                CurrentTypeWriter.Write(node, $"(", false);
+                                //No need to write method argument explicitly since we use spread operator on arguments
+                                //WriteMethodDeclarationParameters(node, parameters?.Parameters ?? default);
+                                CurrentTypeWriter.WriteLine(node, $")", false);
+                                CurrentTypeWriter.WriteLine(node, $"{{", true);
+                                CurrentTypeWriter.WriteLine(node, $"{(interfaceMember.Kind == SymbolKind.Method && interfaceMember is IMethodSymbol method && method.ReceiverType != null && method.ReturnType.Name != "void" ? "return " : "")}{implementationMetadata.InvocationName}{(methodImplementation.MethodKind == MethodKind.Ordinary || isIndexer ? ".apply(this, arguments)" : "")};", true);
+                                //CurrentTypeWriter.Write(node, $"return {symbol.InvocationName}.apply(this, ...arguments);", true);
+                                CurrentTypeWriter.WriteLine(node, $"}}", true);
+                            }
+                            CloseClosure();
+                        }
+
+                    }
+                }
+            }
         }
 
         public void WriteTypeDeclaration(MemberDeclarationSyntax node, IEnumerable<ParameterSyntax>? primaryConstructorParameters, IEnumerable<MemberDeclarationSyntax>? members, Action? writePrologue = null, Action? writeEpilogue = null)
@@ -303,7 +427,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 bool hasGenericArguments = genericArgs?.Length > 0;
                 bool hasMixinOrGeneric = isInterface || hasGenericArguments;
                 bool isNested = nestedClassAsNestedStaticObject && node.Parent is TypeDeclarationSyntax;
-                var classCreate = typeSymbol.IsValueType ? (isNested ? Constants.AssemblyNestedStructName : Constants.AssemblyStructName) : 
+                var classCreate = typeSymbol.IsValueType ? (isNested ? Constants.AssemblyNestedStructName : Constants.AssemblyStructName) :
                     (isNested ? Constants.AssemblyNestedClassName : Constants.AssemblyClassName);
                 if (isBootClass)
                 {
@@ -508,6 +632,8 @@ namespace NetJs.Translator.CSharpToJavascript
 
                 writeEpilogue?.Invoke();
 
+                WriteInterfaceImplementations(node, typeSymbol);
+
                 if (!_static)
                 {
                     var constructors = members.Where(e => e.IsKind(SyntaxKind.ConstructorDeclaration)/* is ConstructorDeclarationSyntax*/).Cast<ConstructorDeclarationSyntax>()
@@ -565,16 +691,36 @@ namespace NetJs.Translator.CSharpToJavascript
                         {
                             if (!member.Name.Contains("<") && !member.Name.Contains("[")) //skip those compiler generated members and indexer
                             {
-                                if (member is IFieldSymbol f && f.Type.IsValueType && !f.Type.IsJsPrimitive())
+                                if (_global.IsInlineArray(typeSymbol, out var inlineSize))
                                 {
-                                    CurrentTypeWriter.WriteLine(node, $"copy.{member.Name} = this.{member.Name}.Clone();", true);
-                                }
-                                else if (member is IPropertySymbol pr && pr.Type.IsValueType && !pr.Type.IsJsPrimitive())
-                                {
-                                    CurrentTypeWriter.WriteLine(node, $"copy.{member.Name} = this.{member.Name}.Clone();", true);
+                                    CurrentTypeWriter.WriteLine(node, $"copy.{NetJs.Constants.StructFieldsLayoutName} = [...this.{NetJs.Constants.StructFieldsLayoutName}];", true);
+                                    //for (int i = 0; i < inlineSize; i++)
+                                    //{
+                                    //    if (member is IFieldSymbol f && f.Type.IsValueType && !f.Type.IsJsPrimitive())
+                                    //    {
+                                    //        CurrentTypeWriter.WriteLine(node, $"copy.{member.Name}${i + 1} = this.{member.Name}${i + 1}.Clone();", true);
+                                    //    }
+                                    //    else if (member is IPropertySymbol pr && pr.Type.IsValueType && !pr.Type.IsJsPrimitive())
+                                    //    {
+                                    //        CurrentTypeWriter.WriteLine(node, $"copy.{member.Name}${i + 1} = this.{member.Name}${i + 1}.Clone();", true);
+                                    //    }
+                                    //    else
+                                    //        CurrentTypeWriter.WriteLine(node, $"copy.{member.Name}${i + 1} = this.{member.Name}${i + 1};", true);
+                                    //}
                                 }
                                 else
-                                    CurrentTypeWriter.WriteLine(node, $"copy.{member.Name} = this.{member.Name};", true);
+                                {
+                                    if (member is IFieldSymbol f && f.Type.IsValueType && !f.Type.IsJsPrimitive())
+                                    {
+                                        CurrentTypeWriter.WriteLine(node, $"copy.{member.Name} = this.{member.Name}.Clone();", true);
+                                    }
+                                    else if (member is IPropertySymbol pr && pr.Type.IsValueType && !pr.Type.IsJsPrimitive())
+                                    {
+                                        CurrentTypeWriter.WriteLine(node, $"copy.{member.Name} = this.{member.Name}.Clone();", true);
+                                    }
+                                    else
+                                        CurrentTypeWriter.WriteLine(node, $"copy.{member.Name} = this.{member.Name};", true);
+                                }
                             }
                         }
                     }
@@ -852,8 +998,8 @@ namespace NetJs.Translator.CSharpToJavascript
 
                 CurrentTypeWriter.WriteLine(node, $"$ctor(/*object*/ target, fn)", true);
                 CurrentTypeWriter.WriteLine(node, "{", true);
-                CurrentTypeWriter.WriteLine(node, $"this._this = target;", true);
-                CurrentTypeWriter.WriteLine(node, $"this._nativeFunction = fn;", true);
+                CurrentTypeWriter.WriteLine(node, $"this._target = target;", true);
+                CurrentTypeWriter.WriteLine(node, $"this.$nativeFunction = fn;", true);
                 CurrentTypeWriter.WriteLine(node, "return this;", true);
                 CurrentTypeWriter.WriteLine(node, "}", true);
 
@@ -866,7 +1012,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     return $"/*{(t != null ? _global.GetRequiredMetadata(t)?.InvocationName : null)}*/ ${parameter.Identifier.ValueText}";
                 })))})", true);
                 CurrentTypeWriter.WriteLine(node, "{", true);
-                CurrentTypeWriter.WriteLine(node, $"return this._nativeFunction.apply(arguments);", true);
+                CurrentTypeWriter.WriteLine(node, $"return this.$nativeFunction.apply(this._target, arguments);", true);
                 CurrentTypeWriter.WriteLine(node, "}", true);
 
                 //CurrentTypeWriter.WriteLine(node, $"BeginInvoke({(string.Join(", ", node.ParameterList.Parameters.Select(parameter =>

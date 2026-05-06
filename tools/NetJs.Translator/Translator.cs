@@ -511,7 +511,10 @@ namespace {project.GetNamespace()}
                 var directDependency = GetDirectDependecies(symbol);
                 foreach (var dep in directDependency)
                 {
-                    if (dep.ContainingAssembly.Equals(symbol.ContainingAssembly, SymbolEqualityComparer.Default) && dep.ContainingSymbol.Kind != SymbolKind.NamedType && !symbol.Equals(dep, SymbolEqualityComparer.Default) && !outputted.Contains(dep.OriginalDefinition))
+                    if (dep.ContainingAssembly.Equals(symbol.ContainingAssembly, SymbolEqualityComparer.Default) && 
+                        dep.ContainingSymbol.Kind != SymbolKind.NamedType && 
+                        !symbol.Equals(dep, SymbolEqualityComparer.Default) && 
+                        !outputted.Contains(dep.OriginalDefinition))
                     {
                         var metadata = global.GetMetadata(dep.OriginalDefinition);
                         if (metadata != null)

@@ -34,7 +34,7 @@ namespace System
         [Name(Constants.AssemblyMetadataRegistryName)]
         public static void ReflectionData(string assemblyName, AssemblyModel assemblyMetadata)
         {
-            GlobalMetadataRegistry[assemblyMetadata.Handle.GetAssemblyHandle()] = assemblyMetadata;
+            GlobalMetadataRegistry[assemblyMetadata.Handle.As<uint>().GetAssemblyHandle()] = assemblyMetadata;
             GlobalMetadataRegistry[assemblyName] = assemblyMetadata;
         }
 
@@ -46,7 +46,7 @@ namespace System
             {
                 var metadata = GlobalMetadataRegistry[assemblyName];
                 assembly = new RuntimeAssembly_Partial(metadata, assemblyName).As<RuntimeAssembly>();
-                GlobalAssemblyRegistry[metadata.Handle.GetAssemblyHandle()] = assembly;
+                GlobalAssemblyRegistry[metadata.Handle.As<uint>().GetAssemblyHandle()] = assembly;
                 GlobalAssemblyRegistry[assemblyName] = assembly;
                 //precreate all types in this assembly as a stub
                 //if (Script.IsDefined(metadata.Types))
@@ -59,7 +59,7 @@ namespace System
                 //    }
                 //}
             }
-            action(assembly);
+            NetJs.Script.Write("action(assembly)");
             assembly.As<RuntimeAssembly_Partial>().Complete();
         }
 
@@ -87,32 +87,32 @@ namespace System
 
         //public static AppDomain CurrentDomain { get; } = new AppDomain();
 
-        public static string GetTypeName(ulong typeHandle)
+        public static string GetTypeName(uint typeHandle)
         {
             var assemblyHandle = typeHandle.GetAssemblyHandle();
             var assemblyMetadata = GlobalMetadataRegistry[assemblyHandle];
             return assemblyMetadata.TypeNames[typeHandle.GetTypeHandle()];
         }
 
-        public static string? GetAssemblyName(ulong assemblyHandle)
+        public static string? GetAssemblyName(uint assemblyHandle)
         {
             var metadata = GlobalMetadataRegistry[assemblyHandle.GetAssemblyHandle()];
             return metadata?.FullName;
         }
 
-        public static AssemblyModel? GetAssemblyMetadata(ulong assemblyHandle)
+        public static AssemblyModel? GetAssemblyMetadata(uint assemblyHandle)
         {
             var metadata = GlobalMetadataRegistry[assemblyHandle.GetAssemblyHandle()];
             return metadata;
         }
 
-        internal static RuntimeAssembly? GetAssembly(ulong assemblyHandle)
+        internal static RuntimeAssembly? GetAssembly(uint assemblyHandle)
         {
             var assembly = GlobalAssemblyRegistry[assemblyHandle.GetAssemblyHandle()];
             return assembly;
         }
 
-        internal static RuntimeType? GetType(ulong typeHandle)
+        internal static RuntimeType? GetType(uint typeHandle)
         {
             var value = AppDomain.GlobalTypeRegistry[typeHandle.GetAssemblyAndTypeHandle()];
             if (Script.IsUndefined(value))
@@ -120,7 +120,7 @@ namespace System
             return value;
         }
 
-        internal static MemberInfo? GetMember(ulong memberHandle)
+        internal static MemberInfo? GetMember(uint memberHandle)
         {
             var type = GetType(memberHandle);
             return type?.GetMemberInternal(memberHandle);

@@ -16,6 +16,10 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
             {
                 if (node.SyntaxTree == sm.SyntaxTree)
                 {
+                    if (node.ToFullString().Contains("span = stackAllocatedMatches"))
+                    {
+
+                    }
                     var conversion = sm.GetConversion(node);
                     if (conversion.Exists &&
                         conversion.IsImplicit &&
@@ -27,13 +31,13 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                         try
                         {
                             visitor.WriteMethodInvocation(node, conversion.MethodSymbol, null, [node], null, null, null, false);
+                            return true;
                         }
                         finally
                         {
                             _processing.Pop();
                         }
                         //visitor.TryInvokeMethodOperator(node, "op_Implicit", (ITypeSymbol?)lhsType, null, [rhsAsExpression]));
-                        return true;
                     }
                     else if (conversion.Exists &&
                         conversion.IsImplicit &&
@@ -47,8 +51,6 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                             {
                                 var sourceType = operation.Operand.Type!;
                                 var spanType = operation.Type!;
-                                //var spanType = (INamedTypeSymbol)visitor.Global.GetTypeSymbol("System.Span<>", visitor);
-                                //var lhsType = visitor.Global.GetTypeSymbol(node, visitor).GetTypeSymbol();
                                 var implicitConverter = spanType.GetMembers("op_Implicit", visitor.Global)
                                     .Cast<IMethodSymbol>()
                                     .FirstOrDefault(e => e.Parameters.Length == 1 && sourceType.CanConvertTo(e.Parameters[0].Type, visitor.Global, null, out _) > 0 && e.ReturnType.Equals(spanType, SymbolEqualityComparer.Default))
@@ -58,15 +60,149 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                                     .First(e => e.Parameters.Length == 1 && sourceType.CanConvertTo(e.Parameters[0].Type, visitor.Global, null, out _) > 0 && spanType.Equals(e.ReturnType, SymbolEqualityComparer.Default))
                                     ;
                                 visitor.WriteMethodInvocation(node, implicitConverter, null, [node], null, null, null, false);
+                                return true;
                             }
                             finally
                             {
                                 _processing.Pop();
                             }
-                            //visitor.TryInvokeMethodOperator(node, "op_Implicit", (ITypeSymbol?)lhsType, null, [rhsAsExpression]));
-                            return true;
                         }
                     }
+                    else if (conversion.Exists &&
+                        conversion.IsImplicit &&
+                        conversion.IsInlineArray)
+                    {
+                        var operation = sm.GetOperation(node)?.Parent as IConversionOperation;
+                        if (operation != null)
+                        {
+                            _processing.Push(node);
+                            try
+                            {
+                                var sourceType = operation.Operand.Type!;
+                                var spanType = operation.Type!;
+                                var implicitConverter = spanType.GetMembers("op_Implicit", visitor.Global)
+                                    .Cast<IMethodSymbol>()
+                                    .FirstOrDefault(e => e.Parameters.Length == 1 && e.Parameters[0].Type.IsArray(out var t) && e.ReturnType.Equals(spanType, SymbolEqualityComparer.Default));
+                                visitor.WriteMethodInvocation(node, implicitConverter, null, [node], null, null, null, false);
+                                return true;
+                            }
+                            finally
+                            {
+                                _processing.Pop();
+                            }
+                        }
+                    }
+                    else if (conversion.Exists &&
+                        conversion.IsImplicit &&
+                        conversion.IsCollectionExpression)
+                    {
+                        var operation = sm.GetOperation(node)?.Parent as IConversionOperation;
+                        if (operation != null)
+                        {
+                            bool IsCollectionExpressionTargetCandidateParameter(IParameterSymbol parameter)
+                            {
+                                if (parameter.Type.IsArray(out var ta))
+                                    return true;
+                                if (parameter.Type.IsEnumerable(out var te))
+                                    return true;
+                                return false;
+                            }
+                            var targetType = operation.Type!;
+                            var implicitConverter = targetType.GetMembers("op_Implicit", visitor.Global)
+                                .Cast<IMethodSymbol>()
+                                .FirstOrDefault(e => e.Parameters.Length == 1 && IsCollectionExpressionTargetCandidateParameter(e.Parameters[0]) && e.ReturnType.Equals(targetType, SymbolEqualityComparer.Default));
+                            if (implicitConverter != null)
+                            {
+                                _processing.Push(node);
+                                try
+                                {
+                                    visitor.WriteMethodInvocation(node, implicitConverter, null, [new CodeNode(() =>
+                                    {
+                                        visitor.CurrentTypeWriter.Write(node, "[");
+                                        int ix = 0;
+                                        foreach(var e in ((CollectionExpressionSyntax)node).Elements)
+                                        {
+                                            if (ix > 0)
+                                                visitor.CurrentTypeWriter.Write(node, ", ");
+                                            visitor.Visit(e);
+                                            ix++;
+                                        }
+                                        visitor.CurrentTypeWriter.Write(node, "]");
+                                    })], null, null, null, false);
+                                    return true;
+                                }
+                                finally
+                                {
+                                    _processing.Pop();
+                                }
+                            }
+                        }
+                    }
+                    else if (node.IsKind(SyntaxKind.NumericLiteralExpression) &&
+                        node is LiteralExpressionSyntax lt &&
+                        !lt.Token.Text.EndsWith("UL") &&
+                        !lt.Token.Text.EndsWith("L") &&
+                        conversion.Exists &&
+                        conversion.IsImplicit /*&& conversion.IsConstantExpression*/)
+                    {
+                        var literalOperation = sm.GetOperation(node) as ILiteralOperation;
+                        var convertOperation = sm.GetOperation(node)?.Parent as IConversionOperation;
+                        if ((literalOperation != null &&
+                            (SymbolEqualityComparer.Default.Equals(literalOperation.Type, visitor.Global.SystemUInt64) || SymbolEqualityComparer.Default.Equals(literalOperation.Type, visitor.Global.SystemInt64)))
+                            ||
+                            (convertOperation != null &&
+                            (SymbolEqualityComparer.Default.Equals(convertOperation.Type, visitor.Global.SystemUInt64) || SymbolEqualityComparer.Default.Equals(convertOperation.Type, visitor.Global.SystemInt64)))
+                            )
+                        {
+                            _processing.Push(node);
+                            try
+                            {
+                                visitor.Visit(node);
+                                visitor.CurrentTypeWriter.Write(node, "n");
+                                return true;
+                            }
+                            finally { _processing.Pop(); }
+                        }
+                    }
+                    else if (conversion.Exists &&
+                        conversion.IsImplicit &&
+                        conversion.IsNumeric)
+                    {
+                        var from = sm.GetOperation(node)?.Type;
+                        var to = (sm.GetOperation(node)?.Parent as IConversionOperation)?.Type;
+                        if (from != null && to != null)
+                        {
+                            bool skip = false;
+                            ElementAccessExpressionSyntax? el;
+                            if ((el = node.FindClosestParent<ElementAccessExpressionSyntax>()) != null)
+                            {
+                                var ex = visitor.Global.GetTypeSymbol(el.Expression, visitor).GetTypeSymbol();
+                                if (ex.IsPointer(out _) || ex.IsArray(out _)) //dont convert pointer index to BigInt
+                                    skip = true;
+                            }
+                            if (!skip && from.IsIntegerNumericType() && to.IsLongNumericType())
+                            {
+                                _processing.Push(node);
+                                try
+                                {
+                                    if (node.IsKind(SyntaxKind.NumericLiteralExpression))
+                                    {
+                                        visitor.Visit(node);
+                                        visitor.CurrentTypeWriter.Write(node, "n");
+                                    }
+                                    else
+                                    {
+                                        visitor.CurrentTypeWriter.Write(node, "BigInt(");
+                                        visitor.Visit(node);
+                                        visitor.CurrentTypeWriter.Write(node, ")");
+                                    }
+                                    return true;
+                                }
+                                finally { _processing.Pop(); }
+                            }
+                        }
+                    }
+
                 }
             }
             return false;

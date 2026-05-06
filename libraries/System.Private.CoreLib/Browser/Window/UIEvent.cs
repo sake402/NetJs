@@ -9,7 +9,7 @@ namespace Window
     [NetJs.External]
     public class UIEvent : Event
     {
-        public extern Window? view { get; }
+        //public extern Window? view { get; }
         public extern int detail { get; }
         public extern UIEvent(string type, object? eventInitDict = null);
     }

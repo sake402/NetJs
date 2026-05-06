@@ -6,6 +6,7 @@ namespace Window
     [NetJs.External]
     public class ArrayBuffer
     {
+        public extern ArrayBuffer(int length);
         public extern ArrayBuffer(int length, object? options = null);
         // Properties
         public extern int byteLength { get; }

@@ -20,16 +20,16 @@ namespace System.Reflection
         {
             var args = NetJs.Script.IsDefined(att.ConstructorArguments) ? att.ConstructorArguments!.Map(a =>
             {
-                var type = AppDomain.GetType(a.Type);
+                var type = AppDomain.GetType(a.Type.As<uint>());
                 return ConvertAttributeType(a.Value, type);
             }) : NetJs.Script.CreateArrayFromValues<object?>();
-            var constructor = (ConstructorInfo)AppDomain.GetMember(att.ConstructorHandle)!;
+            var constructor = (ConstructorInfo)AppDomain.GetMember(att.ConstructorHandle.As<uint>())!;
             var attribute = (Attribute)Activator.CreateInstance(attType, args)!;
             if (NetJs.Script.IsDefined(att.NamedArguments))
             {
                 for (int i = 0; i < att.NamedArguments!.Length; i++)
                 {
-                    var type = AppDomain.GetType(att.NamedArguments[i].Type) ?? throw new InvalidOperationException();
+                    var type = AppDomain.GetType(att.NamedArguments[i].Type.As<uint>()) ?? throw new InvalidOperationException();
                     var val = ConvertAttributeType(att.NamedArguments[i].Value, type);
                     var property = attType.GetProperty(att.NamedArguments[i].Name) ?? throw new InvalidOperationException();
                     property.SetValue(attribute, val);
@@ -40,15 +40,15 @@ namespace System.Reflection
 
         static CustomAttributeData CreateAttributeData(AttributeModel att)
         {
-            var attributeType = AppDomain.GetType(att.TypeHandle) ?? throw new InvalidOperationException();
-            var constructor = (ConstructorInfo)AppDomain.GetMember(att.ConstructorHandle)!;
+            var attributeType = AppDomain.GetType(att.TypeHandle.As<uint>()) ?? throw new InvalidOperationException();
+            var constructor = (ConstructorInfo)AppDomain.GetMember(att.ConstructorHandle.As<uint>())!;
             return new BrowserCustomAttributeData(
                 constructor,
-                NetJs.Script.IsDefined(att.ConstructorArguments) ? (att.ConstructorArguments!.Map(a => new CustomAttributeTypedArgument(AppDomain.GetType(a.Type) ?? throw new InvalidOperationException(), a.Value))) : [],
+                NetJs.Script.IsDefined(att.ConstructorArguments) ? (att.ConstructorArguments!.Map(a => new CustomAttributeTypedArgument(AppDomain.GetType(a.Type.As<uint>()) ?? throw new InvalidOperationException(), a.Value))) : [],
                 NetJs.Script.IsDefined(att.NamedArguments) ? att.NamedArguments!.Map(a =>
                 {
                     var member = attributeType.GetMember(a.Name).ArraySingle();
-                    return new CustomAttributeNamedArgument(member, new CustomAttributeTypedArgument(AppDomain.GetType(a.Type) ?? throw new InvalidOperationException(), a.Value));
+                    return new CustomAttributeNamedArgument(member, new CustomAttributeTypedArgument(AppDomain.GetType(a.Type.As<uint>()) ?? throw new InvalidOperationException(), a.Value));
                 }) : NetJs.Script.CreateArrayFromValues<CustomAttributeNamedArgument>());
         }
 
@@ -87,14 +87,14 @@ namespace System.Reflection
         {
             var attHandle = attributeType.As<RuntimeType>()._model.Handle;
             AttributeModel[]? attributesModel = GetAttributeModel(obj);
-            return attributesModel?.Filter(a => a.TypeHandle == attHandle).Map(a => CreateAttribute(a, attributeType)) ?? [];
+            return (attributesModel?.Filter(a => a.TypeHandle == attHandle).Map(a => CreateAttribute(a, attributeType)) ?? []).AsNetArray();
         }
 
         [NetJs.MemberReplace]
         private static CustomAttributeData[] GetCustomAttributesDataInternal(ICustomAttributeProvider obj)
         {
             AttributeModel[]? attributesModel = GetAttributeModel(obj);
-            return attributesModel?.Map(a => CreateAttributeData(a)) ?? [];
+            return (attributesModel?.Map(a => CreateAttributeData(a)) ?? []).AsNetArray();
         }
 
         [NetJs.MemberReplace]

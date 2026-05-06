@@ -886,9 +886,12 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 return tp.Name;
             }
-            if (type is ITypeSymbol tt && tt.IsArray(out var elementType))
+            if (type is ITypeSymbol tt)
             {
-                return $"{global.GlobalName}.{Constants.TypeArray}({ComputeOutputTypeName(elementType, global)})";
+                if (tt.IsArray(out var elementType))
+                    return $"{global.GlobalName}.{Constants.TypeArray}({ComputeOutputTypeName(elementType, global)})";
+                if (tt.IsPointer(out var pointedType))
+                    return $"{global.GlobalName}.{Constants.TypePointer}({ComputeOutputTypeName(pointedType, global)})";
             }
             var sym = global.GetMetadata(type);
             if (sym != null)
@@ -1723,7 +1726,7 @@ namespace NetJs.Translator.CSharpToJavascript
             HashSet<string> found = new HashSet<string>();
             return RecursivelyGetMembers(type, name, global, found, deep);
         }
-        internal static bool IsJsBoolean(this ITypeSymbol type)
+        internal static bool IsBooleanType(this ITypeSymbol type)
         {
             return type.SpecialType == SpecialType.System_Boolean;
         }
@@ -1765,7 +1768,6 @@ namespace NetJs.Translator.CSharpToJavascript
                 case SpecialType.System_UInt16:
                 case SpecialType.System_UInt32:
                 case SpecialType.System_UInt64:
-                case SpecialType.System_Int64:
                     return true;
             }
             return false;
@@ -1779,7 +1781,6 @@ namespace NetJs.Translator.CSharpToJavascript
                 case SpecialType.System_Int16:
                 case SpecialType.System_Int32:
                 case SpecialType.System_IntPtr:
-                case SpecialType.System_UIntPtr:
                 case SpecialType.System_Single:
                 case SpecialType.System_Double:
                 case SpecialType.System_Decimal:
@@ -1810,35 +1811,7 @@ namespace NetJs.Translator.CSharpToJavascript
             return false;
         }
 
-        internal static bool IsLongNumericType(this ITypeSymbol type)
-        {
-            switch (type.SpecialType)
-            {
-                case SpecialType.System_UInt64:
-                case SpecialType.System_Int64:
-                    return true;
-            }
-            return false;
-        }
-
-        internal static bool IsJsNativeIntegerNumeric(this ITypeSymbol type)
-        {
-            switch (type.SpecialType)
-            {
-                case SpecialType.System_SByte:
-                case SpecialType.System_Int16:
-                case SpecialType.System_Int32:
-                case SpecialType.System_IntPtr:
-                case SpecialType.System_UIntPtr:
-                case SpecialType.System_Byte:
-                case SpecialType.System_UInt16:
-                case SpecialType.System_UInt32:
-                    return true;
-            }
-            return false;
-        }
-
-        internal static bool IsJsNativeNumeric(this ITypeSymbol type)
+        internal static bool IsNumberNumericType(this ITypeSymbol type)
         {
 
             switch (type.SpecialType)
@@ -1853,6 +1826,34 @@ namespace NetJs.Translator.CSharpToJavascript
                 case SpecialType.System_UInt32:
                 case SpecialType.System_Single:
                 case SpecialType.System_Double:
+                    return true;
+            }
+            return false;
+        }
+
+        internal static bool IsLongNumericType(this ITypeSymbol type)
+        {
+            switch (type.SpecialType)
+            {
+                case SpecialType.System_UInt64:
+                case SpecialType.System_Int64:
+                    return true;
+            }
+            return false;
+        }
+
+        internal static bool IsIntegerNumericType(this ITypeSymbol type)
+        {
+            switch (type.SpecialType)
+            {
+                case SpecialType.System_SByte:
+                case SpecialType.System_Int16:
+                case SpecialType.System_Int32:
+                case SpecialType.System_IntPtr:
+                case SpecialType.System_UIntPtr:
+                case SpecialType.System_Byte:
+                case SpecialType.System_UInt16:
+                case SpecialType.System_UInt32:
                     return true;
             }
             return false;
@@ -2454,31 +2455,32 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public static ITypeSymbol GetTypeSymbol(this ISymbol symbol)
         {
-            if (symbol is ITypeSymbol type)
+            if ((symbol.Kind == SymbolKind.NamedType || symbol.Kind == SymbolKind.ArrayType || symbol.Kind == SymbolKind.PointerType || symbol.Kind == SymbolKind.FunctionPointerType) &&
+                symbol is ITypeSymbol type)
             {
                 return type;
             }
-            if (symbol is IPropertySymbol property)
+            if (symbol.Kind == SymbolKind.Property && symbol is IPropertySymbol property)
             {
                 return property.Type;
             }
-            if (symbol is IFieldSymbol field)
+            if (symbol.Kind == SymbolKind.Field && symbol is IFieldSymbol field)
             {
                 return field.Type;
             }
-            if (symbol is ILocalSymbol local)
+            if (symbol.Kind == SymbolKind.Local && symbol is ILocalSymbol local)
             {
                 return local.Type;
             }
-            if (symbol is IParameterSymbol parameter)
+            if (symbol.Kind == SymbolKind.Parameter && symbol is IParameterSymbol parameter)
             {
                 return parameter.Type;
             }
-            if (symbol is ITypeParameterSymbol tparameter)
+            if (symbol.Kind == SymbolKind.TypeParameter && symbol is ITypeParameterSymbol tparameter)
             {
                 return tparameter;
             }
-            if (symbol is IMethodSymbol method)
+            if (symbol.Kind == SymbolKind.Method && symbol is IMethodSymbol method)
             {
                 if (method.Name == "op_Implicit")
                     return method.Parameters.First().Type;
@@ -2486,11 +2488,11 @@ namespace NetJs.Translator.CSharpToJavascript
                     return method.ContainingType;
                 return method.ReturnType;
             }
-            if (symbol is IDiscardSymbol discard)
+            if (symbol.Kind == SymbolKind.Discard && symbol is IDiscardSymbol discard)
             {
                 return discard.Type;
             }
-            if (symbol is IEventSymbol ev)
+            if (symbol.Kind == SymbolKind.Event && symbol is IEventSymbol ev)
             {
                 return ev.Type;
             }

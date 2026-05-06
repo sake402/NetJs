@@ -23,7 +23,7 @@ namespace System.Reflection
         {
             if (THIS._model.Flags.TypeHasFlag(MemberFlagsModel.IsStatic))
             {
-                var prototype = AppDomain.GetType(THIS._model.As<FieldModel>().FieldType)!._prototype;
+                var prototype = AppDomain.GetType(THIS._model.As<FieldModel>().FieldType.As<uint>())!._prototype;
                 return prototype![THIS._model.Name];
             }
             return obj![THIS._model.Name];
@@ -34,7 +34,7 @@ namespace System.Reflection
         {
             if (THIS._model.Flags.TypeHasFlag(MemberFlagsModel.IsStatic))
             {
-                var prototype = AppDomain.GetType(THIS._model.As<FieldModel>().FieldType)!._prototype;
+                var prototype = AppDomain.GetType(THIS._model.As<FieldModel>().FieldType.As<uint>())!._prototype;
                 return prototype![THIS._model.Name];
             }
             return obj![THIS._model.Name];
@@ -43,13 +43,13 @@ namespace System.Reflection
         [NetJs.MemberReplace]
         private Type ResolveType()
         {
-            return AppDomain.GetType(THIS._model.As<FieldModel>().FieldType)!;
+            return AppDomain.GetType(THIS._model.As<FieldModel>().FieldType.As<uint>())!;
         }
 
         [NetJs.MemberReplace]
         private Type GetParentType(bool declaring)
         {
-            return AppDomain.GetType(THIS._model.DeclaringType)!;
+            return AppDomain.GetType(THIS._model.DeclaringType.As<uint>())!;
         }
 
         [NetJs.MemberReplace]
@@ -64,7 +64,7 @@ namespace System.Reflection
             var field = fi.As<RuntimeFieldInfo>();
             if (field._model.Flags.TypeHasFlag(MemberFlagsModel.IsStatic))
             {
-                var prototype = AppDomain.GetType(field._model.As<FieldModel>().FieldType)!._prototype;
+                var prototype = AppDomain.GetType(field._model.As<FieldModel>().FieldType.As<uint>())!._prototype;
                 prototype![field._model.Name] = value;
             }
             obj![field._model.Name] = value;
@@ -73,7 +73,7 @@ namespace System.Reflection
         [NetJs.MemberReplace]
         public object GetRawConstantValue()
         {
-            var prototype = AppDomain.GetType(THIS._model.As<FieldModel>().FieldType)!._prototype;
+            var prototype = AppDomain.GetType(THIS._model.As<FieldModel>().FieldType.As<uint>())!._prototype;
             return prototype![THIS._model.Name]!;
         }
 

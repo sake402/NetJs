@@ -15,9 +15,10 @@ namespace NetJs.Translator.CSharpToJavascript
         //Even though a long can be a constant in c#.
         //In this js port it cannot because long is implemented as a struct (not a native javascript number because of rounding error) we need to instantiate
         //The only way we can serialize it as a constant without loosing value is through a string or primitive values(if possible without loosing precision
-        void WriteLongConstant(CSharpSyntaxNode node, string longValue)
+        void WriteLongConstant(CSharpSyntaxNode node, long longValue, int _base)
         {
-            CurrentTypeWriter.Write(node, longValue);
+            var format = _base == 16 ? $"0x{longValue:X}" : _base == 2 ? $"0b{longValue:B}" : longValue.ToString();
+            CurrentTypeWriter.Write(node, format);
             CurrentTypeWriter.Write(node, "n");
             return;
             //var longType = (INamedTypeSymbol)_global.GetTypeSymbol("long", this/*, out _, out _*/);
@@ -46,9 +47,10 @@ namespace NetJs.Translator.CSharpToJavascript
             //}
         }
 
-        void WriteULongConstant(CSharpSyntaxNode node, string longValue)
+        void WriteULongConstant(CSharpSyntaxNode node, ulong longValue, int _base)
         {
-            CurrentTypeWriter.Write(node, longValue);
+            var format = _base == 16 ? $"0x{longValue:X}" : _base == 2 ? $"0b{longValue:B}" : longValue.ToString();
+            CurrentTypeWriter.Write(node, format);
             CurrentTypeWriter.Write(node, "n");
             return;
             //var longType = (INamedTypeSymbol)_global.GetTypeSymbol("ulong", this/*, out _, out _*/);
@@ -163,8 +165,16 @@ namespace NetJs.Translator.CSharpToJavascript
                     //long handling
                     //Long literal is a different beast because js cannot actually handle it precisely
                     //This would have require us to estimate a constant expression in runtime instead of compile time
-                    var val = constantValue.Value!.ToString();
-                    WriteLongConstant(node, val);
+                    //var val = constantValue.Value!.ToString();
+                    int _base = 10;
+                    if (constantExpression.IsKind(SyntaxKind.NumericLiteralExpression) && constantExpression is LiteralExpressionSyntax lt)
+                    {
+                        if (lt.Token.Text.StartsWith("0x", StringComparison.InvariantCultureIgnoreCase))
+                            _base = 16;
+                        else if (lt.Token.Text.StartsWith("0b", StringComparison.InvariantCultureIgnoreCase))
+                            _base = 2;
+                    }
+                    WriteLongConstant(node, Convert.ToInt64(constantValue.Value!), _base);
                     return true;
                 }
                 else if (constantType.SpecialType == SpecialType.System_UInt64)
@@ -172,8 +182,16 @@ namespace NetJs.Translator.CSharpToJavascript
                     //ulong handling
                     //Long literal is a different beast because js cannot actually handle it precisely
                     //This would have require us to estimate a constant expression in runtime instead of compile time
-                    var val = constantValue.Value!.ToString();
-                    WriteULongConstant(node, val);
+                    //var val = !.ToString();
+                    int _base = 10;
+                    if (constantExpression.IsKind(SyntaxKind.NumericLiteralExpression) && constantExpression is LiteralExpressionSyntax lt)
+                    {
+                        if (lt.Token.Text.StartsWith("0x", StringComparison.InvariantCultureIgnoreCase))
+                            _base = 16;
+                        else if (lt.Token.Text.StartsWith("0b", StringComparison.InvariantCultureIgnoreCase))
+                            _base = 2;
+                    }
+                    WriteULongConstant(node, Convert.ToUInt64(constantValue.Value!), _base);
                     return true;
                 }
                 else if (constantType.SpecialType == SpecialType.System_Decimal)

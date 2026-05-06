@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using NetJs;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace System
 {
@@ -6,35 +8,47 @@ namespace System
     //[dotnetJs.External]
     public static class ArrayExtensions
     {
+        public static T[] AsNetArray<T>(this T[] arr)
+        {
+            return RuntimeHelpers.EnsureIsNetArray(arr);
+        }
+
+        //public static Array AsNetArray(this Array arr)
+        //{
+        //    return RuntimeHelpers.EnsureIsNetArray(arr);
+        //}
+
         [NetJs.Template("{array}.includes({item})")]
         public static extern bool ArrayContains<T>(this T[] array, T item);
 
         [NetJs.Template("{array}.every({callback})")]
-        public static extern bool Every<T>(this T[] array, Func<T, int, T[], bool> callback);
+        public static extern bool Every<T>(this T[] array, [NativeDelegate] Func<T, int, T[], bool> callback);
 
         [NetJs.Template("{array}.every({callback})")]
-        public static extern bool Every<T>(this T[] array, Func<T, bool> callback);
+        public static extern bool Every<T>(this T[] array, [NativeDelegate] Func<T, bool> callback);
 
         [NetJs.Template("{array}.filter({callback})")]
-        public static extern T[] Filter<T>(this T[] array, Func<T, int, T[], bool> callback);
+        public static extern T[] Filter<T>(this T[] array, [NativeDelegate] Func<T, int, T[], bool> callback);
 
         [NetJs.Template("{array}.filter({callback})")]
-        public static extern T[] Filter<T>(this T[] array, Func<T, bool> callback);
+        public static extern T[] Filter<T>(this T[] array, [NativeDelegate] Func<T, bool> callback);
         [NetJs.Template("[...new Set({array})]")]
         public static extern T[] Unique<T>(this T[] array);
 
         [NetJs.Template("{array}.map({callback})")]
-        public static extern TResult[] Map<TSource, TResult>(this TSource[] array, Func<TSource, int, TSource[], TResult> callback);
+        public static extern TResult[] Map<TSource, TResult>(this TSource[] array, [NativeDelegate] Func<TSource, int, TSource[], TResult> callback);
 
         [NetJs.Template("{array}.map({callback})")]
-        public static extern TResult[] Map<TSource, TResult>(this TSource[] array, Func<TSource, TResult> callback);
+        public static extern TResult[] Map<TSource, TResult>(this TSource[] array, [NativeDelegate] Func<TSource, TResult> callback);
 
         [NetJs.Template("{array}.some({callback})")]
-        public static extern bool Some<T>(this T[] array, Func<T, int, T[], bool> callback);
+        public static extern bool Some<T>(this T[] array, [NativeDelegate] Func<T, int, T[], bool> callback);
 
         [NetJs.Template("{array}.some({callback})")]
-        public static extern bool Some<T>(this T[] array, Func<T, bool> callback);
+        public static extern bool Some<T>(this T[] array, [NativeDelegate] Func<T, bool> callback);
 
+        [NetJs.Template("{source}.push({value})")]
+        public static extern void Push(this Array source, object? value);
         [NetJs.Template("{source}.push({value})")]
         public static extern void Push<T>(this T[] source, T value);
         [NetJs.Template("{source}.push( ...{values})")]
@@ -44,13 +58,13 @@ namespace System
         public static extern void Sort<T>(this T[] array);
 
         [NetJs.Template("{array}.sort({compareCallback})")]
-        public static extern void Sort<T>(this T[] array, Func<T, T, int> compareCallback);
+        public static extern void Sort<T>(this T[] array, [NativeDelegate] Func<T, T, int> compareCallback);
 
         [NetJs.Template("{array}.forEach({callback})")]
-        public static extern void ForEach<T>(this T[] array, Action<T, int, T[]> callback);
+        public static extern void ForEach<T>(this T[] array, [NativeDelegate] Action<T, int, T[]> callback);
 
         [NetJs.Template("{array}.forEach({callback})")]
-        public static extern void ForEach<T>(this T[] array, Action<T> callback);
+        public static extern void ForEach<T>(this T[] array, [NativeDelegate] Action<T> callback);
 
         [NetJs.Template("{array}.lastIndexOf({searchString}, {fromIndex})")]
         public static extern int LastIndexOf<T>(this T[] array, string searchString, int fromIndex);
@@ -135,7 +149,7 @@ namespace System
             }
         }
 
-        public static T ArrayFirst<T>(this T[] arr, Func<T, bool> filter)
+        public static T ArrayFirst<T>(this T[] arr, [NativeDelegate] Func<T, bool> filter)
         {
             if (arr.Length == 0)
                 throw new InvalidOperationException();
@@ -152,7 +166,7 @@ namespace System
             return arr[0];
         }
 
-        public static T? ArrayFirstOrDefault<T>(this T[] arr, Func<T, bool> filter)
+        public static T? ArrayFirstOrDefault<T>(this T[] arr, [NativeDelegate] Func<T, bool> filter)
         {
             if (arr.Length == 0)
                 return default(T);
@@ -175,7 +189,7 @@ namespace System
             }
         }
 
-        public static T ArrayLast<T>(this T[] arr, Func<T, bool> filter)
+        public static T ArrayLast<T>(this T[] arr, [NativeDelegate] Func<T, bool> filter)
         {
             if (arr.Length == 0)
                 throw new InvalidOperationException();
@@ -196,7 +210,7 @@ namespace System
             }
         }
 
-        public static T? ArrayLastOrDefault<T>(this T[] arr, Func<T, bool> filter)
+        public static T? ArrayLastOrDefault<T>(this T[] arr, [NativeDelegate] Func<T, bool> filter)
         {
             if (arr.Length == 0)
                 return default(T);
@@ -213,5 +227,6 @@ namespace System
         {
             return arr.Length > 0;
         }
+
     }
 }

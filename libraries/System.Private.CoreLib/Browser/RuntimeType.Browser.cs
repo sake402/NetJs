@@ -91,8 +91,8 @@ namespace System
                 _assembly.As<RuntimeAssembly_Partial>()._types.Push(this);
             }
             AppDomain.GlobalTypeRegistry[scriptFullName] = this;
-            if (model != null)
-                AppDomain.GlobalTypeRegistry[model.Handle.GetAssemblyAndTypeHandle()] = this;
+            if (model != null && model.Handle != 0)
+                AppDomain.GlobalTypeRegistry[model.Handle.As<uint>().GetAssemblyAndTypeHandle()] = this;
             //if (model != null && _prototype != null)
             //    Initialize();
         }
@@ -310,7 +310,7 @@ namespace System
                 return true;
             if (Script.IsDefined(child._model.As<TypeModel>().BaseType))
             {
-                var childBase = GetTypeFromHandle(child._model.As<TypeModel>().BaseType!.Value);
+                var childBase = GetTypeFromHandle(child._model.As<TypeModel>().BaseType!.Value.As<uint>());
                 if (childBase != null && IsSubClassOfInternal(childBase, @base))
                     return true;
             }
@@ -318,7 +318,7 @@ namespace System
             {
                 for (int i = 0; i < child._model.As<TypeModel>().Interfaces!.Length; i++)
                 {
-                    var childBase = GetTypeFromHandle(child._model.As<TypeModel>().Interfaces![i]);
+                    var childBase = GetTypeFromHandle(child._model.As<TypeModel>().Interfaces![i].As<uint>());
                     if (childBase != null && IsSubClassOfInternal(childBase, @base))
                         return true;
                 }
@@ -370,20 +370,20 @@ namespace System
             return members;
         }
 
-        internal MemberInfo? GetMemberInternal(ulong memberHandle)
+        internal MemberInfo? GetMemberInternal(uint memberHandle)
         {
-            return (MemberInfo?)_constructors.ArrayFirstOrDefault(c => c._model.Handle.GetMemberHandle() == memberHandle.GetMemberHandle()) ??
-               (MemberInfo?)_fields.ArrayFirstOrDefault(c => c._model.Handle.GetMemberHandle() == memberHandle.GetMemberHandle()) ??
-               (MemberInfo?)_properties.ArrayFirstOrDefault(c => c._model.Handle.GetMemberHandle() == memberHandle.GetMemberHandle()) ??
-               (MemberInfo?)_properties.Map(p => p.GetMethod).Filter(c => c != null).ArrayFirstOrDefault(c => c!._model.Handle.GetMemberHandle() == memberHandle.GetMemberHandle()) ??
-               (MemberInfo?)_properties.Map(p => p.SetMethod).Filter(c => c != null).ArrayFirstOrDefault(c => c!._model.Handle.GetMemberHandle() == memberHandle.GetMemberHandle()) ??
-               (MemberInfo?)_events.ArrayFirstOrDefault(c => c._model.Handle.GetMemberHandle() == memberHandle.GetMemberHandle()) ??
-               (MemberInfo?)_methods.ArrayFirstOrDefault(c => c._model.Handle.GetMemberHandle() == memberHandle.GetMemberHandle());
+            return (MemberInfo?)_constructors.ArrayFirstOrDefault(c => c._model.Handle.As<uint>().GetMemberHandle() == memberHandle.GetMemberHandle()) ??
+               (MemberInfo?)_fields.ArrayFirstOrDefault(c => c._model.Handle.As<uint>().GetMemberHandle() == memberHandle.GetMemberHandle()) ??
+               (MemberInfo?)_properties.ArrayFirstOrDefault(c => c._model.Handle.As<uint>().GetMemberHandle() == memberHandle.GetMemberHandle()) ??
+               (MemberInfo?)_properties.Map(p => p.GetMethod).Filter(c => c != null).ArrayFirstOrDefault(c => c!._model.Handle.As<uint>().GetMemberHandle() == memberHandle.GetMemberHandle()) ??
+               (MemberInfo?)_properties.Map(p => p.SetMethod).Filter(c => c != null).ArrayFirstOrDefault(c => c!._model.Handle.As<uint>().GetMemberHandle() == memberHandle.GetMemberHandle()) ??
+               (MemberInfo?)_events.ArrayFirstOrDefault(c => c._model.Handle.As<uint>().GetMemberHandle() == memberHandle.GetMemberHandle()) ??
+               (MemberInfo?)_methods.ArrayFirstOrDefault(c => c._model.Handle.As<uint>().GetMemberHandle() == memberHandle.GetMemberHandle());
         }
 
-        public static RuntimeType? GetTypeFromHandle(ulong typeHandle)
+        public static RuntimeType? GetTypeFromHandle(uint typeHandle)
         {
-            return AppDomain.GetType(typeHandle);
+            return AppDomain.GetType(typeHandle.As<uint>());
         }
 
         public static string? GetTypeNameFromHandle(uint typeHandle)
@@ -420,6 +420,7 @@ namespace System
             //If the type we are mixing for depends on itself, we need to pass this into the getPrototype so it can be used in the mixin definition
             var selfProxy = RuntimeAssembly_Partial.CreateTypeProxy(newScriptName);
             var gArgs = typeArguments.Map(t => t.As<RuntimeType>()._prototype!);
+            //var newPrototype = NetJs.Script.Write<TypePrototype>("this._prototypeProvider(selfProxy, gArgs, null)");
             var newPrototype = _prototypeProvider(selfProxy, gArgs, null);
             //var newPrototype = _prototypeProvider(typeArguments.Map(t => t.As<RuntimeType>()._prototype!), null);
             var newType = MakeGenericTypeInternal(typeArguments, newPrototype, newScriptName);
@@ -444,6 +445,8 @@ namespace System
                 throw new ArgumentException("Incorrect number of type arguments supplied");
             //Clone the parent model
             var newTypeModel = Script.JSONParse<TypeModel>(Script.JSONStringify(_model));
+            //An instantiated generic type must have a different handle from its parent
+            newTypeModel.Handle = _assembly.As<RuntimeAssembly_Partial>().CreateHandle(scriptFullName);
             //replace every generic type placeholder in the new model with the provided type arguments
             if (Script.IsDefined(newTypeModel.GenericArguments))
                 newTypeModel.GenericArguments = newTypeModel.GenericArguments!.Map(g => UpdateGenericHandle(g, typeArguments));
@@ -508,12 +511,12 @@ namespace System
                 return _typeArguments;
             return _typeArguments = _model.As<TypeModel>().GenericArguments?.Map((arg, i, all) =>
             {
-                var argType = GetTypeFromHandle(arg);
+                var argType = GetTypeFromHandle(arg.As<uint>());
                 var constraint = Script.IsDefined(_model.As<TypeModel>().GenericConstraints) ? _model.As<TypeModel>().GenericConstraints![i] : null;//?.Filter(c => c.ParameterName == arg)[0];
                 bool firstConstraintIsClass;
                 if (constraint != null && constraint.TypeConstraints?.Length > 0)
                 {
-                    var firstConstraintType = GetTypeFromHandle(constraint.TypeConstraints[0]);
+                    var firstConstraintType = GetTypeFromHandle(constraint.TypeConstraints[0].As<uint>());
                     firstConstraintIsClass = firstConstraintType != null && !firstConstraintType.IsInterface;
                 }
                 else
@@ -523,16 +526,16 @@ namespace System
                 var model = new TypeModel()
                 {
                     //Name = arg,
-                    Handle =  0 ,// arg,
+                    Handle = 0,// arg,
                     BaseType = constraint != null && firstConstraintIsClass ? constraint.TypeConstraints?[0] : null,
                     Interfaces = constraint != null ? (firstConstraintIsClass ? constraint.TypeConstraints!.Slice(1).As<ulong[]>() : constraint.TypeConstraints) : null,
                 };
                 var type = Create(null, Script.Write<TypePrototype>("$.System.GenericTypeArgument" /*+ nameof(GenericTypeArgument)*/), model, _scriptFullName);
                 type._genericParameterPosition = i;
-                type._typeConstraints = constraint?.TypeConstraints?.Map(c => GetTypeFromHandle(c) ?? throw new InvalidOperationException());
+                type._typeConstraints = constraint?.TypeConstraints?.Map(c => GetTypeFromHandle(c.As<uint>()) ?? throw new InvalidOperationException());
                 type._constraintModel = constraint;
                 return type;
-            }) ?? Array.Empty<RuntimeType>();
+            }).AsNetArray() ?? Array.Empty<RuntimeType>();
         }
         //static SimpleDictionary<RuntimeType> types = new SimpleDictionary<RuntimeType>();
 
@@ -546,7 +549,7 @@ namespace System
             {
                 if (runtimeType._model.As<TypeModel>().BaseType != null)
                 {
-                    res.GetObjectHandleOnStack<RuntimeType?>() = AppDomain.GetType(runtimeType._model.As<TypeModel>().BaseType!.Value);
+                    res.GetObjectHandleOnStack<RuntimeType?>() = AppDomain.GetType(runtimeType._model.As<TypeModel>().BaseType!.Value.As<uint>());
                 }
             }
             RuntimeHelpers.GetObjectHandleOnStack<RuntimeType?>(res) = null;
@@ -597,52 +600,52 @@ namespace System
         [NetJs.MemberReplace(nameof(GetMethodsByName))]
         internal RuntimeMethodInfo[] GetMethodsByNameOverride(string? name, BindingFlags bindingAttr, MemberListType listType, RuntimeType reflectedType)
         {
-            return GetMembersInternal(MemberTypes.Method, bindingAttr, name, null, listType).As<RuntimeMethodInfo[]>();
+            return GetMembersInternal(MemberTypes.Method, bindingAttr, name, null, listType).As<RuntimeMethodInfo[]>().AsNetArray();
         }
 
         [NetJs.MemberReplace(nameof(GetConstructors_internal))]
         private RuntimeConstructorInfo[] GetConstructors_internalOverride(BindingFlags bindingAttr, RuntimeType reflectedType)
         {
-            return GetMembersInternal(MemberTypes.Constructor, bindingAttr).As<RuntimeConstructorInfo[]>();
+            return GetMembersInternal(MemberTypes.Constructor, bindingAttr).As<RuntimeConstructorInfo[]>().AsNetArray();
         }
 
         [NetJs.MemberReplace(nameof(GetPropertiesByName))]
         private RuntimePropertyInfo[] GetPropertiesByNameOverride(string? name, BindingFlags bindingAttr, MemberListType listType, RuntimeType reflectedType)
         {
-            return GetMembersInternal(MemberTypes.Property, bindingAttr, name, null, listType).As<RuntimePropertyInfo[]>();
+            return GetMembersInternal(MemberTypes.Property, bindingAttr, name, null, listType).As<RuntimePropertyInfo[]>().AsNetArray();
         }
 
         [NetJs.MemberReplace(nameof(GetFields_internal))]
         private RuntimeFieldInfo[] GetFields_internalOverride(string? name, BindingFlags bindingAttr, MemberListType listType, RuntimeType reflectedType)
         {
-            return GetMembersInternal(MemberTypes.Field, bindingAttr, name, null, listType).As<RuntimeFieldInfo[]>();
+            return GetMembersInternal(MemberTypes.Field, bindingAttr, name, null, listType).As<RuntimeFieldInfo[]>().AsNetArray();
         }
 
         [NetJs.MemberReplace(nameof(GetEvents_internal))]
         private RuntimeFieldInfo[] GetEvents_internalOverride(string? name, BindingFlags bindingAttr, MemberListType listType, RuntimeType reflectedType)
         {
-            return GetMembersInternal(MemberTypes.Event, bindingAttr, name, null, listType).As<RuntimeFieldInfo[]>();
+            return GetMembersInternal(MemberTypes.Event, bindingAttr, name, null, listType).As<RuntimeFieldInfo[]>().AsNetArray();
         }
 
         [NetJs.MemberReplace(nameof(GetInterfaces))]
         private static void GetInterfacesImpl(QCallTypeHandle type, ObjectHandleOnStack res)
         {
             var mtype = type.QCallTypeHandleToRuntimeType();
-            res.GetObjectHandleOnStack<RuntimeType[]?>() = mtype._model.As<TypeModel>().Interfaces?.Map(i => RuntimeType.GetTypeFromHandle(i) ?? throw new InvalidOperationException()) ?? [];
+            res.GetObjectHandleOnStack<RuntimeType[]?>() = (mtype._model.As<TypeModel>().Interfaces?.Map(i => RuntimeType.GetTypeFromHandle(i.As<uint>()) ?? throw new InvalidOperationException()) ?? []).AsNetArray();
         }
 
         [NetJs.MemberReplace(nameof(GetNestedTypes_internal))]
         private RuntimeType[] GetNestedTypes_internalOverride(string? displayName, BindingFlags bindingAttr, MemberListType listType)
         {
-            return _model.As<TypeModel>().NestedTypes?.Map(i => RuntimeType.GetTypeFromHandle(i) ?? throw new InvalidOperationException())
-                .Filter(nt => (displayName == null || nt.Name.Contains(displayName)) && MemberFilter(nt, bindingAttr, null)) ?? [];
+            return (_model.As<TypeModel>().NestedTypes?.Map(i => RuntimeType.GetTypeFromHandle(i.As<uint>()) ?? throw new InvalidOperationException())
+                .Filter(nt => (displayName == null || nt.Name.Contains(displayName)) && MemberFilter(nt, bindingAttr, null)) ?? []).AsNetArray();
         }
 
         [NetJs.MemberReplace(nameof(GetDeclaringType))]
         private static void GetDeclaringTypeImpl(QCallTypeHandle type, ObjectHandleOnStack res)
         {
             var mtype = type.QCallTypeHandleToRuntimeType();
-            res.GetObjectHandleOnStack<Type?>() = mtype._model.DeclaringType != 0 ? RuntimeType.GetTypeFromHandle(mtype._model.DeclaringType) : null;
+            res.GetObjectHandleOnStack<Type?>() = mtype._model.DeclaringType != 0 ? RuntimeType.GetTypeFromHandle(mtype._model.DeclaringType.As<uint>()) : null;
         }
 
         [NetJs.MemberReplace(nameof(GetName))]
@@ -664,8 +667,8 @@ namespace System
         {
             var targetType = t.QCallTypeHandleToRuntimeType();
             var interfaceType = iface.QCallTypeHandleToRuntimeType();
-            targets = targetType.GetMembersInternal(MemberTypes.Method).As<MethodInfo[]>();
-            methods = interfaceType.GetMembersInternal(MemberTypes.Method).As<MethodInfo[]>();
+            targets = targetType.GetMembersInternal(MemberTypes.Method).As<MethodInfo[]>().AsNetArray();
+            methods = interfaceType.GetMembersInternal(MemberTypes.Method).As<MethodInfo[]>().AsNetArray();
         }
 
         [NetJs.MemberReplace(nameof(GetPacking))]

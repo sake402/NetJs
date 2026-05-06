@@ -66,7 +66,8 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             //In JS, everything is on the heap, even struct.
             //The only time we need boxing is if we are converting to object a native JS primitive type that has a one to one maps to .Net primitive type
-            if (/*fromType.IsValueType && */fromType.IsJsPrimitive())
+            //Or from a type parameter, the runtime will check if boxing is really neccessary for the type parameter
+            if (fromType.Kind == SymbolKind.TypeParameter || fromType.IsJsPrimitive())
             {
                 if (SymbolEqualityComparer.Default.Equals(toType, _global.SystemObject))
                     return true;
@@ -309,7 +310,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     VisitNode(rhsNode);
                 }
-            //RhsEmitted:
+                //RhsEmitted:
                 if (rightDereference)
                 {
                     TryDereference(node);
@@ -334,8 +335,8 @@ namespace NetJs.Translator.CSharpToJavascript
                 if (doBoxing)
                 {
                     CurrentTypeWriter.Write(node, $", ");
-                    var rhsMetadata = _global.GetRequiredMetadata(rhsType!);
-                    CurrentTypeWriter.Write(node, rhsMetadata.InvocationName!);
+                    var rhsMetadata = rhsType!.Kind != SymbolKind.TypeParameter ? _global.GetRequiredMetadata(rhsType!) : null;
+                    CurrentTypeWriter.Write(node, rhsMetadata?.InvocationName ?? rhsType.ComputeOutputTypeName(_global));
                     CurrentTypeWriter.Write(node, $")");
                 }
             }

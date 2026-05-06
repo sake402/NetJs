@@ -42,7 +42,7 @@ namespace NetJs.Translator.CSharpToJavascript
             isPrimaryConstructorParameter = false;
             if (symbol == null)
                 return false;
-            var currentType = _global.GetTypeSymbol(CurentType, this).GetTypeSymbol();
+            var currentType = _global.GetTypeSymbol(CurrentType, this).GetTypeSymbol();
             IEnumerable<INamedTypeSymbol> GetAllBaseTypes(ITypeSymbol type)
             {
                 if (type.BaseType != null)

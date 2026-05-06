@@ -2,7 +2,7 @@
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Index
+namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.SystemIndex
 {
     sealed class CreateIndexSyntaxEmitter : SyntaxEmitter<PrefixUnaryExpressionSyntax>
     {

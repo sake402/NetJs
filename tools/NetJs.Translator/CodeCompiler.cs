@@ -334,11 +334,12 @@ namespace NetJs.Translator
                     var libProjectPath = Path.GetFullPath(Path.GetDirectoryName(project.FullPath) + "/" + lib.Path);
                     var libProjectFolder = Path.GetDirectoryName(libProjectPath);
                     //var config="wasm";//project.Evaluate("Configuration");
+                    var binPathJs = libProjectFolder + $"/bin/wasm/{project.Evaluate("Configuration")}/{project.Evaluate("TargetFramework")}/" + Path.GetFileName(lib.Name) + ".js.dll";
                     var binPath = libProjectFolder + $"/bin/wasm/{project.Evaluate("Configuration")}/{project.Evaluate("TargetFramework")}/" + Path.GetFileName(lib.Name) + ".dll";
-                    if (!File.Exists(binPath))
-                        throw new InvalidOperationException($"Expected dll file not found at {binPath}. Ensure that project has built successfully.");
-                    refs.Add(MetadataReference.CreateFromFile(binPath));
-                    var symbolFile = libProjectFolder + $"/bin/wasm/{project.Evaluate("Configuration")}/{project.Evaluate("TargetFramework")}/js/" + Path.GetFileName(lib.Name) + ".SymbolNames.yaml";
+                    if (!File.Exists(binPath) && !File.Exists(binPathJs))
+                        throw new InvalidOperationException($"Expected dll file not found at {binPath} or {binPathJs}. Ensure that project has built successfully.");
+                    refs.Add(MetadataReference.CreateFromFile(File.Exists(binPathJs) ? binPathJs : binPath));
+                    var symbolFile = libProjectFolder + $"/bin/wasm/{project.Evaluate("Configuration")}/{project.Evaluate("TargetFramework")}/{Constants.OutputFolderName}/" + Path.GetFileName(lib.Name) + ".SymbolNames.yaml";
                     if (File.Exists(symbolFile))
                     {
                         symbols.Add(symbolFile);

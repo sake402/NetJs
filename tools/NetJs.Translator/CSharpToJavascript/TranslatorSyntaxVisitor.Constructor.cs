@@ -55,9 +55,11 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     continue;
                 }
-                var parameterSymbol = _global.GetTypeSymbol(parameter, this/*, out _, out _*/);
+                var parameterSymbol = _global.GetSymbol(parameter, this/*, out _, out _*/);
                 constructorSymbol = parameterSymbol.ContainingSymbol as IMethodSymbol;
-                if (parameterSymbol.Kind == SymbolKind.Property || parameterSymbol.Kind == SymbolKind.Method)
+                if (parameterSymbol.Kind == SymbolKind.Property ||
+                    parameterSymbol.Kind == SymbolKind.Method ||
+                    typeSymbol.GetMembers(parameterSymbol.Name).Any())
                 {
                 }
                 else
@@ -138,7 +140,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 CurrentTypeWriter.Write(property, property.Identifier.ValueText);
                 CurrentTypeWriter.Write(property, $" = $");
                 //Writer.Write(property, ((IdentifierNameSyntax)property.Initializer!.Value).Identifier.ValueText);
-                Visit(property.Initializer);
+                Visit(property.Initializer!.Value);
                 CurrentTypeWriter.WriteLine(property, ";");
                 MarkMemberAsInitializedByPrimaryConstructor(property);
                 i++;
@@ -180,7 +182,7 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             WriteMethodBody(node, null, null, parameters, writePrologue: () =>
             {
-                var systemObject = _global.GetTypeSymbol("System.Object", this/*, out _, out _*/);
+                var systemObject = _global.GetSymbol("System.Object", this/*, out _, out _*/);
                 //MethodOverloadResult overloadResult = default;
                 //bool baseIsExternal = false;
 
@@ -374,51 +376,48 @@ namespace NetJs.Translator.CSharpToJavascript
             bool isLiteralObject = _global.HasAttribute(instanceType, typeof(ObjectLiteralAttribute).FullName!, this, false, out _);
             foreach (var expression in expressions)
             {
-                if (expression is AssignmentExpressionSyntax assignment)
+                if (expression is AssignmentExpressionSyntax assignment && assignment.Left is ImplicitElementAccessSyntax imp)
                 {
-                    if (assignment.Left is ImplicitElementAccessSyntax imp)
+                    if (isLiteralObject)
                     {
-                        if (isLiteralObject)
+                        CurrentTypeWriter.Write(node, $"{instanceName}", true);
+                        //If the literal name is a valid js name, convert the [""] to . operation
+                        if (imp.ArgumentList.Arguments.Count == 1)
                         {
-                            CurrentTypeWriter.Write(node, $"{instanceName}", true);
-                            //If the literal name is a valid js name, convert the [""] to . operation
-                            if (imp.ArgumentList.Arguments.Count == 1)
+                            var argExpression = imp.ArgumentList.Arguments.First().Expression;
+                            if (argExpression.IsKind(SyntaxKind.StringLiteralExpression))
                             {
-                                var argExpression = imp.ArgumentList.Arguments.First().Expression;
-                                if (argExpression.IsKind(SyntaxKind.StringLiteralExpression))
+                                var litetal = (LiteralExpressionSyntax)argExpression;
+                                var valueName = litetal.Token.ValueText;
+                                if (valueName.IsValidateJsName())
                                 {
-                                    var litetal = (LiteralExpressionSyntax)argExpression;
-                                    var valueName = litetal.Token.ValueText;
-                                    if (valueName.IsValidateJsName())
-                                    {
-                                        CurrentTypeWriter.Write(node, ".");
-                                        CurrentTypeWriter.Write(node, valueName);
-                                        CurrentTypeWriter.Write(node, " = ");
-                                        Visit(assignment.Right);
-                                        CurrentTypeWriter.WriteLine(node, ";");
-                                        continue;
-                                    }
+                                    CurrentTypeWriter.Write(node, ".");
+                                    CurrentTypeWriter.Write(node, valueName);
+                                    CurrentTypeWriter.Write(node, " = ");
+                                    Visit(assignment.Right);
+                                    CurrentTypeWriter.WriteLine(node, ";");
+                                    continue;
                                 }
                             }
-                            Visit(assignment);
-                            CurrentTypeWriter.WriteLine(node, ";");
-                            continue;
                         }
-                        else
-                        {
-                            var disposable = CurrentClosure.DefineIdentifierType(instanceName, CodeSymbol.From(instanceType));
-                            //rewrite new a { [b] = .. } as instance[b] = ..
-                            var rewrite = SyntaxFactory.AssignmentExpression(
-                                SyntaxKind.SimpleAssignmentExpression,
-                                SyntaxFactory.ElementAccessExpression(SyntaxFactory.IdentifierName(instanceName), imp.ArgumentList),
-                                assignment.Right
-                                );
-                            CurrentTypeWriter.Write(node, "", true);
-                            Visit(rewrite);
-                            disposable.Dispose();
-                            CurrentTypeWriter.WriteLine(node, ";");
-                            continue;
-                        }
+                        Visit(assignment);
+                        CurrentTypeWriter.WriteLine(node, ";");
+                        continue;
+                    }
+                    else
+                    {
+                        var disposable = CurrentClosure.DefineIdentifierType(instanceName, CodeSymbol.From(instanceType));
+                        //rewrite new a { [b] = .. } as instance[b] = ..
+                        var rewrite = SyntaxFactory.AssignmentExpression(
+                            SyntaxKind.SimpleAssignmentExpression,
+                            SyntaxFactory.ElementAccessExpression(SyntaxFactory.IdentifierName(instanceName), imp.ArgumentList),
+                            assignment.Right
+                            );
+                        CurrentTypeWriter.Write(node, "", true);
+                        Visit(rewrite);
+                        disposable.Dispose();
+                        CurrentTypeWriter.WriteLine(node, ";");
+                        continue;
                     }
                 }
                 else if (expression is InitializerExpressionSyntax init)
@@ -449,9 +448,22 @@ namespace NetJs.Translator.CSharpToJavascript
                     CurrentTypeWriter.WriteLine(node, ");");
                     continue;
                 }
-                CurrentTypeWriter.Write(node, $"{instanceName}.", true);
-                Visit(expression);
-                CurrentTypeWriter.WriteLine(node, ";");
+                else if (expression is AssignmentExpressionSyntax assignment2)
+                {
+                    CurrentTypeWriter.Write(node, $"{instanceName}.", true);
+                    Visit(expression);
+                    CurrentTypeWriter.WriteLine(node, ";");
+                }
+                else
+                {
+                    var addMethod = (IMethodSymbol)instanceType.GetMembers("Add").Single(e => e is IMethodSymbol ms && ms.Parameters.Length == 1);
+                    CurrentTypeWriter.Write(node, "", true);
+                    WriteMethodInvocation(node, addMethod, null, [expression], new CodeNode(() =>
+                    {
+                        CurrentTypeWriter.Write(node, $"{instanceName}");
+                    }), instanceType);
+                    CurrentTypeWriter.WriteLine(node, ";");
+                }
             }
         }
 
@@ -459,7 +471,7 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (type == null && typeSymbol == null)
                 throw new InvalidOperationException("ONE of type or typeSymbol is required");
-            typeSymbol ??= (ITypeSymbol)_global.GetTypeSymbol(type!, this/*, out _, out _*/).GetTypeSymbol()!;
+            typeSymbol ??= _global.GetTypeSymbol(type!, this)!;
             if (typeSymbol.TypeKind == TypeKind.Delegate)
             {
                 if (arguments != null)
@@ -499,7 +511,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
                 boundConstructor ??= GetExpressionBoundTarget(node).TypeSyntaxOrSymbol as IMethodSymbol;
                 var targetConstructor = boundConstructor ?? GetBestOverloadMethod(typeSymbol, ".ctor", null, arguments.Select(a => a.AsT0), null, out overloadResult) ?? throw new InvalidOperationException("Cannot find the constructor");
-                bool isCompilerGeneratedCOnstructor = targetConstructor.Parameters.Count() == 0 && targetConstructor.IsImplicitlyDeclared;
+                bool isCompilerGeneratedConstructor = targetConstructor.Parameters.Count() == 0 && targetConstructor.IsImplicitlyDeclared;
                 if (_global.HasAttribute(targetConstructor, typeof(TemplateAttribute).FullName!, this, false, out _))
                 {
                     WriteMethodInvocation(node, targetConstructor, null, arguments, null, null, genericArgs, false);
@@ -546,7 +558,7 @@ namespace NetJs.Translator.CSharpToJavascript
                             }
                             else
                             {
-                                if (!isCompilerGeneratedCOnstructor)
+                                if (!isCompilerGeneratedConstructor)
                                 {
                                     CurrentTypeWriter.Write(node, $"{instanceName}", true);
                                     CurrentTypeWriter.Write(node, $".{(constructorMeta?.OverloadName ?? "$ctor")}");
@@ -560,7 +572,7 @@ namespace NetJs.Translator.CSharpToJavascript
                             {
                                 disposeAnonymousMethodParameter = CurrentClosure.DefineAnonymousMethodParameterTypes(delegateReturnType == null ? delegateParameterTypes : [.. delegateParameterTypes, delegateReturnType]);
                             }
-                            if (!isCompilerGeneratedCOnstructor)
+                            if (!isCompilerGeneratedConstructor)
                             {
                                 WriteMethodInvocationParameter(node,
                                     targetConstructor,
@@ -630,13 +642,29 @@ namespace NetJs.Translator.CSharpToJavascript
         }
         public override void VisitAnonymousObjectCreationExpression(AnonymousObjectCreationExpressionSyntax node)
         {
-            base.VisitAnonymousObjectCreationExpression(node);
+            CurrentTypeWriter.Write(node, "{ ");
+            int ix = 0;
+            foreach (var i in node.Initializers)
+            {
+                if (ix > 0)
+                    CurrentTypeWriter.Write(node, ", ");
+                if (i.NameEquals != null)
+                    CurrentTypeWriter.Write(node, i.NameEquals.Name.Identifier.ValueText);
+                else
+                    CurrentTypeWriter.Write(node, i.Expression.ToString().Split('.').Last());
+                CurrentTypeWriter.Write(node, " : ");
+                Visit(i.Expression);
+                ix++;
+            }
+            CurrentTypeWriter.Write(node, " }");
+            //base.VisitAnonymousObjectCreationExpression(node);
         }
 
         public override void VisitImplicitObjectCreationExpression(ImplicitObjectCreationExpressionSyntax node)
         {
-            var type = InferType(node);
-            WriteObjectCreation(node, type.type, type.typeSymbol, null, node.ArgumentList.Arguments.Select(e => new CodeNode(e)), node.Initializer);
+            var tSymbol = _global.TryGetTypeSymbol(node, this);
+            var type = tSymbol == null ? InferType(node) : default;
+            WriteObjectCreation(node, type.type, tSymbol ?? type.typeSymbol, null, node.ArgumentList.Arguments.Select(e => new CodeNode(e)), node.Initializer);
             //base.VisitImplicitObjectCreationExpression(node);
         }
 

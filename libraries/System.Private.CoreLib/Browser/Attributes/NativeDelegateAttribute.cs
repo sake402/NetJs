@@ -11,4 +11,14 @@ namespace NetJs
     {
 
     }
+
+    /// <summary>
+    /// Make a params array parameter be spread into individual arguments when calling a native function
+    /// </summary>
+    [NonScriptable]
+    [AttributeUsage(AttributeTargets.Parameter)]
+    public class SpreadAttribute : Attribute
+    {
+
+    }
 }

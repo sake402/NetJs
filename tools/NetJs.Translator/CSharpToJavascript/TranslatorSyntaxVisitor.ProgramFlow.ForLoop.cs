@@ -16,13 +16,15 @@ namespace NetJs.Translator.CSharpToJavascript
         void WriteForEach(CommonForEachStatementSyntax node, object variable)
         {
             OpenClosure(node);
-            var enumerableTypeSymbol = (INamedTypeSymbol)_global.GetTypeSymbol("System.Collections.Generic.IEnumerable<>", this/*, out _, out _*/);
-            var enumerableGetEnumerator = (IMethodSymbol)(enumerableTypeSymbol.GetMembers("GetEnumerator", _global).First());
+            bool isAsync = node.AwaitKeyword.ValueText.Length > 0;
+            string? asyncModifier = isAsync ? "Async" : null;
+            var enumerableTypeSymbol = (INamedTypeSymbol)_global.GetSymbol(isAsync ? "System.Collections.Generic.IAsyncEnumerable<>" : "System.Collections.Generic.IEnumerable<>", this/*, out _, out _*/);
+            var enumerableGetEnumerator = (IMethodSymbol)(enumerableTypeSymbol.GetMembers(isAsync ? "GetAsyncEnumerator" : "GetEnumerator", _global).First());
             var enumerableGetEnumeratorMethodMetadata = _global.GetRequiredMetadata(enumerableGetEnumerator);
             string getEnumeratorInvocationName = enumerableGetEnumeratorMethodMetadata.InvocationName ?? enumerableGetEnumerator.Name;
 
-            var enumerationRhsType = GetExpressionReturnSymbol(node.Expression);
-            var enumerationTargetRhsTypeSymbol = _global.ResolveSymbol(enumerationRhsType, this/*, out _, out _*/)?.GetTypeSymbol();
+            //var enumerationRhsType = GetExpressionReturnSymbol(node.Expression);
+            var enumerationTargetRhsTypeSymbol = _global.TryGetTypeSymbol(node.Expression, this);
 
             ITypeSymbol? enumerableItemSymbol = null;
             string? enumeratorMoveNextInvocationName = null;
@@ -39,17 +41,17 @@ namespace NetJs.Translator.CSharpToJavascript
                 //If we can get the enumerator directly on the target, we dont need to call the interface method
                 //This is espcially useful if the target doesn't actually implement the IEnumerable Interface
                 directGetEnumerator = enumerationTargetRhsTypeSymbol.TypeKind != TypeKind.Interface ?
-                   (IMethodSymbol?)(enumerationTargetRhsTypeSymbol.GetMembers("GetEnumerator", _global).FirstOrDefault()) : null;
+                   (IMethodSymbol?)(enumerationTargetRhsTypeSymbol.GetMembers(isAsync ? "GetAsyncEnumerator" : "GetEnumerator", _global).FirstOrDefault()) : null;
                 if (directGetEnumerator != null)
                 {
                     //var directGetENumeratorMetadata = _global.GetRequiredMetadata(directGetEnumerator);
                     //getEnumeratorInvocationName = directGetENumeratorMetadata.InvocationName ?? directGetEnumerator.Name;
-                    getEnumeratorInvocationName = "GetEnumerator";
-                    enumeratorMoveNextInvocationName = "MoveNext";
+                    getEnumeratorInvocationName = isAsync ? "GetAsyncEnumerator" : "GetEnumerator";
+                    enumeratorMoveNextInvocationName = isAsync ? "MoveNextAsync" : "MoveNext";
                     enumeratorCurrentInvocationName = "Current";
-                    var enumeratorType = directGetEnumerator.GetTypeSymbol();
-                    enumeratorMoveNext = (IMethodSymbol)(enumeratorType.GetMembers("MoveNext", _global).FirstOrDefault());
-                    enumeratorCurrent = (IPropertySymbol)(enumeratorType.GetMembers("Current", _global).FirstOrDefault());
+                    var enumeratorType = _global.GetTypeSymbol(directGetEnumerator);
+                    enumeratorMoveNext = (IMethodSymbol)(enumeratorType.GetMembers(enumeratorMoveNextInvocationName, _global).FirstOrDefault());
+                    enumeratorCurrent = (IPropertySymbol)(enumeratorType.GetMembers(enumeratorCurrentInvocationName, _global).FirstOrDefault());
                 }
                 else
                 {
@@ -57,10 +59,12 @@ namespace NetJs.Translator.CSharpToJavascript
                     {
                         enumerableItemSymbol = elementType;
                     }
-                    else if (!enumerationTargetRhsTypeSymbol.IsEnumerable(out _) && !enumerationTargetRhsTypeSymbol.IsEnumerable())
+                    else if (!enumerationTargetRhsTypeSymbol.IsEnumerable(out _) &&
+                        !enumerationTargetRhsTypeSymbol.IsEnumerable() &&
+                        !enumerationTargetRhsTypeSymbol.IsAsyncEnumerable(out _))
                     {
-                        var ienumerable = enumerationTargetRhsTypeSymbol.AllInterfaces.FirstOrDefault(o => o.IsEnumerable(out _)) ??
-                            enumerationTargetRhsTypeSymbol.AllInterfaces.First(o => o.IsEnumerable());
+                        var ienumerable = enumerationTargetRhsTypeSymbol.AllInterfaces.FirstOrDefault(o => o.IsEnumerable(out _) || o.IsAsyncEnumerable(out _)) ??
+                            enumerationTargetRhsTypeSymbol.AllInterfaces.First(o => o.IsEnumerable() || o.IsAsyncEnumerable(out _));
                         enumerableItemSymbol = ienumerable.TypeArguments.FirstOrDefault() ?? _global.Compilation.ObjectType;
                     }
                     else if (enumerationTargetRhsTypeSymbol.IsEnumerable())
@@ -73,12 +77,12 @@ namespace NetJs.Translator.CSharpToJavascript
                     }
                     enumerableTypeSymbol = enumerableTypeSymbol.Construct([enumerableItemSymbol]);
 
-                    var enumeratorSymbol = (INamedTypeSymbol)_global.GetTypeSymbol("System.Collections.Generic.IEnumerator<>", this/*, out _, out _*/)!.GetTypeSymbol();
+                    var enumeratorSymbol = (INamedTypeSymbol)_global.GetSymbol(isAsync ? "System.Collections.Generic.IAsyncEnumerator<>" : "System.Collections.Generic.IEnumerator<>", this/*, out _, out _*/);
                     if (enumerableItemSymbol != null)
                     {
                         enumeratorSymbol = enumeratorSymbol.Construct([enumerableItemSymbol]);
                     }
-                    enumeratorMoveNext = (IMethodSymbol)(enumeratorSymbol.GetMembers("MoveNext", _global).First());
+                    enumeratorMoveNext = (IMethodSymbol)(enumeratorSymbol.GetMembers(isAsync ? "MoveNextAsync" : "MoveNext", _global).First());
                     var enumeratorMoveNextMethodMetadata = _global.GetRequiredMetadata(enumeratorMoveNext);
                     enumeratorMoveNextInvocationName = enumeratorMoveNextMethodMetadata.InvocationName ?? enumeratorMoveNext.Name;
 
@@ -87,7 +91,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     enumeratorCurrentInvocationName = enumeratorCurrentMethodMetadata.InvocationName ?? enumeratorCurrent.Name;
 
                 }
-                var enumeratorVariableSymbol = _global.TryGetTypeSymbol(node, this/*, out _, out _*/) as ILocalSymbol;
+                var enumeratorVariableSymbol = _global.TryGetSymbol(node, this/*, out _, out _*/) as ILocalSymbol;
                 if (enumeratorVariableSymbol != null)
                 {
                     if (variable is SyntaxToken identifierName)
@@ -110,8 +114,19 @@ namespace NetJs.Translator.CSharpToJavascript
                 //Visit(node.Expression);
                 CurrentTypeWriter.WriteLine(node, $".{getEnumeratorInvocationName}();");
             }
-
-            CurrentTypeWriter.WriteLine(node, $"while ({enumarableName}.{enumeratorMoveNextInvocationName}())", true);
+            if (isAsync)
+            {
+                CurrentTypeWriter.Write(node, $"while (await ", true);
+                WriteMethodInvocation(node, "System.Runtime.CompilerServices.RuntimeHelpers.TaskToPromise", arguments: [new CodeNode(() => {
+                    CurrentTypeWriter.Write(node, enumarableName);
+                    CurrentTypeWriter.Write(node, ".");
+                    CurrentTypeWriter.Write(node, enumeratorMoveNextInvocationName!);
+                    CurrentTypeWriter.Write(node, "()");
+                })]);
+                CurrentTypeWriter.WriteLine(node, $")");
+            }
+            else
+                CurrentTypeWriter.WriteLine(node, $"while ({enumarableName}.{enumeratorMoveNextInvocationName}())", true);
             //if (!node.Statement.IsKind(SyntaxKind.Block))
             CurrentTypeWriter.WriteLine(node, "{", true);
             if (variable is SyntaxToken identifierName2)

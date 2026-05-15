@@ -56,15 +56,15 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             var parentIsEnum = node.FindClosestParent<EnumDeclarationSyntax>();
             //Don't generate cast for enum value initialization
-            var type = _global.GetTypeSymbol(node.Type, this/*, out _, out _*/);
+            var type = _global.GetSymbol(node.Type, this/*, out _, out _*/);
             if (parentIsEnum != null || node.Expression.IsKind(SyntaxKind.NullLiteralExpression) || !_global.ShouldExportType(type, this))
             {
                 Visit(node.Expression);
             }
             else
             {
-                var fromType = _global.ResolveSymbol(GetExpressionReturnSymbol(node.Expression), this)?.GetTypeSymbol();
-                var toType = _global.GetTypeSymbol(node.Type, this/*, out _, out _*/).GetTypeSymbol();
+                var fromType = _global.TryGetTypeSymbol(node.Expression, this);
+                var toType = _global.GetTypeSymbol(node.Type, this);
 
                 //if (fromType != null &&
                 //    toType != null /*&& _global.Compilation.HasImplicitConversion(fromType, toType)*/ &&

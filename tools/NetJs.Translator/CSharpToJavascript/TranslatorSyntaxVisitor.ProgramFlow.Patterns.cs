@@ -92,7 +92,7 @@ namespace NetJs.Translator.CSharpToJavascript
         public override void VisitConstantPattern(ConstantPatternSyntax node)
         {
             var type = (node.Parent.IsKind(SyntaxKind.NotPattern) || node.Parent.IsKind(SyntaxKind.IsPatternExpression)) && !node.Expression.IsKind(SyntaxKind.NullLiteralExpression) ?
-                _global.GetTypeSymbol(node.Expression, this) :
+                _global.GetSymbol(node.Expression, this) :
                 null;
             if (type != null && type.Kind == SymbolKind.NamedType)
             {
@@ -193,7 +193,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 //Writer.Write(node, "(");
                 if (sub.ExpressionColon?.Expression is IdentifierNameSyntax id)
                 {
-                    var lhsType = _global.ResolveSymbol(GetExpressionReturnSymbol(containingIsPatternExpression.Expression), this);
+                    var lhsType = _global.GetTypeSymbol(containingIsPatternExpression.Expression, this);
                     WriteMemberAccess(id, new CodeNode(() => WritePatternExpressionFilter(node)), lhsType, id.Identifier.ValueText, null);
                 }
                 else
@@ -267,7 +267,7 @@ namespace NetJs.Translator.CSharpToJavascript
         public override void VisitListPattern(ListPatternSyntax node)
         {
             var patternExpression = GetPatternExpression(node);
-            var patteryType = _global.ResolveSymbol(GetExpressionReturnSymbol(patternExpression), this)?.GetTypeSymbol();
+            var patteryType = _global.TryGetTypeSymbol(patternExpression, this);
             var lenghtPropertyName = "Length";
             var lenghtProperty = patteryType?.GetMembers().FirstOrDefault(m => m.Name == "Length" || m.Name == "Count");
             if (lenghtProperty != null)
@@ -286,16 +286,17 @@ namespace NetJs.Translator.CSharpToJavascript
             bool hasTemplate = lenghtProperty?.GetTemplateAttribute(_global) != null;
             if (lenghtProperty != null)
             {
-                if (isStaticConvention || hasTemplate)
-                {
-                    WriteMemberName(node, patteryType!, lenghtProperty, new CodeNode(() => WritePatternExpressionFilter(node)));
-                }
-                else
-                {
-                    WritePatternExpressionFilter(node);
-                    CurrentTypeWriter.Write(node, ".");
-                    WriteMemberName(node, patteryType!, lenghtProperty);
-                }
+                WriteMemberAccess(node, new CodeNode(() => WritePatternExpressionFilter(node)), patteryType, null, lenghtProperty);
+                //if (isStaticConvention || hasTemplate)
+                //{
+                //    WriteMemberName(node, patteryType!, lenghtProperty, new CodeNode(() => WritePatternExpressionFilter(node)));
+                //}
+                //else
+                //{
+                //    WritePatternExpressionFilter(node);
+                //    CurrentTypeWriter.Write(node, ".");
+                //    WriteMemberName(node, patteryType!, lenghtProperty);
+                //}
             }
             else
             {
@@ -427,7 +428,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 //}
                 if (svd != null)
                 {
-                    var localSymbol = _global.TryGetTypeSymbol(svd, this/*, out _, out _*/);
+                    var localSymbol = _global.TryGetSymbol(svd, this/*, out _, out _*/);
                     if (localSymbol != null)
                     {
                         CurrentClosure.DefineIdentifierType(svd.Identifier.ValueText, CodeSymbol.From(localSymbol));

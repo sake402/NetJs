@@ -52,7 +52,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     }
                     else //find by symbols in other importted modules
                     {
-                        var targetType2 = _global.TryGetTypeSymbol(typeName, this/*, out _, out _*/);
+                        var targetType2 = _global.TryGetSymbol(typeName, this/*, out _, out _*/);
                         if (targetType2 != null)
                         {
                             //var nm =$"{targetType.ContainingModule.Name}";
@@ -74,7 +74,7 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (type != null && _global.OutputMode.HasFlag(OutputMode.Module))
             {
-                var symbol = _global.TryGetTypeSymbol(type, this);
+                var symbol = _global.TryGetSymbol(type, this);
                 if (symbol != null && !_global.ShouldExportType(symbol, this))
                     return;
                 if (type.SyntaxTree != _tree)

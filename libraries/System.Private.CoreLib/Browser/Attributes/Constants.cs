@@ -10,6 +10,8 @@
         [InlineConst]
         public const bool NestedClassAsNestedStaticObject = true;
         [InlineConst]
+        public const bool StructFieldAlwaysLayout = true;
+        [InlineConst]
         public const string ProjectName = "NetJs";
         [InlineConst]
         public const string GlobalName = "$";
@@ -61,6 +63,8 @@
         public const string CreateArray = "$array";
         [InlineConst]
         public const string BoxName = "$box";
+        [InlineConst]
+        public const string UnboxName = "$unbox";
         [InlineConst]
         public const string IsTypeName = "$is";
         [InlineConst]
@@ -129,5 +133,9 @@
         public const string NumericShift = "$nsh";
         [InlineConst]
         public const string Dispatch = "$dsp";
+        [InlineConst]
+        public const string Clone = "Clone";
+        [InlineConst]
+        public const string OutputFolderName = "wwwroot";
     }
 }

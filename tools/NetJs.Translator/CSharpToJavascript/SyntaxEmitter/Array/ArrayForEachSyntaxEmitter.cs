@@ -8,7 +8,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Array
     {
         public override bool TryEmit(ForEachStatementSyntax node, TranslatorSyntaxVisitor visitor)
         {
-            var type = visitor.Global.GetTypeSymbol(node.Expression, visitor).GetTypeSymbol();
+            var type = visitor.Global.GetTypeSymbol(node.Expression, visitor);
             if (type.IsArray(out var elementType))
             {
                 var i = ++visitor.CurrentTypeWriter.CurrentClosure.NameManglingSeed;
@@ -20,6 +20,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Array
                 visitor.CurrentTypeWriter.WriteLine(node, $";");
                 visitor.CurrentTypeWriter.WriteLine(node, $"while ({index} < {array}.length)", true);
                 visitor.CurrentTypeWriter.WriteLine(node, "{", true);
+                visitor.OpenClosure(node);
                 visitor.CurrentTypeWriter.Write(node, $"let ", true);
                 visitor.CurrentTypeWriter.Write(node, node.Identifier.ValueText);
                 visitor.CurrentTypeWriter.Write(node, $" = ");
@@ -33,6 +34,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Array
                     visitor.Visit(node.Statement);
                 }
                 visitor.CurrentTypeWriter.WriteLine(node, $"{index}++;", true);
+                visitor.CloseClosure();
                 visitor.CurrentTypeWriter.WriteLine(node, "}", true);
                 return true;
             }

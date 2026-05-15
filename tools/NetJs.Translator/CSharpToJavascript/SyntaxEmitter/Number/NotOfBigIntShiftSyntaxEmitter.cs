@@ -11,7 +11,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Numbers
         {
             if (node.IsKind(SyntaxKind.BitwiseNotExpression))
             {
-                var type = visitor.Global.GetTypeSymbol(node.Operand, visitor).GetTypeSymbol();
+                var type = visitor.Global.GetTypeSymbol(node.Operand, visitor);
                 if (type.IsLongNumericType() && type.IsUnsignedNumericType())
                 {
                     visitor.CurrentTypeWriter.Write(node, "(");

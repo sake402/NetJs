@@ -15,7 +15,38 @@ namespace NetJs.Translator.CSharpToJavascript
     {
         bool HasYield(CSharpSyntaxNode node)
         {
-            return node.DescendantNodes().Any(n => n.IsKind(SyntaxKind.YieldReturnStatement) || n.IsKind(SyntaxKind.YieldBreakStatement));
+            var kk = node.ToString();
+            if (kk.Contains("Node? current = head;"))
+            {
+                if (kk.Contains("while (current != null)"))
+                {
+                    if (kk.Contains("yield return current._value;"))
+                    {
+
+                    }
+                }
+            }
+            bool has = false;
+            node.VisitHierachy((n, d) =>
+            {
+                if (n.IsKind(SyntaxKind.MethodDeclaration) && n != node)
+                {
+                    return false;
+                }
+                if (n.IsKind(SyntaxKind.LocalFunctionStatement) && n != node)
+                {
+                    return false;
+                }
+                var mhas = n.IsKind(SyntaxKind.YieldReturnStatement) || n.IsKind(SyntaxKind.YieldBreakStatement);
+                if (mhas)
+                {
+                    has = true;
+                    return false;
+                }
+                return true;
+            });
+            return has;
+            //return node.DescendantNodes().Any(n => n.IsKind(SyntaxKind.YieldReturnStatement) || n.IsKind(SyntaxKind.YieldBreakStatement));
         }
 
         void TryWrapInYieldingGetEnumerable(CSharpSyntaxNode node, IEnumerable<TypeSyntax>? typeparameters, IEnumerable<SyntaxNode> body, bool isAsync = false)
@@ -27,7 +58,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 ITypeSymbol? type = null;
                 //if (typeparameters == null)
                 //{
-                var methodInfo = _global.GetTypeSymbol(node, this) as IMethodSymbol;
+                var methodInfo = _global.GetSymbol(node, this) as IMethodSymbol;
                 if (methodInfo != null)
                 {
                     var returnType = methodInfo.ReturnType;
@@ -46,8 +77,8 @@ namespace NetJs.Translator.CSharpToJavascript
                 bool bodyIsBlock = body.Count() == 1 && body.Single().IsKind(SyntaxKind.Block);
                 if (bodyIsBlock)
                     CurrentTypeWriter.WriteLine(node, "{", true);
-                var typeParameter = isObjectEnumerable || isObjectEnumerator ? (type ?? _global.SystemObject) : (ITypeSymbol)_global.GetTypeSymbol(typeparameters.First(), this/*, out _, out _*/);
-                var yieldClass = ((INamedTypeSymbol)_global.GetTypeSymbol("System.YieldToIterator<>", this)).Construct(typeParameter);
+                var typeParameter = isObjectEnumerable || isObjectEnumerator ? (type ?? _global.SystemObject) : (ITypeSymbol)_global.GetSymbol(typeparameters.First(), this/*, out _, out _*/);
+                var yieldClass = ((INamedTypeSymbol)_global.GetSymbol("System.YieldToIterator<>", this)).Construct(typeParameter);
                 var constructor = (IMethodSymbol)yieldClass.GetMembers(".ctor").Single();
                 CurrentTypeWriter.Write(node, $"return ", true);
                 WriteObjectCreation(node, null, yieldClass, constructor, [new CodeNode(() =>

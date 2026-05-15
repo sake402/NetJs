@@ -12,7 +12,7 @@ namespace NetJs.Translator.CSharpToJavascript.AssignmentConverter
         public bool CanConvertTo(TranslatorSyntaxVisitor visitor, INamedTypeSymbol lhsType, CSharpSyntaxNode rhsExpression)
         {
             CollectionExpressionSyntax collection = (CollectionExpressionSyntax)rhsExpression;
-            var rhsType = (INamedTypeSymbol?)visitor.Global.ResolveSymbol(visitor.GetExpressionReturnSymbol(collection), visitor/*, out _, out _*/)?.GetTypeSymbol();
+            var rhsType = (INamedTypeSymbol?)visitor.Global.GetTypeSymbol(collection, visitor/*, out _, out _*/);
             if (rhsType == null)
                 return false;
             return lhsType.IsType("System.ReadOnlySpan<>", true) &&

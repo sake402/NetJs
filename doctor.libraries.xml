@@ -73,15 +73,15 @@ Whenever we sync our forked dotnet runtime and aspnetcore with official repo, we
 	</Project>
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.IO.MemoryMappedFiles\src\System.IO.MemoryMappedFiles.csproj">
 		<ItemGroup>
-		  <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interop.Errors.cs" />
-		  <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interop.FTruncate.cs" />
-		  <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interop.MMap.cs" />
-		  <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interop.Munmap.cs" />
-		  <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interop.Open.cs" />
-		  <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interop.Stat.cs" />
-		  <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interop.SysConf.cs" />
-		  <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interop.Unlink.cs" />
-		  <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interop.Close.cs" />
+		  <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interops\Interop.Errors.cs" />
+		  <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interops\Interop.FTruncate.cs" />
+		  <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interops\Interop.MMap.cs" />
+		  <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interops\Interop.Munmap.cs" />
+		  <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interops\Interop.Open.cs" />
+		  <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interops\Interop.Stat.cs" />
+		  <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interops\Interop.SysConf.cs" />
+		  <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interops\Interop.Unlink.cs" />
+		  <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interops\Interop.Close.cs" />
 		</ItemGroup>
 	</Project>
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.IO.Hashing\src\System.IO.Hashing.csproj"  Remove="//ItemGroup/PackageReference@Include=System.Memory|System.Buffers">

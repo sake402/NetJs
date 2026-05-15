@@ -52,6 +52,10 @@ namespace NetJs.Translator.CSharpToJavascript
         }
         public void Write(string value)
         {
+            if (value==".Invoke" && lastWord == ".Invoke")
+            {
+
+            }
             if (value.Length == 0)
                 return;
             if (value.Length == 1)

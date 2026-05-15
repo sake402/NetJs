@@ -14,8 +14,8 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Numbers
                 node.IsKind(SyntaxKind.LeftShiftExpression) ||
                 node.IsKind(SyntaxKind.UnsignedRightShiftAssignmentExpression))
             {
-                var lhsType = visitor.Global.GetTypeSymbol(node.Left, visitor).GetTypeSymbol();
-                var rhsType = visitor.Global.GetTypeSymbol(node.Right, visitor).GetTypeSymbol();
+                var lhsType = visitor.Global.GetTypeSymbol(node.Left, visitor);
+                var rhsType = visitor.Global.GetTypeSymbol(node.Right, visitor);
                 if (lhsType.IsNumericType() && rhsType.IsNumericType())
                 {
                     if (lhsType.IsLongNumericType())

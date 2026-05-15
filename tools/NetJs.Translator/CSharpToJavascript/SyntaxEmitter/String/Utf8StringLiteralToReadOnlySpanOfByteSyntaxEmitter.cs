@@ -31,8 +31,8 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.String
                 }
                 else
                 {
-                    var readOnlySpan = (INamedTypeSymbol)visitor.Global.GetTypeSymbol("System.ReadOnlySpan<>", visitor);
-                    var ssbyte = (ITypeSymbol)visitor.Global.GetTypeSymbol("System.Byte", visitor);
+                    var readOnlySpan = (INamedTypeSymbol)visitor.Global.GetSymbol("System.ReadOnlySpan<>", visitor);
+                    var ssbyte = (ITypeSymbol)visitor.Global.GetSymbol("System.Byte", visitor);
                     readOnlySpan = readOnlySpan.Construct(ssbyte);
                     var constructor = readOnlySpan.GetMembers(".ctor").Cast<IMethodSymbol>().Single(t => t.Parameters.Count() == 1 && t.Parameters[0].Type.IsArray(out _));
                     visitor.WriteConstructorCall(node, readOnlySpan, constructor, null, [new CodeNode(() =>
@@ -75,8 +75,8 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.String
                 if (concatBytesWritten == null)
                     concatBytesWritten = 0;
                 visitor.States[nameof(Utf8StringLiteralConcatSyntaxEmitter)] = concatBytesWritten;
-                var readOnlySpan = (INamedTypeSymbol)visitor.Global.GetTypeSymbol("System.ReadOnlySpan<>", visitor);
-                var ssbyte = (ITypeSymbol)visitor.Global.GetTypeSymbol("System.Byte", visitor);
+                var readOnlySpan = (INamedTypeSymbol)visitor.Global.GetSymbol("System.ReadOnlySpan<>", visitor);
+                var ssbyte = (ITypeSymbol)visitor.Global.GetSymbol("System.Byte", visitor);
                 readOnlySpan = readOnlySpan.Construct(ssbyte);
                 var constructor = readOnlySpan.GetMembers(".ctor").Cast<IMethodSymbol>().Single(t => t.Parameters.Count() == 1 && t.Parameters[0].Type.IsArray(out _));
                 visitor.WriteConstructorCall(node, readOnlySpan, constructor, null, [new CodeNode(() =>

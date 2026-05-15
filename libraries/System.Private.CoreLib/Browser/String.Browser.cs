@@ -46,6 +46,9 @@ namespace System
         [NetJs.Template("{this}.toUpperCase()")]
         public extern string NativeToUpper();
 
+        [NetJs.MemberReplace(nameof(Empty))]
+        public static readonly string EmptyImpl = "";
+
         [NetJs.Name(NetJs.Constants.IsTypeName)]
         public static bool Is(object? value, out string? result)
         {
@@ -75,8 +78,16 @@ namespace System
             throw null!;
         }
 
+        [NetJs.MemberReplace("_stringLength")]
+        [NetJs.Template("{this}.length")]
+        private int StringLength;
+        //{
+        //    [NetJs.Template("{this}.length")]
+        //    get;
+        //}
+
         [NetJs.MemberReplace("_firstChar")]
-        [NetJs.Template("{this}.charCodeAt(0)")]
+        //[NetJs.Template("{this}.charCodeAt(0)")]
         private char FirstChar;
         //{
         //    get
@@ -88,58 +99,51 @@ namespace System
         //        //NetJs.Script.Write("this._m_value = value");
         //    }
         //}
-        //[dotnetJs.MemberReplace("ctor(char[])")]
-        //public static string Create(char[]? value)
-        //{
-        //    return Ctor(value);
-        //}
 
-        //[dotnetJs.MemberReplace("ctor(char[], int, int)")]
-        //public static string Create(char[] value, int startIndex, int length)
-        //{
-        //    return Ctor(value, startIndex, length);
-        //}
+        public static string Create(char[]? value)
+        {
+            return Ctor(value);
+        }
 
-        //[dotnetJs.MemberReplace("ctor(char*)")]
-        //public static unsafe string Create(char* value)
-        //{
-        //    return Ctor(value);
-        //}
+        public static string Create(char[] value, int startIndex, int length)
+        {
+            return Ctor(value, startIndex, length);
+        }
 
-        //[dotnetJs.MemberReplace("ctor(char*, int, int)")]
-        //public static unsafe string Create(char* value, int startIndex, int length)
-        //{
-        //    return Ctor(value, startIndex, length);
-        //}
+        public static unsafe string Create(char* value)
+        {
+            return Ctor(value);
+        }
 
-        //[dotnetJs.MemberReplace("ctor(sbyte*)")]
-        //public static unsafe string Create(sbyte* value)
-        //{
-        //    return Ctor(value);
-        //}
+        public static unsafe string Create(char* value, int startIndex, int length)
+        {
+            return Ctor(value, startIndex, length);
+        }
 
-        //[dotnetJs.MemberReplace("ctor(sbyte*, int, int)")]
-        //public static unsafe string Create(sbyte* value, int startIndex, int length)
-        //{
-        //    return Ctor(value, startIndex, length);
-        //}
+        public static unsafe string Create(sbyte* value)
+        {
+            return Ctor(value);
+        }
 
-        //[dotnetJs.MemberReplace("ctor(char, int)")]
-        //public static string Create(char c, int count)
-        //{
-        //    return Ctor(c, count);
-        //}
+        public static unsafe string Create(sbyte* value, int startIndex, int length)
+        {
+            return Ctor(value, startIndex, length);
+        }
 
-        //[dotnetJs.MemberReplace("ctor(ReadOnlySpan<char>)")]
-        //public static string Create(ReadOnlySpan<char> value)
-        //{
-        //    return Ctor(value);
-        //}
+        public static string Create(char c, int count)
+        {
+            return Ctor(c, count);
+        }
+
+        public static string Create(ReadOnlySpan<char> value)
+        {
+            return Ctor(value);
+        }
 
         [NetJs.MemberReplace(nameof(Length))]
         [NetJs.StaticCallConvention(false)]
         [NetJs.Name("length")]
-        public extern int IntrinsicLength
+        public extern int LengthImpl
         {
             [NetJs.Template("{this}.length")]
             get;
@@ -228,7 +232,6 @@ namespace System
                 NetJs.Script.Write("return rref");
                 throw null!;
             }
-
         }
 
         [NetJs.MemberReplace(nameof(GetRawStringDataAsUInt16))]
@@ -282,9 +285,11 @@ namespace System
             return RuntimeHelpers.CreateArrayT<char>(array.Slice(startIndex, length).As<char[]>());
         }
 
+        [NetJs.Template("window.String.fromCharCode({code})")]
+        public static extern string LocalNativeFromCharCode(int code);
         public static string operator +(string a, char b)
         {
-            return a + NativeFromCharCode(b);
+            return a + LocalNativeFromCharCode(b);
         }
     }
 }

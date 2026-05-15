@@ -5,12 +5,11 @@ namespace System
     [NetJs.StaticCallConvention]
     public readonly partial struct Int32_Partial
     {
-        [NetJs.MemberReplace(nameof(GetHashCode))]
-        [NetJs.Template("{global.}" + NetJs.Constants.GetHashCodeName + "({this:!super})")] //make sure we dont pass super keyword in here. JS doesnt support it
-        public int GetHashCodeImplChar()
-        {
-            return this.As<int>();
-        }
+        //[NetJs.MemberReplace(nameof(GetHashCode))]
+        //public int GetHashCodeImplInt32()
+        //{
+        //    return NetJs.Script.Write<int>("m_value");
+        //}
 
         readonly int _m_value;
         [NetJs.MemberReplace("m_value")]

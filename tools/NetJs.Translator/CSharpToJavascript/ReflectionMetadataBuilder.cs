@@ -84,6 +84,8 @@ namespace NetJs.Translator.CSharpToJavascript
                         t == "System.UInt16" ? KnownTypeHandle.SystemUInt16 :
                         t == "System.Int32" ? KnownTypeHandle.SystemInt32 :
                         t == "System.UInt32" ? KnownTypeHandle.SystemUint32 :
+                        t == "System.IntPtr" ? KnownTypeHandle.SystemIntPtr :
+                        t == "System.UIntPtr" ? KnownTypeHandle.SystemUintPtr :
                         t == "System.Int64" ? KnownTypeHandle.SystemInt64 :
                         t == "System.UInt64" ? KnownTypeHandle.SystemUint64 :
                         t == "System.Float" ? KnownTypeHandle.SystemFloat :
@@ -100,7 +102,7 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 //throw new InvalidOperationException("An AssemblyHandleAttribute must be defined on all assembly");
             }
-            assemblyHandle = (uint)(args?.ElementAtOrDefault(0) ?? (isSystemPrivateCoreLib ? 1 : (uint)new Random().Next(32768, 65536)));
+            assemblyHandle = (uint)(args?.ElementAtOrDefault(0).Value ?? (isSystemPrivateCoreLib ? 1 : (uint)new Random().Next(32768, 65536)));
             //uint assemblyHandle = (uint)args[0];
             var types = GetAllTypes(assembly.GlobalNamespace).Concat(assembly.GlobalNamespace
                     .GetNamespaceMembers()

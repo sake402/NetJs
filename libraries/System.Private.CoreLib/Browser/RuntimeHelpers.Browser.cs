@@ -82,11 +82,14 @@ namespace System.Runtime.CompilerServices
             //int? a = 1;
             //var s = Global.IfNotNull(a, aa=>aa.ToString());
             //return new RefOrPointer<T?>((i) => getValue(), (v, i) => Global.IfNotNull(setValue, t => t.Invoke(v)));
-            return new Ref<T>((i) => getValue(), (v, i) =>
+            Ref<T> rref = default!;
+            rref = new Ref<T>((i) => rref!._object = getValue(), (v, i) =>
             {
                 if (setValue != null)
                     setValue(v);
             });
+            rref._object = getValue();
+            return rref;
         }
 
         public static Ref<T?> CreateArrayReference<T>(T[] array, int? index = null, bool _checked = false)

@@ -22,7 +22,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Ref
                 return false;
             if (node.IsReadOnlyOperation())
             {
-                var symbol = visitor.Global.TryGetTypeSymbol(node, visitor);
+                var symbol = visitor.Global.TryGetSymbol(node, visitor);
                 var refKind = symbol?.GetRefKind();
                 if (refKind != null && refKind != RefKind.None)
                 {
@@ -39,7 +39,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Ref
                             }
                             else
                             {
-                                var rsymbolType = visitor.Global.TryGetTypeSymbol(right, visitor);
+                                var rsymbolType = visitor.Global.TryGetSymbol(right, visitor);
                                 rightRefKind = rsymbolType?.GetRefKind();
                             }
                             if (rightRefKind != null && rightRefKind != RefKind.None)

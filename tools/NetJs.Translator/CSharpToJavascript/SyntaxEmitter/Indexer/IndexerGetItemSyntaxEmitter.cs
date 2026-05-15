@@ -23,7 +23,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Indexer
                 if (expression != null)
                 {
                     var arguments = (node as ElementAccessExpressionSyntax)?.ArgumentList.Arguments ?? (node as ElementBindingExpressionSyntax)!.ArgumentList.Arguments;
-                    var lhsSymbol = visitor.Global.GetTypeSymbol(expression, visitor);
+                    var lhsSymbol = visitor.Global.GetSymbol(expression, visitor);
                     CodeNode cExpression = expression;
                     if (conditionalExpression != null && visitor.ConditionalAccessUseIfNotNull(conditionalExpression, out _))
                     {

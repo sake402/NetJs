@@ -11,12 +11,8 @@ namespace NetJs.Translator.CSharpToJavascript
     {
         ILLinkerAssembly.Type.Member GetLinkerMemeberSubstitution(string signature)
         {
-            if (signature == "System.Runtime.Intrinsics.Wasm.WasmBase.IsSupported")
-            {
-
-            }
             var members = Symbols.LinkerSubstitutions.SelectMany(s => s.Types.SelectMany(t => t.Members.Select(m => (t, m))));
-            var matchingMember = members.FirstOrDefault(m => m.t.NormalizedFullName + "." + m.m.NormalizedSignature == signature).m;
+            var matchingMember = members.LastOrDefault(m => m.t.NormalizedFullName + "." + m.m.NormalizedSignature == signature).m;
             return matchingMember;
         }
 
@@ -25,7 +21,7 @@ namespace NetJs.Translator.CSharpToJavascript
             var cValue = EvaluateConstant(expression, visitor);
             if (cValue.HasValue)
                 return cValue;
-            var symbol = TryGetTypeSymbol(expression, visitor);
+            var symbol = TryGetSymbol(expression, visitor);
             if (symbol != null)
             {
                 var template = symbol.GetTemplateAttribute(this);

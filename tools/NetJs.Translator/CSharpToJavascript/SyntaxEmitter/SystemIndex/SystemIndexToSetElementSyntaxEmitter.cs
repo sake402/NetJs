@@ -1,6 +1,8 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.ComponentModel.Design;
+using System.Reflection;
 
 namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.SystemIndex
 {
@@ -23,19 +25,21 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.SystemIndex
             }
             if (node.Left is ElementAccessExpressionSyntax elementAccess && IsEqualToken())
             {
-                var targetType = visitor.Global.ResolveSymbol(visitor.GetExpressionReturnSymbol(elementAccess.Expression), visitor)?.GetTypeSymbol();
+                var targetType = visitor.Global.TryGetTypeSymbol(elementAccess.Expression, visitor);
                 if (targetType != null)
                 {
                     if (elementAccess.ArgumentList.Arguments.Count == 1)
                     {
                         var arg = elementAccess.ArgumentList.Arguments[0];
-                        var argType = visitor.Global.ResolveSymbol(visitor.GetExpressionReturnSymbol(arg), visitor)?.GetTypeSymbol();
+                        var argType = visitor.Global.TryGetTypeSymbol(arg, visitor);
                         if (argType != null)
                         {
-                            var indexType = (ITypeSymbol)visitor.Global.GetTypeSymbol("System.Index", visitor);
-                            if (argType.Equals(indexType, SymbolEqualityComparer.Default))
+                            //var indexType = (ITypeSymbol)visitor.Global.GetTypeSymbol("System.Index", visitor);
+                            if (argType.Equals(visitor.Global.SystemIndex, SymbolEqualityComparer.Default))
                             {
-                                var sint = (ITypeSymbol)visitor.Global.GetTypeSymbol("System.Int32", visitor);
+                                var prefixIndex = arg.Expression as PrefixUnaryExpressionSyntax;
+                                var identifierIndex = arg.Expression as IdentifierNameSyntax;
+                                //var sint = (ITypeSymbol)visitor.Global.GetTypeSymbol("System.Int32", visitor);
                                 var indexSetMethod = ((IPropertySymbol)targetType
                                     .GetMembers("this[]", visitor.Global)
                                     //TODO: First? What if we have more that matched the predicate
@@ -44,114 +48,165 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.SystemIndex
                                     .SetMethod;
                                 if (indexSetMethod != null)
                                 {
-                                    visitor.WrapStatementsInExpression(node, () =>
+                                    var lenGetProperty = ((IPropertySymbol)(targetType.GetMembers("Length", visitor.Global).SingleOrDefault() ?? targetType.GetMembers("Count", visitor.Global).Single()));
+                                    if (lenGetProperty != null)
                                     {
-                                        var rhsType = visitor.Global.ResolveSymbol(visitor.GetExpressionReturnSymbol(node.Right), visitor)!.GetTypeSymbol();
-
-                                        const string sourceName = "$s";
-                                        const string indexName = "$i";
-                                        const string rhsName = "$r";
-
-                                        visitor.CurrentTypeWriter.Write(node, $"var {sourceName} = ", true);
-                                        visitor.Visit(elementAccess.Expression);
-                                        visitor.CurrentTypeWriter.WriteLine(node, $";");
-
-                                        visitor.CurrentTypeWriter.Write(node, $"var {indexName} = ", true);
-                                        visitor.Visit(arg);
-                                        visitor.CurrentTypeWriter.Write(node, ".");
-                                        visitor.WriteMemberName(node, indexType, "GetOffset");
-                                        var member = targetType.GetMembers("Length", visitor.Global).SingleOrDefault() ?? targetType.GetMembers("Count", visitor.Global).Single();
-                                        bool isStaticCall = member.IsStaticCallConvention(visitor.Global);
-                                        if (!isStaticCall)
+                                        bool isStaticCall = lenGetProperty.IsStaticCallConvention(visitor.Global);
+                                        bool hasTemplate = lenGetProperty.GetMethod?.GetTemplateAttribute(visitor.Global) != null;
+                                        //if (true)
+                                        //{
+                                        CodeNode expressionNode;
+                                        if (elementAccess.Expression.IsKind(SyntaxKind.IdentifierName))
                                         {
-                                            visitor.CurrentTypeWriter.Write(node, $"({sourceName}.");
+                                            expressionNode = elementAccess.Expression;
                                         }
-                                        visitor.WriteMemberName(node, targetType, member, _this: isStaticCall ? new CodeNode(() =>
+                                        else
                                         {
-                                            visitor.CurrentTypeWriter.Write(node, $"({sourceName}");
-                                        }) : null);
-                                        visitor.CurrentTypeWriter.WriteLine(node, $");");
-
-                                        visitor.CurrentTypeWriter.Write(node, $"var {rhsName} = ", true);
-                                        if (!node.OperatorToken.IsKind(SyntaxKind.EqualsToken))
-                                        {
-                                            visitor.Visit(node.Left);
-                                            visitor.CurrentTypeWriter.Write(node, " ");
-                                            visitor.CurrentTypeWriter.Write(node, node.OperatorToken.ValueText.Substring(0, node.OperatorToken.ValueText.Length - 1));
-                                            visitor.CurrentTypeWriter.Write(node, " ");
+                                            var lhsVariable = $"$t{++visitor.CurrentTypeWriter.CurrentClosure.NameManglingSeed}";
+                                            visitor.CurrentTypeWriter.InsertAbove(node, () =>
+                                            {
+                                                visitor.CurrentTypeWriter.Write(node, "let ");
+                                                visitor.CurrentTypeWriter.Write(node, lhsVariable);
+                                                visitor.CurrentTypeWriter.Write(node, " = ");
+                                                visitor.Visit(elementAccess.Expression);
+                                                visitor.CurrentTypeWriter.Write(node, ";");
+                                            }, true);
+                                            expressionNode = new CodeNode(() =>
+                                            {
+                                                visitor.CurrentTypeWriter.Write(node, lhsVariable);
+                                            });
                                         }
-                                        visitor.Visit(node.Right);
-                                        visitor.CurrentTypeWriter.WriteLine(node, $";");
+                                        visitor.WriteMethodInvocation(node, indexSetMethod, null, [new CodeNode(() => {
+                                            //if (!isStaticCall && !hasTemplate)
+                                            //{
+                                            //    visitor.VisitNode(expressionNode);
+                                            //    visitor.CurrentTypeWriter.Write(node, ".");
+                                            //}
+                                            if (prefixIndex!= null)
+                                            {
+                                                visitor.WriteMemberAccess(node, expressionNode,targetType, null, lenGetProperty);
+                                                //visitor.WriteMemberName(node, targetType, lenGetProperty, thisExpression: expressionNode, isGet:true);
+                                                visitor.CurrentTypeWriter.Write(node, " - ");
+                                                visitor.Visit(prefixIndex.Operand);
+                                            }
+                                            else
+                                            {
+                                                visitor.Visit(identifierIndex);
+                                            }
+                                        })], expressionNode, targetType, null, false, suffixArguments: node.Right);
+                                        //}
+                                        //else
+                                        //{
+                                        //    visitor.WrapStatementsInExpression(node, () =>
+                                        //    {
+                                        //        var rhsType = visitor.Global.GetTypeSymbol(node.Right, visitor);
 
-                                        var source = SyntaxFactory.IdentifierName(sourceName);
-                                        var index = SyntaxFactory.IdentifierName(indexName);
-                                        var rhs = SyntaxFactory.IdentifierName(rhsName);
-                                        var disposeSource = visitor.CurrentClosure.DefineIdentifierType(sourceName, CodeSymbol.From(new GeneratedLocalSymbol(targetType, sourceName)));
-                                        var disposeIndex = visitor.CurrentClosure.DefineIdentifierType(indexName, CodeSymbol.From(new GeneratedLocalSymbol(sint, indexName)));
-                                        var disposeRhs = visitor.CurrentClosure.DefineIdentifierType(rhsName, CodeSymbol.From(new GeneratedLocalSymbol(rhsType, rhsName)));
-                                        visitor.CurrentTypeWriter.Write(node, $"", true);
-                                        visitor.WriteMethodInvocation(node, indexSetMethod, null, [index], source, targetType, null, false, rhs);
-                                        visitor.CurrentTypeWriter.WriteLine(node, $";");
-                                        visitor.CurrentTypeWriter.WriteLine(node, $"return {rhsName};", true);
-                                        disposeSource.Dispose();
-                                        disposeIndex.Dispose();
-                                        disposeRhs.Dispose();
-                                    });
+                                        //        const string sourceName = "$s";
+                                        //        const string indexName = "$i";
+                                        //        const string rhsName = "$r";
 
-                                    //var rhsType = visitor.Global.ResolveSymbol(visitor.GetExpressionReturnSymbol(node.Right), visitor)!.GetTypeSymbol();
+                                        //        visitor.CurrentTypeWriter.Write(node, $"var {sourceName} = ", true);
+                                        //        visitor.Visit(elementAccess.Expression);
+                                        //        visitor.CurrentTypeWriter.WriteLine(node, $";");
 
-                                    //const string sourceName = "$s";
-                                    //const string indexName = "$i";
-                                    //const string rhsName = "$r";
+                                        //        visitor.CurrentTypeWriter.Write(node, $"var {indexName} = ", true);
+                                        //        visitor.Visit(arg);
+                                        //        visitor.CurrentTypeWriter.Write(node, ".");
+                                        //        visitor.WriteMemberName(node, visitor.Global.SystemIndex, "GetOffset");
+                                        //        var member = targetType.GetMembers("Length", visitor.Global).SingleOrDefault() ?? targetType.GetMembers("Count", visitor.Global).Single();
+                                        //        bool isStaticCall = member.IsStaticCallConvention(visitor.Global);
+                                        //        if (!isStaticCall)
+                                        //        {
+                                        //            visitor.CurrentTypeWriter.Write(node, $"({sourceName}.");
+                                        //        }
+                                        //        visitor.WriteMemberName(node, targetType, member, thisExpression: isStaticCall ? new CodeNode(() =>
+                                        //        {
+                                        //            visitor.CurrentTypeWriter.Write(node, $"({sourceName}");
+                                        //        }) : null);
+                                        //        visitor.CurrentTypeWriter.WriteLine(node, $");");
 
-                                    //visitor.CurrentTypeWriter.WriteLine(node, $"/*{node}*/ {visitor.Global.GlobalName}.{Constants.Expression}(function()");
-                                    //visitor.CurrentTypeWriter.WriteLine(node, "{", true);
-                                    //visitor.CurrentTypeWriter.Write(node, $"var {sourceName} = ", true);
-                                    //visitor.Visit(elementAccess.Expression);
-                                    //visitor.CurrentTypeWriter.WriteLine(node, $";");
+                                        //        visitor.CurrentTypeWriter.Write(node, $"var {rhsName} = ", true);
+                                        //        if (!node.OperatorToken.IsKind(SyntaxKind.EqualsToken))
+                                        //        {
+                                        //            visitor.Visit(node.Left);
+                                        //            visitor.CurrentTypeWriter.Write(node, " ");
+                                        //            visitor.CurrentTypeWriter.Write(node, node.OperatorToken.ValueText.Substring(0, node.OperatorToken.ValueText.Length - 1));
+                                        //            visitor.CurrentTypeWriter.Write(node, " ");
+                                        //        }
+                                        //        visitor.Visit(node.Right);
+                                        //        visitor.CurrentTypeWriter.WriteLine(node, $";");
 
-                                    //visitor.CurrentTypeWriter.Write(node, $"var {indexName} = ", true);
-                                    //visitor.Visit(arg);
-                                    //visitor.CurrentTypeWriter.Write(node, ".");
-                                    //visitor.WriteMemberName(node, indexType, "GetOffset");
-                                    //var member = targetType.GetMembers("Length", visitor.Global).SingleOrDefault() ?? targetType.GetMembers("Count", visitor.Global).Single();
-                                    //bool isStaticCall = member.IsStaticCallConvention(visitor.Global);
-                                    //if (!isStaticCall)
-                                    //{
-                                    //    visitor.CurrentTypeWriter.Write(node, $"({sourceName}.");
-                                    //}
-                                    //visitor.WriteMemberName(node, targetType, member, _this: isStaticCall ? new CodeNode(() =>
-                                    //{
-                                    //    visitor.CurrentTypeWriter.Write(node, $"({sourceName}");
-                                    //}) : null);
-                                    //visitor.CurrentTypeWriter.WriteLine(node, $");");
+                                        //        var source = SyntaxFactory.IdentifierName(sourceName);
+                                        //        var index = SyntaxFactory.IdentifierName(indexName);
+                                        //        var rhs = SyntaxFactory.IdentifierName(rhsName);
+                                        //        var disposeSource = visitor.CurrentClosure.DefineIdentifierType(sourceName, CodeSymbol.From(new GeneratedLocalSymbol(targetType, sourceName)));
+                                        //        var disposeIndex = visitor.CurrentClosure.DefineIdentifierType(indexName, CodeSymbol.From(new GeneratedLocalSymbol(visitor.Global.SystemInt32, indexName)));
+                                        //        var disposeRhs = visitor.CurrentClosure.DefineIdentifierType(rhsName, CodeSymbol.From(new GeneratedLocalSymbol(rhsType, rhsName)));
+                                        //        visitor.CurrentTypeWriter.Write(node, $"", true);
+                                        //        visitor.WriteMethodInvocation(node, indexSetMethod, null, [index], source, targetType, null, false, rhs);
+                                        //        visitor.CurrentTypeWriter.WriteLine(node, $";");
+                                        //        visitor.CurrentTypeWriter.WriteLine(node, $"return {rhsName};", true);
+                                        //        disposeSource.Dispose();
+                                        //        disposeIndex.Dispose();
+                                        //        disposeRhs.Dispose();
+                                        //    });
 
-                                    //visitor.CurrentTypeWriter.Write(node, $"var {rhsName} = ", true);
-                                    //if (!node.OperatorToken.IsKind(SyntaxKind.EqualsToken))
-                                    //{
-                                    //    visitor.Visit(node.Left);
-                                    //    visitor.CurrentTypeWriter.Write(node, " ");
-                                    //    visitor.CurrentTypeWriter.Write(node, node.OperatorToken.ValueText.Substring(0, node.OperatorToken.ValueText.Length - 1));
-                                    //    visitor.CurrentTypeWriter.Write(node, " ");
-                                    //}
-                                    //visitor.Visit(node.Right);
-                                    //visitor.CurrentTypeWriter.WriteLine(node, $";");
+                                        //    //var rhsType = visitor.Global.ResolveSymbol(visitor.GetExpressionReturnSymbol(node.Right), visitor)!.GetTypeSymbol();
 
-                                    //var source = SyntaxFactory.IdentifierName(sourceName);
-                                    //var index = SyntaxFactory.IdentifierName(indexName);
-                                    //var rhs = SyntaxFactory.IdentifierName(rhsName);
-                                    //var disposeSource = visitor.CurrentClosure.DefineIdentifierType(sourceName, CodeSymbol.From(new GeneratedLocalSymbol(targetType, sourceName)));
-                                    //var disposeIndex = visitor.CurrentClosure.DefineIdentifierType(indexName, CodeSymbol.From(new GeneratedLocalSymbol(sint, indexName)));
-                                    //var disposeRhs = visitor.CurrentClosure.DefineIdentifierType(rhsName, CodeSymbol.From(new GeneratedLocalSymbol(rhsType, rhsName)));
-                                    //visitor.CurrentTypeWriter.Write(node, $"", true);
-                                    //visitor.WriteMethodInvocation(node, indexSetMethod, null, [index], source, targetType, null, false, rhs);
-                                    //visitor.CurrentTypeWriter.WriteLine(node, $";");
-                                    //visitor.CurrentTypeWriter.WriteLine(node, $"return {rhsName};", true);
-                                    //disposeSource.Dispose();
-                                    //disposeIndex.Dispose();
-                                    //disposeRhs.Dispose();
-                                    //visitor.CurrentTypeWriter.Write(node, "}.bind(this))", true);
-                                    return true;
+                                        //    //const string sourceName = "$s";
+                                        //    //const string indexName = "$i";
+                                        //    //const string rhsName = "$r";
+
+                                        //    //visitor.CurrentTypeWriter.WriteLine(node, $"/*{node}*/ {visitor.Global.GlobalName}.{Constants.Expression}(function()");
+                                        //    //visitor.CurrentTypeWriter.WriteLine(node, "{", true);
+                                        //    //visitor.CurrentTypeWriter.Write(node, $"var {sourceName} = ", true);
+                                        //    //visitor.Visit(elementAccess.Expression);
+                                        //    //visitor.CurrentTypeWriter.WriteLine(node, $";");
+
+                                        //    //visitor.CurrentTypeWriter.Write(node, $"var {indexName} = ", true);
+                                        //    //visitor.Visit(arg);
+                                        //    //visitor.CurrentTypeWriter.Write(node, ".");
+                                        //    //visitor.WriteMemberName(node, indexType, "GetOffset");
+                                        //    //var member = targetType.GetMembers("Length", visitor.Global).SingleOrDefault() ?? targetType.GetMembers("Count", visitor.Global).Single();
+                                        //    //bool isStaticCall = member.IsStaticCallConvention(visitor.Global);
+                                        //    //if (!isStaticCall)
+                                        //    //{
+                                        //    //    visitor.CurrentTypeWriter.Write(node, $"({sourceName}.");
+                                        //    //}
+                                        //    //visitor.WriteMemberName(node, targetType, member, _this: isStaticCall ? new CodeNode(() =>
+                                        //    //{
+                                        //    //    visitor.CurrentTypeWriter.Write(node, $"({sourceName}");
+                                        //    //}) : null);
+                                        //    //visitor.CurrentTypeWriter.WriteLine(node, $");");
+
+                                        //    //visitor.CurrentTypeWriter.Write(node, $"var {rhsName} = ", true);
+                                        //    //if (!node.OperatorToken.IsKind(SyntaxKind.EqualsToken))
+                                        //    //{
+                                        //    //    visitor.Visit(node.Left);
+                                        //    //    visitor.CurrentTypeWriter.Write(node, " ");
+                                        //    //    visitor.CurrentTypeWriter.Write(node, node.OperatorToken.ValueText.Substring(0, node.OperatorToken.ValueText.Length - 1));
+                                        //    //    visitor.CurrentTypeWriter.Write(node, " ");
+                                        //    //}
+                                        //    //visitor.Visit(node.Right);
+                                        //    //visitor.CurrentTypeWriter.WriteLine(node, $";");
+
+                                        //    //var source = SyntaxFactory.IdentifierName(sourceName);
+                                        //    //var index = SyntaxFactory.IdentifierName(indexName);
+                                        //    //var rhs = SyntaxFactory.IdentifierName(rhsName);
+                                        //    //var disposeSource = visitor.CurrentClosure.DefineIdentifierType(sourceName, CodeSymbol.From(new GeneratedLocalSymbol(targetType, sourceName)));
+                                        //    //var disposeIndex = visitor.CurrentClosure.DefineIdentifierType(indexName, CodeSymbol.From(new GeneratedLocalSymbol(sint, indexName)));
+                                        //    //var disposeRhs = visitor.CurrentClosure.DefineIdentifierType(rhsName, CodeSymbol.From(new GeneratedLocalSymbol(rhsType, rhsName)));
+                                        //    //visitor.CurrentTypeWriter.Write(node, $"", true);
+                                        //    //visitor.WriteMethodInvocation(node, indexSetMethod, null, [index], source, targetType, null, false, rhs);
+                                        //    //visitor.CurrentTypeWriter.WriteLine(node, $";");
+                                        //    //visitor.CurrentTypeWriter.WriteLine(node, $"return {rhsName};", true);
+                                        //    //disposeSource.Dispose();
+                                        //    //disposeIndex.Dispose();
+                                        //    //disposeRhs.Dispose();
+                                        //    //visitor.CurrentTypeWriter.Write(node, "}.bind(this))", true);
+                                        //}
+                                        return true;
+                                    }
                                 }
                             }
                         }

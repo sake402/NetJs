@@ -5,12 +5,12 @@ namespace System
     [NetJs.StaticCallConvention]
     public readonly partial struct IntPtr_Partial
     {
-        [NetJs.MemberReplace(nameof(GetHashCode))]
-        [NetJs.Template("{global.}" + NetJs.Constants.GetHashCodeName + "({this:!super})")] //make sure we dont pass super keyword in here. JS doesnt support it
-        public int GetHashCodeImplChar()
-        {
-            return this.As<int>();
-        }
+        //[NetJs.MemberReplace(nameof(GetHashCode))]
+        //[NetJs.Template("{global.}" + NetJs.Constants.GetHashCodeName + "({this:!super})")] //make sure we dont pass super keyword in here. JS doesnt support it
+        //public int GetHashCodeImplChar()
+        //{
+        //    return this.As<int>();
+        //}
 
         readonly nint _m_value;
         [NetJs.MemberReplace("_value")]

@@ -47,9 +47,15 @@ namespace NetJs.Translator.CSharpToJavascript
         
         public override void VisitWhereClause(WhereClauseSyntax node)
         {
-            CurrentTypeWriter.Write(node, "if (", true);
+            var from = node.FindClosestParent<QueryExpressionSyntax>()!.FromClause;
+            CurrentTypeWriter.Write(node, "Enumerable.Where(");
+            VisitNode(from.Expression);
+            CurrentTypeWriter.Write(node, ", ");
             Visit(node.Condition);
             CurrentTypeWriter.WriteLine(node, ")");
+            //CurrentTypeWriter.Write(node, "if (", true);
+            //Visit(node.Condition);
+            //CurrentTypeWriter.WriteLine(node, ")");
             //base.VisitWhereClause(node);
         }
 
@@ -72,5 +78,15 @@ namespace NetJs.Translator.CSharpToJavascript
             //base.VisitQueryBody(node);
         }
 
+        public override void VisitOrderByClause(OrderByClauseSyntax node)
+        {
+            var from = node.FindClosestParent<QueryExpressionSyntax>()!.FromClause;
+            CurrentTypeWriter.Write(node, "Enumerable.OrderBy(");
+            VisitNode(from.Expression);
+            CurrentTypeWriter.Write(node, ", ");
+            //Visit(node.Condition);
+            CurrentTypeWriter.WriteLine(node, ")");
+            //base.VisitOrderByClause(node);
+        }
     }
 }

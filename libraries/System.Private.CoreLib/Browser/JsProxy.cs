@@ -5,10 +5,11 @@ using System.Reflection;
 namespace System
 {
     [NetJs.Reflectable(false)]
+    [NetJs.External]
     public interface IJsProxyHandler
     {
-        [Name("$isProxy")]
-        bool IsProxy => true;
+        //[Name("$isProxy")]
+        //bool IsProxy => true;
         [Name("get")]
         public object? Get(object target, string property, object receiver);
         [Name("set")]
@@ -18,6 +19,7 @@ namespace System
     [NetJs.Reflectable(false)]
     public static class JSProxy
     {
+        [NetJs.IgnoreGeneric]
         public static T Create<T>(IJsProxyHandler handler)
         {
             object? proxy = null;

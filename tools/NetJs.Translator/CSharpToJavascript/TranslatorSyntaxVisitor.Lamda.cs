@@ -22,7 +22,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 int ix = 0;
                 foreach (var parameter in lamdaParameters)
                 {
-                    var localSymbol = _global.TryGetTypeSymbol(parameter, this/*, out _, out _*/);
+                    var localSymbol = _global.TryGetSymbol(parameter, this/*, out _, out _*/);
                     if (localSymbol != null)
                     {
                         CurrentClosure.DefineIdentifierType(parameter.Identifier.Text, CodeSymbol.From(localSymbol));
@@ -46,7 +46,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     ix++;
                 }
             }
-            var parameters = string.Join(", ", lamdaParameters?.Select(p => $"/*{p.Type?.ToFullString().Trim() ?? _global.ResolveSymbol(GetIdentifierTypeInScope(p.Identifier.Text), this/*, out _, out _*/)?.GetTypeSymbol()?.Name}*/ {p.Identifier.Text}") ?? Enumerable.Empty<string>());
+            var parameters = string.Join(", ", lamdaParameters?.Select((p, i) => $"/*{p.Type?.ToString().Trim() ?? _global.TryGetSymbol(p.Identifier.Text, this)?.Name}*/ {(p.Identifier.Text == "_" ? $"_{i}" : p.Identifier.Text)}") ?? Enumerable.Empty<string>());
             CurrentTypeWriter.WriteLine(node, $"/*{modifiers}*/ ({parameters}) =>");
             CurrentTypeWriter.WriteLine(node, "{", true);
             var child = node.ChildNodes().Where(t => !t.IsKind(SyntaxKind.ParameterList)/* is not ParameterListSyntax*/ && !t.IsKind(SyntaxKind.Parameter)/* is not ParameterSyntax*/);

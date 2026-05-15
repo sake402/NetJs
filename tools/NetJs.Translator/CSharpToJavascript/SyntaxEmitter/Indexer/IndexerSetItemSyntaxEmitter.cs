@@ -38,19 +38,19 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Indexer
                 if (expression != null)
                 {
                     var arguments = (node.Left as ElementAccessExpressionSyntax)?.ArgumentList.Arguments ?? (node.Left as ElementBindingExpressionSyntax)!.ArgumentList.Arguments;
-                    var lhsSymbol = visitor.Global.GetTypeSymbol(expression, visitor);
+                    var lhsSymbol = visitor.Global.GetSymbol(expression, visitor);
 
-                    var rhsType = visitor.GetExpressionBoundTarget(node.Right).TypeSyntaxOrSymbol as ISymbol;
-                    if (rhsType == null)
-                    {
-                        rhsType = visitor.Global.ResolveSymbol(visitor.GetExpressionReturnSymbol(node.Right), visitor/*, out _, out _*/);
-                    }
-                    var lhsType = visitor.GetExpressionBoundTarget(node.Left).TypeSyntaxOrSymbol as ISymbol;
-                    if (lhsType == null)
-                    {
-                        lhsType = visitor.Global.ResolveSymbol(visitor.GetExpressionReturnSymbol(node.Left), visitor/*, out _, out _*/);
-                    }
-                    var assignmentType = rhsType?.GetTypeSymbol() ?? lhsType?.GetTypeSymbol();
+                    var rhsType = visitor.Global.TryGetTypeSymbol(node.Right, visitor);// GetExpressionBoundTarget(node.Right).TypeSyntaxOrSymbol as ISymbol;
+                    //if (rhsType == null)
+                    //{
+                    //    rhsType = visitor.Global.ResolveSymbol(visitor.GetExpressionReturnSymbol(node.Right), visitor/*, out _, out _*/);
+                    //}
+                    var lhsType = visitor.Global.TryGetTypeSymbol(node.Left, visitor);// GetExpressionBoundTarget(node.Left).TypeSyntaxOrSymbol as ISymbol;
+                    //if (lhsType == null)
+                    //{
+                    //    lhsType = visitor.Global.ResolveSymbol(visitor.GetExpressionReturnSymbol(node.Left), visitor/*, out _, out _*/);
+                    //}
+                    var assignmentType = rhsType ?? lhsType;
 
                     //var sourceDeclaration = visitor.GetExpressionReturnSymbol(expression);
                     //var sourceType = visitor.Global.ResolveSymbol(sourceDeclaration, visitor/*, out _, out _*/)?.GetTypeSymbol();

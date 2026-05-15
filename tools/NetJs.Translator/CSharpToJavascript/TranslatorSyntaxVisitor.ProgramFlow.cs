@@ -262,7 +262,7 @@ namespace NetJs.Translator.CSharpToJavascript
             var method = node.FindClosestParent<MethodDeclarationSyntax>();
             if (method != null)
             {
-                var methodSymbol = (IMethodSymbol)_global.GetTypeSymbol(method, this/*, out _, out _*/);
+                var methodSymbol = (IMethodSymbol)_global.GetSymbol(method, this/*, out _, out _*/);
                 returnType = methodSymbol;
             }
             else
@@ -270,7 +270,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 var property = node.FindClosestParent<PropertyDeclarationSyntax>();
                 if (property != null)
                 {
-                    IPropertySymbol? propertySymbol = (IPropertySymbol)_global.GetTypeSymbol(property, this/*, out _, out _*/);
+                    IPropertySymbol? propertySymbol = (IPropertySymbol)_global.GetSymbol(property, this/*, out _, out _*/);
                     returnType = propertySymbol;
                 }
                 else
@@ -278,7 +278,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     var indexer = node.FindClosestParent<IndexerDeclarationSyntax>();
                     if (indexer != null)
                     {
-                        IPropertySymbol? propertySymbol = (IPropertySymbol)_global.GetTypeSymbol(indexer, this/*, out _, out _*/);
+                        IPropertySymbol? propertySymbol = (IPropertySymbol)_global.GetSymbol(indexer, this/*, out _, out _*/);
                         returnType = propertySymbol;
                     }
                 }
@@ -295,7 +295,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 //We try to get the required return type from this expression to make sure we return the right type
                 var rhsType = expression.IsT0 ? _global.ResolveSymbol(GetExpressionReturnSymbol(expression.AsT0), this/*, out _, out _*/) : null;
                 if (rhsType == null)
-                    rhsType = returnType?.GetTypeSymbol();
+                    rhsType = returnType != null ? _global.GetTypeSymbol(returnType) : null;
                 returnType ??= rhsType;
                 WriteVariableAssignment(node, null, returnType, null, expression, rhsType);
             }
@@ -303,7 +303,7 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 //Must always return this in a constructor overload
                 var inConstructor = node.FindClosestParent<ConstructorDeclarationSyntax>();
-                if (inConstructor!= null)
+                if (inConstructor != null)
                 {
                     CurrentTypeWriter.Write(node, "this");
                 }

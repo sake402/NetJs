@@ -19,9 +19,15 @@ namespace NetJs.Translator
     public static class Translator
     {
         //const string GeneratedFolderName = "__dotnetJs";
-        static string TempFolder = Path.GetTempPath() + "NetJs\\";
-        public static void Build(IProject project, IProjectOutputProvider output, IEnumerable<IIncrementalGenerator>? sourceGenerators = null)
+        public static void Build(
+            IProject project,
+            IProjectOutputProvider output,
+            IEnumerable<IIncrementalGenerator>? sourceGenerators = null,
+            TextWriter? logTo = null,
+            string? tempFolder = null)
         {
+            tempFolder ??= Path.GetTempPath() + "NetJs\\";
+            logTo.LogTo();
             Random random = new Random();
             var compiler = new CodeCompiler();
             //var dependencies = project.Imports.Select(i => i.ImportedProject);
@@ -262,7 +268,7 @@ namespace {project.GetNamespace()}
             //{
             //    syntaxTrees = compiler.GetSyntaxTrees(project, csFiles.ToArray(), null);
             //});
-            SyntaxTree[] replacements = new SyntaxTree[syntaxTrees.Count()];
+            (string FilePath, string Source)[] replacements = new (string, string)[syntaxTrees.Count()];
             $"Rewriting".Profile(() =>
             {
                 var partialClassGroupings = syntaxTrees
@@ -275,23 +281,42 @@ namespace {project.GetNamespace()}
                     var newTree = (((CSharpSyntaxNode)tree.tree.GetRoot()).Accept(visitor))
                     !.SyntaxTree
                     .WithFilePath(tree.tree.FilePath);
-                    replacements[tree.i] = newTree;
+                    var typesInTree = newTree.GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>();
+                    var sourceCode = newTree.GetText().ToString();
+                    foreach (var t in typesInTree)
+                    {
+                        var name = t.CreateFullMemberName();
+                        var partials = partialClassGroupings[name];
+                        foreach (var partial in partials)
+                        {
+                            if (partial.HasAnyAttribute([typeof(VerbatimReplacementAttribute).FullName], out var atts))
+                            {
+                                var att = atts.Single().Value;
+                                foreach (var a in att)
+                                {
+                                    var pattern = (a.ArgumentList!.Arguments[0].Expression as LiteralExpressionSyntax)?.Token.ValueText;
+                                    var replace = (a.ArgumentList!.Arguments[1].Expression as LiteralExpressionSyntax)?.Token.ValueText;
+                                    if (pattern != null && replace != null)
+                                    {
+                                        sourceCode = sourceCode.Replace(pattern, replace);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    var path = project.DirectoryPath.GetRelativePath(newTree.FilePath);
+                    //var tempFile = Path.Combine(TempFolder, path);
+                    var tempFile = Path.Combine(tempFolder, project.GetName(), Path.GetFileName(newTree.FilePath));
+                    var directory = Path.GetDirectoryName(tempFile);
+                    if (!Directory.Exists(directory))
+                        Directory.CreateDirectory(directory);
+                    File.WriteAllText(tempFile, sourceCode);
+                    replacements[tree.i] = (tempFile, sourceCode);
                 });
             });
             $"Rebuilding Syntax Tree".Profile(() =>
             {
-                var newCodes = /*csCompilation.SyntaxTrees*/replacements.Select(s => (s.FilePath, s.GetText().ToString())).ToList();
-                foreach (var cc in newCodes)
-                {
-                    var path = project.DirectoryPath.GetRelativePath(cc.FilePath);
-                    //var tempFile = Path.Combine(TempFolder, path);
-                    var tempFile = Path.Combine(TempFolder, project.GetName(), Path.GetFileName(cc.FilePath));
-                    var directory = Path.GetDirectoryName(tempFile);
-                    if (!Directory.Exists(directory))
-                        Directory.CreateDirectory(directory);
-                    File.WriteAllText(tempFile, cc.Item2);
-                }
-                csCompilation = compiler.GenerateCode(project, newCodes.Select(s => s.FilePath).ToArray(), newCodes.Select(s => s.Item2).ToArray(), out references, out symbolFiles);
+                csCompilation = compiler.GenerateCode(project, replacements.Select(s => s.FilePath).ToArray(), replacements.Select(s => s.Source).ToArray(), out references, out symbolFiles);
                 //var errors = csCompilation.GetDiagnostics().Where(e => e.Severity == DiagnosticSeverity.Error);
             });
             if (sourceGenerators != null)
@@ -381,18 +406,18 @@ namespace {project.GetNamespace()}
             dllStream.Position = 0;
             pdbStream.Position = 0;
             docStream.Position = 0;
-            output.Output(global, project.GetName() + ".dll", dllStream, null);
-            output.Output(global, project.GetName() + ".pdb", pdbStream, null);
-            output.Output(global, project.GetName() + ".xml", docStream, null);
+            output.Output(global, project.GetName() + ".js.dll", dllStream, null);
+            output.Output(global, project.GetName() + ".js.pdb", pdbStream, null);
+            output.Output(global, project.GetName() + ".js.xml", docStream, null);
 
             //copy the js folder in every refence over to this js folder
             foreach (var _ref in references)
             {
                 var refFolder = Path.GetDirectoryName(_ref.Display);
-                var jsFolder = Path.Combine(refFolder!, "wwwroot") + "\\";
-                if (Directory.Exists(jsFolder))
+                var jsFolder = Path.Combine(refFolder!, Constants.OutputFolderName) + "\\";
+                if (Directory.Exists(refFolder))
                 {
-                    DeepCopyFolder(jsFolder);
+                    DeepCopyFolder(refFolder);
                 }
             }
 
@@ -405,7 +430,10 @@ namespace {project.GetNamespace()}
                     var relativePath = Utility.GetRelativePath(project.GetFolder(), file);
                     //Since wwwroot contains content files like js, css and img.
                     //And what we are producing from cs files are also js files, flatten the wwwroot folder with our output path
-                    output.Output(global, relativePath.StartsWith("wwwroot\\") ? relativePath.Substring("wwwroot\\".Length) : relativePath, source, existingFileInfo.LastWriteTime);
+                    output.Output(global,
+                        !relativePath.StartsWith(Constants.OutputFolderName + "\\") ? Constants.OutputFolderName + "\\" + relativePath : relativePath,
+                        source, 
+                        existingFileInfo.LastWriteTime);
                 }
             }
 
@@ -416,7 +444,11 @@ namespace {project.GetNamespace()}
                 using (var source = new FileStream(file, FileMode.Open, FileAccess.Read))
                 {
                     var relativePath = Utility.GetRelativePath(project.GetFolder(), file);
-                    output.Output(global, relativePath.StartsWith("wwwroot\\") ? relativePath.Substring("wwwroot\\".Length) : relativePath, source, existingFileInfo.LastWriteTime);
+                    output.Output(global,
+                        !relativePath.StartsWith(Constants.OutputFolderName + "\\") ? Constants.OutputFolderName + "\\" + relativePath : relativePath,
+                        source,
+                        existingFileInfo.LastWriteTime);
+                    //output.Output(global, relativePath.StartsWith(Constants.OutputFolderName + "\\") ? relativePath.Substring((Constants.OutputFolderName + "\\").Length) : relativePath, source, existingFileInfo.LastWriteTime);
                 }
             }
 
@@ -511,9 +543,9 @@ namespace {project.GetNamespace()}
                 var directDependency = GetDirectDependecies(symbol);
                 foreach (var dep in directDependency)
                 {
-                    if (dep.ContainingAssembly.Equals(symbol.ContainingAssembly, SymbolEqualityComparer.Default) && 
-                        dep.ContainingSymbol.Kind != SymbolKind.NamedType && 
-                        !symbol.Equals(dep, SymbolEqualityComparer.Default) && 
+                    if (dep.ContainingAssembly.Equals(symbol.ContainingAssembly, SymbolEqualityComparer.Default) &&
+                        dep.ContainingSymbol.Kind != SymbolKind.NamedType &&
+                        !symbol.Equals(dep, SymbolEqualityComparer.Default) &&
                         !outputted.Contains(dep.OriginalDefinition))
                     {
                         var metadata = global.GetMetadata(dep.OriginalDefinition);
@@ -640,9 +672,9 @@ namespace {project.GetNamespace()}
 
             if (global.OutputMode.HasFlag(OutputMode.SingleFile))
             {
-                var existingFolder = Path.Combine(output.OutputPath, "wwwroot", project.GetFolderName());
-                if (Directory.Exists(existingFolder))
-                    Directory.Delete(existingFolder, true);
+                //var existingFolder = Path.Combine(output.OutputPath, Constants.OutputFolderName);
+                //if (Directory.Exists(existingFolder))
+                //Directory.Delete(existingFolder, true);
                 string bootCodes = "";
                 string codes;
                 if (global.OutputMode.HasFlag(OutputMode.Global))
@@ -729,7 +761,7 @@ namespace {project.GetNamespace()}
                 {
                     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault
                 };
-                output.Output(global, project.GetName() + ".js", StringToStream(global.OutputMode.HasFlag(OutputMode.Global) ? @$"
+                output.Output(global, Constants.OutputFolderName + "/" + project.GetName() + ".js", StringToStream(global.OutputMode.HasFlag(OutputMode.Global) ? @$"
 (function ({global.GlobalName}, $global) {{
     ""use strict"";
     let _;
@@ -792,7 +824,7 @@ namespace {project.GetNamespace()}
     <style>
         {StreamToString(output.HtmlStyleContent)}
     </style>
-    {(string.Join("\r\n    ", output.OutputtedFiles.Where(o => o.EndsWith(".js")).Select(o => $"<script type=\"text/javascript\" src=\"{o}\"></script>")))}
+    {(string.Join("\r\n    ", output.OutputtedFiles.Where(o => o.EndsWith(".js")).Select(o => $"<script type=\"text/javascript\" src=\"{o.Replace(Constants.OutputFolderName + "/", "").Replace(Constants.OutputFolderName + "\\", "")}\"></script>")))}
 	<script type=""{(global.OutputMode.HasFlag(OutputMode.Global) ? "text/javascript" : "module")}"">
         (function ({global.GlobalName}, $global) {{
             ""use strict"";
@@ -808,7 +840,7 @@ namespace {project.GetNamespace()}
 </body>
 </html>
 ";
-                output.Output(global, project.GetName() + ".html", StringToStream(index), null);
+                output.Output(global, Constants.OutputFolderName + "/" + project.GetName() + ".html", StringToStream(index), null);
             }
         }
 

@@ -15,10 +15,10 @@ namespace NetJs.Translator.CSharpToJavascript
     {
         public override void VisitInterpolation(InterpolationSyntax node)
         {
-            var handler = (ITypeSymbol)_global.GetTypeSymbol("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler", this);
+            var handler = (ITypeSymbol)_global.GetSymbol("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler", this);
             CurrentTypeWriter.Write(node, $"$handler.", true);
-            var sint = (ITypeSymbol)_global.GetTypeSymbol("System.Int32", this);
-            var sstring = (ITypeSymbol)_global.GetTypeSymbol("System.String", this);
+            var sint = (ITypeSymbol)_global.GetSymbol("System.Int32", this);
+            var sstring = (ITypeSymbol)_global.GetSymbol("System.String", this);
             var appendFormattedObjectMethod = handler.GetMembers("AppendFormatted").Cast<IMethodSymbol>().Single(e => e.Parameters.Count() == 3 && e.Parameters[0].Type.Equals(_global.Compilation.ObjectType, SymbolEqualityComparer.Default) && e.Parameters[1].Type.Equals(sint, SymbolEqualityComparer.Default) && e.Parameters[2].Type.Equals(sstring, SymbolEqualityComparer.Default));
             WriteMemberName(node, handler, appendFormattedObjectMethod);
             CurrentTypeWriter.Write(node, $"(");
@@ -45,7 +45,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitInterpolatedStringText(InterpolatedStringTextSyntax node)
         {
-            var handler = (ITypeSymbol)_global.GetTypeSymbol("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler", this);
+            var handler = (ITypeSymbol)_global.GetSymbol("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler", this);
             CurrentTypeWriter.Write(node, $"$handler.", true);
             WriteMemberName(node, handler, "AppendLiteral");
             CurrentTypeWriter.Write(node, $"(\"");
@@ -68,7 +68,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     else if (token is InterpolationSyntax format)
                     {
                         CurrentTypeWriter.Write(node, "${");
-                        var type = _global.ResolveSymbol(GetExpressionReturnSymbol(format.Expression), this)?.GetTypeSymbol();
+                        var type = _global.TryGetTypeSymbol(format.Expression, this);
                         string? formatSpecifier = null;
                         //Cant handle char like a regular primitive. THough char is a numeric type, its conversion to string is not numeric
                         if (type != null && 
@@ -113,8 +113,8 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             else
             {
-                var handler = (ITypeSymbol)_global.GetTypeSymbol("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler", this);
-                var sint = (ITypeSymbol)_global.GetTypeSymbol("System.Int32", this);
+                var handler = (ITypeSymbol)_global.GetSymbol("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler", this);
+                var sint = (ITypeSymbol)_global.GetSymbol("System.Int32", this);
                 var constructor = handler.GetMembers(".ctor").Cast<IMethodSymbol>().Single(e => e.Parameters.Count() == 2 && e.Parameters[0].Type.Equals(sint, SymbolEqualityComparer.Default) && e.Parameters[1].Type.Equals(sint, SymbolEqualityComparer.Default));
                 int literalLenght = node.Contents.Count(e => !e.IsKind(SyntaxKind.Interpolation));
                 int formattedLenght = node.Contents.Count(e => e.IsKind(SyntaxKind.Interpolation));

@@ -20,58 +20,90 @@ namespace NetJs.Translator.CSharpToJavascript
             return isLiteralInit;
         }
 
-        public void WriteMemberName(CSharpSyntaxNode node, ITypeSymbol symbol, string memberName, CodeNode? _this = null)
+        public void WriteMemberName(CSharpSyntaxNode node, ITypeSymbol symbol, string memberName/*, CodeNode? _this = null*/)
         {
             var member = symbol.GetMembers(memberName, _global).Single();
-            WriteMemberName(node, symbol, member, _this);
+            WriteMemberName(node, symbol, member/*, _this*/);
         }
 
-        public void WriteMemberName(CSharpSyntaxNode node, ITypeSymbol symbol, ISymbol member, CodeNode? _this = null)
+        public void WriteMemberName(CSharpSyntaxNode node, ITypeSymbol typeSymbol, ISymbol member
+            //, CodeNode? thisExpression = null, bool? isGet = null, CodeNode? setValue = null
+            )
         {
             var template = member.GetTemplateAttribute(_global);
-            if (template != null)
-            {
-                if (_this == null && !member.IsStatic)
-                {
-                    throw new InvalidOperationException("Cannot literarily write a templated member without providing this");
-                }
-                WriteMethodTemplate(node, _this, symbol, false, null, null, template, default);
-            }
+            //if (template == null && isGet != null && member.Kind == SymbolKind.Property)
+            //{
+            //    var memberProperty = (IPropertySymbol)member;
+            //    if (isGet == true && memberProperty.GetMethod != null)
+            //    {
+            //        template = memberProperty.GetMethod.GetTemplateAttribute(_global);
+            //    }
+            //    else if (isGet == false && memberProperty.SetMethod != null)
+            //    {
+            //        template = memberProperty.SetMethod.GetTemplateAttribute(_global);
+            //    }
+            //}
+            //if (template != null)
+            //{
+            //    if (thisExpression == null && !member.IsStatic)
+            //    {
+            //        throw new InvalidOperationException("Cannot literarily write a templated member without providing this");
+            //    }
+            //    WriteMethodTemplate(node, thisExpression, typeSymbol, false, null, null, template, default);
+            //    return;
+            //}
             var metadata = _global.GetRequiredMetadata(member);
             var isStaticConvention = member.IsStaticCallConvention(_global);
-            CurrentTypeWriter.Write(node, metadata.InvocationName ?? symbol.Name);
-            if (isStaticConvention)
-            {
-                if (_this == null)
-                {
-                    throw new InvalidOperationException("Cannot literarily write a member with static convention wthout providing the this");
-                }
-                CurrentTypeWriter.Write(node, "$get.call(");
-                VisitNode(_this);
-                CurrentTypeWriter.Write(node, ")");
-            }
+            CurrentTypeWriter.Write(node, metadata.InvocationName ?? typeSymbol.Name);
+            //if (isStaticConvention)
+            //{
+            //    if (thisExpression == null)
+            //    {
+            //        throw new InvalidOperationException("Cannot literarily write a member with static convention wthout providing the this");
+            //    }
+            //    if (isGet == false)
+            //    {
+            //        if (setValue == null)
+            //            throw new InvalidOperationException("Must provide setValue when isGet is false");
+            //        CurrentTypeWriter.Write(node, "$set");
+            //    }
+            //    else
+            //        CurrentTypeWriter.Write(node, "$get");
+            //    CurrentTypeWriter.Write(node, ".call(");
+            //    VisitNode(thisExpression);
+            //    if (isGet == false)
+            //    {
+            //        CurrentTypeWriter.Write(node, ", ");
+            //        VisitNode(setValue!);
+            //    }
+            //    CurrentTypeWriter.Write(node, ")");
+            //}
         }
 
-        void WriteMemberAccess(CSharpSyntaxNode node, CodeNode? lhsExpression, ISymbol? lhsSymbol, string? memberName, ISymbol? member)
+        public void WriteMemberAccess(
+             CSharpSyntaxNode node,
+             CodeNode? thisExpression,
+             ITypeSymbol? thisSymbol,
+             string? memberName,
+             ISymbol? member,
+             CodeNode? setValue = null)
         {
-            if (lhsSymbol == null && lhsExpression == null)
-                throw new InvalidOperationException("Must supply one of lhsSymbol or lhsExpression");
+            if (thisSymbol == null && thisExpression == null)
+                throw new InvalidOperationException("Must supply one of lhsSymbol or thisExpression");
             if (memberName == null && member == null)
                 throw new InvalidOperationException("Must supply one of memberName or member");
-            if (lhsSymbol == null)
+            if (thisSymbol == null)
             {
-                if (lhsExpression!.IsT0)
+                if (thisExpression!.IsT0)
                 {
-                    CodeSymbol mlhsType = GetExpressionReturnSymbol(lhsExpression!.AsT0);
-                    lhsSymbol = _global.ResolveSymbol(mlhsType, this/*, out _, out _*/) ??
-                        throw new InvalidOperationException($"Cannot resolve expreession type of {lhsExpression}");
+                    thisSymbol = _global.GetTypeSymbol(thisExpression!.AsT0, this);
                 }
                 else
                 {
-                    throw new InvalidOperationException($"Cannot resolve expreession type of {lhsExpression}");
+                    throw new InvalidOperationException($"Cannot resolve expreession type of {thisExpression}");
                 }
             }
-            var lhsType = lhsSymbol.GetTypeSymbol();
+            var lhsType = _global.GetTypeSymbol(thisSymbol);
             member ??= lhsType.GetMembers(memberName, _global).FirstOrDefault();
             memberName ??= member.Name;
             bool isStaticConvention = member?.IsStaticCallConvention(_global) ?? false;
@@ -120,43 +152,53 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             if (attribute != null)
             {
-                WriteMethodTemplate(node, lhsExpression, lhsSymbol, false, method, null, attribute, default, assignmentRhs);
+                WriteMethodTemplate(node, thisExpression, thisSymbol, false, method, null, attribute, default, assignmentRhs);
                 return;
             }
             if (member != null)
             {
-                var memberMetadata = _global.GetRequiredMetadata(member);
+                var memberMetadata = _global.GetMetadata(member);
                 if (member.IsStatic || isStaticConvention)
                 {
-                    if (lhsSymbol is ITypeParameterSymbol tp)
+                    if (thisSymbol is ITypeParameterSymbol tp)
                     {
                         CurrentTypeWriter.Write(node, tp.Name);
                         CurrentTypeWriter.Write(node, ".");
-                        CurrentTypeWriter.Write(node, memberMetadata.OverloadName /*??memberMetadata.LocalName */?? member.Name);
+                        CurrentTypeWriter.Write(node, memberMetadata?.OverloadName ?? member.Name);
                     }
                     else
                     {
-                        CurrentTypeWriter.Write(node, memberMetadata.InvocationName ?? member.Name);
+                        CurrentTypeWriter.Write(node, memberMetadata?.InvocationName ?? member.Name);
                     }
                     if (isStaticConvention)
                     {
-                        CurrentTypeWriter.Write(node, "$get.call(");
-                        if (lhsExpression != null)
-                            VisitNode(lhsExpression);
+                        if (setValue != null)
+                        {
+                            CurrentTypeWriter.Write(node, "$set.call(");
+                        }
+                        else
+                            CurrentTypeWriter.Write(node, "$get.call(");
+                        if (thisExpression != null)
+                            VisitNode(thisExpression);
                         else
                             CurrentTypeWriter.Write(node, "this");
+                        if (setValue != null)
+                        {
+                            CurrentTypeWriter.Write(node, ", ");
+                            VisitNode(setValue);
+                        }
                         CurrentTypeWriter.Write(node, ")");
                     }
                     return;
                 }
                 else
                 {
-                    memberName = memberMetadata.InvocationName ?? memberName;
+                    memberName = memberMetadata?.InvocationName ?? memberName;
                 }
             }
             var initialCurrentNamespace = currentExpressionNamespace;
             bool lhsWritten = false;
-            if (lhsExpression == null && member != null && !(member.IsStatic || isStaticConvention))
+            if (thisExpression == null && member != null && !(member.IsStatic || isStaticConvention))
             {
                 if (node.Parent is AssignmentExpressionSyntax assign && assign.Left == node && node.Parent?.Parent is InitializerExpressionSyntax)
                 {
@@ -204,8 +246,8 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             else
             {
-                VisitNode(lhsExpression);
-                lhsWritten = lhsExpression != null;
+                VisitNode(thisExpression);
+                lhsWritten = thisExpression != null;
             }
             if (/*node.Expression.IsKind(SyntaxKind.IdentifierName) && */initialCurrentNamespace != currentExpressionNamespace)
             {
@@ -217,8 +259,8 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 if (lhsWritten)
                 {
-                    var lhsIsThis = lhsExpression != null && lhsExpression.IsT0 && lhsExpression.AsT0.IsKind(SyntaxKind.ThisExpression);
-                    if (!lhsIsThis && lhsSymbol.GetRefKind() != RefKind.None)
+                    var lhsIsThis = thisExpression != null && thisExpression.IsT0 && thisExpression.AsT0.IsKind(SyntaxKind.ThisExpression);
+                    if (!lhsIsThis && thisSymbol.GetRefKind() != RefKind.None)
                     {
                         TryDereference(node);
                     }
@@ -239,7 +281,18 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 memberName = node.Name.Identifier.ValueText;
             }
-            WriteMemberAccess(node, node.Expression, null, memberName, null);
+            var lhsType = _global.TryGetTypeSymbol(node.Expression, this);
+            if (lhsType != null)
+            {
+                var memberType = _global.GetSymbol(node, this);
+                WriteMemberAccess(node, node.Expression, lhsType, memberName, memberType);
+            }
+            else
+            {
+                var type = _global.GetTypeSymbol(node, this);
+                var metadata = _global.GetRequiredMetadata(type);
+                CurrentTypeWriter.Write(node, metadata.InvocationName?? type.Name);
+            }
             return;
 
             ////var memberType = GetExpressionReturnType(node);

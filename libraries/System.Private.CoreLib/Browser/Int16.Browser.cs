@@ -4,11 +4,11 @@
     [NetJs.StaticCallConvention]
     public readonly struct Int16_Partial 
     {
-        [NetJs.MemberReplace(nameof(GetHashCode))]
-        public int GetHashCodeImplChar()
-        {
-            return this.As<int>();
-        }
+        //[NetJs.MemberReplace(nameof(GetHashCode))]
+        //public int GetHashCodeImplChar()
+        //{
+        //    return NetJs.Script.Write<short>("m_value");
+        //}
 
         readonly short _m_value;
         [NetJs.MemberReplace("m_value")]

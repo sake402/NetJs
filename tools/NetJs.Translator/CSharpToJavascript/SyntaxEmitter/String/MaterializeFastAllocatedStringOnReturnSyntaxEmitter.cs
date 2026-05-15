@@ -19,7 +19,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.String
         {
             if (node.Expression != null && node.Expression.IsKind(SyntaxKind.IdentifierName) && node.Expression is IdentifierNameSyntax id)
             {
-                var type = visitor.Global.TryGetTypeSymbol(node.Expression, visitor)?.GetTypeSymbol();
+                var type = visitor.Global.TryGetTypeSymbol(node.Expression, visitor);
                 if (SymbolEqualityComparer.Default.Equals(type, visitor.Global.SystemString))
                 {
                     var method = node.FindClosestParent<MethodDeclarationSyntax>();

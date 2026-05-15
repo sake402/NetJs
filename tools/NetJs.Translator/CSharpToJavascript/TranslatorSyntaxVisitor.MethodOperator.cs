@@ -19,34 +19,32 @@ namespace NetJs.Translator.CSharpToJavascript
         public bool TryInvokeMethodOperator(CSharpSyntaxNode node, string _operator, ITypeSymbol? leftOperandType, CSharpSyntaxNode? leftOperand, IEnumerable<CSharpSyntaxNode> arguments, Action? prologue = null)
         {
             var conversion = node.FindClosestParent<ConversionOperatorDeclarationSyntax>();
-            var conversionMethod = conversion != null ? _global.GetTypeSymbol(conversion, this) : null;
+            var conversionMethod = conversion != null ? _global.GetSymbol(conversion, this) : null;
             ITypeSymbol? rightOperandType = null;
             var rightOperand = arguments.FirstOrDefault();
             if (leftOperand != null)
             {
                 if (leftOperandType == null)
                 {
-                    var operandCodeType = GetExpressionReturnSymbol(leftOperand);
-                    leftOperandType = _global.ResolveSymbol(operandCodeType, this)?.GetTypeSymbol();
+                    leftOperandType = _global.TryGetTypeSymbol(leftOperand, this);
                 }
                 if (leftOperand == rightOperand)
                 {
                     rightOperand = arguments.Last();
-                    rightOperandType = _global.ResolveSymbol(GetExpressionReturnSymbol(rightOperand), this)?.GetTypeSymbol();
+                    rightOperandType = _global.TryGetTypeSymbol(rightOperand, this);
                 }
             }
             else if (leftOperandType == null)
             {
                 leftOperand = arguments.First();
                 rightOperand = arguments.Last();
-                leftOperandType = _global.ResolveSymbol(GetExpressionReturnSymbol(leftOperand), this)?.GetTypeSymbol();
-                rightOperandType = _global.ResolveSymbol(GetExpressionReturnSymbol(rightOperand), this)?.GetTypeSymbol();
+                leftOperandType = _global.TryGetTypeSymbol(leftOperand, this);
+                rightOperandType = _global.TryGetTypeSymbol(rightOperand, this);
                 leftOperandType = leftOperandType ?? rightOperandType;
             }
             if (rightOperandType == null && rightOperand != null)
             {
-                var operandCodeType = GetExpressionReturnSymbol(rightOperand);
-                rightOperandType = _global.ResolveSymbol(operandCodeType, this)?.GetTypeSymbol();
+                rightOperandType = _global.TryGetTypeSymbol(rightOperand, this);
             }
             bool IsAssignmentRewriteCandidate()
             {

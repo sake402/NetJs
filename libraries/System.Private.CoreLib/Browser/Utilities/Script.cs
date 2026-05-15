@@ -15,6 +15,8 @@ namespace NetJs
         [Template("{0}")]
         public static unsafe extern RefOrPointer<T> Ref<T>(T* value);
         [Template("{0}")]
+        public static unsafe extern RefOrPointer<T> Ref<T>(void* value);
+        [Template("{0}")]
         public static unsafe extern T* RefP<T>(RefOrPointer<T> value);
         [Template("{0}")]
         public static unsafe extern void* RefAsVoidPointer<T>(RefOrPointer<T> value);

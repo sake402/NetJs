@@ -8,16 +8,12 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Pointer
     {
         public override bool TryEmit(VariableDeclaratorSyntax node, TranslatorSyntaxVisitor visitor)
         {
-            if (node.ToString().Contains("bufPtr = buffer"))
-            {
-
-            }
             if (node.Initializer != null)
             {
                 var declaration = node.FindClosestParent<VariableDeclarationSyntax>();
                 if (declaration != null && declaration.Parent.IsKind(SyntaxKind.FixedStatement))
                 {
-                    var rhsType = visitor.Global.TryGetTypeSymbol(node.Initializer.Value, visitor)?.GetTypeSymbol();
+                    var rhsType = visitor.Global.TryGetTypeSymbol(node.Initializer.Value, visitor);
                     if (rhsType != null && !rhsType.IsPointer(out _))
                     {
                         //check if the rhsType has GetPinnableReference method

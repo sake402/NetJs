@@ -11,10 +11,10 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Pointer
         {
             if (node.ArgumentList.Arguments.Count == 1)
             {
-                var type = visitor.Global.GetTypeSymbol(node.Expression, visitor).GetTypeSymbol();
+                var type = visitor.Global.GetTypeSymbol(node.Expression, visitor);
                 if (type.IsPointer(out var pointedType))
                 {
-                    var argType = visitor.Global.GetTypeSymbol(node.ArgumentList.Arguments[0], visitor).GetTypeSymbol();
+                    var argType = visitor.Global.GetTypeSymbol(node.ArgumentList.Arguments[0], visitor);
                     bool isGet = node.IsReadOnlyOperation();
                     if (isGet)
                     {

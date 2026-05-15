@@ -18,13 +18,14 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Delegate
             if (node.IsKind(SyntaxKind.SimpleMemberAccessExpression) ||
                 node.IsKind(SyntaxKind.IdentifierName) ||
                 node.IsKind(SyntaxKind.SimpleLambdaExpression) ||
-                node.IsKind(SyntaxKind.AnonymousMethodExpression))
+                node.IsKind(SyntaxKind.AnonymousMethodExpression) ||
+                node.IsKind(SyntaxKind.ParenthesizedLambdaExpression))
             {
                 foreach (var sm in visitor.SemanticModels)
                 {
                     if (node.SyntaxTree == sm.SyntaxTree)
                     {
-                        var type = visitor.Global.GetTypeSymbol(node, visitor);
+                        var type = visitor.Global.GetSymbol(node, visitor);
                         if (!visitor.Global.IsNativeFunction(type))
                         {
                             if (node.Parent.IsKind(SyntaxKind.Argument))
@@ -55,7 +56,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Delegate
                                     var methodGroup = node;// as MemberAccessExpressionSyntax ?? node as IdentifierNameSyntax; 
                                     if (_this == null)
                                     {
-                                        var methodSymbol = (IMethodSymbol)visitor.Global.GetTypeSymbol(methodGroup, visitor);
+                                        var methodSymbol = (IMethodSymbol)visitor.Global.GetSymbol(methodGroup, visitor);
                                         if (!methodSymbol.IsStatic)
                                         {
                                             _this = SyntaxFactory.ThisExpression();

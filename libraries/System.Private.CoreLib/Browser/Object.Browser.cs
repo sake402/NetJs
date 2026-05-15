@@ -1,4 +1,6 @@
-﻿using System.Runtime.CompilerServices;
+﻿using NetJs;
+using System.Runtime.CompilerServices;
+using System.Runtime.Versioning;
 
 namespace System
 {
@@ -7,6 +9,8 @@ namespace System
     [NetJs.OutputOrder(int.MinValue + 1)]
     public partial class Object
     {
+        [NetJs.Template("{T}._model")]
+        public static extern TypeModel? GetTypeModel<T>() where T : allows ref struct;
         public extern object? this[string name]
         {
             [NetJs.External]
@@ -30,6 +34,8 @@ namespace System
 
         [NetJs.Convention(NetJs.Notation.CamelCase)]
         public virtual extern bool PropertyIsEnumerable(object v);
+        [NetJs.Template("{this}.constructor")]
+        public  extern TypePrototype GetPrototype();
 
         [NetJs.Convention(NetJs.Notation.CamelCase)]
         [NetJs.Template("{obj}.hasOwnProperty({name})")]
@@ -55,6 +61,17 @@ namespace System
         [NetJs.Template("{global.}$clone({this:!super})")]
         [NetJs.MemberReplace(nameof(MemberwiseClone))]
         protected extern object IntrisicMemberwiseClone();
+
+        /////String is a reference type. But we box it anyway like every other js primitive type,
+        ////because we want to be able to access the methods exposed by String class on it, especially the interface methods.
+        ////Calling ReferenceEquals on interned boxed string(unlike other primitive) should still work as expected, so we need to unbox 
+        //[NetJs.MemberReplace(nameof(ReferenceEquals))]
+        //public static bool ReferenceEqualsImpl(object? objA, object? objB)
+        //{
+        //    if (objA is string s1 && objB is string s2)
+        //        return s1.NativeEquals(s2);
+        //    return objA == objB;
+        //}
 
         [NetJs.MemberReplace(nameof(GetType))]
         [NetJs.StaticCallConvention]
@@ -373,18 +390,75 @@ namespace System
             }
         }
 
-        object GetField(int offset)
+        [NetJs.Name("$offsetObjects")]
+        internal SimpleDictionary<object>? offsetObjects;
+        object GetField(int offset, Union<int, TypePrototype> size)
         {
             unchecked
             {
-                return _fields[offset].As<object>();
+                bool isNumber = NetJs.Script.TypeOf(size).NativeEquals("number");
+                if (!isNumber) //Object of inline array type laid within this object
+                {
+                    offsetObjects ??= new();
+                    var mobject = offsetObjects[offset];
+                    if (NetJs.Script.IsUndefinedOrNull(mobject))
+                    {
+                        var realSize = size.As<TypePrototype>().Model!.Size ?? 0;
+                        mobject = size.As<TypePrototype>().New();
+                        var fields = JSProxy.Create<object[]>(new ArrayWindowProxyHandler(_fields, offset, realSize));
+                        mobject._fields = fields;
+                        offsetObjects[offset] = mobject;
+                    }
+                    return mobject;
+                }
+                else if (size.As<int>() > 1) //Array type laid inside this object
+                {
+                    offsetObjects ??= new();
+                    var arrayProxy = offsetObjects[offset];
+                    if (NetJs.Script.IsUndefinedOrNull(arrayProxy))
+                    {
+                        arrayProxy = JSProxy.Create<object[]>(new ArrayWindowProxyHandler(_fields, offset, size.As<int>()));
+                        offsetObjects[offset] = arrayProxy;
+                    }
+                    return arrayProxy;
+                }
+                else
+                {
+                    return _fields[offset];
+                }
             }
         }
-        void SetField(int offset, object value)
+        void SetField(int offset, Union<int, TypePrototype> size, object value)
         {
             unchecked
             {
-                _fields[offset] = value.As<object>();
+                bool isNumber = NetJs.Script.TypeOf(size).NativeEquals("number");
+                if (!isNumber)
+                {
+                    var realSize = size.As<TypePrototype>().Model!.Size ?? 0;
+                    if (_fields.Length < offset)
+                        NetJs.Script.Write("this.$fields.length = offset");
+                    var sourceFields = value._fields;
+                    if (sourceFields.As<object>()["$isProxy"].As<bool>() == true)
+                    {
+                        throw null;
+                    }
+                    //if (sourceFields.Length != realSize)
+                    //{
+                    //    throw null;
+                    //}
+                    _fields.Splice(offset, 0, sourceFields);
+                }
+                else if (size.As<int>() > 1)
+                {
+                    if (_fields.Length < offset)
+                        NetJs.Script.Write("this.$fields.length = offset");
+                    _fields.Splice(offset, size.As<int>(), value.As<object[]>());
+                }
+                else
+                {
+                    _fields[offset] = value;
+                }
             }
         }
 
@@ -408,9 +482,6 @@ namespace System
         }
 
         #endregion
-        //[dotnetJs.MemberReplace(nameof(ToString), dotnetJs.MemberReplaceType.Attributes)]
-        //[dotnetJs.StaticCallConvention]
-        //Make .ToString static so it can be called with instance of native types that doesn't have ToString by default
-        //public virtual extern string? OverrideToString();
+
     }
 }

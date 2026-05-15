@@ -5,12 +5,11 @@ namespace System
     [NetJs.StaticCallConvention]
     public readonly partial struct Int64_Partial
     {
-        [NetJs.MemberReplace(nameof(GetHashCode))]
-        [NetJs.Template("{global.}" + NetJs.Constants.GetHashCodeName + "({this:!super})")] //make sure we dont pass super keyword in here. JS doesnt support it
-        public int GetHashCodeImplChar()
-        {
-            return (int)(this.As<long>());
-        }
+        //[NetJs.MemberReplace(nameof(GetHashCode))]
+        //public int GetHashCodeImplInt64()
+        //{
+        //    return (int)NetJs.Script.Write<long>("m_value");
+        //}
 
         readonly long _m_value;
         [NetJs.MemberReplace("m_value")]
@@ -18,7 +17,7 @@ namespace System
         {
             get
             {
-                if (NetJs.Script.TypeOf(this).NativeEquals("number"))
+                if (NetJs.Script.TypeOf(this).NativeEquals("bigint"))
                     return this.As<long>();
                 return _m_value;
             }

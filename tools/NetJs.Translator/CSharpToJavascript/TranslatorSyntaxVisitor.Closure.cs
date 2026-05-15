@@ -23,14 +23,14 @@ namespace NetJs.Translator.CSharpToJavascript
             }
         }
 
-        ISymbol OpenClosure(CSharpSyntaxNode node)
+        public ISymbol OpenClosure(CSharpSyntaxNode node)
         {
-            var symbol = _global.TryGetTypeSymbol(node, this/*, out _, out _*/);
+            var symbol = _global.TryGetSymbol(node, this/*, out _, out _*/);
             closures.Push(new CodeBlockClosure(_global, this, node, symbol, CurrentClosure));
             return symbol!;
         }
 
-        void CloseClosure()
+        public void CloseClosure()
         {
             var closure = closures.Pop();
             closure.Dispose();

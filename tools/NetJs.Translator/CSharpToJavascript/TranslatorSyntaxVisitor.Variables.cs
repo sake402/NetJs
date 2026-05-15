@@ -39,7 +39,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 vType = ((RefTypeSyntax)vType).Type;
                 //isRef = true;
             }
-            var variableType = _global.TryGetTypeSymbol(vType, this/*, out _, out _*/);
+            var variableType = _global.TryGetSymbol(vType, this/*, out _, out _*/);
             IDisposable? disposeDelegateType = null;
             if (variableType is ITypeSymbol ts)
             {
@@ -73,7 +73,7 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             var parent = (VariableDeclarationSyntax)node.Parent!;
             CurrentTypeWriter.Write(node, node.Identifier.Text);
-            var localSymbol = _global.TryGetTypeSymbol(node, this/*, out _, out _*/);
+            var localSymbol = _global.TryGetSymbol(node, this/*, out _, out _*/);
             if (localSymbol != null)
             {
                 CurrentClosure.DefineIdentifierType(node.Identifier.ValueText, CodeSymbol.From(localSymbol));

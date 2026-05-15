@@ -43,7 +43,7 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (explicitGenericArgs != null)
             {
-                var ts = explicitGenericArgs.Arguments.Select(a => _global.ResolveSymbol(GetExpressionReturnSymbol(a), this/*, out _, out _*/)!.GetTypeSymbol()!).ToArray();
+                var ts = explicitGenericArgs.Arguments.Select(a => _global.GetTypeSymbol(a, this)).ToArray();
                 if (ts.Any(t => t is not ITypeParameterSymbol))
                     method = method.Construct(ts);
             }
@@ -96,7 +96,8 @@ namespace NetJs.Translator.CSharpToJavascript
                         else
                         {
                             bool isDelegate = parameter.Type.IsDelegate(out var delegateReturnType, out var delegateParameterTypes);
-                            argType = _global.ResolveSymbol(GetExpressionReturnSymbol(argExpression!, lamdaReturnType: delegateReturnType, lamdaParameterTypes: delegateParameterTypes), this/*, out _, out _*/)?.GetTypeSymbol();
+                            argType = _global.GetTypeSymbol(argExpression, this);
+                            //argType = _global.ResolveSymbol(GetExpressionReturnSymbol(argExpression!, lamdaReturnType: delegateReturnType, lamdaParameterTypes: delegateParameterTypes), this/*, out _, out _*/)?.GetTypeSymbol();
                             w = argType?.CanConvertTo(parameter.Type, _global, _genericTypeSubstitutions, out unionItemSelected, fromExpressionHint: argExpression, visitor: this) ?? -1;
                         }
                     }
@@ -306,7 +307,7 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             if (candidate != null && candidate.Arity > 0 && explicitGenericArgs != null)
             {
-                var args = explicitGenericArgs.Arguments.Select(a => (ITypeSymbol?)_global.TryGetTypeSymbol(a, this/*, out _, out _*/)).ToArray();
+                var args = explicitGenericArgs.Arguments.Select(a => (ITypeSymbol?)_global.TryGetSymbol(a, this/*, out _, out _*/)).ToArray();
                 if (args.All(a => a != null))
                 {
                     candidate = candidate.Construct(args!);
@@ -405,7 +406,7 @@ namespace NetJs.Translator.CSharpToJavascript
             //As a last resort, if the type is a System.Array, use it
             if (type is IArrayTypeSymbol)
             {
-                var systemArray = _global.GetTypeSymbol("System.Array", this/*, out _, out _*/);
+                var systemArray = _global.GetSymbol("System.Array", this/*, out _, out _*/);
                 return GetBestOverloadMethod((ITypeSymbol)systemArray, methodName, explicitGenericArgs, parameterArgs, suffixParameter, out result);
             }
             result = default;

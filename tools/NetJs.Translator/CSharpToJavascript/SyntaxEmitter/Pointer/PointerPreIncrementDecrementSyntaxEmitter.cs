@@ -11,7 +11,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Pointer
         {
             if (node.IsKind(SyntaxKind.PreIncrementExpression) || node.IsKind(SyntaxKind.PreDecrementExpression))
             {
-                var operandType = visitor.Global.ResolveSymbol(visitor.GetExpressionReturnSymbol(node.Operand), visitor)!.GetTypeSymbol();
+                var operandType = visitor.Global.GetTypeSymbol(node.Operand, visitor);
                 if (operandType.IsPointer(out var pointerType))
                 {
                     //if the result of the expression is passed to other variables

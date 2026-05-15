@@ -193,7 +193,7 @@ else if (args.Length > 0 && args[0] == "watch")
                             Console.WriteLine(e.GetType().FullName);
                             Console.WriteLine(e.Message);
                             Console.WriteLine(e.StackTrace);
-                            e = e.InnerException;
+                            e = e.InnerException!;
                         }
                     }
                     Console.WriteLine("\r\nWaiting for changes...");
@@ -225,7 +225,35 @@ else if (args.Length > 0 && args[0] == "build")
         var projectCollection = new Microsoft.Build.Evaluation.ProjectCollection();
         var project = new Project(csProjectFile, GetBuildProperties(), null, projectCollection);
         var wProject = new ProjectWrapper(project);
-        Translator.Build(wProject, new ProjectBinOutputProvider(wProject));
+        StringWriter logWriter = new StringWriter();
+        var tempFolder = Path.GetTempPath() + "NetJs\\";
+        try
+        {
+            Translator.Build(wProject, new ProjectBinOutputProvider(wProject), logTo: logWriter, tempFolder: tempFolder);
+            logWriter.WriteLine("BUILD SUCCESS!");
+        }
+        catch (Exception e)
+        {
+            logWriter.WriteLine();
+            logWriter.WriteLine();
+            logWriter.WriteLine("BUILD ERROR!!!");
+            while (e != null)
+            {
+                logWriter.WriteLine(e.GetType().FullName);
+                logWriter.WriteLine(e.Message);
+                logWriter.WriteLine(e.StackTrace);
+                e = e.InnerException!;
+            }
+            throw;
+        }
+        finally
+        {
+            var logFile = Path.Combine(tempFolder, Path.GetFileNameWithoutExtension(csProjectFile)!, $"__build.log.txt");
+            var directory = Path.GetDirectoryName(logFile);
+            if (!Directory.Exists(directory))
+                Directory.CreateDirectory(directory);
+            File.WriteAllText(logFile, logWriter.ToString());
+        }
     }
 }
 

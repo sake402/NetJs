@@ -17,7 +17,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.String
         {
             if (node.RefKindKeyword.ValueText.Length > 0)
             {
-                var field = visitor.Global.TryGetTypeSymbol(node.Expression, visitor) as IFieldSymbol;
+                var field = visitor.Global.TryGetSymbol(node.Expression, visitor) as IFieldSymbol;
                 if (field != null && field.Name == "_firstChar" && SymbolEqualityComparer.Default.Equals(field.ContainingType, visitor.Global.SystemString))
                 {
                     ExpressionSyntax? lhs = null;

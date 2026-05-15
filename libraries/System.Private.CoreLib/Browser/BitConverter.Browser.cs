@@ -14,7 +14,7 @@ namespace System
             var buffer = new Window.ArrayBuffer(8);
             var view = new Window.DataView(buffer);
             view.setFloat64(0, value);
-            return view.getBigInt64(0, true);
+            return view.getBigInt64(0);
         }
 
         [NetJs.MemberReplace]
@@ -23,7 +23,7 @@ namespace System
             var buffer = new Window.ArrayBuffer(8);
             var view = new Window.DataView(buffer);
             view.setBigInt64(0, value);
-            return view.getFloat64(0, true);
+            return view.getFloat64(0);
         }
 
         [NetJs.MemberReplace]
@@ -32,7 +32,7 @@ namespace System
             var buffer = new Window.ArrayBuffer(8);
             var view = new Window.DataView(buffer);
             view.setFloat64(0, value);
-            return view.getBigUint64(0, true);
+            return view.getBigUint64(0);
         }
 
         [NetJs.MemberReplace]
@@ -41,7 +41,7 @@ namespace System
             var buffer = new Window.ArrayBuffer(8);
             var view = new Window.DataView(buffer);
             view.setBigUint64(0, value);
-            return view.getFloat64(0, true);
+            return view.getFloat64(0);
         }
 
         [NetJs.MemberReplace]
@@ -50,7 +50,7 @@ namespace System
             var buffer = new Window.ArrayBuffer(4);
             var view = new Window.DataView(buffer);
             view.setFloat32(0, value);
-            return view.getInt32(0, true);
+            return view.getInt32(0);
         }
 
         [NetJs.MemberReplace]
@@ -59,7 +59,7 @@ namespace System
             var buffer = new Window.ArrayBuffer(4);
             var view = new Window.DataView(buffer);
             view.setInt32(0, value);
-            return view.getFloat32(0, true);
+            return view.getFloat32(0);
         }
 
         [NetJs.MemberReplace]
@@ -68,7 +68,7 @@ namespace System
             var buffer = new Window.ArrayBuffer(4);
             var view = new Window.DataView(buffer);
             view.setFloat32(0, value);
-            return view.getUint32(0, true);
+            return view.getUint32(0);
         }
 
         [NetJs.MemberReplace]
@@ -77,7 +77,7 @@ namespace System
             var buffer = new Window.ArrayBuffer(4);
             var view = new Window.DataView(buffer);
             view.setUint32(0, value);
-            return view.getFloat32(0, true);
+            return view.getFloat32(0);
         }
 
     }

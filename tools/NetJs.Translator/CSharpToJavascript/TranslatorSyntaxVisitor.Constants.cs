@@ -81,11 +81,11 @@ namespace NetJs.Translator.CSharpToJavascript
 
         void WriteDecimalConstant(CSharpSyntaxNode node, string decimalValue)
         {
-            var decimalType = (INamedTypeSymbol)_global.GetTypeSymbol("decimal", this/*, out _, out _*/);
+            var decimalType = (INamedTypeSymbol)_global.GetSymbol("decimal", this/*, out _, out _*/);
             decimal idecimal = decimal.Parse(decimalValue);
             if (Math.Abs(idecimal) < int.MaxValue && !decimalValue.Contains('.')) //if the decimal can fit an int, we call the int constructor otherwise string
             {
-                var intType = (ITypeSymbol)_global.GetTypeSymbol("int", this/*, out _, out _*/);
+                var intType = (ITypeSymbol)_global.GetSymbol("int", this/*, out _, out _*/);
                 var intBasedConstructor = decimalType.GetMembers(".ctor").Cast<IMethodSymbol>().Single(e => e.Parameters.Count() == 1 && e.Parameters.Single().Type.Equals(intType, SymbolEqualityComparer.Default));
                 //WriteConstructorCall(node, decimalType, intBasedConstructor, null, [SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal((int)idecimal)))]);
                 WriteConstructorCall(node, decimalType, intBasedConstructor, null, [new CodeNode(() =>
@@ -95,7 +95,7 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             else
             {
-                var stringType = (ITypeSymbol)_global.GetTypeSymbol("string", this/*, out _, out _*/);
+                var stringType = (ITypeSymbol)_global.GetSymbol("string", this/*, out _, out _*/);
                 var stringBasedConstructor = decimalType.GetMembers(".ctor").Cast<IMethodSymbol>().SingleOrDefault(e => e.Parameters.Count() == 1 && e.Parameters.Single().Type.Equals(stringType, SymbolEqualityComparer.Default));
                 if (stringBasedConstructor != null)
                 {
@@ -112,7 +112,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     var bits = decimal.GetBits(idecimal);
                     if (bits.Length == 4)
                     {
-                        var intType = (ITypeSymbol)_global.GetTypeSymbol("int", this/*, out _, out _*/);
+                        var intType = (ITypeSymbol)_global.GetSymbol("int", this/*, out _, out _*/);
                         var arrayBasedConstructor = decimalType.GetMembers(".ctor").Cast<IMethodSymbol>().SingleOrDefault(e => e.Parameters.Count() == 1 && e.Parameters.Single().Type.IsArray(out var i) && i.Equals(intType, SymbolEqualityComparer.Default));
                         //var parameter = SyntaxFactory.ArrayCreationExpression(
                         //    SyntaxFactory.ArrayType(SyntaxFactory.ParseTypeName("int")),
@@ -136,7 +136,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     }
                     else
                     {
-                        var doubleType = (ITypeSymbol)_global.GetTypeSymbol("double", this/*, out _, out _*/);
+                        var doubleType = (ITypeSymbol)_global.GetSymbol("double", this/*, out _, out _*/);
                         var doubleBasedConstructor = decimalType.GetMembers(".ctor").Cast<IMethodSymbol>().SingleOrDefault(e => e.Parameters.Count() == 1 && e.Parameters.Single().Type.Equals(doubleType, SymbolEqualityComparer.Default));
                         if (doubleBasedConstructor != null)
                         {
@@ -155,6 +155,10 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (constantExpression == null && optionalConstantValue == null)
                 throw new InvalidOperationException("One of constantExpression or optionalConstantValue is required");
+            if (constantExpression != null && _factoryAssociationNode.TryGetValue(constantExpression, out var n))
+            {
+                constantExpression = (CSharpSyntaxNode)n;
+            }
             var constantValue = optionalConstantValue ?? _global.EvaluateConstant(constantExpression!, this);
             if (constantValue.HasValue)
             {
@@ -212,7 +216,14 @@ namespace NetJs.Translator.CSharpToJavascript
                 if (constantType.SpecialType == SpecialType.System_String && constantValue.Value != null)
                     CurrentTypeWriter.Write(node, "\"");
                 if (constantValue.Value == null)
-                    CurrentTypeWriter.Write(node, "null");
+                {
+                    if (constantType.IsValueType && !constantType.IsNullable(out _))
+                    {
+                        CurrentTypeWriter.Write(node, _global.GetDefaultValue(constantType, true)!);
+                    }
+                    else
+                        CurrentTypeWriter.Write(node, "null");
+                }
                 else
                 {
                     if (constantType.SpecialType == SpecialType.System_Boolean)

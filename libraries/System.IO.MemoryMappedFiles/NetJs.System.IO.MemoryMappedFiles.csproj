@@ -90,15 +90,15 @@
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Threading.Thread\NetJs.System.Threading.Thread.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interop.Errors.cs" />
-    <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interop.FTruncate.cs" />
-    <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interop.MMap.cs" />
-    <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interop.Munmap.cs" />
-    <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interop.Open.cs" />
-    <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interop.Stat.cs" />
-    <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interop.SysConf.cs" />
-    <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interop.Unlink.cs" />
-    <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interop.Close.cs" />
+    <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interops\Interop.Errors.cs" />
+    <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interops\Interop.FTruncate.cs" />
+    <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interops\Interop.MMap.cs" />
+    <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interops\Interop.Munmap.cs" />
+    <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interops\Interop.Open.cs" />
+    <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interops\Interop.Stat.cs" />
+    <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interops\Interop.SysConf.cs" />
+    <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interops\Interop.Unlink.cs" />
+    <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interops\Interop.Close.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="$(DotnetRuntimeRoot)src/libraries/Common/src/System/SR.cs" />

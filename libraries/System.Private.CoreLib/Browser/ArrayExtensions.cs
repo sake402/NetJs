@@ -94,7 +94,7 @@ namespace System
 
         [NetJs.Template("{array}.splice({start}, {deleteCount})")]
         public static extern Array Splice<T>(this T[] array, int start, int deleteCount);
-        [NetJs.Template("{array}.splice({start}, {deleteCount}, {newItems})")]
+        [NetJs.Template("{array}.splice({start}, {deleteCount}, ...{newItems})")]
         public static extern Array Splice<T>(this T[] array, int start, int deleteCount, params object[] newItems);
 
         [NetJs.Template("{array}.splice({items})")]

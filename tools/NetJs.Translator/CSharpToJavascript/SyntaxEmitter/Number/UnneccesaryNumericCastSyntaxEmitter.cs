@@ -14,8 +14,8 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Numbers
     {
         public override bool TryEmit(CastExpressionSyntax node, TranslatorSyntaxVisitor visitor)
         {
-            var fromType = visitor.Global.TryGetTypeSymbol(node.Expression, visitor)?.GetTypeSymbol();
-            var toType = visitor.Global.TryGetTypeSymbol(node.Type, visitor)?.GetTypeSymbol();
+            var fromType = visitor.Global.TryGetTypeSymbol(node.Expression, visitor);
+            var toType = visitor.Global.TryGetTypeSymbol(node.Type, visitor);
 
             //Casting a literal number should result in a compile time literal
             if (fromType != null &&

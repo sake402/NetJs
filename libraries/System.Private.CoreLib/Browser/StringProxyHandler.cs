@@ -1,5 +1,6 @@
 ﻿namespace System
 {
+    [NetJs.Reflectable(false)]
     public class StringProxyHandler : IJsProxyHandler
     {
         public StringProxyHandler(string str)
@@ -25,6 +26,8 @@
         public StringProxyHandler(int length)
         {
             _chars = new char[length];
+            var handler = new ArrayMutationProxyHandler(_chars);
+            var _proxyChars = JSProxy.Create<char[]>(handler);
             reff = new Ref<char>((i) =>
             {
                 unchecked
@@ -39,10 +42,14 @@
                     strDirty = true;
                 }
             });
-            reff._array = _chars;
+            //If someone mutate this array behind the scene, we need to know and update our dirty flag
+            //Which is why it is a proxy exposed
+            reff._array = _proxyChars;
+            handler.OnMutated += (s, e) => strDirty = true;
         }
         string str = "";
         internal char[] _chars;
+        //internal char[] _proxyChars;
         Ref<char> reff;
         bool strDirty;
         public Ref<char> Reference => reff;

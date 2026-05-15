@@ -7,19 +7,23 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
 {
     sealed class ImplicitConversionSyntaxEmitter : SyntaxEmitter<CSharpSyntaxNode>
     {
+        static List<CSharpSyntaxNode?> _disabled = new List<CSharpSyntaxNode?>();
+        public static IDisposable Disable(CSharpSyntaxNode? node)
+        {
+            _disabled.Add(node);
+            return new DelegateDispose(() => _disabled.Remove(node));
+        }
         Stack<CSharpSyntaxNode> _processing = new Stack<CSharpSyntaxNode>();
         public override bool TryEmit(CSharpSyntaxNode node, TranslatorSyntaxVisitor visitor)
         {
+            if (_disabled.Contains(node))
+                return false;
             if (_processing.TryPeek(out var top) && top == node)
                 return false;
             foreach (var sm in visitor.SemanticModels)
             {
                 if (node.SyntaxTree == sm.SyntaxTree)
                 {
-                    if (node.ToFullString().Contains("span = stackAllocatedMatches"))
-                    {
-
-                    }
                     var conversion = sm.GetConversion(node);
                     if (conversion.Exists &&
                         conversion.IsImplicit &&
@@ -83,7 +87,11 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                                 var implicitConverter = spanType.GetMembers("op_Implicit", visitor.Global)
                                     .Cast<IMethodSymbol>()
                                     .FirstOrDefault(e => e.Parameters.Length == 1 && e.Parameters[0].Type.IsArray(out var t) && e.ReturnType.Equals(spanType, SymbolEqualityComparer.Default));
-                                visitor.WriteMethodInvocation(node, implicitConverter, null, [node], null, null, null, false);
+                                visitor.WriteMethodInvocation(node, implicitConverter, null, [new CodeNode(() => {
+                                    visitor.Visit(node);
+                                    visitor.CurrentTypeWriter.Write(node, ".");
+                                    visitor.CurrentTypeWriter.Write(node, Constants.StructFieldsLayoutName);
+                                })], null, null, null, false);
                                 return true;
                             }
                             finally
@@ -173,10 +181,13 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                         if (from != null && to != null)
                         {
                             bool skip = false;
-                            ElementAccessExpressionSyntax? el;
-                            if ((el = node.FindClosestParent<ElementAccessExpressionSyntax>()) != null)
+                            ElementAccessExpressionSyntax? el = null;
+                            //node.Parent.IsKind(SyntaxKind.ElementAccessExpression) ? (ElementAccessExpressionSyntax)node.Parent :
+                            //    node.Parent.IsKind(SyntaxKind.Argument) && node.Parent.Parent.IsKind(SyntaxKind.BracketedArgumentList) && node.Parent.Parent.Parent.IsKind(SyntaxKind.ElementAccessExpression) ? (ElementAccessExpressionSyntax)node.Parent.Parent.Parent :
+                            //    null;
+                            if (/*el != null*/(el = node.FindClosestParent<ElementAccessExpressionSyntax>()) != null && el.ArgumentList.DescendantNodes().Contains(node))
                             {
-                                var ex = visitor.Global.GetTypeSymbol(el.Expression, visitor).GetTypeSymbol();
+                                var ex = visitor.Global.GetTypeSymbol(el.Expression, visitor);
                                 if (ex.IsPointer(out _) || ex.IsArray(out _)) //dont convert pointer index to BigInt
                                     skip = true;
                             }
@@ -196,6 +207,18 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                                         visitor.Visit(node);
                                         visitor.CurrentTypeWriter.Write(node, ")");
                                     }
+                                    return true;
+                                }
+                                finally { _processing.Pop(); }
+                            }
+                            else if (!skip && from.IsLongNumericType() && to.IsFloatingNumericType())
+                            {
+                                _processing.Push(node);
+                                try
+                                {
+                                    visitor.CurrentTypeWriter.Write(node, "Number(");
+                                    visitor.Visit(node);
+                                    visitor.CurrentTypeWriter.Write(node, ")");
                                     return true;
                                 }
                                 finally { _processing.Pop(); }

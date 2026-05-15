@@ -1,5 +1,7 @@
-﻿using System;
+﻿using NetJs;
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -23,6 +25,7 @@ namespace System.Reflection
 
         public RuntimeAssembly_Partial(AssemblyModel model, string assemblyName)
         {
+            NetJs.Script.Write("this._mono_assembly = model.h");
             this._model = model;
             _module = new RuntimeModule_Partial(this);
             if (model.AssemblyFlags.TypeHasFlag(AssemblyFlags.Entry))
@@ -60,7 +63,7 @@ namespace System.Reflection
             return handle.As<ulong>();
         }
 
-        TypeModel GetModel(string fullTypeName, TypeFlagsModel flag)
+        TypeModel GetModel(string fullTypeName, TypeFlagsModel flag, TypePrototype? parent = null)
         {
             var localAssemblyTypeName = fullTypeName;
             if (localAssemblyTypeName.NativeStartsWith("$"))
@@ -78,6 +81,7 @@ namespace System.Reflection
                     return _model.TypeNames[t.Handle.As<uint>().GetTypeHandle()].NativeEquals(localAssemblyTypeName);
                 })[0];
             }
+            //type has no metadata exported, create one
             if (NetJs.Script.IsUndefinedOrNull(typeMetadata))
             {
                 //var pth = prototype.FullName.Split('.');
@@ -88,6 +92,12 @@ namespace System.Reflection
                     //Name = pth[pth.Length - 1],
                     Handle = CreateHandle(localAssemblyTypeName)
                 };
+            }
+            //A nested class within a generic class should obtain a new type handle different from the type inside the generic type definition
+            var isNestedClass = flag.TypeHasFlag(TypeFlagsModel.IsNested);
+            if (isNestedClass && NetJs.Script.IsDefined(parent) && NetJs.Script.IsDefined(parent!.Arguments))
+            {
+                typeMetadata!.Handle = CreateHandle(localAssemblyTypeName);
             }
             return typeMetadata!;
         }
@@ -104,25 +114,30 @@ namespace System.Reflection
         }
 
         [NetJs.Name(NetJs.Constants.AssemblyNestedStructName)]
-        NetJs.Union<TypePrototype, TypePrototypeProvider> DefineNestedStruct(string fullTypeName, TypePrototypeProvider provider)
+        NetJs.Union<TypePrototype, TypePrototypeProvider> DefineNestedStruct(string fullTypeName, TypePrototypeProvider provider, TypePrototype parent, Action<TypePrototype>? typePrototypeSink = null)
         {
-            return DefineType(fullTypeName, provider, TypeFlagsModel.IsValueType | TypeFlagsModel.IsNested);
+            return DefineType(fullTypeName, provider, TypeFlagsModel.IsValueType | TypeFlagsModel.IsNested, parent, typePrototypeSink);
         }
 
         [NetJs.Name(NetJs.Constants.AssemblyNestedClassName)]
-        NetJs.Union<TypePrototype, TypePrototypeProvider> DefineNestedType(string fullTypeName, TypePrototypeProvider provider)
+        NetJs.Union<TypePrototype, TypePrototypeProvider> DefineNestedClass(string fullTypeName, TypePrototypeProvider provider, TypePrototype parent, Action<TypePrototype>? typePrototypeSink = null)
         {
-            return DefineType(fullTypeName, provider, TypeFlagsModel.IsNested);
+            return DefineType(fullTypeName, provider, TypeFlagsModel.IsNested, parent, typePrototypeSink);
         }
 
         [NetJs.Name(NetJs.Constants.AssemblyClassName)]
-        NetJs.Union<TypePrototype, TypePrototypeProvider> DefineType(string fullTypeName, TypePrototypeProvider provider, TypeFlagsModel flags)
+        NetJs.Union<TypePrototype, TypePrototypeProvider> DefineType(
+            string fullTypeName,
+            TypePrototypeProvider provider,
+            TypeFlagsModel flags,
+            TypePrototype? parent = null,
+            [NativeDelegate] Action<TypePrototype>? typePrototypeSink = null)
         {
             if (NetJs.Script.IsUndefined(flags))
                 flags = TypeFlagsModel.None;
             provider.As<object>()["$fn"] = fullTypeName.As<object>();
             var jsName = GetJsName(fullTypeName);
-            TypeModel typeMetadata = GetModel(fullTypeName, flags);
+            TypeModel typeMetadata = GetModel(fullTypeName, flags, parent);
             //bool isNestedClass = Constants.NestedClassAsNestedStaticObject && typeMetadata!.Flags.TypeHasFlag(TypeFlagsModel.IsNested);
             //if (_isCompleted) //if the assembly was marked completed, any other class defined after that is a nested class
             var isNestedClass = flags.TypeHasFlag(TypeFlagsModel.IsNested);
@@ -201,8 +216,16 @@ namespace System.Reflection
             }
             if (!isInterfaceMixin && !isGenericDefinition)
                 AppDomain.SetupDefaults(type);
+            if (NetJs.Script.IsDefined(typePrototypeSink))
+            {
+                typePrototypeSink!(prototype!);
+            }
             if (isNestedClass)
             {
+                if (prototype != null)
+                {
+                    prototype.Parent = parent;
+                }
                 //Initialize nested types immedialty. If we are crrating it, it means we already access it
                 RegisterCompletionNotification(type);
             }
@@ -515,5 +538,11 @@ namespace System.Reflection
             throw new NotSupportedException();
         }
 
+        //Not supporting satellite assemblies, return the original assembly for any culture, version or throwOnFileNotFound
+        [NetJs.MemberReplace]
+        internal static Assembly InternalGetSatelliteAssembly(Assembly assembly, CultureInfo culture, Version? version, bool throwOnFileNotFound)
+        {
+            return assembly;
+        }
     }
 }

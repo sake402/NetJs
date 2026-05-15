@@ -13,10 +13,10 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Pointer
             {
                 if (elementAccess.ArgumentList.Arguments.Count == 1)
                 {
-                    var type = visitor.Global.GetTypeSymbol(elementAccess.Expression, visitor).GetTypeSymbol();
+                    var type = visitor.Global.GetTypeSymbol(elementAccess.Expression, visitor);
                     if (type.IsPointer(out _))
                     {
-                        var argType = visitor.Global.GetTypeSymbol(elementAccess.ArgumentList.Arguments[0], visitor).GetTypeSymbol();
+                        var argType = visitor.Global.GetTypeSymbol(elementAccess.ArgumentList.Arguments[0], visitor);
                         visitor.Visit(elementAccess.Expression);
                         visitor.CurrentTypeWriter.Write(node, ".SetAt(");
                         visitor.Visit(node.Right);

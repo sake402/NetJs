@@ -17,8 +17,7 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             var expression = element.IsT1 ? ((ConditionalAccessExpressionSyntax)element.AsT1.Parent!).Expression : element.AsT0.Expression;
             var arguments = element.IsT0 ? element.AsT0.ArgumentList.Arguments : element.AsT1!.ArgumentList.Arguments;
-            var target = _global.GetTypeSymbol(expression, this);
-            var targetType = target?.GetTypeSymbol();
+            var targetType = _global.TryGetTypeSymbol(expression, this);
             if (targetType != null)
             {
                 var propertyIndexers = targetType.GetMembers("get_Item", _global).Where(e => e is IMethodSymbol p && p.Parameters.Count() == arguments.Count).Cast<IMethodSymbol>().ToList();
@@ -32,8 +31,7 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             var expression = element.IsT1 ? ((ConditionalAccessExpressionSyntax)element.AsT1.Parent!.Parent!).Expression : element.AsT0.Expression;
             var arguments = element.IsT0 ? element.AsT0.ArgumentList.Arguments : element.AsT1!.ArgumentList.Arguments;
-            var target = _global.GetTypeSymbol(expression, this);
-            var targetType = target?.GetTypeSymbol();
+            var targetType = _global.TryGetTypeSymbol(expression, this);
             if (targetType != null)
             {
                 var propertyIndexers = targetType.GetMembers("set_Item", _global).Where(e => e is IMethodSymbol p && p.Parameters.Count() == arguments.Count + 1).Cast<IMethodSymbol>().ToList();

@@ -11,10 +11,10 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Array
         {
             if (node.ArgumentList.Arguments.Count == 1 && node.ArgumentList.Arguments[0].IsKind(SyntaxKind.RangeExpression))
             {
-                var type = visitor.Global.ResolveSymbol(visitor.GetExpressionReturnSymbol(node.Expression), visitor)?.GetTypeSymbol();
+                var type = visitor.Global.GetTypeSymbol(node.Expression, visitor);
                 if (type != null && type.IsArray(out var elementType))
                 {
-                    var runtimeHelpers = (ITypeSymbol)visitor.Global.GetTypeSymbol("System.Runtime.CompilerServices.RuntimeHelpers", visitor);
+                    var runtimeHelpers = (ITypeSymbol)visitor.Global.GetSymbol("System.Runtime.CompilerServices.RuntimeHelpers", visitor);
                     var getSubArray = (IMethodSymbol)runtimeHelpers.GetMembers("GetSubArray").Single();
                     getSubArray = getSubArray.Construct(elementType);
                     visitor.WriteMethodInvocation(node, getSubArray, null, [node.Expression, .. node.ArgumentList.Arguments], null, runtimeHelpers, null, false);

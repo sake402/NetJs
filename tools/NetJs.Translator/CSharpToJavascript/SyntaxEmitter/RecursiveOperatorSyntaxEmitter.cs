@@ -19,9 +19,9 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                 var moperator = node.FindClosestParent<OperatorDeclarationSyntax>();
                 if (moperator != null && node.OperatorToken.ValueText == moperator.OperatorToken.ValueText)
                 {
-                    var operatorSymbol = visitor.Global.TryGetTypeSymbol(moperator, visitor);
-                    var leftType = visitor.Global.TryGetTypeSymbol(node.Left, visitor)?.GetTypeSymbol();
-                    var rightType = visitor.Global.TryGetTypeSymbol(node.Right, visitor)?.GetTypeSymbol();
+                    var operatorSymbol = visitor.Global.TryGetSymbol(moperator, visitor);
+                    var leftType = visitor.Global.TryGetTypeSymbol(node.Left, visitor);
+                    var rightType = visitor.Global.TryGetTypeSymbol(node.Right, visitor);
                     if (operatorSymbol != null && 
                         leftType != null && 
                         rightType != null && 

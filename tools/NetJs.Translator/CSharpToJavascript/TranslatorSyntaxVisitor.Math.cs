@@ -21,8 +21,8 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (MathBinaryOperators.Contains(_operator))
             {
-                var leftType = _global.ResolveSymbol(GetExpressionReturnSymbol(left), this)?.GetTypeSymbol();
-                var rightType = _global.ResolveSymbol(GetExpressionReturnSymbol(right), this)?.GetTypeSymbol();
+                var leftType = _global.TryGetTypeSymbol(left, this);
+                var rightType = _global.TryGetTypeSymbol(right, this);
                 if (leftType != null && rightType != null && leftType.IsNumericType() && rightType.IsNumericType())
                 {
                     if (TryInvokeMethodOperator(node, _operator, leftType, left, [left, right]))

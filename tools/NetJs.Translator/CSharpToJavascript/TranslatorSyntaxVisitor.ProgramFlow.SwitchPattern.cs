@@ -46,7 +46,7 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             if (svd != null)
             {
-                var localSymbol = _global.TryGetTypeSymbol(svd, this/*, out _, out _*/);
+                var localSymbol = _global.TryGetSymbol(svd, this/*, out _, out _*/);
                 if (localSymbol != null)
                 {
                     CurrentClosure.DefineIdentifierType(svd.Identifier.ValueText, CodeSymbol.From(localSymbol));
@@ -61,6 +61,11 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitSwitchExpressionArm(SwitchExpressionArmSyntax node)
         {
+            if (node.Pattern.IsKind(SyntaxKind.DeclarationPattern)) //need a closure to declare the variable into
+            {
+                OpenClosure(node);
+                CurrentTypeWriter.WriteLine(node, "{", true);
+            }
             //var governor = node.FindClosest<SwitchExpressionSyntax>()!.GoverningExpression;
             if (!node.Pattern.IsKind(SyntaxKind.DiscardPattern) || node.WhenClause != null)
             {
@@ -101,6 +106,11 @@ namespace NetJs.Translator.CSharpToJavascript
             //Writer.WriteLine(node, ";");
             if (!node.Pattern.IsKind(SyntaxKind.DiscardPattern) || node.WhenClause != null)
             {
+                CurrentTypeWriter.WriteLine(node, "}", true);
+            }
+            if (node.Pattern.IsKind(SyntaxKind.DeclarationPattern)) //need a closure to declare the variable into
+            {
+                CloseClosure();
                 CurrentTypeWriter.WriteLine(node, "}", true);
             }
             //base.VisitSwitchExpressionArm(node);

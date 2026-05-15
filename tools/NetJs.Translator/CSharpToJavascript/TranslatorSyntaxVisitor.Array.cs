@@ -224,11 +224,12 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitStackAllocArrayCreationExpression(StackAllocArrayCreationExpressionSyntax node)
         {
-            ITypeSymbol elementType = (ITypeSymbol)_global.GetTypeSymbol(((ArrayTypeSyntax)node.Type).ElementType, this);
+            ITypeSymbol elementType = (ITypeSymbol)_global.GetSymbol(((ArrayTypeSyntax)node.Type).ElementType, this);
             var type = InferType(node);
-            var typeSymbol = type.typeSymbol?.GetOriginalRootDefinition() ?? (type.type != null ? _global.TryGetTypeSymbol(type.type, this) : null)?.GetTypeSymbol().GetOriginalRootDefinition();
-            var spanType = _global.GetTypeSymbol("System.Span<>", this)!.GetTypeSymbol();
-            var readOnlySpanType = _global.GetTypeSymbol("System.ReadOnlySpan<>", this)!.GetTypeSymbol();
+            var typeSymbol = type.typeSymbol?.GetOriginalRootDefinition() ??
+                (type.type != null ? _global.TryGetTypeSymbol(type.type, this) : null)?.GetOriginalRootDefinition();
+            //var spanType = _global.GetTypeSymbol("System.Span<>", this)!.GetTypeSymbol();
+            //var readOnlySpanType = _global.GetTypeSymbol("System.ReadOnlySpan<>", this)!.GetTypeSymbol();
             //if ((typeSymbol?.Equals(spanType, SymbolEqualityComparer.Default) ?? false) ||
             //    (typeSymbol?.Equals(readOnlySpanType, SymbolEqualityComparer.Default) ?? false))
             //{
@@ -249,11 +250,11 @@ namespace NetJs.Translator.CSharpToJavascript
             //    }));
             //}
             string methodName;
-            if ((typeSymbol?.Equals(spanType, SymbolEqualityComparer.Default) ?? false))
+            if ((typeSymbol?.Equals(_global.SystemSpan, SymbolEqualityComparer.Default) ?? false))
             {
                 methodName = "StackAllocSpan";
             }
-            else if ((typeSymbol?.Equals(readOnlySpanType, SymbolEqualityComparer.Default) ?? false))
+            else if ((typeSymbol?.Equals(_global.SystemReadOnlySpan, SymbolEqualityComparer.Default) ?? false))
             {
                 methodName = "StackAllocReadOnlySpan";
             }
@@ -292,11 +293,11 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 if (member is PropertyDeclarationSyntax p)
                 {
-                    return _global.GetTypeSymbol(p.Type, this/*, out _, out _*/).GetTypeSymbol();
+                    return _global.GetTypeSymbol(p.Type, this);
                 }
                 else if (member is MethodDeclarationSyntax m)
                 {
-                    return _global.GetTypeSymbol(m.ReturnType, this/*, out _, out _*/).GetTypeSymbol();
+                    return _global.GetTypeSymbol(m.ReturnType, this);
                 }
             }
             return null;
@@ -328,11 +329,11 @@ namespace NetJs.Translator.CSharpToJavascript
         public override void VisitCollectionExpression(CollectionExpressionSyntax node)
         {
             var @class = node.FindClosestParent<BaseTypeDeclarationSyntax>();
-            var symbol = _global.GetTypeSymbol(@class!, this/*, out _, out _*/);
+            var symbol = _global.GetSymbol(@class!, this/*, out _, out _*/);
             bool isBootCode = _global.HasAttribute(symbol, typeof(BootAttribute).FullName, this, false, out _);
 
             //Disable collection expression in boot code as other classes are not available
-            var lhsType = isBootCode ? null : (InferLeftHandSideType(node) ?? _global.TryGetTypeSymbol(node, this)?.GetTypeSymbol());
+            var lhsType = isBootCode ? null : (InferLeftHandSideType(node) ?? _global.TryGetTypeSymbol(node, this));
             //bool isArrayLHS = false;
             ITypeSymbol? elementType = null;
             if ((lhsType?.IsArray(out elementType) ?? false) || (lhsType?.IsEnumerable(out elementType) ?? false))
@@ -350,8 +351,8 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 if (_global.HasAttribute(lhsType, "System.Runtime.CompilerServices.CollectionBuilderAttribute"/*typeof(CollectionBuilderAttribute).FullName*/, this, false, out var args))
                 {
-                    var builderTypeArg = (ITypeSymbol)args.First();
-                    var builderMethodName = (string)args.Last();
+                    var builderTypeArg = (ITypeSymbol)args[0];
+                    var builderMethodName = (string)args[1];
                     var method = builderTypeArg.GetMembers(builderMethodName).FirstOrDefault() as IMethodSymbol;
                     if (method == null)
                     {
@@ -362,13 +363,13 @@ namespace NetJs.Translator.CSharpToJavascript
                 else
                 {
                     //if (TryInvokeMethodOperator(node, ImplicitOperatorName, lhsType, null, node.Elements))
-                        //return;
+                    //return;
                     WrapStatementsInExpression(node, () =>
                     {
                         var ix = ++CurrentTypeWriter.CurrentClosure.NameManglingSeed;
                         var instanceName = $"$t{ix}";
                         CurrentTypeWriter.Write(node, "let ");
-                        CurrentTypeWriter.Write(node, instanceName, true);
+                        CurrentTypeWriter.Write(node, instanceName);
                         CurrentTypeWriter.Write(node, " = ");
                         WriteConstructorCall(node, (INamedTypeSymbol)lhsType, lhsType.GetMembers(".ctor").Cast<IMethodSymbol>().Where(e => e.Parameters.Count() == 0).First());
                         CurrentTypeWriter.WriteLine(node, ";");
@@ -400,7 +401,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitImplicitArrayCreationExpression(ImplicitArrayCreationExpressionSyntax node)
         {
-            var arrayType = (IArrayTypeSymbol)_global.GetTypeSymbol(node, this).GetTypeSymbol();
+            var arrayType = (IArrayTypeSymbol)_global.GetTypeSymbol(node, this);
             WriteCreateArray(node, arrayType.ElementType, lengths: null, bounds: null, values: new CodeNode(() =>
             {
                 CurrentTypeWriter.Write(node, "[");

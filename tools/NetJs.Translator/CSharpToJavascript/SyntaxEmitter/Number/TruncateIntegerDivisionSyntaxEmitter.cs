@@ -13,8 +13,8 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Number
         {
             if (node.IsKind(SyntaxKind.DivideExpression))
             {
-                var lhsType = visitor.Global.TryGetTypeSymbol(node.Left, visitor)?.GetTypeSymbol();
-                var rhsType = visitor.Global.TryGetTypeSymbol(node.Left, visitor)?.GetTypeSymbol();
+                var lhsType = visitor.Global.TryGetTypeSymbol(node.Left, visitor);
+                var rhsType = visitor.Global.TryGetTypeSymbol(node.Right, visitor);
                 if (lhsType != null &&
                     rhsType != null &&
                     lhsType.IsIntegerNumericType() &&

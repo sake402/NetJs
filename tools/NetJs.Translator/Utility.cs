@@ -145,12 +145,18 @@ namespace NetJs.Translator
             }
         }
 
+        static TextWriter logTo = Console.Out;
+
+        public static void LogTo(this TextWriter? writer)
+        {
+            logTo = writer ?? Console.Out;
+        }
 
         static int depth;
         public static void Profile(this string message, Action action)
         {
-            Console.WriteLine();
-            Console.Write(string.Join("", Enumerable.Range(1, depth).Select(i => "    ")) + message + "...");
+            logTo.WriteLine();
+            logTo.Write(string.Join("", Enumerable.Range(1, depth).Select(i => "    ")) + message + "...");
             Stopwatch sw = new();
             sw.Start();
             depth++;
@@ -163,7 +169,7 @@ namespace NetJs.Translator
                 depth--;
             }
             sw.Stop();
-            Console.Write("  " + sw.ElapsedMilliseconds + "ms");
+            logTo.Write("  " + sw.ElapsedMilliseconds + "ms");
         }
 
         public static string RemoveComments(this string str)

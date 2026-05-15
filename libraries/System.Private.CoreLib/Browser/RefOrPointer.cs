@@ -31,6 +31,8 @@ namespace System
     {
         //static RefOrPointer<object> _nullRef;
 
+        internal uint _virtualAddress;
+        internal T? _object;
         internal T[]? _array;
         [NativeDelegate]
         internal Func<int?, T> _getter;
@@ -90,6 +92,8 @@ namespace System
         }
         public T[] ToArray(int length = -1)
         {
+            if (_object != null)
+                return [_object];
             if (_array == null)
                 throw new InvalidOperationException("Not based on an array");
             if (_arrayOffset == 0 && length < 0)
@@ -104,9 +108,12 @@ namespace System
 
         public T GetAt(int offset)
         {
+            if (NetJs.Script.TypeOf(offset).NativeEquals("bigint"))
+                offset = NetJs.Script.Write<int>("Number(offset)");
             offset += _arrayOffset;
             if (_parentRef != null)
             {
+                var parentO = _parentRef.As<RefOrPointer<object>>();
                 var sourceSize = _parentRef.SizeOfItem;
                 var thisSize = SizeOfItem;
                 if (thisSize > sourceSize) //eg int > byte, getting int from underlying byte[]
@@ -114,9 +121,9 @@ namespace System
                     var ratio = Math.DivRem(thisSize, sourceSize);
                     Debug.Assert(ratio.Remainder == 0);
                     ulong numeric = 0;
-                    var isNumeric = _parentRef.Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric() && Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric();
+                    var isNumeric = _parentRef.Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric() &&
+                        Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric();
                     var raw = !isNumeric ? new object[ratio.Quotient] : null;
-                    var parentO = _parentRef.As<RefOrPointer<object>>();
                     for (int i = 0; i < ratio.Quotient; i++)
                     {
                         var value = parentO.GetAt(offset * ratio.Quotient + i);
@@ -157,7 +164,6 @@ namespace System
                 {
                     var ratio = Math.DivRem(sourceSize, thisSize);
                     Debug.Assert(ratio.Remainder == 0);
-                    var parentO = _parentRef.As<RefOrPointer<object>>();
                     var d = (ulong)parentO.GetAt(offset / ratio.Quotient).As<uint>();
                     var i = offset % ratio.Quotient;
                     if (_parentRef.Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric() && Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric())
@@ -169,6 +175,10 @@ namespace System
                         throw null;
                         //d.As<object>()._fields;
                     }
+                }
+                else
+                {
+                    return (T)parentO.GetAt(offset);
                 }
             }
             //else if (_primitiveWindowItems > 0) //eg getting int from underlying byte[]
@@ -190,17 +200,20 @@ namespace System
 
         public void SetAt(T value, int offset)
         {
+            if (NetJs.Script.TypeOf(offset).NativeEquals("bigint"))
+                offset = NetJs.Script.Write<int>("Number(offset)");
             offset += _arrayOffset;
             if (_parentRef != null)
             {
+                var parentO = _parentRef.As<RefOrPointer<object>>();
                 var sourceSize = _parentRef.SizeOfItem;
                 var thisSize = SizeOfItem;
                 if (thisSize > sourceSize) //eg int > byte, setting int to underlying byte[]
                 {
                     var ratio = Math.DivRem(thisSize, sourceSize);
                     Debug.Assert(ratio.Remainder == 0);
-                    var parentO = _parentRef.As<RefOrPointer<object>>();
-                    var isNumeric = _parentRef.Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric() && Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric();
+                    var isNumeric = _parentRef.Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric() &&
+                        Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric();
                     ulong mask = sourceSize switch
                     {
                         1 => 0xFF,
@@ -214,9 +227,9 @@ namespace System
                     {
                         if (isNumeric)
                         {
-                            var mvalue = ((ulong)value.As<uint>() >> (i * sourceSize * 8)) & mask;
-                            var dvalue = NetJs.Script.Write<object>($"{NetJs.Constants.GlobalName}.{NetJs.Constants.CastName}({nameof(mvalue)}, {nameof(parentPrototype)})");
-                            parentO.SetAt(dvalue, offset * ratio.Quotient + i);
+                            var longValue = ((ulong)value.As<uint>() >> (i * sourceSize * 8)) & mask;
+                            var parValue = NetJs.Script.Write<object>($"{NetJs.Constants.GlobalName}.{NetJs.Constants.CastName}({nameof(longValue)}, {nameof(parentPrototype)})");
+                            parentO.SetAt(parValue, offset * ratio.Quotient + i);
                         }
                         else
                         {
@@ -228,22 +241,30 @@ namespace System
                 {
                     var ratio = Math.DivRem(sourceSize, thisSize);
                     Debug.Assert(ratio.Remainder == 0);
-                    var d = (ulong)_parentRef.As<RefOrPointer<object>>().GetAt(offset / ratio.Quotient).As<uint>();
+                    var parValue = _parentRef.As<RefOrPointer<object>>().GetAt(offset / ratio.Quotient);
+                    if (NetJs.Script.IsUndefined(parValue)) //this can happen with ref to unititialized local reference
+                    {
+                        parValue = 0.As<object>();
+                    }
+                    var longValue = (ulong)parValue.As<uint>();
                     var i = offset % ratio.Quotient;
-                    var parentO = _parentRef.As<RefOrPointer<object>>();
                     if (_parentRef.Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric() && Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric())
                     {
                         var maskSet = (ulong)value.As<uint>();
                         var maskClear = ~(0xffUL << (8 * i));
-                        d = (d & maskClear) | (maskSet << (8 * i));
+                        longValue = (longValue & maskClear) | (maskSet << (8 * i));
                         var parentPrototype = parentO.Type.As<RuntimeType>()._prototype;
-                        var dd = NetJs.Script.Write<object>($"{NetJs.Constants.GlobalName}.{NetJs.Constants.CastName}({nameof(d)}, {nameof(parentPrototype)})");
+                        var dd = NetJs.Script.Write<object>($"{NetJs.Constants.GlobalName}.{NetJs.Constants.CastName}({nameof(longValue)}, {nameof(parentPrototype)})");
                         parentO.SetAt(dd, offset / ratio.Quotient);
                     }
                     else
                     {
                         throw null;
                     }
+                }
+                else
+                {
+                    parentO.SetAt(value.As<object>(), offset);
                 }
             }
             //else if (_primitiveWindowItems > 0) //eg setting int to underlying byte[]
@@ -297,18 +318,76 @@ namespace System
         {
             get
             {
-                return this with { _byteOffset = _byteOffset + (offset * SizeOfItem) };
+                if (offset == 0)
+                    return this;
+                return this with
+                {
+                    _parentRef = this,
+                    _byteOffset = offset * SizeOfItem,
+                    _sizeOfItem = _sizeOfItem, //No point recomputing this if it is already computed
+                    _getter = null!,
+                    _setter = null!
+                };
             }
         }
 
         public RefOrPointer<T> AddByteOffset(int offset)
         {
-            return this with { _byteOffset = _byteOffset + offset };
+            if (offset == 0)
+                return this;
+            var root = GetRefWithBackingArray(out var totalByteOffset, out _);
+            if (root != null)
+            {
+                return this with
+                {
+                    _parentRef = root,
+                    _byteOffset = totalByteOffset+ offset ,
+                    _sizeOfItem = _sizeOfItem, //No point recomputing this if it is already computed
+                    _getter = null!,
+                    _setter = null!
+                };
+            }
+            return this with
+            {
+                _parentRef = this,
+                _byteOffset = offset,
+                _sizeOfItem = _sizeOfItem, //No point recomputing this if it is already computed
+                _getter = null!,
+                _setter = null!
+            };
         }
 
         public RefOrPointer<T> Add(long offset)
         {
-            return this with { _byteOffset = _byteOffset + ((int)offset * SizeOfItem) };
+            int iOffset = (int)offset;
+            if (iOffset == 0)
+                return this;
+            var root = GetRefWithBackingArray(out var totalByteOffset, out _);
+            if (root != null)
+            {
+                return this with
+                {
+                    _parentRef = root,
+                    _byteOffset = totalByteOffset + iOffset * SizeOfItem,
+                    _sizeOfItem = _sizeOfItem, //No point recomputing this if it is already computed
+                    _getter = null!,
+                    _setter = null!
+                };
+            }
+            return this with
+            {
+                _parentRef = this,
+                _byteOffset = iOffset * SizeOfItem,
+                _sizeOfItem = _sizeOfItem, //No point recomputing this if it is already computed
+                _getter = null!,
+                _setter = null!
+            };
+        }
+
+        public void Advance(long offset)
+        {
+            int iOffset = (int)offset;
+            _byteOffset += iOffset * SizeOfItem;
         }
 
         public bool Overlaps(IRefOrPointer? second)
@@ -344,6 +423,28 @@ namespace System
         //    return reference.Value;
         //}
 
+        public IRefOrPointer GetRefWithBackingArray(out int byteOffset, out int arrayOffset)
+        {
+            IRefOrPointer? where = this;
+            int bOffset = 0;
+            int arrOffset = 0;
+            while (where != null)
+            {
+                bOffset += where.As<RefOrPointer<object>>()._byteOffset;
+                arrOffset += where.As<RefOrPointer<object>>()._arrayOffset;
+                if (where.As<RefOrPointer<object>>()._parentRef == null &&
+                    where.As<RefOrPointer<object>>()._array != null)
+                {
+                    arrayOffset = arrOffset;
+                    byteOffset = bOffset;
+                    return where;
+                }
+                where = where.As<RefOrPointer<object>>()._parentRef;
+            }
+            byteOffset = -1;
+            arrayOffset = -1;
+            return null;
+        }
         public override string? ToString()
         {
             return Value?.ToString() ?? base.ToString();
@@ -371,7 +472,7 @@ namespace System
         {
         }
 
-        internal Ref(Func<int?, T> getter, Action<T, int?> setter) : base(getter, setter)
+        internal Ref([NativeDelegate] Func<int?, T> getter, [NativeDelegate] Action<T, int?> setter) : base(getter, setter)
         {
         }
 
@@ -434,7 +535,7 @@ namespace System
         {
         }
 
-        internal Pointer(Func<int?, T> getter, Action<T, int?> setter) : base(getter, setter)
+        internal Pointer([NativeDelegate] Func<int?, T> getter, [NativeDelegate] Action<T, int?> setter) : base(getter, setter)
         {
         }
 

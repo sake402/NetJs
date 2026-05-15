@@ -17,8 +17,8 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Numbers
                 node.IsKind(SyntaxKind.LessThanOrEqualExpression) ||
                 node.IsKind(SyntaxKind.EqualsExpression))
             {
-                var lhsType = visitor.Global.TryGetTypeSymbol(node.Left, visitor)?.GetTypeSymbol();
-                var rhsType = visitor.Global.TryGetTypeSymbol(node.Right, visitor)?.GetTypeSymbol();
+                var lhsType = visitor.Global.TryGetTypeSymbol(node.Left, visitor);
+                var rhsType = visitor.Global.TryGetTypeSymbol(node.Right, visitor);
                 if (lhsType != null &&
                     rhsType != null &&
                     lhsType.SpecialType == SpecialType.System_UInt32 &&

@@ -42,7 +42,7 @@ namespace NetJs.Translator.CSharpToJavascript
             isPrimaryConstructorParameter = false;
             if (symbol == null)
                 return false;
-            var currentType = _global.GetTypeSymbol(CurrentType, this).GetTypeSymbol();
+            var currentType = _global.GetTypeSymbol(CurrentType, this);
             IEnumerable<INamedTypeSymbol> GetAllBaseTypes(ITypeSymbol type)
             {
                 if (type.BaseType != null)
@@ -85,11 +85,11 @@ namespace NetJs.Translator.CSharpToJavascript
             //SymbolKind declaringKind = SymbolKind.ErrorType;
             if (currentExpressionNamespace?.Length > 0)
             {
-                identifierSymbol = _global.TryGetTypeSymbol(currentExpressionNamespace + "." + identifier.ValueText, this/*, out declaringSymbol, out declaringKind*/);
+                identifierSymbol = _global.TryGetSymbol(currentExpressionNamespace + "." + identifier.ValueText, this/*, out declaringSymbol, out declaringKind*/);
             }
             else
             {
-                identifierSymbol = _global.TryGetTypeSymbol(node, this);
+                identifierSymbol = _global.TryGetSymbol(node, this);
             }
             if (identifierSymbol is INamespaceSymbol ns)
             {
@@ -197,7 +197,7 @@ namespace NetJs.Translator.CSharpToJavascript
                             }
                             else
                             {
-                                var rsymbolType = _global.TryGetTypeSymbol(right, this);
+                                var rsymbolType = _global.TryGetSymbol(right, this);
                                 rightRefKind = rsymbolType?.GetRefKind();
                             }
                             if (rightRefKind != null && rightRefKind != RefKind.None)
@@ -264,7 +264,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitQualifiedName(QualifiedNameSyntax node)
         {
-            var type = Global.TryGetTypeSymbol(node, this);
+            var type = Global.TryGetSymbol(node, this);
             if (type?.Kind == SymbolKind.Field)
             {
                 string? memberName = null;

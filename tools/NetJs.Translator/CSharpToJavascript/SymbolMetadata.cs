@@ -130,8 +130,11 @@ namespace NetJs.Translator.CSharpToJavascript
                 return _originalInvocationName;
             }
         }
-        string? _invocationName;
 
+        string? _invocationName;
+        //TODO: We should make invoation name take TranslatorVisitor,
+        //If a static member is accesses within the same class, use this.Member, albeit static, instead of Namespace.Class.Member.
+        //This way we can save some characters for static member access within the same class, which is more common
         public string? InvocationName
         {
             get
@@ -142,6 +145,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 return _invocationName;
             }
         }
+
         ISymbol _symbol = default!;
         public ISymbol Symbol
         {
@@ -286,6 +290,10 @@ namespace NetJs.Translator.CSharpToJavascript
 
         static string ComputeInvocatioNameForType(ITypeSymbol type, string? overloadName, GlobalCompilationVisitor _global)
         {
+            if (type.IsAnonymousType)
+            {
+                return ComputeInvocatioNameForType(_global.SystemObject, null, _global);
+            }
             //We are not testing for [External] because those types still exist, only JS world, do they are not deleted
             if (!type.IsNullable(out _) && _global.HasAnyAttribute(type, null, false, typeof(ObjectLiteralAttribute).FullName, typeof(NonScriptableAttribute).FullName))
             {

@@ -55,14 +55,61 @@ namespace System.Runtime.CompilerServices
             where TTo : allows ref struct
         {
             var reff = NetJs.Script.Write<Ref<object>>("source");
-            var fromSize = SizeOf<TFrom>();
-            var toSize = SizeOf<TTo>();
-            if (fromSize != toSize)
+            //If we are casting a struct to a struct, non primitive
+            //OR
+            //If we are tring to cast a numeric array to a structlayout object,
+            //allow it by pulling the provided array into the backing field array of the target type
+            var fromModel = typeof(TFrom).As<RuntimeType>()._model.As<TypeModel>();
+            var toModel = typeof(TTo).As<RuntimeType>()._model.As<TypeModel>();
+            if ((toModel.Flags.TypeHasFlag(TypeFlagsModel.IsValueType) &&
+                fromModel.Flags.TypeHasFlag(TypeFlagsModel.IsValueType) &&
+                !toModel.KnownType.IsPrimitive() &&
+                !fromModel.KnownType.IsPrimitive())
+                ||
+                (toModel.Flags.TypeHasFlag(TypeFlagsModel.IsValueType | TypeFlagsModel.IsStructLayout) &&
+                !toModel.KnownType.IsNumeric() &&
+                fromModel.KnownType.IsIntegerNumeric()))
             {
-                //var mreff = new Ref<TTo>(reff);
-                var mreff = NetJs.Script.Write<Ref<object>>("new ($.$spc.System.Ref$$(TTo))().$ctor$5(reff)");
-                mreff._type = typeof(TTo);
-                reff = mreff.As<Ref<object>>();
+                Array array = reff.GetRefWithBackingArray(out _, out int arrayOffset).As<RefOrPointer<object>>()._array!;
+                if (array != null)
+                {
+                    if (arrayOffset > 0)
+                    {
+                        array = JSProxy.Create<Array>(new ArrayWindowProxyHandler(array, arrayOffset, array.Length - arrayOffset));
+                    }
+                    var newObject = NetJs.Script.Write<TTo>("new TTo()")!;
+                    //var newObject = Activator.CreateInstance<TTo>()!;
+                    newObject._fields = array.As<object[]>();
+                    newObject.offsetObjects = null;
+                    var result = RuntimeHelpers.CreateObjectReference<object>(() =>
+                    {
+                        NetJs.Script.Write("return newObject");
+                        throw null!;
+                    }, (v) =>
+                    {
+                        throw null!;
+                    });
+                    result._type = typeof(TTo);
+                    NetJs.Script.Write("return result");
+                }
+                else
+                {
+                    throw null!;
+                }
+            }
+
+            //If both are numeric type, create a new TTo ref such that it can read from the TFrom ref
+            if (toModel.KnownType.IsNumeric() && fromModel.KnownType.IsNumeric())
+            {
+                var fromSize = SizeOf<TFrom>();
+                var toSize = SizeOf<TTo>();
+                if (fromSize != toSize)
+                {
+                    //var mreff = new Ref<TTo>(reff);
+                    var mreff = NetJs.Script.Write<Ref<object>>("new ($.$spc.System.Ref$$(TTo))().$ctor$5(reff)");
+                    mreff._type = typeof(TTo);
+                    reff = mreff.As<Ref<object>>();
+                }
             }
             //if (fromSize > toSize)
             //{
@@ -75,7 +122,7 @@ namespace System.Runtime.CompilerServices
             NetJs.Script.Write("return reff");
             throw null!;
         }
-        
+
         [NetJs.MemberReplace(nameof(Add) + "<>(ref T, nint)")]
         public static ref T AddImplNint<T>(ref T source, nint elementOffset)
             where T : allows ref struct
@@ -160,7 +207,7 @@ namespace System.Runtime.CompilerServices
         {
             RefOrPointer<object> mleft = NetJs.Script.Write<RefOrPointer<object>>("left");
             RefOrPointer<object> mright = NetJs.Script.Write<RefOrPointer<object>>("right");
-            return ReferenceEquals(mleft, mright) || (mleft._parentRef == mright._parentRef && mleft.As<RefOrPointer<object>>()._byteOffset == mright.As<RefOrPointer<object>>()._byteOffset);
+            return ReferenceEquals(mleft, mright) || (mleft._array == mright._array && mleft._parentRef == mright._parentRef && mleft.As<RefOrPointer<object>>()._byteOffset == mright.As<RefOrPointer<object>>()._byteOffset);
         }
 
         [NetJs.MemberReplace(nameof(IsAddressGreaterThan) + "<>(ref readonly T, ref readonly T)")]
@@ -215,11 +262,11 @@ namespace System.Runtime.CompilerServices
 
         public static unsafe void CopyBlockFinal(void* dest, void* src, nuint lenBytes)
         {
-            RefOrPointer<object> source = NetJs.Script.Write<RefOrPointer<object>>("src");
+            RefOrPointer<object>? source = NetJs.Script.Write<RefOrPointer<object>?>("src");
             RefOrPointer<object> destination = NetJs.Script.Write<RefOrPointer<object>>("dest");
-            var sourceSize = source.SizeOfItem;
+            var sourceSize = src != null ? source!.SizeOfItem : 0;
             var destinationSize = destination.SizeOfItem;
-            if (sourceSize != destinationSize)
+            if (src != null && sourceSize != destinationSize)
             {
                 nuint byteRemaining = lenBytes;
                 if (destinationSize > sourceSize)
@@ -232,7 +279,7 @@ namespace System.Runtime.CompilerServices
                         int i = 0;
                         while (i < destinationSize)
                         {
-                            result |= source.GetAt(s_i).As<ulong>() << (i * 8 * sourceSize);
+                            result |= source!.GetAt(s_i).As<ulong>() << (i * 8 * sourceSize);
                             s_i++;
                             i++;
                         }
@@ -259,7 +306,7 @@ namespace System.Runtime.CompilerServices
                     };
                     while (byteRemaining > 0)
                     {
-                        var s = source.GetAt(s_i.As<int>()).As<ulong>();
+                        var s = source!.GetAt(s_i.As<int>()).As<ulong>();
                         s_i++;
                         int ix = 0;
                         while (ix < sourceSize)
@@ -275,35 +322,36 @@ namespace System.Runtime.CompilerServices
             else
             {
                 //Fast path, both are same data type
-                nuint sourceOffset = source._arrayOffset.As<nuint>();
+                nuint sourceOffset = src != null ? source!._arrayOffset.As<nuint>() : 0;
                 nuint destOffset = destination._arrayOffset.As<nuint>();
-                lenBytes /= (nuint)sourceSize;
+                if (sourceSize != 0)
+                    lenBytes /= (nuint)sourceSize;
                 unchecked
                 {
-                    if (source._array != null && destination._array != null)
+                    if ((src == null || source!._array != null) && destination._array != null)
                     {
                         for (nuint i = 0; i < lenBytes; i++)
                         {
-                            destination._array[i + destOffset] = source._array[i + sourceOffset];
+                            destination._array[i + destOffset] = src == null ? 0.As<object>() : source!._array![i + sourceOffset];
                         }
                     }
-                    else if (source._array != null && destination._array == null)
+                    else if ((src == null || source!._array != null) && destination._array == null)
                     {
                         for (nuint i = 0; i < lenBytes; i++)
                         {
-                            destination.SetAt(source._array[i + sourceOffset], i.As<int>());
+                            destination.SetAt(src == null ? 0.As<object>() : source!._array![i + sourceOffset], i.As<int>());
                         }
                     }
-                    else if (source._array == null && destination._array != null)
+                    else if (src != null && source!._array == null && destination._array != null)
                     {
                         for (nuint i = 0; i < lenBytes; i++)
                         {
-                            destination._array[i + destOffset] = source.GetAt(i.As<int>());
+                            destination._array[i + destOffset] = src == null ? 0.As<object>() : source.GetAt(i.As<int>());
                         }
                     }
-                    else if (source._array == null && destination._array == null)
+                    else //if (source?._array == null && destination._array == null)
                     {
-                        if (source._parentRef != null && destination._parentRef != null && destination._byteOffset == 0 && source._byteOffset == 0)
+                        if (source?._parentRef != null && destination._parentRef != null && destination._byteOffset == 0 && source._byteOffset == 0)
                         {
                             var nDest = NetJs.Script.RefAsVoidPointer(NetJs.Script.Write<RefOrPointer<object>>("destination._parentRef"));
                             var nSrc = NetJs.Script.RefAsVoidPointer(NetJs.Script.Write<RefOrPointer<object>>("source._parentRef"));
@@ -313,7 +361,7 @@ namespace System.Runtime.CompilerServices
                         {
                             for (nuint i = 0; i < lenBytes; i++)
                             {
-                                destination.SetAt(source.GetAt(i.As<int>()), (i + destOffset).As<int>());
+                                destination.SetAt(src == null ? 0.As<object>() : source!.GetAt(i.As<int>()), (i + destOffset).As<int>());
                             }
                         }
                     }
@@ -344,6 +392,16 @@ namespace System.Runtime.CompilerServices
         public static void CopyBlockUnalignedByteImpl(ref byte destination, ref readonly byte source, uint byteCount)
         {
             CopyBlockFinal(NetJs.Script.RefAsPointer<byte>(ref destination), NetJs.Script.RefAsPointer<byte>(in source), byteCount);
+        }
+
+        [NetJs.MemberReplace(nameof(SkipInit) + "<>")]
+        public static void SkipInitImpl<T>(out T value)
+            where T : allows ref struct
+        {
+            if (NetJs.Script.Write<bool>("value.$v == undefined"))
+                value = default!;
+            NetJs.Script.Write("return");
+            value = default!;
         }
     }
 }

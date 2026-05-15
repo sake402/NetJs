@@ -18,18 +18,18 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.String
         {
             if (node.Type.ToString().Equals("string", StringComparison.InvariantCultureIgnoreCase))
             {
-                var typeSymbol = visitor.Global.GetTypeSymbol(node.Type, visitor).GetTypeSymbol()!;
+                var typeSymbol = visitor.Global.GetTypeSymbol(node.Type, visitor)!;
                 if (SymbolEqualityComparer.Default.Equals(typeSymbol, visitor.Global.SystemString))
                 {
-                    var parameterTypes = node.ArgumentList?.Arguments.Select(a => visitor.Global.GetTypeSymbol(a, visitor).GetTypeSymbol()).ToArray() ?? [];
-                    var ctor = typeSymbol.GetMembers("Ctor").Cast<IMethodSymbol>().Select((e, i) => (e, i)).SingleOrDefault(e =>
+                    var parameterTypes = node.ArgumentList?.Arguments.Select(a => visitor.Global.GetTypeSymbol(a, visitor)).ToArray() ?? [];
+                    var ctor = typeSymbol.GetMembers("Create").Cast<IMethodSymbol>().Select((e, i) => (e, i)).SingleOrDefault(e =>
                     {
                         if (e.e.Parameters.Length != parameterTypes.Length)
                             return false;
                         return e.e.Parameters.Select((e, i) => (e, i)).All(e => SymbolEqualityComparer.Default.Equals(e.e.Type, parameterTypes[e.i]));
                     }).e
                     ??
-                    typeSymbol.GetMembers("Ctor").Cast<IMethodSymbol>().Select((e, i) => (e, i)).SingleOrDefault(e =>
+                    typeSymbol.GetMembers("Create").Cast<IMethodSymbol>().Select((e, i) => (e, i)).SingleOrDefault(e =>
                     {
                         if (e.e.Parameters.Length != parameterTypes.Length)
                             return false;

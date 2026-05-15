@@ -5,57 +5,64 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace System.Runtime.InteropServices
 {
     public static partial class Marshal
     {
-        const int MarshalledPointerFlag = 0x1000000;
-
-        static SimpleDictionary<object?> marsalTable = new SimpleDictionary<object?>();
+        //const uint MarshalledPointerFlag = 0x80000000;
+        //static SimpleDictionary<object?> marsalTable = new SimpleDictionary<object?>();
         internal static unsafe IntPtr MarshalObject(void* value)
         {
-            if (Script.TypeOf(value).NativeEquals("number"))
-                return (IntPtr)value;
-            int reference = MarshalledPointerFlag + Random.Shared.Next(1, 0x7FFFFFFF);
-            while (marsalTable.ContainsKey(reference))
-            {
-                reference = MarshalledPointerFlag + Random.Shared.Next(1, 0x7FFFFFFF);
-            }
-            marsalTable[reference] = *(object*)value;
-            return reference;
+            var rref = NetJs.Script.Ref<object>(value);
+            return InteropUtility.castPtr2Address(rref).As<IntPtr>();
+            //if (Script.TypeOf(value).NativeEquals("number"))
+            //    return (IntPtr)value;
+            //uint reference = MarshalledPointerFlag + Random.Shared.Next(1, 0x7FFFFFFF).As<uint>();
+            //while (marsalTable.ContainsKey(reference))
+            //{
+            //    reference = MarshalledPointerFlag + Random.Shared.Next(1, 0x7FFFFFFF).As<uint>();
+            //}
+            //marsalTable[reference] = *(object*)value;
+            //return reference.As<IntPtr>();
         }
 
         internal static IntPtr MarshalObject(object? value, IntPtr handle = 0, bool deleteOld = false)
         {
+            if (value == null)
+                return 0;
             if (Script.TypeOf(value).NativeEquals("number"))
                 return value.As<IntPtr>();
-            if (handle == 0)
-            {
-                handle = MarshalledPointerFlag + Random.Shared.Next(1, 0x7FFFFFFF);
-                while (marsalTable.ContainsKey(handle.As<int>()))
-                {
-                    handle = MarshalledPointerFlag + Random.Shared.Next(1, 0x7FFFFFFF);
-                }
-            }
-            //var key = handle.ToString();
-            if (!deleteOld && marsalTable.ContainsKey(handle.As<int>()))
-            {
-                throw new InvalidOperationException();
-            }
-            marsalTable[handle.As<int>()] = value;
-            return handle;
+            return InteropUtility.castObject2Address(value, handle.As<uint>(), deleteOld).As<IntPtr>();
+            //if (handle == 0)
+            //{
+            //    handle = (MarshalledPointerFlag + Random.Shared.Next(1, 0x7FFFFFFF)).As<IntPtr>();
+            //    while (marsalTable.ContainsKey(handle.As<int>()))
+            //    {
+            //        handle = (MarshalledPointerFlag + Random.Shared.Next(1, 0x7FFFFFFF)).As<IntPtr>();
+            //    }
+            //}
+            ////var key = handle.ToString();
+            //if (!deleteOld && marsalTable.ContainsKey(handle.As<int>()))
+            //{
+            //    throw new InvalidOperationException();
+            //}
+            //marsalTable[handle.As<int>()] = value;
+            //return handle;
         }
 
         internal static object? MarshalObject(IntPtr value)
         {
-            return marsalTable[value.As<int>()];
+            return InteropUtility.castAddress2Object(value.As<uint>());
+            //return marsalTable[value.As<int>()];
         }
 
         internal static void Remove(IntPtr value)
         {
-            marsalTable.Remove(value.As<int>());
+            InteropUtility.free(value.As<uint>());
+            //marsalTable.Remove(value.As<int>());
         }
 
         static int lastPInvokeError;
@@ -103,7 +110,7 @@ namespace System.Runtime.InteropServices
         private static void GetDelegateForFunctionPointerInternalImpl(QCallTypeHandle t, IntPtr ptr, ObjectHandleOnStack res)
         {
             Delegate? d = null;
-            if ((ptr & MarshalledPointerFlag) != 0)
+            if (InteropUtility.IsVirtualAddress(ptr.As<uint>()))
             {
                 d = MarshalObject(ptr) as Delegate;
             }

@@ -14,15 +14,15 @@ namespace NetJs.Translator.CSharpToJavascript
     {
         public void WriteIndexOperator(CSharpSyntaxNode node, ExpressionSyntax operand)
         {
-            var index = (ITypeSymbol)_global.GetTypeSymbol("System.Index", this/*, out _, out _*/);
+            var index = (ITypeSymbol)_global.GetSymbol("System.Index", this/*, out _, out _*/);
             var fromEnd = index.GetMembers("FromEnd").Cast<IMethodSymbol>().FirstOrDefault();
             WriteMethodInvocation(node, fromEnd, null, [operand], null, null, null, false);
         }
 
         public void WriteRangeOperator(CSharpSyntaxNode node, ExpressionSyntax? leftOperand, ExpressionSyntax? rightOperand)
         {
-            var index = (ITypeSymbol)_global.GetTypeSymbol("System.Index", this/*, out _, out _*/);
-            var range = (INamedTypeSymbol)_global.GetTypeSymbol("System.Range", this/*, out _, out _*/);
+            var index = (ITypeSymbol)_global.GetSymbol("System.Index", this/*, out _, out _*/);
+            var range = (INamedTypeSymbol)_global.GetSymbol("System.Range", this/*, out _, out _*/);
             if (leftOperand == null && rightOperand == null)
             {
                 WriteMemberAccess(node, null, range, "All", null);

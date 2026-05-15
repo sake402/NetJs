@@ -8,7 +8,7 @@ using System.Xml.Serialization;
 
 namespace NetJs.Translator.CSharpToJavascript
 {
-    public class PreWriterSyntaxVisitor : CSharpSyntaxRewriter
+    public partial class PreWriterSyntaxVisitor : CSharpSyntaxRewriter
     {
         CSharpCompilation _compilation;
         SemanticModel _semanticModel;
@@ -255,7 +255,7 @@ namespace NetJs.Translator.CSharpToJavascript
             return node;
         }
 
-        public override SyntaxNode? VisitIdentifierName(IdentifierNameSyntax node)
+        SyntaxNode? TryRemovePartial(IdentifierNameSyntax node)
         {
             if (node.Identifier.ValueText.EndsWith("_Partial"))
             {
@@ -263,12 +263,10 @@ namespace NetJs.Translator.CSharpToJavascript
                     .WithLeadingTrivia(node.GetLeadingTrivia())
                     .WithTrailingTrivia(node.GetTrailingTrivia());
             }
-            //if (node.Identifier.ValueText.Equals("THIS"))
-            //{
-            //    return SyntaxFactory.IdentifierName("this")
-            //        .WithLeadingTrivia(node.GetLeadingTrivia())
-            //        .WithTrailingTrivia(node.GetTrailingTrivia());
-            //}
+            return null;
+        }
+        SyntaxNode? TryRewriteTHIS(IdentifierNameSyntax node)
+        {
             if (node.Identifier.ValueText.Equals("THIS"))
             {
                 //var @class = node.FindClosestParent<BaseTypeDeclarationSyntax>();
@@ -279,7 +277,37 @@ namespace NetJs.Translator.CSharpToJavascript
                     .WithTrailingTrivia(node.GetTrailingTrivia());
                 }
             }
-            return base.VisitIdentifierName(node);
+            return null;
+        }
+        public override SyntaxNode? VisitIdentifierName(IdentifierNameSyntax node)
+        {
+            return TryRemovePartial(node) ?? 
+                TryRewriteTHIS(node) ?? 
+                TryGetQueryMemberAccessForVariable(node) ?? 
+                base.VisitIdentifierName(node);
+            //if (node.Identifier.ValueText.EndsWith("_Partial"))
+            //{
+            //    return SyntaxFactory.IdentifierName(node.Identifier.ValueText.Substring(0, node.Identifier.ValueText.Length - "_Partial".Length))
+            //        .WithLeadingTrivia(node.GetLeadingTrivia())
+            //        .WithTrailingTrivia(node.GetTrailingTrivia());
+            //}
+            ////if (node.Identifier.ValueText.Equals("THIS"))
+            ////{
+            ////    return SyntaxFactory.IdentifierName("this")
+            ////        .WithLeadingTrivia(node.GetLeadingTrivia())
+            ////        .WithTrailingTrivia(node.GetTrailingTrivia());
+            ////}
+            //if (node.Identifier.ValueText.Equals("THIS"))
+            //{
+            //    //var @class = node.FindClosestParent<BaseTypeDeclarationSyntax>();
+            //    //if (@class?.BaseList?.Types.Any(b => b.Type.ToString().Contains("ForcedPartialBase")) ?? false)
+            //    {
+            //        return SyntaxFactory.IdentifierName("this")
+            //        .WithLeadingTrivia(node.GetLeadingTrivia())
+            //        .WithTrailingTrivia(node.GetTrailingTrivia());
+            //    }
+            //}
+            //return base.VisitIdentifierName(node);
         }
         BaseTypeDeclarationSyntax? TryBruteForcePartialTypes(BaseTypeDeclarationSyntax node, string fullName)
         {
@@ -381,7 +409,7 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             var identifier =
                 node is MethodDeclarationSyntax method ? method.Identifier.ValueText + (method.Arity > 0 ? $"<{string.Join(",", Enumerable.Range(1, method.Arity).Select(s => ""))}>" : "") :
-                node is ConstructorDeclarationSyntax ctor ? "ctor" :
+                node is ConstructorDeclarationSyntax ctor ? ".ctor" :
                 node is PropertyDeclarationSyntax property ? property.Identifier.ValueText :
                 node is IndexerDeclarationSyntax idx ? "this" :
                 node is FieldDeclarationSyntax field && field.Declaration.Variables.Count == 1 ? field.Declaration.Variables.Single().Identifier.ValueText :
@@ -403,7 +431,7 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             var methodSignature =
                 node is MethodDeclarationSyntax method1 ? $"{method1.Identifier.ValueText}{(method1.Arity > 0 ? $"<{string.Join(",", Enumerable.Range(1, method1.Arity).Select(s => ""))}>" : "")}({string.Join(", ", method1.ParameterList.Parameters.Select(p => $"{ModifierString(p)}{p.Type}"))})" :
-                node is ConstructorDeclarationSyntax ctor1 ? $"ctor({string.Join(", ", ctor1.ParameterList.Parameters.Select(p => p.Type?.ToString()))})" :
+                node is ConstructorDeclarationSyntax ctor1 ? $".ctor({string.Join(", ", ctor1.ParameterList.Parameters.Select(p => p.Type?.ToString()))})" :
                 node is PropertyDeclarationSyntax property1 ? $"{property1.Identifier.ValueText}" :
                 node is IndexerDeclarationSyntax idx ? $"this[{string.Join(", ", idx.ParameterList.Parameters.Select(p => p.Type?.ToString()))}]" :
                 node is FieldDeclarationSyntax field1 ? $"{field1.Declaration.Variables.Single().Identifier.ValueText}" :
@@ -526,7 +554,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 var memberOverride = partialClasses
                     .SelectMany(c => c.Members)
                     .Where(e => node is PropertyDeclarationSyntax ? e is PropertyDeclarationSyntax :
-                                node is FieldDeclarationSyntax ? e is PropertyDeclarationSyntax :
+                                node is FieldDeclarationSyntax ? e is PropertyDeclarationSyntax || e is FieldDeclarationSyntax :
                                 //node is IndexerDeclarationSyntax ? e is IndexerDeclarationSyntax :
                                 e is MethodDeclarationSyntax)
                     //.OfType<MethodDeclarationSyntax>()
@@ -968,6 +996,10 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override SyntaxNode? VisitFieldDeclaration(FieldDeclarationSyntax node)
         {
+            if (node.ToFullString().Contains("public static readonly string Empty"))
+            {
+
+            }
             //A field decorated with MemberOverride is removed. Only its content is used to replace the overriden member
             if (node.HasAnyAttribute([typeof(MemberReplaceAttribute).FullName], out _))
                 return null;
@@ -977,27 +1009,46 @@ namespace NetJs.Translator.CSharpToJavascript
                 //MemberReplaceType replacementType = MemberReplaceType.All;// & ~MemberReplaceType.Modifiers;
                 if (memberOverrides?.Any() ?? false)
                 {
-                    var property = SyntaxFactory.PropertyDeclaration(
-                        node.AttributeLists,
-                        node.Modifiers,
-                        node.Declaration.Type,
-                        null,
-                        node.Declaration.Variables.Single().Identifier,
-                        null, null,
-                        node.Declaration.Variables.Single().Initializer);
-                    SyntaxList<AttributeListSyntax> atts = node.AttributeLists;
-                    SyntaxTokenList modifiers = node.Modifiers;
-                    var accessors = OverrideAccessor(node, memberOverrides, SyntaxFactory.AccessorList(default), ref atts, ref modifiers);
-                    var newNode = property.WithAccessorList(accessors)
-                        //.WithExpressionBody(expressionBody)
-                        .WithAttributeLists(atts)
-                        .WithModifiers(modifiers);
-                    //if (atts.Any(a => a.Attributes.Count > 0))
-                    //newNode = newNode.WithAttributeLists(atts);
-                    newNode = newNode.WithLeadingTrivia(node.GetLeadingTrivia())
-                       .WithTrailingTrivia(node.GetTrailingTrivia());
-                    return newNode;
-
+                    var moverride = memberOverrides.Single().Value;
+                    if (moverride.IsKind(SyntaxKind.FieldDeclaration))
+                    {
+                        var mov = (FieldDeclarationSyntax)moverride;
+                        var originalVariable = node.Declaration.Variables.Single();
+                        var overrideVariable = mov.Declaration.Variables.Single();
+                        originalVariable = originalVariable.WithInitializer(overrideVariable.Initializer);
+                        var newDeclaration = SyntaxFactory.VariableDeclaration(node.Declaration.Type, SyntaxFactory.SeparatedList<VariableDeclaratorSyntax>([originalVariable]));
+                        var newNode = node.WithDeclaration(newDeclaration);
+                        SyntaxList<AttributeListSyntax> atts = node.AttributeLists;
+                        if (moverride.AttributeLists.Count > 0)
+                        {
+                            atts = atts.AddRange(moverride.AttributeLists.Where(e => e.Attributes.Count > 0));
+                        }
+                        newNode = newNode.WithAttributeLists(atts);
+                        return newNode;
+                    }
+                    else
+                    {
+                        var property = SyntaxFactory.PropertyDeclaration(
+                            node.AttributeLists,
+                            node.Modifiers,
+                            node.Declaration.Type,
+                            null,
+                            node.Declaration.Variables.Single().Identifier,
+                            null, null,
+                            node.Declaration.Variables.Single().Initializer);
+                        SyntaxList<AttributeListSyntax> atts = node.AttributeLists;
+                        SyntaxTokenList modifiers = node.Modifiers;
+                        var accessors = OverrideAccessor(node, memberOverrides, SyntaxFactory.AccessorList(default), ref atts, ref modifiers);
+                        var newNode = property.WithAccessorList(accessors)
+                            //.WithExpressionBody(expressionBody)
+                            .WithAttributeLists(atts)
+                            .WithModifiers(modifiers);
+                        //if (atts.Any(a => a.Attributes.Count > 0))
+                        //newNode = newNode.WithAttributeLists(atts);
+                        newNode = newNode.WithLeadingTrivia(node.GetLeadingTrivia())
+                           .WithTrailingTrivia(node.GetTrailingTrivia());
+                        return newNode;
+                    }
                     //    var atts = replacementType.HasFlag(MemberReplaceType.Attributes) ? SyntaxFactory.List([SyntaxFactory.AttributeList(SeparatedSyntaxList.Create([.. memberOverride.AttributeLists.SelectMany(a => a.Attributes).Concat(node.AttributeLists.SelectMany(a => a.Attributes))]))]) : node.AttributeLists;
                     //var newNode = node.WithDeclaration(memberOverride.Declaration)
                     //    .WithModifiers(replacementType.HasFlag(MemberReplaceType.Modifiers) ? (!memberOverride.Modifiers.Any(e => e.IsKind(SyntaxKind.ExternKeyword)) ? SyntaxFactory.TokenList(memberOverride.Modifiers.Where(e => !e.IsKind(SyntaxKind.ExternKeyword))) : memberOverride.Modifiers) : node.Modifiers);

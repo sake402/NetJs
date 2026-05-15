@@ -9,12 +9,12 @@ namespace Window
     [NetJs.External]
     public class Console
     {
-        public extern void log(params object?[] args);
-        public extern void info(params object?[] args);
-        public extern void warn(params object?[] args);
-        public extern void error(params object?[] args);
-        public extern void debug(params object?[] args);
-        public extern void assert(bool condition, params object?[] args);
+        public extern void log([NetJs.Spread] params object?[] args);
+        public extern void info([NetJs.Spread] params object?[] args);
+        public extern void warn([NetJs.Spread] params object?[] args);
+        public extern void error([NetJs.Spread] params object?[] args);
+        public extern void debug([NetJs.Spread] params object?[] args);
+        public extern void assert(bool condition, [NetJs.Spread] params object?[] args);
         public extern void clear();
         public extern void dir(object? obj);
         public extern void trace();

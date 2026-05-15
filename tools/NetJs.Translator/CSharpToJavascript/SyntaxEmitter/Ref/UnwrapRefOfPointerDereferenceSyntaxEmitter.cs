@@ -19,7 +19,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Ref
             }
             if (node.Expression.IsKind(SyntaxKind.ElementAccessExpression) && node.Expression is ElementAccessExpressionSyntax elementAccess)
             {
-                var type = visitor.Global.TryGetTypeSymbol(elementAccess.Expression, visitor)?.GetTypeSymbol();
+                var type = visitor.Global.TryGetTypeSymbol(elementAccess.Expression, visitor);
                 if (type?.IsPointer(out _) ?? false)
                 {
                     visitor.WritePointerAdvance(node, elementAccess.Expression, elementAccess.ArgumentList.Arguments[0]);
@@ -45,7 +45,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Ref
             }
             if (node.RefKindKeyword.ValueText.Length > 0 && node.Expression.IsKind(SyntaxKind.ElementAccessExpression) && node.Expression is ElementAccessExpressionSyntax elementAccess)
             {
-                var type = visitor.Global.TryGetTypeSymbol(elementAccess.Expression, visitor)?.GetTypeSymbol();
+                var type = visitor.Global.TryGetTypeSymbol(elementAccess.Expression, visitor);
                 if (type?.IsPointer(out _) ?? false)
                 {
                     visitor.WritePointerAdvance(node, elementAccess.Expression, elementAccess.ArgumentList.Arguments[0]);

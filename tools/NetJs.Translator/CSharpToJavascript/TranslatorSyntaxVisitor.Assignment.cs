@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NetJs.Translator.CSharpToJavascript.SyntaxEmitter;
 
 namespace NetJs.Translator.CSharpToJavascript
 {
@@ -62,14 +63,14 @@ namespace NetJs.Translator.CSharpToJavascript
             new CollectionExpressionToReadOnlySpanAssignmentConverter(),
         ];
 
-        bool NeedBoxing(ITypeSymbol toType, ITypeSymbol fromType)
+        public bool NeedBoxing(ITypeSymbol toType, ITypeSymbol fromType)
         {
             //In JS, everything is on the heap, even struct.
-            //The only time we need boxing is if we are converting to object a native JS primitive type that has a one to one maps to .Net primitive type
+            //The only time we need boxing is if we are converting to object/interface a native JS primitive type that has a one to one maps to .Net primitive type
             //Or from a type parameter, the runtime will check if boxing is really neccessary for the type parameter
-            if (fromType.Kind == SymbolKind.TypeParameter || fromType.IsJsPrimitive())
+            if (!fromType.IsAbstract && (fromType.Kind == SymbolKind.TypeParameter || fromType.IsJsPrimitive()))
             {
-                if (SymbolEqualityComparer.Default.Equals(toType, _global.SystemObject))
+                if (SymbolEqualityComparer.Default.Equals(toType, _global.SystemObject) || toType.TypeKind == TypeKind.Interface)
                     return true;
             }
             return false;
@@ -133,7 +134,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 (rhs is IMethodSymbol m && rhsExpression.IsKind(SyntaxKind.InvocationExpression) ? m.ReturnType : null) ??
                 (rhs is IMethodSymbol m2 && m2.Name == ImplicitOperatorName ? m2.Parameters.First().Type : null) ??
                 rhs as ITypeSymbol ??
-                (rhsExpression != null ? _global.ResolveSymbol(GetExpressionReturnSymbol(rhsExpression), this)?.GetTypeSymbol() : null);
+                (rhsExpression != null ? _global.TryGetTypeSymbol(rhsExpression, this) : null);
             var rhsRefKind = rhs?.GetRefKind();
 
             if (rhsRefKind == null || rhsRefKind == RefKind.None)
@@ -218,7 +219,8 @@ namespace NetJs.Translator.CSharpToJavascript
                     CurrentTypeWriter.Write(node, $"{_global.GlobalName}.Destructure(");
                 }
             }
-            bool doBoxing = enableBoxing && lhsType != null && rhsType != null && NeedBoxing(lhsType, rhsType);
+            bool needBoxing = lhsType != null && rhsType != null && NeedBoxing(lhsType, rhsType);
+            bool doBoxing = enableBoxing && needBoxing;
             //if (rhsType == null || rhsRefTarget == null)
             //{
             //    var expressionBoundMember = GetExpressionBoundMember(rhsExpression).TypeSyntaxOrSymbol;
@@ -268,7 +270,15 @@ namespace NetJs.Translator.CSharpToJavascript
             //    Writer.Write(node, Constants.RefValueName);
             //}
             //else
+            IDisposable? dispose = null;
             {
+                if (needBoxing)
+                {
+                    if (rhsExpression is ArgumentSyntax arg)
+                        dispose = BoxPrimitiveAssignmentSyntaxEmitter.Disable(arg.Expression);
+                    else
+                        dispose = BoxPrimitiveAssignmentSyntaxEmitter.Disable(rhsExpression);
+                }
                 if (doBoxing)
                 {
                     CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.BoxName}(");
@@ -339,6 +349,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     CurrentTypeWriter.Write(node, rhsMetadata?.InvocationName ?? rhsType.ComputeOutputTypeName(_global));
                     CurrentTypeWriter.Write(node, $")");
                 }
+                dispose?.Dispose();
             }
 
             if (lhsExpression != null)
@@ -407,17 +418,17 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (TryInvokeMethodOperator(node, node.OperatorToken.ValueText, null, node.Left, [node.Left, node.Right]))
                 return;
-            var rhsType = _global.GetTypeSymbol(node.Right, this);// GetExpressionBoundTarget(node.Right).TypeSyntaxOrSymbol as ISymbol;
+            var rhsType = _global.GetSymbol(node.Right, this);// GetExpressionBoundTarget(node.Right).TypeSyntaxOrSymbol as ISymbol;
             //if (rhsType == null)
             //{
             //    rhsType = _global.ResolveSymbol(GetExpressionReturnSymbol(node.Right), this/*, out _, out _*/);
             //}
-            var lhsType = _global.GetTypeSymbol(node.Left, this);// GetExpressionBoundTarget(node.Left).TypeSyntaxOrSymbol as ISymbol;
+            var lhsType = _global.GetSymbol(node.Left, this);// GetExpressionBoundTarget(node.Left).TypeSyntaxOrSymbol as ISymbol;
             //if (lhsType == null)
             //{
             //    lhsType = _global.ResolveSymbol(GetExpressionReturnSymbol(node.Left), this/*, out _, out _*/);
             //}
-            var assignmentType = rhsType?.GetTypeSymbol() ?? lhsType?.GetTypeSymbol();
+            var assignmentType = (rhsType != null ? _global.GetTypeSymbol(rhsType) : null) ?? (lhsType != null ? _global.GetTypeSymbol(lhsType) : null);
 
             IDisposable? disposeDelegateType = null;
             if (assignmentType is ITypeSymbol ts)

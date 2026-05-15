@@ -83,11 +83,14 @@ namespace System
                 _scriptFullName = scriptFullName;
                 //prototype.As<object>()["$type"] = this;
             }
+            prototype.As<TypePrototype>().Assembly = assembly;
+            prototype.As<TypePrototype>().Name = scriptFullName;
+            prototype.As<TypePrototype>().Model = model;
             Object.DefineProperty(prototype.As<object>(), Constants.ObjectTypeName, new PropertyDescriptor { Value = this });
-            prototype.As<object>()["$model"] = model;
+            //prototype.As<TypePrototype>().Type = this;
             if (_assembly != null)
             {
-                prototype.As<object>()[Constants.AssemblyRegistryName] = _assembly;
+                //prototype.As<object>()[Constants.AssemblyRegistryName] = _assembly;
                 _assembly.As<RuntimeAssembly_Partial>()._types.Push(this);
             }
             AppDomain.GlobalTypeRegistry[scriptFullName] = this;
@@ -493,11 +496,13 @@ namespace System
                 {
                     t._arrayElementType = typeArguments[0];
                     t._arrayTypeRank = 1;
+                    prototype.Element = typeArguments[0]._prototype!;
                 }
             }
             else
             {
                 t._typeArguments = typeArguments;
+                prototype.Arguments = typeArguments.Map(t => t._prototype!);
             }
             _assembly.As<RuntimeAssembly_Partial>().RegisterCompletionNotification(t);
             return t;

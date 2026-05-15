@@ -67,14 +67,15 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitCatchClause(CatchClauseSyntax node)
         {
+            IDisposable? dispose = null;
             CurrentTypeWriter.Write(node, "catch(", true);
             if (node.Declaration != null && !string.IsNullOrEmpty(node.Declaration.Identifier.ValueText))
             {
-                var localField = _global.TryGetTypeSymbol(node.Declaration, this/*, out _, out _*/);
+                var localField = _global.TryGetSymbol(node.Declaration, this/*, out _, out _*/);
                 if (localField != null)
-                    CurrentClosure.DefineIdentifierType(node.Declaration.Identifier.ValueText, CodeSymbol.From(localField));
+                    dispose = CurrentClosure.DefineIdentifierType(node.Declaration.Identifier.ValueText, CodeSymbol.From(localField));
                 else
-                    CurrentClosure.DefineIdentifierType(node.Declaration.Identifier.ValueText, CodeSymbol.From(node.Declaration.Type, SymbolKind.Local));
+                    dispose = CurrentClosure.DefineIdentifierType(node.Declaration.Identifier.ValueText, CodeSymbol.From(node.Declaration.Type, SymbolKind.Local));
                 CurrentTypeWriter.Write(node, node.Declaration.Identifier.ValueText);
             }
             else
@@ -82,6 +83,7 @@ namespace NetJs.Translator.CSharpToJavascript
             //Visit(node.Declaration);
             CurrentTypeWriter.WriteLine(node, ")");
             Visit(node.Block);
+            dispose?.Dispose();
             //base.VisitCatchClause(node);
         }
 

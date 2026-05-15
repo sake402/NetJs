@@ -5,8 +5,9 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
 {
     /// <summary>
-    /// And expression like int a = Unsafe.Add(ref first, index); will typically produce let a = $.$spc.System.Runtime.CompilerServices.Unsafe.Add$1(T)(first, index).$v;
-    /// Rewrite as let a = first.Get(index), this will be way faster as it doesnt create the temp reference object returned by Unsafe.Add
+    /// An expression like "int a = Unsafe.Add(ref first, index)" 
+    /// will typically produce "let a = $.$spc.System.Runtime.CompilerServices.Unsafe.Add$1(T)(first, index).$v"
+    /// Rewrite as let a = first.Get(index) or first.SetAt(...), this will be way faster as it doesnt create the temp reference object returned by Unsafe.Add
     /// </summary>
     internal class UnneccessaryUnsafeAddSyntaxEmitter : SyntaxEmitter<CSharpSyntaxNode>
     {
@@ -18,7 +19,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                 var right = (node as AssignmentExpressionSyntax)?.Right ?? (node as EqualsValueClauseSyntax)?.Value;
                 if (left != null && right != null && right.IsKind(SyntaxKind.InvocationExpression) && right.ToString().StartsWith("Unsafe.Add("))
                 {
-                    var lhsType = visitor.Global.GetTypeSymbol(left, visitor);
+                    var lhsType = visitor.Global.GetSymbol(left, visitor);
                     var leftRefKind = lhsType.GetRefKind() ?? RefKind.None;
                     if (leftRefKind == RefKind.None &&
                         right is InvocationExpressionSyntax inv &&
@@ -38,7 +39,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                 }
                 else if (left != null && right != null && left.IsKind(SyntaxKind.InvocationExpression) && left.ToString().StartsWith("Unsafe.Add("))
                 {
-                    var rhsType = visitor.Global.GetTypeSymbol(right, visitor);
+                    var rhsType = visitor.Global.GetSymbol(right, visitor);
                     var rightRefKind = rhsType.GetRefKind() ?? RefKind.None;
                     if (rightRefKind == RefKind.None &&
                         left is InvocationExpressionSyntax inv &&

@@ -21,6 +21,8 @@ namespace System
         SystemUInt16,
         SystemInt32,
         SystemUint32,
+        SystemIntPtr,
+        SystemUintPtr,
         SystemInt64,
         SystemUint64,
         SystemFloat,
@@ -115,6 +117,7 @@ namespace System
         IsFlags = 1L << 17,
         IsNestedPublic = 1L << 18,
         IsSerializable = 1L << 19,
+        IsStructLayout = 1L << 20
     }
 
     [Flags]

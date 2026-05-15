@@ -6,11 +6,11 @@ namespace System
     [NetJs.StaticCallConvention]
     public readonly struct Char_Partial
     {
-        [NetJs.MemberReplace(nameof(GetHashCode))]
-        public int GetHashCodeImplChar()
-        {
-            return this.As<char>();
-        }
+        //[NetJs.MemberReplace(nameof(GetHashCode))]
+        //public int GetHashCodeImplChar()
+        //{
+        //    return NetJs.Script.Write<int>("m_value");
+        //}
 
         readonly char _m_value;
         [NetJs.MemberReplace("m_value")]

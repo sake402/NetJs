@@ -19,8 +19,8 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Pointer
             {
                 if (!node.Left.IsKind(SyntaxKind.NullLiteralExpression) && !node.Right.IsKind(SyntaxKind.NullLiteralExpression))
                 {
-                    var leftOperandType = visitor.Global.TryGetTypeSymbol(node.Left, visitor)?.GetTypeSymbol();
-                    var rightOperandType = visitor.Global.TryGetTypeSymbol(node.Right, visitor)?.GetTypeSymbol();
+                    var leftOperandType = visitor.Global.TryGetTypeSymbol(node.Left, visitor);
+                    var rightOperandType = visitor.Global.TryGetTypeSymbol(node.Right, visitor);
                     if ((leftOperandType?.IsPointer(out _) ?? false) && (rightOperandType?.IsPointer(out _) ?? false))
                     {
                         visitor.WriteMethodInvocation(node, "System.RefOrPointer.Compare",/* classGenericTypes: [visitor.Global.SystemObject],*/ arguments: [node.Left, node.Right]);

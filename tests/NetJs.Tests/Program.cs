@@ -61,6 +61,11 @@ namespace NetJs.Tests
             NumericTests.Run();
             ArrayTests.Run();
             StringTests.Run();
+            DateTimeTests.Run();
+            DateTimeExhaustiveTests.Run();
+            DateTimeOffsetTests.Run();
+            DateTimeOffsetExhaustiveTests.Run();
+            CSharp14TranspilerTests.Run();
             int end = Environment.TickCount;
             Debug.WriteLine($"✅ All Tests completed in {end - start}ms.");
             //int[] aaa = [1,2,3];

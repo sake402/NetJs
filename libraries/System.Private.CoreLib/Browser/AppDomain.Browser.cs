@@ -1,5 +1,4 @@
 ﻿using NetJs;
-using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
@@ -26,11 +25,15 @@ namespace System
             GlobalTypeRegistry = new SimpleDictionary<RuntimeType>();
             //GlobalPrototypeRegistry = Script.Write<SimpleDictionary<TypePrototypeRegistrar>>("window.dotnetJs");
             GlobalPrototypeRegistry = Script.Write<SimpleDictionary<Union<TypePrototype, TypePrototypeProvider>>>($"window.{Constants.ProjectName}");
-            Script.Write($"$.{Constants.AssemblyRegistryName} = this.{Constants.AssemblyRegistryName}");
-            Script.Write($"$.{Constants.AssemblyMetadataRegistryName} = this.{Constants.AssemblyMetadataRegistryName}");
+            //Script.Write($"{Constants.GlobalName}.typesReady = true");
+            Script.Write($"{Constants.GlobalName}.{Constants.AssemblyRegistryName} = this.{Constants.AssemblyRegistryName}");
+            Script.Write($"{Constants.GlobalName}.{Constants.AssemblyMetadataRegistryName} = this.{Constants.AssemblyMetadataRegistryName}");
+            Script.Write($"{Constants.GlobalName}.castPtr2Address = {Constants.GlobalName}.$spc.{nameof(InteropUtility)}.{nameof(InteropUtility.castPtr2Address)}");
+            Script.Write($"{Constants.GlobalName}.castAddress2Ptr = {Constants.GlobalName}.$spc.{nameof(InteropUtility)}.{nameof(InteropUtility.castAddress2Ptr)}");
+            Script.Write($"{Constants.GlobalName}.virtualAddressOffset = {Constants.GlobalName}.$spc.{nameof(InteropUtility)}.{nameof(InteropUtility.virtualAddressOffset)}");
             //Script.Write($"$.{Constants.AssemblyStubName} = $.System.AppDomain.{Constants.AssemblyStubName}");
         }
-
+        
         [Name(Constants.AssemblyMetadataRegistryName)]
         public static void ReflectionData(string assemblyName, AssemblyModel assemblyMetadata)
         {

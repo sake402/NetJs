@@ -45,13 +45,13 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             else if (node.Parent is AssignmentExpressionSyntax assignment)
             {
-                var lhsType = _global.ResolveSymbol(GetExpressionReturnSymbol(assignment.Left), this/*, out _, out _*/)?.GetTypeSymbol() ?? throw new InvalidOperationException($"Cannot Infer the typeof {node}");
+                var lhsType = _global.TryGetTypeSymbol(assignment.Left, this/*, out _, out _*/) ?? throw new InvalidOperationException($"Cannot Infer the typeof {node}");
                 return (null, lhsType);
             }
             else if (node.Parent.IsKind(SyntaxKind.ReturnStatement)/*is ReturnStatementSyntax*/)
             {
                 var member = node.FindClosestParent<MemberDeclarationSyntax>() ?? throw new InvalidOperationException($"Cannot find a member containig {node.Parent}");
-                var memberSymbol = _global.GetTypeSymbol(member, this/*, out _, out _*/);
+                var memberSymbol = _global.GetSymbol(member, this/*, out _, out _*/);
                 var lhsType = (memberSymbol as IMethodSymbol)?.ReturnType ??
                     (memberSymbol as IPropertySymbol)?.Type ??
                     throw new InvalidOperationException($"Cannot get return type from {memberSymbol}");
@@ -60,11 +60,11 @@ namespace NetJs.Translator.CSharpToJavascript
             else if (node.Parent.IsKind(SyntaxKind.YieldReturnStatement))
             {
                 var member = node.FindClosestParent<MemberDeclarationSyntax>() ?? throw new InvalidOperationException($"Cannot find a member containig {node.Parent}");
-                var memberSymbol = _global.GetTypeSymbol(member, this/*, out _, out _*/);
+                var memberSymbol = _global.GetSymbol(member, this/*, out _, out _*/);
                 var lhsType = (memberSymbol as IMethodSymbol)?.ReturnType ??
                     (memberSymbol as IPropertySymbol)?.Type ??
                     throw new InvalidOperationException($"Cannot get return type from {memberSymbol}");
-                var systemObject = (ITypeSymbol)_global.GetTypeSymbol("System.Object", this);
+                var systemObject = (ITypeSymbol)_global.GetSymbol("System.Object", this);
                 if (lhsType.SpecialType == SpecialType.System_Collections_IEnumerable)
                     return (null, systemObject);
                 if (lhsType.SpecialType == SpecialType.System_Collections_IEnumerator)
@@ -226,7 +226,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 var leftType = _global.ResolveSymbol(GetExpressionBoundTarget(ela.Expression), this/*, out _, out _*/)?.GetTypeSymbol();
                 if (leftType?.IsArray(out var elementType) ?? false)
                 {
-                    var arrayT = (INamedTypeSymbol)_global.GetTypeSymbol("System.Array<>", this/*, out _, out _*/);
+                    var arrayT = (INamedTypeSymbol)_global.GetSymbol("System.Array<>", this/*, out _, out _*/);
                     arrayT = arrayT.Construct([elementType]);
                     //var argTypes = ela.ArgumentList.Arguments.Select(a => _global.ResolveTypeSymbol(GetExpressionReturnType(a), this, out _, out _));
                     //if (argTypes.All(a => a != null))
@@ -302,7 +302,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 var idType = GetIdentifierTypeInScope(id.Identifier.ValueText);
                 if (idType.TypeSyntaxOrSymbol != null)
                     return idType;
-                var symbol = _global.TryGetTypeSymbol(id, this/*, out _, out _*/);
+                var symbol = _global.TryGetSymbol(id, this/*, out _, out _*/);
                 return CodeSymbol.From(symbol);
             }
             else if (expression is GenericNameSyntax gnn)
@@ -310,12 +310,12 @@ namespace NetJs.Translator.CSharpToJavascript
                 var idType = GetIdentifierTypeInScope(gnn.Identifier.ValueText + "<" + string.Join(",", Enumerable.Range(1, gnn.Arity).Select(e => "")) + ">");
                 if (idType.TypeSyntaxOrSymbol != null)
                     return idType;
-                var symbol = _global.GetTypeSymbol(gnn, this/*, out _, out _*/);
+                var symbol = _global.GetSymbol(gnn, this/*, out _, out _*/);
                 return CodeSymbol.From(symbol);
             }
             else if (expression is TypeSyntax typ)
             {
-                var symbol = _global.TryGetTypeSymbol(typ, this/*, out _, out _*/);
+                var symbol = _global.TryGetSymbol(typ, this/*, out _, out _*/);
                 return CodeSymbol.From(symbol);
             }
             else if (expression is RefExpressionSyntax rref)
@@ -330,7 +330,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 return CodeSymbol.From(create.Type, SymbolKind.ErrorType);
             else if (expression is ArrayCreationExpressionSyntax arrayCreate)
             {
-                var symbol = _global.Compilation.CreateArrayTypeSymbol((ITypeSymbol)_global.GetTypeSymbol(arrayCreate.Type.ElementType, this/*, out _, out _*/));
+                var symbol = _global.Compilation.CreateArrayTypeSymbol((ITypeSymbol)_global.GetSymbol(arrayCreate.Type.ElementType, this/*, out _, out _*/));
                 return CodeSymbol.From(symbol);
             }
             else if (expression is MemberAccessExpressionSyntax memberAccess)
@@ -402,7 +402,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 //Weird that there is no dedicated Expression for nameof() operator
                 if (invocation.Expression is IdentifierNameSyntax idn && idn.Identifier.ValueText == "nameof")
                 {
-                    return CodeSymbol.From(_global.GetTypeSymbol("System.String", this/*, out _, out _*/));
+                    return CodeSymbol.From(_global.GetSymbol("System.String", this/*, out _, out _*/));
                 }
                 //if (invocation.Expression is MemberAccessExpressionSyntax ma && ma.Name.Identifier.ValueText == "ToString" && invocation.ArgumentList.Arguments.Count == 0)
                 //{
@@ -465,7 +465,7 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 if (literal.IsKind(SyntaxKind.NumericLiteralExpression))
                 {
-                    return CodeSymbol.From(_global.GetTypeSymbol(literal.Token.ValueText.EndsWith("f") ? "System.Float" : literal.Token.ValueText.Contains(".") ? "System.Double" : "System.Int32", this/*, out _, out _*/));
+                    return CodeSymbol.From(_global.GetSymbol(literal.Token.ValueText.EndsWith("f") ? "System.Float" : literal.Token.ValueText.Contains(".") ? "System.Double" : "System.Int32", this/*, out _, out _*/));
                 }
                 else if (literal.IsKind(SyntaxKind.StringLiteralExpression))
                     return CodeSymbol.From(_global.SystemString);
@@ -474,17 +474,17 @@ namespace NetJs.Translator.CSharpToJavascript
                 else if (literal.IsKind(SyntaxKind.CharacterLiteralExpression))
                     return CodeSymbol.From(_global.SystemChar);
                 else if (literal.IsKind(SyntaxKind.NullLiteralExpression))
-                    return CodeSymbol.From(_global.GetTypeSymbol("NetJs.Null", this/*, out _, out _*/));
+                    return CodeSymbol.From(_global.GetSymbol("NetJs.Null", this/*, out _, out _*/));
                 else if (literal.IsKind(SyntaxKind.DefaultLiteralExpression))
-                    return CodeSymbol.From(_global.GetTypeSymbol("NetJs.Default", this/*, out _, out _*/));
+                    return CodeSymbol.From(_global.GetSymbol("NetJs.Default", this/*, out _, out _*/));
             }
             else if (expression is RangeExpressionSyntax range)
             {
-                return CodeSymbol.From(_global.GetTypeSymbol("System.Range", this/*, out _, out _*/));
+                return CodeSymbol.From(_global.GetSymbol("System.Range", this/*, out _, out _*/));
             }
             else if (expression is PrefixUnaryExpressionSyntax un && un.OperatorToken.ValueText == "^")
             {
-                return CodeSymbol.From(_global.GetTypeSymbol("System.Index", this/*, out _, out _*/));
+                return CodeSymbol.From(_global.GetSymbol("System.Index", this/*, out _, out _*/));
             }
             else if (expression is BaseExpressionSyntax _base)
             {
@@ -494,18 +494,21 @@ namespace NetJs.Translator.CSharpToJavascript
                     var baseType = type.BaseList?.Types.FirstOrDefault();
                     if (baseType != null)
                     {
-                        var symbol = _global.TryGetTypeSymbol(baseType.Type, this/*, out _, out _*/);
+                        var symbol = _global.TryGetSymbol(baseType.Type, this/*, out _, out _*/);
                         return CodeSymbol.From(symbol);
                     }
                     if (type is StructDeclarationSyntax)
                     {
-                        return CodeSymbol.From(_global.GetTypeSymbol("System.ValueType", this/*, out _, out _*/));
+                        return CodeSymbol.From(_global.GetSymbol("System.ValueType", this/*, out _, out _*/));
                     }
-                    return CodeSymbol.From(_global.GetTypeSymbol("System.Object", this/*, out _, out _*/));
+                    return CodeSymbol.From(_global.GetSymbol("System.Object", this/*, out _, out _*/));
                 }
             }
             else if (expression is CastExpressionSyntax cast)
             {
+                var t = _global.TryGetTypeSymbol(cast.Type, this);
+                if (t != null)
+                    return CodeSymbol.From(t);
                 return CodeSymbol.From(cast.Type, SymbolKind.ErrorType);
             }
             else if (expression is ParenthesizedExpressionSyntax pa)
@@ -568,7 +571,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     bin.IsKind(SyntaxKind.GreaterThanOrEqualExpression) ||
                     bin.IsKind(SyntaxKind.LessThanExpression) ||
                     bin.IsKind(SyntaxKind.LessThanOrEqualExpression))
-                    return CodeSymbol.From(_global.GetTypeSymbol("System.Boolean", this/*, out _, out _*/));
+                    return CodeSymbol.From(_global.GetSymbol("System.Boolean", this/*, out _, out _*/));
                 //TODO: which one shall we return
                 var ilhs = GetExpressionReturnSymbol(bin.Left, lamdaReturnType: lamdaReturnType, lamdaParameterTypes: lamdaParameterTypes, lamdaIdentifierType: lamdaIdentifierType);
                 //var irhs = GetExpressionReturnType(bin.Right);
@@ -588,7 +591,7 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             else if (expression is TypeOfExpressionSyntax)
             {
-                return CodeSymbol.From(_global.GetTypeSymbol("System.Type", this/*, out _, out _*/));
+                return CodeSymbol.From(_global.GetSymbol("System.Type", this/*, out _, out _*/));
             }
             else if (expression is DefaultExpressionSyntax _default)
             {
@@ -652,7 +655,7 @@ namespace NetJs.Translator.CSharpToJavascript
             else if (expression is TupleExpressionSyntax tp)
             {
                 var items = tp.Arguments.Select(a => _global.ResolveSymbol(GetExpressionReturnSymbol(a, lamdaReturnType: lamdaReturnType, lamdaParameterTypes: lamdaParameterTypes, lamdaIdentifierType: lamdaIdentifierType), this/*, out _, out _*/)!.GetTypeSymbol()).ToArray();
-                var asTuple = (INamedTypeSymbol)_global.GetTypeSymbol($"System.Tuple<{string.Join(",", Enumerable.Range(1, items.Length).Select(c => ""))}>", this/*, out _, out _*/);
+                var asTuple = (INamedTypeSymbol)_global.GetSymbol($"System.Tuple<{string.Join(",", Enumerable.Range(1, items.Length).Select(c => ""))}>", this/*, out _, out _*/);
                 var tuple = asTuple.Construct(items);
                 return CodeSymbol.From(tuple);
             }
@@ -667,7 +670,7 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             else if (expression is InterpolatedStringExpressionSyntax)
             {
-                return CodeSymbol.From(_global.GetTypeSymbol("System.String", this/*, out _, out _*/));
+                return CodeSymbol.From(_global.GetSymbol("System.String", this/*, out _, out _*/));
             }
             CodeSymbol GetLambdaReturnType(CSharpSyntaxNode expression, IEnumerable<ParameterSyntax>? parameters)
             {
@@ -704,13 +707,13 @@ namespace NetJs.Translator.CSharpToJavascript
                         var lamdaReturnSymbol = _global.ResolveSymbol(lamdaReturn, this/*, out _, out _*/)?.GetTypeSymbol();
                         if (lamdaReturnSymbol != null) //func
                         {
-                            var asFunc = (INamedTypeSymbol)_global.GetTypeSymbol($"NetJs.Function<{string.Join(",", Enumerable.Range(1, paramsCount + 1).Select(c => ""))}>", this/*, out _, out _*/);
+                            var asFunc = (INamedTypeSymbol)_global.GetSymbol($"NetJs.Function<{string.Join(",", Enumerable.Range(1, paramsCount + 1).Select(c => ""))}>", this/*, out _, out _*/);
                             var func = asFunc.Construct([.. (lamdaParameterTypes ?? asFunc.TypeArguments.Take(asFunc.TypeArguments.Count() - 1)), lamdaReturnSymbol]);
                             return CodeSymbol.From(func);
                         }
                         else //action
                         {
-                            var asAction = (INamedTypeSymbol)_global.GetTypeSymbol($"NetJs.Action<{string.Join(",", Enumerable.Range(1, paramsCount).Select(c => ""))}>", this/*, out _, out _*/);
+                            var asAction = (INamedTypeSymbol)_global.GetSymbol($"NetJs.Action<{string.Join(",", Enumerable.Range(1, paramsCount).Select(c => ""))}>", this/*, out _, out _*/);
                             var action = asAction.Construct([.. (lamdaParameterTypes ?? asAction.TypeArguments.Take(asAction.TypeArguments.Count()))]);
                             return CodeSymbol.From(action);
                         }
@@ -719,12 +722,12 @@ namespace NetJs.Translator.CSharpToJavascript
                 bool hasExplicitReturn = returnExpression != null;
                 if (hasExplicitReturn)
                 {
-                    return CodeSymbol.From(_global.GetTypeSymbol($"NetJs.Function<{string.Join(",", Enumerable.Range(1, paramsCount + 1).Select(c => ""))}>", this/*, out _, out _*/));
+                    return CodeSymbol.From(_global.GetSymbol($"NetJs.Function<{string.Join(",", Enumerable.Range(1, paramsCount + 1).Select(c => ""))}>", this/*, out _, out _*/));
                 }
                 else
                 {
-                    var asFunc = (ITypeSymbol)_global.GetTypeSymbol($"NetJs.Function<{string.Join(",", Enumerable.Range(1, paramsCount + 1).Select(c => ""))}>", this/*, out _, out _*/);
-                    var asAction = (ITypeSymbol)_global.GetTypeSymbol($"NetJs.Action<{string.Join(",", Enumerable.Range(1, paramsCount).Select(c => ""))}>", this/*, out _, out _*/);
+                    var asFunc = (ITypeSymbol)_global.GetSymbol($"NetJs.Function<{string.Join(",", Enumerable.Range(1, paramsCount + 1).Select(c => ""))}>", this/*, out _, out _*/);
+                    var asAction = (ITypeSymbol)_global.GetSymbol($"NetJs.Action<{string.Join(",", Enumerable.Range(1, paramsCount).Select(c => ""))}>", this/*, out _, out _*/);
                     return CodeSymbol.From(_global.Union([asFunc, asAction], this));
                 }
             }

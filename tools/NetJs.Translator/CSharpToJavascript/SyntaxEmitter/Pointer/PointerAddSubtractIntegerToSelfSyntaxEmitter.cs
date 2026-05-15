@@ -11,8 +11,8 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Pointer
         {
             if (node.IsKind(SyntaxKind.AddAssignmentExpression) || node.IsKind(SyntaxKind.SubtractAssignmentExpression))
             {
-                var leftOperandType = visitor.Global.TryGetTypeSymbol(node.Left, visitor)?.GetTypeSymbol();
-                var rightOperandType = visitor.Global.TryGetTypeSymbol(node.Right, visitor)?.GetTypeSymbol();
+                var leftOperandType = visitor.Global.TryGetTypeSymbol(node.Left, visitor);
+                var rightOperandType = visitor.Global.TryGetTypeSymbol(node.Right, visitor);
                 //var operandType = visitor.Global.ResolveSymbol(visitor.GetExpressionReturnSymbol(node.Left), visitor)!.GetTypeSymbol();
                 if ((leftOperandType?.IsPointer(out var pointedType) ?? false) && (rightOperandType?.IsNumericType() ?? false))
                 {

@@ -20,7 +20,7 @@ namespace NetJs.Compiler
         MemoryStream htmlScriptContent = new MemoryStream();
         MemoryStream htmlStyleContent = new MemoryStream();
         MemoryStream htmlBodyContent = new MemoryStream();
-
+        bool cleaned;
         public ProjectBinOutputProvider(IProject project)
         {
             this.project = project;
@@ -28,6 +28,37 @@ namespace NetJs.Compiler
 
         public void Output(GlobalCompilationVisitor global, string destinationRelativePath, Stream content, DateTime? sourceCreateTime)
         {
+            if (!cleaned)
+            {
+                var files = Directory.GetFiles(OutputPath, "*.*", SearchOption.AllDirectories);
+                foreach (var f in files)
+                {
+                    if (f.EndsWith(".js.dll") || f.EndsWith(".js.pdb") || f.EndsWith(".js.xml")) //clean only the ones we created, to avoid deleting files created by other tools (e.g. .NET build)
+                        File.Delete(f);
+                }
+                var directories = Directory.GetDirectories(OutputPath);
+                foreach (var d in directories)
+                {
+                    try
+                    {
+                        Directory.Delete(d, true);
+                    }
+                    catch
+                    {
+                        var mfiles = Directory.GetFiles(d, "*.*", SearchOption.AllDirectories);
+                        foreach (var f in mfiles)
+                        {
+                            File.Delete(f);
+                        }
+                        var mdirectories = Directory.GetDirectories(d);
+                        foreach (var dd in mdirectories)
+                        {
+                            Directory.Delete(dd, true);
+                        }
+                    }
+                }
+                cleaned = true;
+            }
             if (destinationRelativePath.EndsWith(".dll") || destinationRelativePath.EndsWith(".pdb") || destinationRelativePath.EndsWith(".xml"))
             {
                 var outputFile = Path.Combine(OutputPath, destinationRelativePath);
@@ -38,7 +69,7 @@ namespace NetJs.Compiler
             }
             else if (!global.OutputMode.HasFlag(OutputMode.SingleHtmlFile) || destinationRelativePath.EndsWith(".html"))
             {
-                var outputFile = Path.Combine(OutputPath, "wwwroot", destinationRelativePath);
+                var outputFile = Path.Combine(OutputPath, /*Constants.OutputFolderName,*/ destinationRelativePath);
                 FileInfo? existingInfo = null;
                 if (sourceCreateTime != null && File.Exists(outputFile))
                 {

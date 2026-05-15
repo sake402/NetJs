@@ -15,7 +15,7 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             _global = global;
             Syntax = syntax;
-            Symbol = symbol ?? _global.TryGetTypeSymbol(syntax, visitor/*, out _, out _*/);
+            Symbol = symbol ?? _global.TryGetSymbol(syntax, visitor/*, out _, out _*/);
             Parent = parent;
         }
 
@@ -53,7 +53,12 @@ namespace NetJs.Translator.CSharpToJavascript
         //{
         //    _identifiers[identifier] = CodeType.From(type);
         //}
-        public IDisposable DefineIdentifierType(string identifier, CodeSymbol type, [CallerFilePath] string? file = null, [CallerMemberName] string? memberName = null, [CallerLineNumber] int lineNumber = 0)
+        public IDisposable DefineIdentifierType(string identifier,
+            CodeSymbol type,
+            bool throwOnDuplicate = true,
+            [CallerFilePath] string? file = null,
+            [CallerMemberName] string? memberName = null,
+            [CallerLineNumber] int lineNumber = 0)
         {
             if (type.TypeSyntaxOrSymbol == null)
             {
@@ -61,10 +66,10 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                 });
             }
-            if (!identifier.StartsWith("$") && type.TypeSyntaxOrSymbol is ITypeSymbol && type.TypeSyntaxOrSymbol is not ITypeParameterSymbol)
-            {
+            //if (!identifier.StartsWith("$") && type.TypeSyntaxOrSymbol is ITypeSymbol && type.TypeSyntaxOrSymbol is not ITypeParameterSymbol)
+            //{
 
-            }
+            //}
             if (_identifiers.TryGetValue(identifier, out var cd) && !cd.Item1.TypeSyntaxOrSymbol!.Equals(type.TypeSyntaxOrSymbol))
             {
                 if (cd.Item1.TypeSyntaxOrSymbol is MemberSymbolOverload mo && mo.Overloads.Contains(type.TypeSyntaxOrSymbol))
@@ -73,7 +78,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     {
                     });
                 }
-                if (identifier != "_") //discard can be redefined/reused in a scope
+                if (identifier != "_" && throwOnDuplicate) //discard can be redefined/reused in a scope
                     throw new InvalidOperationException($"Attempt to redefine an existing symbol {identifier} = {cd.Item1.TypeSyntaxOrSymbol} as {type.TypeSyntaxOrSymbol}. Initially defined at {cd.Item2}.{cd.Item3}:{cd.Item4}");
             }
             _identifiers[identifier] = (type, file, memberName, lineNumber);

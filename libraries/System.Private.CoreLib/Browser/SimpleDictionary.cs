@@ -68,7 +68,7 @@ namespace System
         [Template("s.split({by})")]
         static extern string[] NativeSplit(this string s, string by);
         [IgnoreGeneric]
-        public static void SetNested<T>(this SimpleDictionary<T> dic, string name, T value, bool throwIfExisting = true, Func<T, bool>? onAccess = null)
+        public static void SetNested<T>(this SimpleDictionary<T> dic, string name, T value, bool throwIfExisting = true, [NativeDelegate] Func<T, bool>? onAccess = null)
         {
             unchecked
             {

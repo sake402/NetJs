@@ -11,20 +11,25 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Pointer
         {
             if (node.IsKind(SyntaxKind.PostIncrementExpression) || node.IsKind(SyntaxKind.PostDecrementExpression))
             {
-                var operandType = visitor.Global.ResolveSymbol(visitor.GetExpressionReturnSymbol(node.Operand), visitor)!.GetTypeSymbol();
+                var operandType = visitor.Global.GetTypeSymbol(node.Operand, visitor);
                 if (operandType.IsPointer(out var pointerType))
                 {
                     //if the result of the expression is passed to other variables
-                    if (node.Parent.IsKind(SyntaxKind.SimpleAssignmentExpression) ||
-                        node.Parent.IsKind(SyntaxKind.EqualsExpression) ||
-                        node.Parent.IsKind(SyntaxKind.Argument) ||
-                        node.Parent.IsKind(SyntaxKind.PointerIndirectionExpression))
+                    bool UsePointerBeforeMutation(SyntaxNode node)
+                    {
+                        return node.IsKind(SyntaxKind.SimpleAssignmentExpression) ||
+                        node.IsKind(SyntaxKind.EqualsExpression) ||
+                        node.IsKind(SyntaxKind.Argument) ||
+                        node.IsKind(SyntaxKind.PointerIndirectionExpression);
+                    }
+                    if (UsePointerBeforeMutation(node.Parent!) || 
+                        (node.Parent.IsKind(SyntaxKind.ParenthesizedExpression) && UsePointerBeforeMutation(node.Parent!.Parent!)))
                     {
                         visitor.WrapStatementsInExpression(node, () =>
                         {
                             visitor.CurrentTypeWriter.Write(node, "var $oldp = ", true);
                             visitor.Visit(node.Operand);
-                            visitor.CurrentTypeWriter.WriteLine(node, ";");
+                            visitor.CurrentTypeWriter.WriteLine(node, ".Clone();");
                             visitor.CurrentTypeWriter.Write(node, "", true);
                             visitor.WritePointerSelfAdvance(node, node.Operand, new CodeNode(() =>
                             {

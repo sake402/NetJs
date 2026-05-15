@@ -236,11 +236,16 @@
             return null;
         if (value.$boxed)
             return value;
-        //if reference type, no need boxing
-        if (isValueType(prototype) == false) {
-            if (isPrimitive(prototype) == true) { //primitive reference type like string still need boxing. This is how we ensure their interfaces works
+        let valueType = isValueType(prototype);
+        let primitive = isPrimitive(prototype);
+        if (valueType == false) {  //if reference type, no need boxing
+            if (primitive == true) { //primitive reference type like string still need boxing. This is how we ensure their interfaces works
             } else
                 return value;
+        } else if (valueType == true) { //Nonprimitive value types are on the heap in JavaScript already
+            if (primitive == false) {
+                return value;
+            }
         }
         var instance = new prototype(); //most valuetype link Int32 we want to box have a field called m_value 
         instance.m_value = value;
@@ -313,10 +318,12 @@
         var iOut = {
             set $v(v) {
                 if (v !== undefined) {
-                    if (value.$boxed)
-                        outValue.$v = value.m_value;
-                    else
-                        outValue.$v = v;
+                    if (outValue) {
+                        if (value.$boxed)
+                            outValue.$v = value.m_value;
+                        else
+                            outValue.$v = v;
+                    }
                     assigned = true;
                 }
             }
@@ -367,17 +374,21 @@
                 return left >>> BigInt(right);
         }
     }
-    function typeIsNumber(T) {
+    function typeIsIntegerNumber(T) {
         var fn = T.$fullName;
         return fn == "System.Byte" ||
             fn == "System.SByte" ||
+            fn == "System.Char" ||
             fn == "System.Int16" ||
             fn == "System.UInt16" ||
             fn == "System.Int32" ||
             fn == "System.UInt32" ||
             fn == "System.IntPtr" ||
-            fn == "System.UIntPtr" ||
-            fn == "System.Float" ||
+            fn == "System.UIntPtr";
+    }
+    function typeIsFloatingNumber(T) {
+        var fn = T.$fullName;
+        return fn == "System.Float" ||
             fn == "System.Double";
     }
     function typeIsLong(T) {
@@ -388,8 +399,9 @@
     function tryCastNumeric(value, T) {
         var tvalue = typeof value;
         var toLong = typeIsLong(T);
-        var toNumber = typeIsNumber(T);
-        if ((tvalue == "number" || tvalue == "bigint") && (toNumber || toLong)) {
+        var toInteger = typeIsIntegerNumber(T);
+        var toFloat = typeIsFloatingNumber(T);
+        if ((tvalue == "number" || tvalue == "bigint") && (toInteger || toFloat || toLong)) {
             var min = T.MinValue;
             var max = T.MaxValue;
             //Detect long and ulong overflow, since JavaScript bitwise operation only work on 32 bit signed integer, we need to use BigInt to detect overflow, 
@@ -404,22 +416,33 @@
                 if (tvalue == "bigint") {
                     value = Number(value);
                 }
-                var allBitsSet = T.System$Numerics$IBinaryNumber$$$AllBitsSet;
-                var bitSize = NetJs.$sizeOf(T) * 8;
-                //var greaterThanZero = value > 0;
-                //var lessThanZero = value < 0;
-                if (allBitsSet) {
-                    value = value & allBitsSet;
-                } else {
-                    value = value & max;
+                if (toInteger) {
+                    var bitSize = NetJs.$sizeOf(T) * 8;
+                    let allBitsSet;// T.System$Numerics$IBinaryNumber$$$AllBitsSet;
+                    switch (bitSize) {
+                        case 8:
+                            allBitsSet = 0xFF;
+                            break;
+                        case 16:
+                            allBitsSet = 0xFFFF;
+                            break;
+                        case 24:
+                            allBitsSet = 0xFFFFFF;
+                            break;
+                        case 32:
+                            allBitsSet = 0xFFFFFFFF;
+                            break;
+                    }
+                    if (allBitsSet) {
+                        value = value & allBitsSet;
+                    } else {
+                        value = value & max;
+                    }
+                    if (min < 0) //cast to signed
+                        value = (value << (32 - bitSize)) >> (32 - bitSize);
+                    else if (/*greaterThanZero || */min == 0) // cast to unsigned
+                        value = value >>> 0;
                 }
-                if (min < 0) //cast to signed
-                    value = (value << (32 - bitSize)) >> (32 - bitSize);
-                else if (/*greaterThanZero || */min == 0) // cast to unsigned
-                    value = value >>> 0;
-                //if (value > max) {
-                //    value &= max;
-                //}
             }
             return value;
         }
@@ -445,89 +468,86 @@
     //    return null;
     //}
 
-    //Pointers are not numbers in NetJs
-    //But we need an abstraction that let this be castable in both ways
-    //We will map a pointer to a vrtual address space
-    let virtualAddressSpaceSlotSize = 64 * 1024;
-    let virtualAddressOffset = 0x80000000;
-    let virtualAddressSpaces = [];
+    //let virtualAddressSpaceSlotSize = 64 * 1024;
+    //let virtualAddressOffset = 0x80000000;
+    //let virtualAddressSpaces = [];
 
-    function freeAddressSpace(start, blocks) {
-        while (blocks--) {
-            virtualAddressSpaces[start] = undefined;
-            start++;
-        }
-    }
+    //function freeAddressSpace(start, blocks) {
+    //    while (blocks--) {
+    //        virtualAddressSpaces[start] = undefined;
+    //        start++;
+    //    }
+    //}
 
-    const pointerFinalizer = new FinalizationRegistry((startBlocks) => {
-        freeAddressSpace(startBlock.start, startBlock.blocks);
-    });
+    //const pointerFinalizer = new FinalizationRegistry((startBlocks) => {
+    //    freeAddressSpace(startBlock.start, startBlock.blocks);
+    //});
 
-    function isFreeAddressSpace(n) {
-        var v = virtualAddressSpaces[n];
-        return v == undefined;
-    }
-    function getContaguousAddressSpace(blocks) {
-        let start = 0;
-        let nBlock = blocks;
-        while (true) {
-            if (isFreeAddressSpace(start)) {
-                nBlock--;
-            } else {
-                nBlock = blocks;
-            }
-            start++;
-            if (nBlock == 0)
-                return start - blocks;
-        }
-    }
-    function markAddressSpaceUsed(start, blocks, pointer) {
-        pointerFinalizer.register(pointer, { start, blocks });
-        while (blocks--) {
-            virtualAddressSpaces[start] = pointer;
-            start++;
-            pointer = pointer.Add(virtualAddressSpaceSlotSize);
-        }
-    }
-    function castPtr2Address(pointer) {
-        if (pointer.$virtualAddress)
-            return pointer.$virtualAddress;
-        let array;
-        let cur = pointer;
-        let root = pointer;
-        let offset = 0;
-        while (cur) {
-            root = cur;
-            if (cur._arrayOffset) {
-                offset += cur._arrayOffset;
-            }
-            if (cur._array) {
-                array = cur._array;
-                break;
-            }
-            if (cur._parentRef)
-                cur = cur._parentRef;
-        }
-        if (array) {
-            if (!root.$virtualAddress) {
-                var len = array.length;
-                var addressSpaces = Math.floor(((len - 1) / virtualAddressSpaceSlotSize) + 1);
-                let freeAddressSpace = getContaguousAddressSpace(addressSpaces);
-                markAddressSpaceUsed(freeAddressSpace, addressSpaces, root);
-                root.$virtualAddress = virtualAddressOffset + freeAddressSpace;
-            }
-            return root.$virtualAddress + offset;
-        }
-        return null;
-    };
-    function castAddress2Ptr(address) {
-        if (address < virtualAddressOffset) {
-            throw new Error("Not a virtual address");
-        }
-        address -= virtualAddressOffset;
-        var block = Math.floor(address / virtualAddressSpaceSlotSize);
-        return virtualAddressSpaces[block];
-    }
+    //function isFreeAddressSpace(n) {
+    //    var v = virtualAddressSpaces[n];
+    //    return v == undefined;
+    //}
+    //function getContaguousAddressSpace(blocks) {
+    //    let start = 0;
+    //    let nBlock = blocks;
+    //    while (true) {
+    //        if (isFreeAddressSpace(start)) {
+    //            nBlock--;
+    //        } else {
+    //            nBlock = blocks;
+    //        }
+    //        start++;
+    //        if (nBlock == 0)
+    //            return start - blocks;
+    //    }
+    //}
+    //function markAddressSpaceUsed(start, blocks, pointer) {
+    //    pointerFinalizer.register(pointer, { start, blocks });
+    //    while (blocks--) {
+    //        virtualAddressSpaces[start] = pointer;
+    //        start++;
+    //        pointer = pointer.Add(virtualAddressSpaceSlotSize);
+    //    }
+    //}
+    //function castPtr2Address(pointer) {
+    //    if (pointer.$virtualAddress)
+    //        return pointer.$virtualAddress;
+    //    let array;
+    //    let cur = pointer;
+    //    let root = pointer;
+    //    let offset = 0;
+    //    while (cur) {
+    //        root = cur;
+    //        if (cur._arrayOffset) {
+    //            offset += cur._arrayOffset;
+    //        }
+    //        if (cur._array) {
+    //            array = cur._array;
+    //            break;
+    //        }
+    //        if (cur._parentRef)
+    //            cur = cur._parentRef;
+    //    }
+    //    if (array) {
+    //        if (!root.$virtualAddress) {
+    //            var len = array.length;
+    //            var addressSpaces = Math.floor(((len - 1) / virtualAddressSpaceSlotSize) + 1);
+    //            let freeAddressSpace = getContaguousAddressSpace(addressSpaces);
+    //            markAddressSpaceUsed(freeAddressSpace, addressSpaces, root);
+    //            root.$virtualAddress = virtualAddressOffset + freeAddressSpace;
+    //        }
+    //        return root.$virtualAddress + offset;
+    //    }
+    //    return null;
+    //};
+    //function castAddress2Ptr(address) {
+    //    if (address < virtualAddressOffset) {
+    //        throw new Error("Not a virtual address");
+    //    }
+    //    address -= virtualAddressOffset;
+    //    var block = Math.floor(address / virtualAddressSpaceSlotSize);
+    //    return virtualAddressSpaces[block];
+    //}
 
     NetJs.$cast = function (value, toType, originalType) {
         if (value === null)
@@ -536,8 +556,8 @@
         var out = { set $v(v) { mvalue = v; } }
         if (NetJs.$is(value, toType, out))
             return tryCastNumeric(mvalue, toType);
-        if (value instanceof NetJs.$spc.System.IRefOrPointer && (typeIsNumber(toType) || typeIsLong(toType))) { //casting pointer to number
-            var number = castPtr2Address(value);
+        if (value instanceof NetJs.$spc.System.IRefOrPointer && (typeIsIntegerNumber(toType) || typeIsLong(toType))) { //casting pointer to number
+            var number = NetJs.castPtr2Address(value, toType);
             if (number) {
                 if (typeIsLong(toType))
                     return BigInt(number);
@@ -545,9 +565,9 @@
             }
         }
         var tvalue = typeof (value);
-        if ((tvalue == "number" || tvalue == "bigint") && value >= virtualAddressOffset && (toType.name == "Pointer$$" || toType.name == "Ref$$")/*Object.getPrototypeListOf(type).contains(NetJs.$spc.System.IRefOrPointer)*/) { //casting number to pointer
+        if ((tvalue == "number" || tvalue == "bigint") && value >= NetJs.virtualAddressOffset && (toType.name == "Pointer$$" || toType.name == "Ref$$")/*Object.getPrototypeListOf(type).contains(NetJs.$spc.System.IRefOrPointer)*/) { //casting number to pointer
             var ivalue = tvalue == "bigint" ? Number(value) : value;
-            var pointer = castAddress2Ptr(ivalue);
+            var pointer = NetJs.castAddress2Ptr(ivalue, toType);
             if (pointer)
                 return pointer;
         }

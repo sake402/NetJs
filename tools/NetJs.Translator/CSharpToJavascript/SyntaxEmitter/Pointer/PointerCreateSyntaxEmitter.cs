@@ -15,7 +15,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Pointer
                 {
                     var element = (ElementAccessExpressionSyntax)node.Operand;
                     var pointer = element.Expression;
-                    var pointerType = visitor.Global.GetTypeSymbol(pointer, visitor).GetTypeSymbol();
+                    var pointerType = visitor.Global.GetTypeSymbol(pointer, visitor);
                     if (pointerType.IsPointer(out _))
                     {
                         var increment = element.ArgumentList.Arguments[0];
@@ -23,8 +23,8 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Pointer
                         return true;
                     }
                 }
-                var operandType = visitor.Global.GetTypeSymbol(node.Operand, visitor);// ResolveSymbol(visitor.GetExpressionReturnSymbol(node.Operand), visitor);
-                var operandRefKind = operandType.GetRefKind();
+                var operandSymbol = visitor.Global.GetSymbol(node.Operand, visitor);// ResolveSymbol(visitor.GetExpressionReturnSymbol(node.Operand), visitor);
+                var operandRefKind = operandSymbol.GetRefKind();
                 //Ref and Pointer uses the same object for abstraction
                 //If it is already a ref, no need to create another pointer
                 if (operandRefKind != null && operandRefKind != RefKind.None)
@@ -33,7 +33,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Pointer
                 }
                 else
                 {
-                    visitor.WriteCreateRef(node, node.Operand, operandType.GetTypeSymbol());
+                    visitor.WriteCreateRef(node, node.Operand, visitor.Global.GetTypeSymbol(operandSymbol));
                 }
                 return true;
             }

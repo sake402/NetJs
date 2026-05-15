@@ -321,8 +321,8 @@ namespace NetJs.Translator.CSharpToJavascript
                                     if (remainingParams.Count() == 1) //if the last parameter passed is an array than can convert directly to the target type. dont create another array to wrap it again
                                     {
                                         var singleParam = remainingParams.Single();
-                                        var singleParameType = singleParam.IsT0 ? _global.ResolveSymbol(GetExpressionReturnSymbol(singleParam.AsT0), this/*, out _, out _*/)?.GetTypeSymbol() : null;
-                                        if (singleParameType?.CanConvertTo(parameter.Type, _global, null, out _) >= 0)
+                                        var singleParamType = singleParam.IsT0 ? _global.TryGetTypeSymbol(singleParam.AsT0, this) : null;
+                                        if (singleParamType?.CanConvertTo(parameter.Type, _global, null, out _) >= 0)
                                         {
                                             VisitArgument(parameterIndex, parameter);
                                             continue;

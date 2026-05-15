@@ -17,7 +17,7 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             Visit(pointer);
             CurrentTypeWriter.Write(node, ".");
-            var refOrPointer = (ITypeSymbol)_global.GetTypeSymbol("System.Pointer<>", this);
+            var refOrPointer = (ITypeSymbol)_global.GetSymbol("System.Pointer<>", this);
             var add = (IMethodSymbol)refOrPointer.GetMembers("Add", _global).Single();
             WriteMemberName(node, refOrPointer, add);
             CurrentTypeWriter.Write(node, $"(");
@@ -31,10 +31,28 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public void WritePointerSelfAdvance(CSharpSyntaxNode node, ExpressionSyntax pointer, CodeNode advance, bool subtract = false)
         {
-            //Writer.Write(node, "", true);
-            Visit(pointer);
-            CurrentTypeWriter.Write(node, " = ");
-            WritePointerAdvance(node, pointer, advance, subtract: subtract);
+            if (false)
+            {
+                var refOrPointer = (ITypeSymbol)_global.GetSymbol("System.Pointer<>", this);
+                var add = (IMethodSymbol)refOrPointer.GetMembers("Advance", _global).Single();
+                Visit(pointer);
+                CurrentTypeWriter.Write(node, ".");
+                WriteMemberName(node, refOrPointer, add);
+                CurrentTypeWriter.Write(node, $"(");
+                if (subtract)
+                {
+                    CurrentTypeWriter.Write(node, $"-");
+                }
+                VisitNode(advance);
+                CurrentTypeWriter.Write(node, $")");
+            }
+            else
+            {
+                //Writer.Write(node, "", true);
+                Visit(pointer);
+                CurrentTypeWriter.Write(node, " = ");
+                WritePointerAdvance(node, pointer, advance, subtract: subtract);
+            }
         }
 
         public void WritePointerSubtration(CSharpSyntaxNode node, ExpressionSyntax left, ExpressionSyntax right)
@@ -51,7 +69,7 @@ namespace NetJs.Translator.CSharpToJavascript
             //}
             Visit(left);
             CurrentTypeWriter.Write(node, ".");
-            var refOrPointer = (ITypeSymbol)_global.GetTypeSymbol("System.Pointer<>", this);
+            var refOrPointer = (ITypeSymbol)_global.GetSymbol("System.Pointer<>", this);
             var subtract = (IMethodSymbol)refOrPointer.GetMembers("Subtract", _global).Single();
             WriteMemberName(node, refOrPointer, subtract);
             CurrentTypeWriter.Write(node, $"(");

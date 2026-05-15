@@ -1,4 +1,5 @@
 using NetJs;
+using System.Reflection;
 
 namespace System
 {
@@ -8,8 +9,20 @@ namespace System
     [External]
     public class TypePrototype
     {
-        [Name("$type")]
+        [Name(Constants.AssemblyRegistryName)]
+        public Assembly? Assembly { get; set; }
+        [Name("$name")]
+        public string? Name { get; set; }
+        [Name(Constants.ObjectTypeName)]
         public Type? Type { get; set; }
+        [Name("$model")]
+        public TypeModel? Model { get; set; }
+        [Name("$args")]
+        public TypePrototype[]? Arguments { get; set; }
+        [Name("$element")]
+        public TypePrototype? Element { get; set; }
+        [Name("$parent")]
+        public TypePrototype? Parent { get; set; }
         [Name(Constants.PrototypeFullName)]
         public string FullName { get; set; } = default!;
         [Name(Constants.IsTypeName)]
@@ -22,6 +35,8 @@ namespace System
         public extern object CallDefaultConstructor();
         [Name("constructor")]
         public extern object NativeConstructor();
+        [Template("new {this}()")]
+        public extern object New();
     }
 
     [External]

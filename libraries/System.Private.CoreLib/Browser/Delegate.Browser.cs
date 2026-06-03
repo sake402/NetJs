@@ -1,7 +1,7 @@
-﻿using NetJs;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Numerics.Colors;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
@@ -24,13 +24,13 @@ namespace System
         })
         {
         }
-        
+
         public Delegate_Partial(object? target, MethodInfo method, Func<object[], object?> jsFunction)
         {
             //This._target = target
             //Script.Write("super(target, method.Name)");
-            Script.Write("this.method_info = method");
-            Script.Write("this._target = target"); //assign a dummy handle to the method handle
+            NetJs.Script.Write("this.method_info = method");
+            NetJs.Script.Write("this._target = target"); //assign a dummy handle to the method handle
             this["$jsFunction"] = jsFunction;
             Setup();
         }
@@ -38,8 +38,8 @@ namespace System
         void Setup()
         {
             //This.method_info = method;
-            Script.Write("this.method = 109848493483"); //assign a dummy handle to the method handle
-            Script.Write("this.method_is_virtual = true"); //amke sure the GetVirtualMethod_internalImpl is called
+            NetJs.Script.Write("this.method = 109848493483"); //assign a dummy handle to the method handle
+            NetJs.Script.Write("this.method_is_virtual = true"); //amke sure the GetVirtualMethod_internalImpl is called
         }
     }
 
@@ -89,7 +89,7 @@ namespace System
         {
             //var jsFunction = this["$jsFunction"].As<Func<object[], object?>>();
             //return jsFunction(parameters);
-            return Script.Write<object>("this._jsFunction.apply(this._target, parameters)");
+            return NetJs.Script.Write<object>("this._jsFunction.apply(this._target, parameters)");
         }
 
         public override bool IsDefined(Type attributeType, bool inherit)
@@ -103,8 +103,8 @@ namespace System
         [NetJs.MemberReplace(nameof(AllocDelegateLike_internal))]
         private protected static MulticastDelegate AllocDelegateLike_internalImpl(Delegate d)
         {
-            var prototype = typeof(MulticastDelegate).As<RuntimeType>()._prototype;
-            var _delegate = prototype.CallDefaultConstructor().As<MulticastDelegate>();
+            var prototype = d.GetPrototype();
+            var _delegate = prototype.New().As<MulticastDelegate>();
             _delegate.bound = d.bound;
             _delegate.data = d.data;
             _delegate.delegate_trampoline = d.delegate_trampoline;
@@ -119,6 +119,21 @@ namespace System
             _delegate.method_ptr = d.method_ptr;
             _delegate.original_method_info = d.original_method_info;
             _delegate._target = d._target;
+            object? trampoline()
+            {
+                object? r;
+                int i = 0;
+                var delegates = NetJs.Script.Write<Delegate[]>("_delegate.delegates");
+                int len = delegates.Length;
+                var args = NetJs.Script.Write<object[]>("arguments");
+                do
+                {
+                    var del = delegates[i];
+                    r = NetJs.Script.Write<object?>("del.Invoke.apply(del, args)");
+                } while (++i < len);
+                return r;
+            }
+            _delegate[NetJs.Constants.NativeDelagateFunction] = trampoline;
             return _delegate;
         }
 

@@ -253,6 +253,7 @@ namespace {project.GetNamespace()}
                 .Build();
 
             //ResXResourceReader;
+            bool isSystemPrivateCoreLib = project.GetAssemblyName() == "NetJs.System.Private.CoreLib";
 
             var csFiles = sourceFiles.Where(e => e.EndsWith(".cs")).ToList();
             CSharpCompilation csCompilation = default!;
@@ -269,6 +270,11 @@ namespace {project.GetNamespace()}
             //    syntaxTrees = compiler.GetSyntaxTrees(project, csFiles.ToArray(), null);
             //});
             (string FilePath, string Source)[] replacements = new (string, string)[syntaxTrees.Count()];
+            //Delete all existing files first, we want to check for filename duplicates since this is a flat directory structure
+            var projectTempFolder = Path.Combine(tempFolder, project.GetName());
+            var files = Directory.GetFiles(projectTempFolder);
+            foreach (var f in files)
+                File.Delete(f);
             $"Rewriting".Profile(() =>
             {
                 var partialClassGroupings = syntaxTrees
@@ -306,11 +312,25 @@ namespace {project.GetNamespace()}
                     }
                     var path = project.DirectoryPath.GetRelativePath(newTree.FilePath);
                     //var tempFile = Path.Combine(TempFolder, path);
-                    var tempFile = Path.Combine(tempFolder, project.GetName(), Path.GetFileName(newTree.FilePath));
-                    var directory = Path.GetDirectoryName(tempFile);
-                    if (!Directory.Exists(directory))
-                        Directory.CreateDirectory(directory);
-                    File.WriteAllText(tempFile, sourceCode);
+                    var tempFile = Path.Combine(projectTempFolder, Path.GetFileName(newTree.FilePath));
+                    int ix = 1;
+                    lock (typeof(Translator))
+                    {
+                        var iTempFile = tempFile;
+                        while (File.Exists(iTempFile))
+                        {
+                            var ext = Path.GetExtension(tempFile);
+                            var dir = Path.GetDirectoryName(tempFile);
+                            var fileName = Path.GetFileNameWithoutExtension(tempFile);
+                            iTempFile = dir + "/" + fileName + ix.ToString() + ext;
+                            ix++;
+                        }
+                        tempFile = iTempFile;
+                        var directory = Path.GetDirectoryName(tempFile);
+                        if (!Directory.Exists(directory))
+                            Directory.CreateDirectory(directory);
+                        File.WriteAllText(tempFile, sourceCode);
+                    }
                     replacements[tree.i] = (tempFile, sourceCode);
                 });
             });
@@ -350,10 +370,15 @@ namespace {project.GetNamespace()}
             //    Console.WriteLine(diagnostic.ToString());
             //}
             GlobalCompilationVisitor global = default!;
+            ReflectionMetadataBuilder metadataBuilder = default!;
             $"Preparing to transpile".Profile(() =>
             {
                 var importedNames = symbolFiles.Select(s => deSerializer.Deserialize<SymbolDescriptor>(File.ReadAllText(s))).ToList();
                 global = new GlobalCompilationVisitor(csCompilation, project, importedNames);
+                metadataBuilder = new ReflectionMetadataBuilder(global, isSystemPrivateCoreLib, contentFiles.Where(e => e.EndsWith(".resx")).ToArray(), embeddedFiles.ToArray());
+                metadataBuilder.InitializeForAssembly(csCompilation.Assembly);
+                global.Reflection = metadataBuilder;
+
             });
             Parallel.ForEach(csCompilation.SyntaxTrees.Select((tree, i) => (tree, i)), new ParallelOptions { MaxDegreeOfParallelism = 1 }, (tree) =>
             {
@@ -432,7 +457,7 @@ namespace {project.GetNamespace()}
                     //And what we are producing from cs files are also js files, flatten the wwwroot folder with our output path
                     output.Output(global,
                         !relativePath.StartsWith(Constants.OutputFolderName + "\\") ? Constants.OutputFolderName + "\\" + relativePath : relativePath,
-                        source, 
+                        source,
                         existingFileInfo.LastWriteTime);
                 }
             }
@@ -503,16 +528,16 @@ namespace {project.GetNamespace()}
                         SortedOutputBuild(root, type, stringBuilder, formatTabs, ref _dependsOnSelf);
                     }
                 }
-                var dependentTypes = DependentTypes(symbol);
-                if (dependentTypes.Contains(symbol, SymbolEqualityComparer.Default))
-                {
-                    var metadata = global.GetMetadata(symbol.OriginalDefinition);
-                    if (metadata != null)
-                    {
-                        if (stubbed.Add(symbol.OriginalDefinition))
-                            stringBuilder.AppendLine($"        {Constants.AssemblyRegistryName}.{Constants.AssemblyTypeProxyName}(\"{metadata.FullName}\");");
-                    }
-                }
+                //var dependentTypes = DependentTypes(symbol);
+                //if (dependentTypes.Contains(symbol, SymbolEqualityComparer.Default))
+                //{
+                //    //var metadata = global.GetMetadata(symbol.OriginalDefinition);
+                //    //if (metadata != null)
+                //    //{
+                //    if (global.ShouldExportType(symbol.OriginalDefinition, null) && stubbed.Add(symbol.OriginalDefinition))
+                //        stringBuilder.AppendLine($"        {Constants.AssemblyRegistryName}.{Constants.AssemblyTypeProxyName}(\"{symbol.OriginalDefinition.CreateSignature(global, withGlobalNamespace: false, withAssemblySlugNamespace: true)}\");");
+                //    //}
+                //}
                 IEnumerable<INamedTypeSymbol> GetDirectDependecies(INamedTypeSymbol symbol)
                 {
                     if (symbol.BaseType != null)
@@ -535,7 +560,8 @@ namespace {project.GetNamespace()}
                             if (ss is INamedTypeSymbol nt)
                             {
                                 yield return nt;
-                                //foreach(var sss in GetDirectDependecies)
+                                //foreach(var sss in GetDirectDependecies(nt))
+                                //yield return sss;
                             }
                         }
                     }
@@ -548,12 +574,12 @@ namespace {project.GetNamespace()}
                         !symbol.Equals(dep, SymbolEqualityComparer.Default) &&
                         !outputted.Contains(dep.OriginalDefinition))
                     {
-                        var metadata = global.GetMetadata(dep.OriginalDefinition);
-                        if (metadata != null)
-                        {
-                            if (stubbed.Add(dep.OriginalDefinition))
-                                stringBuilder.AppendLine($"        {Constants.AssemblyRegistryName}.{Constants.AssemblyTypeProxyName}(\"{metadata.FullName}\");");
-                        }
+                        //var metadata = global.GetMetadata(dep.OriginalDefinition);
+                        //if (metadata != null)
+                        //{
+                        if (global.ShouldExportType(dep.OriginalDefinition, null) && stubbed.Add(dep.OriginalDefinition))
+                            stringBuilder.AppendLine($"        {Constants.AssemblyRegistryName}.{Constants.AssemblyTypeProxyName}(\"{dep.OriginalDefinition.CreateSignature(global, withGlobalNamespace: false, withAssemblySlugNamespace: true)}\");");
+                        //}
                     }
                 }
                 //if (symbol.Arity > 0)
@@ -720,11 +746,6 @@ namespace {project.GetNamespace()}
                             return a;
                         }
                         return o.OutputRank(0);
-                        //if (o.BaseType == null && !o.Interfaces.Any())
-                        //    return 0;
-                        //if (o.BaseType == null && o.Interfaces.Any())
-                        //    return 1;
-                        //return int.MaxValue;
                     }))
                     {
                         bool dependsOnSelf = false;
@@ -737,7 +758,6 @@ namespace {project.GetNamespace()}
                 {
                     codes = string.Join("\r\n", global.Visitors.Select(v => v.Value.Build(2).Trim()).Where(e => !string.IsNullOrEmpty(e)));
                 }
-                bool isSystemPrivateCoreLib = project.GetAssemblyName() == "NetJs.System.Private.CoreLib";
                 if (isSystemPrivateCoreLib)
                 {
                     bootCodes += @$"
@@ -755,19 +775,15 @@ namespace {project.GetNamespace()}
                 //        }}
                 //";
                 //                }
-                var metadataBuilder = new ReflectionMetadataBuilder(global, isSystemPrivateCoreLib, contentFiles.Where(e => e.EndsWith(".resx")).ToArray(), embeddedFiles.ToArray());
+                //var metadataBuilder = new ReflectionMetadataBuilder(global, isSystemPrivateCoreLib, contentFiles.Where(e => e.EndsWith(".resx")).ToArray(), embeddedFiles.ToArray());
                 var reflectionMetadata = metadataBuilder.FromAssemblySymbol(csCompilation.Assembly);
-                var metadataSerializationOption = new JsonSerializerOptions
-                {
-                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault
-                };
                 output.Output(global, Constants.OutputFolderName + "/" + project.GetName() + ".js", StringToStream(global.OutputMode.HasFlag(OutputMode.Global) ? @$"
 (function ({global.GlobalName}, $global) {{
     ""use strict"";
     let _;
     {(isSystemPrivateCoreLib ? "let $asm; function $setasm(v){ $asm = v; }" : "")}
     {bootCodes}
-    $.$meta(""{project.GetAssemblyName()}"", {JsonSerializer.Serialize(reflectionMetadata, metadataSerializationOption)});
+    $.$meta(""{project.GetAssemblyName()}"", {JsonSerializer.Serialize(reflectionMetadata, ReflectionMetadataBuilder.SerializationOption)});
 
 	{global.GlobalName}.{Constants.AssemblyRegistryName}(""{project.GetAssemblyName()}"", function({Constants.AssemblyRegistryName})
 	{{
@@ -814,6 +830,7 @@ namespace {project.GetNamespace()}
             if (global.MainEntry != null)
             {
                 var meta = global.GetRequiredMetadata(global.MainEntry);
+                var jss = output.OutputtedFiles.Where(o => o.EndsWith(".js")).Select(o => o.Replace(Constants.OutputFolderName + "/", "").Replace(Constants.OutputFolderName + "\\", "")).Distinct();
                 var index = $@"
 <!DOCTYPE html>
 <html lang=""en"">
@@ -824,7 +841,7 @@ namespace {project.GetNamespace()}
     <style>
         {StreamToString(output.HtmlStyleContent)}
     </style>
-    {(string.Join("\r\n    ", output.OutputtedFiles.Where(o => o.EndsWith(".js")).Select(o => $"<script type=\"text/javascript\" src=\"{o.Replace(Constants.OutputFolderName + "/", "").Replace(Constants.OutputFolderName + "\\", "")}\"></script>")))}
+    {(string.Join("\r\n    ", jss.Select(o => $"<script type=\"text/javascript\" src=\"{o}\"></script>")))}
 	<script type=""{(global.OutputMode.HasFlag(OutputMode.Global) ? "text/javascript" : "module")}"">
         (function ({global.GlobalName}, $global) {{
             ""use strict"";

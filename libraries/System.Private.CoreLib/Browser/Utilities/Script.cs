@@ -92,6 +92,8 @@ namespace NetJs
 
         [Template("dotnetJs.toArray({items})")]
         public static extern T[] ToArray<T>(IEnumerable<T> items);
+        [Template("Array.from({array})")]
+        public static extern byte[] ArrayFrom(Window.Uint8Array array);
 
         [Template("[]")]
         public static extern T[] NewArray<T>();
@@ -346,6 +348,8 @@ namespace NetJs
         [Template("encodeURIComponent({0})")]
         public static extern string EncodeURIComponent(string component);
 
+        [Template("{global.}" + NetJs.Constants.UnboxName + "({0})")]
+        public static extern object Unbox(object? obj);
         [Template("typeof {0}")]
         public static extern string TypeOf(object? obj);
         [Template("typeof {0}")]

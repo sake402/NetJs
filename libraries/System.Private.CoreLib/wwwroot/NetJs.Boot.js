@@ -3,6 +3,20 @@
 
 (function (global) {
     let NetJs = global.NetJs = {};
+    const GenericType0Placeholder = 20;
+    // NetJs.$Ts = [];
+    // for (let i = 0; i < 128; i++) { dont expect you to have up to 128 generic parameter on a class
+    //     let name = "$T" + (i + 1);
+    //     let cls;
+    //     cls = class {
+    //         static $metadata = { "h": (GenericType0Placeholder + i + 1) << 16 }
+    //         static $is$T = i + 1;
+    //         static $fullName = "";
+    //         static get $type() { return cls; }
+    //     }
+    //     NetJs[name] = cls;
+    //     NetJs.$Ts.push(cls);
+    // }
     //expose some js methods directly
     NetJs.floor = window.Math.floor;
     NetJs.trunc = window.Math.trunc;
@@ -51,6 +65,32 @@
         //TODO: nned a way to map heldValue back to the object being destroyed
         //finalizer.register(myObject, "_");
     }
+
+    NetJs.getCallerName = function () {
+        const error = new Error();
+        const stack = error.stack;
+
+        if (!stack) return 'unknown';
+
+        // Split stack by line breaks
+        const lines = stack.split('\n');
+
+        // Line 0 is Error message, Line 1 is getCallerName itself
+        // Line 2 is the actual function that called getCallerName
+        // Line 3 is the actual function that called getCallerName's caller, which is what we want
+        const callerLine = lines[3];
+
+        if (!callerLine) return 'top-level';
+
+        // Clean up V8 engine style traces: " at CallerName (path...)"
+        const match = callerLine.match(/at\s+([^\s(]+)/);
+        if (match) {
+            var tokens = match[1].split('.');
+            return tokens[tokens.length - 1];
+        }
+        return 'anonymous';
+    }
+
     NetJs.$nomix = class { }
 
     NetJs.$mix = function () {
@@ -162,8 +202,8 @@
                 if (runtimeType)
                     return runtimeType;
                 let spcAssembly = getCoreAssembly();
-                var model = spcAssembly.GetModel(fullTypeName);
-                runtimeType = NetJs.$spc.System.RuntimeType.Create(spcAssembly, prototype, model, fullTypeName);
+                var metadata = prototype.$metadata ?? { h: 0 };// spcAssembly.GetModel(fullTypeName);
+                runtimeType = NetJs.$spc.System.RuntimeType.Create(spcAssembly, prototype, metadata, fullTypeName);
                 runtimeType.$do_complete();
                 return runtimeType;
             }
@@ -189,21 +229,10 @@
             return null;
         if (prototype.$default)
             return prototype.$default();
-        //var type = prototype.$type;
-        //if (type && type.$default)
-        //return type.$default();
-        //if (prototype && prototype.IsValueType === false)
-        //return null;
-        //if (type && type.IsValueType == false)
-        //return null;
-        if (prototype.$is && prototype.$is(0, NetJs.$discardRef)) //test numeric type
-            return 0;
-        //if (type && type.$is && type.$is(0, NetJs.$discard)) //test numeric type
-        //return 0;
-        if (prototype.Zero) //test long and decimal type
+        if (prototype.Zero !== undefined) //test long and decimal type
             return prototype.Zero;
-        //if (type && type.Zero) //test long and decimal type
-        //return type.Zero;
+        if (prototype.$is && prototype.$is(0, NetJs.$discardRef))
+            return 0;
         var model = prototype.$model;
         if (isValueType(prototype) === false) {
             return null;
@@ -254,7 +283,7 @@
     }
 
     NetJs.$unbox = function (value, valueType) {
-        if (valueType == null || NetJs.$is(value, valueType)) {
+        if (!valueType || NetJs.$is(value, valueType)) {
             if (!value.$boxed)
                 return value;
             return value.m_value;
@@ -278,7 +307,7 @@
         return type.$type ?? type;
     }
     NetJs.$sizeOf = function (type) {
-        return type.$type?._model?.sz;
+        return type.$type?.$metadata?.sz;
     }
     NetJs.$firstOf = function (value, otherwise) {
         if (value)
@@ -682,5 +711,38 @@
             }
         }
         return a == b;
+    }
+    NetJs.$destructure = function (tuple) {
+        var o = [];
+        if (tuple.Deconstruct) {
+            o.length = 16;
+            tuple.Deconstruct(
+                { set $v(v) { o[0] = v; } },
+                { set $v(v) { o[1] = v; } },
+                { set $v(v) { o[2] = v; } },
+                { set $v(v) { o[3] = v; } },
+                { set $v(v) { o[4] = v; } },
+                { set $v(v) { o[5] = v; } },
+                { set $v(v) { o[6] = v; } },
+                { set $v(v) { o[7] = v; } },
+                { set $v(v) { o[8] = v; } },
+                { set $v(v) { o[9] = v; } },
+                { set $v(v) { o[10] = v; } },
+                { set $v(v) { o[11] = v; } },
+                { set $v(v) { o[12] = v; } },
+                { set $v(v) { o[13] = v; } },
+                { set $v(v) { o[14] = v; } },
+                { set $v(v) { o[15] = v; } });
+        } else {
+            for (let i = 1; ; i++) {
+                var property = "Item" + i;
+                var val = tuple[property];
+                if (val) {
+                    o.push(val);
+                } else
+                    break;
+            }
+        }
+        return o;
     }
 })(window)

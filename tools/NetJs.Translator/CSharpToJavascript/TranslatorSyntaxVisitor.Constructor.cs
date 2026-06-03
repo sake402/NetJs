@@ -73,8 +73,14 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
                 //We cant be sure if there will be a method/property that accesses this primary constructor parameter
                 //So we create is as a field always 
+                var defaultValue = parameter.Type != null ? _global.GetDefaultValue(parameter.Type, this, true) : null;
                 CurrentTypeWriter.Write(parameter, $"/*{parameter.Type}*/ ", true);
                 CurrentTypeWriter.Write(parameter, parameter.Identifier.ValueText);
+                if (defaultValue != null)
+                {
+                    CurrentTypeWriter.Write(parameter, $" = ");
+                    CurrentTypeWriter.Write(parameter, defaultValue);
+                }
                 CurrentTypeWriter.WriteLine(parameter, ";");
             }
             constructorSymbol ??= typeSymbol.GetMembers(".ctor").Cast<IMethodSymbol>().Where(e => e.IsPrimaryConstructor(_global)).Single();
@@ -123,7 +129,7 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 CurrentTypeWriter.Write(field, $"this.", true);
                 CurrentTypeWriter.Write(field, field.Identifier.ValueText);
-                CurrentTypeWriter.Write(field, $" = $");
+                //CurrentTypeWriter.Write(field, $" = $");
                 //Writer.Write(field, ((IdentifierNameSyntax)field.Initializer!.Value).Identifier.ValueText);
                 Visit(field.Initializer);
                 CurrentTypeWriter.WriteLine(field, ";");
@@ -138,13 +144,15 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 CurrentTypeWriter.Write(property, $"this.", true);
                 CurrentTypeWriter.Write(property, property.Identifier.ValueText);
-                CurrentTypeWriter.Write(property, $" = $");
+                CurrentTypeWriter.Write(property, $" = ");
+                //CurrentTypeWriter.Write(property, $" = $");
                 //Writer.Write(property, ((IdentifierNameSyntax)property.Initializer!.Value).Identifier.ValueText);
                 Visit(property.Initializer!.Value);
                 CurrentTypeWriter.WriteLine(property, ";");
                 MarkMemberAsInitializedByPrimaryConstructor(property);
                 i++;
             }
+            CurrentTypeWriter.WriteLine(node, "return this", true);
             CurrentTypeWriter.WriteLine(node, "}", true);
             CurrentTypeWriter.WriteLine(node, "//End primary constructor", true);
         }
@@ -301,8 +309,19 @@ namespace NetJs.Translator.CSharpToJavascript
             var typeMetadata = typeSymbol.Kind != SymbolKind.TypeParameter ? _global.GetRequiredMetadata(typeSymbol) : null;
             void CallDefaultConstructor()
             {
+                var tt = typeSymbol as INamedTypeSymbol;
+                bool hasArity = false;
+                while (!hasArity && tt != null)
+                {
+                    if (tt.Arity > 0)
+                    {
+                        hasArity = true;
+                        break;
+                    }
+                    tt = tt.ContainingType;
+                }
                 CurrentTypeWriter.Write(node, "new ");
-                if (genericArgs != null || (typeSymbol is INamedTypeSymbol nt && nt.IsGenericType))
+                if (genericArgs != null || hasArity)
                 {
                     CurrentTypeWriter.Write(node, "(");
                 }
@@ -323,7 +342,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 //    }
                 //    Writer.Write(node, ")");
                 //}
-                if (genericArgs != null || (typeSymbol is INamedTypeSymbol nt2 && nt2.IsGenericType))
+                if (genericArgs != null || hasArity)
                 {
                     CurrentTypeWriter.Write(node, ")");
                 }

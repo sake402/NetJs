@@ -56,6 +56,7 @@ namespace NetJs.Translator.CSharpToJavascript
         public Dictionary<string, IEnumerable<ITypeSymbol>> Delegates { get; private set; }
         public OutputMode OutputMode { get; }
         public string GlobalName { get; }
+        public ReflectionMetadataBuilder Reflection { get; set; } = default!;
 
 
         public List<string> ModuleInitializers = new();
@@ -188,11 +189,16 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             Compilation = compilation;
             Project = project;
+            GlobalName = Evaluate("Global") ?? "$";
             AllSymbols = new Dictionary<string, SymbolMetadata>();
             SymbolMetadatas = new Dictionary<ISymbol, SymbolMetadata>(SymbolEqualityComparer.Default);
             ExtensionMethods = new Dictionary<string, IEnumerable<IMethodSymbol>>();
             Delegates = new Dictionary<string, IEnumerable<ITypeSymbol>>();
-            Symbols = Symbols with { GlobalNamespace = GetAssemblyGlobalSlug(compilation.Assembly) };
+            Symbols = Symbols with
+            {
+                GlobalNamespace = GlobalName,
+                AssemblySlug = GetAssemblyGlobalSlug(compilation.Assembly)
+            };
             ImportedNames = new SymbolDescriptor();
             foreach (var m in importedSymbols)
             {
@@ -220,7 +226,6 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
             }
             OutputMode = project.GetOutputMode();
-            GlobalName = Evaluate("Global") ?? "$";
             //AllNodes = compilation.SyntaxTrees.SelectMany(c => c.GetRoot().DescendantNodes()).ToList();
             Dictionary<string, int> usedKeys = new();
             //TypeNodes = AllNodes.Where(e => e is MemberDeclarationSyntax)
@@ -366,17 +371,21 @@ namespace NetJs.Translator.CSharpToJavascript
 
                     .Select(symbol =>
                     {
-                        var names = symbol.CreateSignatures(this);
-                        var originalKey = names.WithoutTypeParameter;
-                        var i = usedKeys.GetValueOrDefault(names.WithoutTypeParameter);
+                        var WithTypeParameter = symbol.CreateSignature(this, withTypeParameterNames: true, withGlobalNamespace: true);
+                        var WithoutTypeParameter = symbol.CreateSignature(this, withTypeParameterNames: false, withGlobalNamespace: true);
+                        var originalKey = WithoutTypeParameter;
+                        //if (symbol.Kind == SymbolKind.NamedType)
+                        //{
+                        var i = usedKeys.GetValueOrDefault(WithoutTypeParameter);
                         if (i > 0)
                         {
                             i++;
-                            names.WithoutTypeParameter += "$$" + i;
-                            names.WithTypeParameter += "$$" + i;
+                            WithoutTypeParameter += "$$" + i;
+                            WithTypeParameter += "$$" + i;
                         }
                         usedKeys[originalKey] = i + 1;
-                        return (withoutTypeParameterNames: names.WithoutTypeParameter, withTypeParameterNames: names.WithTypeParameter, symbol);
+                        //}
+                        return (withoutTypeParameterNames: WithoutTypeParameter, withTypeParameterNames: WithTypeParameter, symbol);
                     })
                     .ToDictionary(s =>
                     {
@@ -449,7 +458,7 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 foreach (var a in symbol.GetAttributes().Select(a => (a, a.AttributeClass)).Where(e => e.AttributeClass != null))
                 {
-                    var aName = a.AttributeClass!.CreateFullTypeName(this, withGlobalNamespace: false)!;
+                    var aName = a.AttributeClass!.CreateSignature(this, withGlobalNamespace: false)!;
                     if (!aName.EndsWith("Attribute"))
                         aName += "Attribute";
                     if (aName == typeof(ConventionAttribute).FullName)
@@ -505,7 +514,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
             var assemblyNamespace = GetAssemblyGlobalSlug(Compilation.Assembly);
             Dictionary<ITypeSymbol, Dictionary<string, HashSet<string>>> usedMemberNames = new(SymbolEqualityComparer.Default);
-            var reversMemberNames = ImportedNames.Members.ToDictionary(e => e.Key, e => e.Value.ToDictionary(ee => ee.Value ?? "Null"/*The yaml deserializer deserializes Null value as null*/, ee => ee.Key));
+            var reversMemberNames = ImportedNames.Members.ToDictionary(e => e.Key, e => e.Value.ToDictionary(ee => ee.Value.Signature ?? "Null"/*The yaml deserializer deserializes Null value as null*/, ee => ee.Key));
 
             bool IsMemberNameUsed(ITypeSymbol type, string overloadName, string tryUseName, out HashSet<string> overloadUsedNames)
             {
@@ -559,7 +568,7 @@ namespace NetJs.Translator.CSharpToJavascript
             $"Preprocessing type symbols".Profile(() =>
             {
                 Dictionary<string, HashSet<string>> usedTypeNames = new();
-                var reversedTypeNames = ImportedNames.Types.ToDictionary(e => e.Value, e => e.Key);
+                var reversedTypeNames = ImportedNames.Types.ToDictionary(e => e.Value.Signature, e => e.Key);
                 foreach (var type in AllSymbols!.Values.Where(e => e.Symbol.Kind == SymbolKind.NamedType/* is ITypeSymbol*/)/*.GroupBy(e => e.FullName.Split('<')[0])*/)
                 {
                     //foreach (var type in group)
@@ -604,7 +613,12 @@ namespace NetJs.Translator.CSharpToJavascript
                             bool hasNameAttribute = false;
                             if (HasAttribute(type.Symbol, typeof(NameAttribute).FullName!, null, false, out var args))
                             {
-                                var name = (string)args![0];
+                                var name = (string)args![0]!;
+                                if (!HasAttribute(type.Symbol, typeof(ExternalAttribute).FullName!, null, false, out _))
+                                {
+                                    var prefix = GlobalName + "." + assemblyNamespace + ".";
+                                    name = name.StartsWith(prefix) ? name : prefix + name;
+                                }
                                 type.OriginalOverloadName = name;
                                 type.OverloadName = name;
                                 hasNameAttribute = true;
@@ -628,7 +642,9 @@ namespace NetJs.Translator.CSharpToJavascript
                                     //}
                                     //else
                                     {
-                                        overloadedName = GlobalName + "." + type.FullName.Replace(",", "$").Replace("<", "$").Replace(">", "$").Replace(" ", "");
+                                        var prefix = GlobalName + "." + assemblyNamespace + ".";
+                                        var fn = type.FullName.Replace(",", "$").Replace("<", "$").Replace(">", "$").Replace(" ", "");
+                                        overloadedName = (fn.StartsWith(prefix) ? null : prefix) + fn;
                                     }
                                 }
                                 if (!usedTypeNames.TryGetValue(overloadedName, out var usedName))
@@ -642,7 +658,7 @@ namespace NetJs.Translator.CSharpToJavascript
                                     usedName.Add(overloadedName);
                                 }
                                 type.OriginalOverloadName = (originalPrefixOverloadName != null ? originalPrefixOverloadName + "." : "") + overloadedName;
-                                type.OverloadName = SymbolMetadata.ShortName(this, shortPrefixOverloadName, originalPrefixOverloadName, type.Signature, overloadedName, !isExtern ? Symbols.Types : new Dictionary<string, string>(), generate: !isExtern, export: !hasNameAttribute && !isExtern && !isImportedType);
+                                type.OverloadName = SymbolMetadata.ShortName(this, shortPrefixOverloadName, originalPrefixOverloadName, type.Signature, overloadedName, !isExtern ? Symbols.Types : new Dictionary<string, SymbolValue>(), generate: !isExtern, export: !hasNameAttribute && !isExtern && !isImportedType);
                             }
                         }
                     }
@@ -750,14 +766,14 @@ namespace NetJs.Translator.CSharpToJavascript
                             }
                         }
                         bool export = !hasNameAttribute && !isExtern && !isImportedType;
-                        Dictionary<string, string> exportNames;
+                        Dictionary<string, SymbolValue> exportNames;
                         if (!export)
                         {
-                            exportNames = new Dictionary<string, string>();
+                            exportNames = new Dictionary<string, SymbolValue>();
                         }
                         else if (!Symbols.Members.TryGetValue(declaringTypeMetadata.Signature, out exportNames))
                         {
-                            exportNames = new Dictionary<string, string>();
+                            exportNames = new Dictionary<string, SymbolValue>();
                             Symbols.Members.Add(declaringTypeMetadata.Signature, exportNames);
                         }
                         field.OriginalOverloadName = overloadedName;
@@ -878,14 +894,14 @@ namespace NetJs.Translator.CSharpToJavascript
                             }
                         }
                         bool export = !hasNameAttribute && !isExtern && !isImportedType;
-                        Dictionary<string, string> exportNames;
+                        Dictionary<string, SymbolValue> exportNames;
                         if (!export)
                         {
-                            exportNames = new Dictionary<string, string>();
+                            exportNames = new Dictionary<string, SymbolValue>();
                         }
                         else if (!Symbols.Members.TryGetValue(declaringTypeMetadata.Signature, out exportNames))
                         {
-                            exportNames = new Dictionary<string, string>();
+                            exportNames = new Dictionary<string, SymbolValue>();
                             Symbols.Members.Add(declaringTypeMetadata.Signature, exportNames);
                         }
                         @event.OriginalOverloadName = overloadedName;
@@ -943,7 +959,23 @@ namespace NetJs.Translator.CSharpToJavascript
                             }
                             else
                             {
-                                string name = property.Symbol.Name.RemoveGenericParameterNames(out _);
+                                string GetCleanName()
+                                {
+                                    if (pproperty.Name.StartsWith("<") && pproperty.ExplicitInterfaceImplementations.Any())
+                                    {
+                                        var originalInterfaceMethod = pproperty.ExplicitInterfaceImplementations.First();
+                                        // 2. Define a clean format: Namespace + Containing Types + Name (Omits "global::")
+                                        var cleanFormat = new SymbolDisplayFormat(
+                                            globalNamespaceStyle: SymbolDisplayGlobalNamespaceStyle.Omitted,
+                                            typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
+                                            memberOptions: SymbolDisplayMemberOptions.IncludeContainingType
+                                        );
+
+                                        return originalInterfaceMethod.ToDisplayString(cleanFormat);
+                                    }
+                                    return pproperty.Name;
+                                }
+                                string name = GetCleanName().RemoveGenericParameterNames(out _);
                                 if (name == "this[]")
                                 {
                                     name = "Item";
@@ -1031,14 +1063,14 @@ namespace NetJs.Translator.CSharpToJavascript
                                 }
                             }
                             bool export = !hasNameAttribute && !isExtern && !isImportedType;
-                            Dictionary<string, string> exportNames;
+                            Dictionary<string, SymbolValue> exportNames;
                             if (!export)
                             {
-                                exportNames = new Dictionary<string, string>();
+                                exportNames = new Dictionary<string, SymbolValue>();
                             }
                             else if (!Symbols.Members.TryGetValue(declaringTypeMetadata.Signature, out exportNames))
                             {
-                                exportNames = new Dictionary<string, string>();
+                                exportNames = new Dictionary<string, SymbolValue>();
                                 Symbols.Members.Add(declaringTypeMetadata.Signature, exportNames);
                             }
                             property.OriginalOverloadName = overloadedName;
@@ -1147,7 +1179,23 @@ namespace NetJs.Translator.CSharpToJavascript
                             }
                             else
                             {
-                                overloadedName = method.Symbol.Name.RemoveGenericParameterNames(out _);
+                                string GetCleaName()
+                                {
+                                    if (mmethod.Name.StartsWith("<") && mmethod.ExplicitInterfaceImplementations.Any())
+                                    {
+                                        var originalInterfaceMethod = mmethod.ExplicitInterfaceImplementations.First();
+                                        // 2. Define a clean format: Namespace + Containing Types + Name (Omits "global::")
+                                        var cleanFormat = new SymbolDisplayFormat(
+                                            globalNamespaceStyle: SymbolDisplayGlobalNamespaceStyle.Omitted,
+                                            typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
+                                            memberOptions: SymbolDisplayMemberOptions.IncludeContainingType
+                                        );
+
+                                        return originalInterfaceMethod.ToDisplayString(cleanFormat);
+                                    }
+                                    return mmethod.Name;
+                                }
+                                overloadedName = GetCleaName().RemoveGenericParameterNames(out _);
                                 if (!overloadedName.Contains(".")) //doesnt apply to explicit interface implementations
                                 {
                                     var convention = GetConvention(method.Symbol);
@@ -1249,14 +1297,14 @@ namespace NetJs.Translator.CSharpToJavascript
                                 //}
                             }
                             bool export = !hasNameAttribute && !isExtern && !isImportedType;
-                            Dictionary<string, string> exportNames;
+                            Dictionary<string, SymbolValue> exportNames;
                             if (!export)
                             {
-                                exportNames = new Dictionary<string, string>();
+                                exportNames = new Dictionary<string, SymbolValue>();
                             }
                             else if (!Symbols.Members.TryGetValue(declaringTypeMetadata.Signature, out exportNames))
                             {
-                                exportNames = new Dictionary<string, string>();
+                                exportNames = new Dictionary<string, SymbolValue>();
                                 Symbols.Members.Add(declaringTypeMetadata.Signature, exportNames);
                             }
                             method.OriginalOverloadName = overloadedName;
@@ -1730,6 +1778,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public INamedTypeSymbol DeletedObject => field ??= (INamedTypeSymbol)GetSymbol("DeletedObject", null/*, out _, out _*/);
 
+        public INamedTypeSymbol AwaitableInterface => field ??= (INamedTypeSymbol)GetSymbol("System.IAwaitable", null);
 
         public ITypeSymbol Union(IEnumerable<ITypeSymbol> types, TranslatorSyntaxVisitor? visitor)
         {
@@ -1932,14 +1981,22 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 var currentAssembly = Compilation.Assembly;
                 var slug = GetAssemblyGlobalSlug(currentAssembly);
-                var lTypeName = slug + "." + (prefixTypeName != null ? prefixTypeName + "." : "") + typeName;
+                var lTypeName = GlobalName + "." + slug + "." + (prefixTypeName != null ? prefixTypeName + "." : "") + typeName;
                 var result = iterate(lTypeName);
+                if (result)
+                    return result;
+                lTypeName = slug + "." + (prefixTypeName != null ? prefixTypeName + "." : "") + typeName;
+                result = iterate(lTypeName);
                 if (result)
                     return result;
                 var dependencies = Compilation.SourceModule.ReferencedAssemblySymbols;
                 foreach (var dep in dependencies)
                 {
                     slug = GetAssemblyGlobalSlug(dep);
+                    lTypeName = GlobalName + "." + slug + "." + (prefixTypeName != null ? prefixTypeName + "." : "") + typeName;
+                    result = iterate(lTypeName);
+                    if (result)
+                        return result;
                     lTypeName = slug + "." + (prefixTypeName != null ? prefixTypeName + "." : "") + typeName;
                     result = iterate(lTypeName);
                     if (result)
@@ -2372,7 +2429,7 @@ namespace NetJs.Translator.CSharpToJavascript
                         var type = e.ConstructorArguments[0].Value;
                         if (type is ITypeSymbol ts)
                         {
-                            typeName = ts.CreateFullTypeName(this, withGlobalNamespace: false);
+                            typeName = ts.CreateSignature(this, withGlobalNamespace: false);
                         }
                         else
                         {
@@ -2390,7 +2447,7 @@ namespace NetJs.Translator.CSharpToJavascript
                             var attValues = a.ConstructorArguments.Length > 2 ? a.ConstructorArguments[2].Values.Select((v, i) => ((object)i, v.Value)).ToDictionary(e => e.Item1, e => e.Value) : new Dictionary<object, object?>();
                             return (attType, attValues);
                         }).Where(a => a.attType != null)
-                        .ToDictionary(e => e.attType.CreateFullTypeName(this, withGlobalNamespace: false), e => e.attValues);
+                        .ToDictionary(e => e.attType.CreateSignature(this, withGlobalNamespace: false), e => e.attValues);
                     })!;
             }
             var noGeneric = fullSymbolName.RemoveGenericParameterNames(out _);
@@ -2478,7 +2535,7 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (symbol is ITypeSymbol ts && ts.IsNullable(out var it))
                 symbol = it!;
-            if (attributeNames.Any(a => HasAttachedAttribute(symbol.CreateFullTypeName(this, withGlobalNamespace: false), a, out _)))
+            if (attributeNames.Any(a => HasAttachedAttribute(symbol.CreateSignature(this, withGlobalNamespace: false), a, out _)))
                 return true;
             return symbol.HasAnyAttribute(inherits, attributeNames, out _);
             ////var symbols = attributeNames.Select(s => GetTypeSymbol(s, visitor/*, out _, out _*/)).ToList();
@@ -2520,7 +2577,7 @@ namespace NetJs.Translator.CSharpToJavascript
             //constructorArgs = null;
             //if (attributeName == typeof(BootAttribute).FullName)
             //return false;
-            if (HasAttachedAttribute(symbol.CreateFullTypeName(this, withGlobalNamespace: false), attributeName, out var args))
+            if (HasAttachedAttribute(symbol.CreateSignature(this, withGlobalNamespace: false), attributeName, out var args))
             {
                 constructorArgs = args;
                 return true;
@@ -2532,7 +2589,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 return false;
             if (symbol.GetAttributes().Select(a => (a, a.AttributeClass)).Where(e => e.AttributeClass != null).Any(a =>
             {
-                var aName = a.AttributeClass!.CreateFullTypeName(this, withGlobalNamespace: false)!;
+                var aName = a.AttributeClass!.CreateSignature(this, withGlobalNamespace: false)!;
                 if (!aName.EndsWith("Attribute"))
                     aName += "Attribute";
                 if (aName != attributeName)
@@ -2626,6 +2683,18 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             return false;
         }
+
+        public bool IsAnonymousType(ISymbol symbol)
+        {
+            if (symbol is INamedTypeSymbol namedType &&
+                namedType.TypeKind == TypeKind.Class &&
+                namedType.IsAnonymousType) // Or check name for compiler-generated patterns
+            {
+                return true;
+            }
+            return false;
+        }
+
         public bool IsAnonymousFunction(ISymbol symbol)
         {
             if (symbol is INamedTypeSymbol namedType &&
@@ -2636,6 +2705,7 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             return false;
         }
+
         public bool IsNativeFunction(ISymbol symbol)
         {
             if (IsAnonymousFunction(symbol))
@@ -2791,8 +2861,18 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 if (createValueInstance)
                 {
-                    var arity = type is INamedTypeSymbol tt ? tt.Arity : 0;
-                    return $"new {(arity > 0 ? "(" : "")}{type.ComputeOutputTypeName(this)}{(arity > 0 ? ")" : "")}()";
+                    var tt = type as INamedTypeSymbol;
+                    bool hasArity = false;
+                    while (!hasArity && tt != null)
+                    {
+                        if (tt.Arity > 0)
+                        {
+                            hasArity = true;
+                            break;
+                        }
+                        tt = tt.ContainingType;
+                    }
+                    return $"new {(hasArity ? "(" : "")}{type.ComputeOutputTypeName(this)}{(hasArity ? ")" : "")}()";
                 }
                 return null;
             }

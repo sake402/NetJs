@@ -10,7 +10,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.SystemIndex
         {
             if (node.IsKind(SyntaxKind.IndexExpression))
             {
-                visitor.WriteIndexOperator(node, node.Operand);
+                visitor.WriteCreateIndexFromEnd(node, node.Operand);
                 return true;
             }
             return false;

@@ -45,7 +45,22 @@
             //If someone mutate this array behind the scene, we need to know and update our dirty flag
             //Which is why it is a proxy exposed
             reff._array = _proxyChars;
-            handler.OnMutated += (s, e) => strDirty = true;
+            handler.OnMutated += (s, e) =>
+            {
+                if (reff._dataView != null)
+                {
+                    var index = NetJs.Script.ParseInt(e.Property);
+                    if (!NetJs.Script.IsNaN(index))
+                    {
+                        if (e.OldValue != e.Value)
+                        {
+                            //The backing array is mutated directly, if the reff dataView exists, it is no longer valid, not in sync with the backing array
+                            reff._dataView = null;
+                        }
+                    }
+                }
+                strDirty = true;
+            };
         }
         string str = "";
         internal char[] _chars;
@@ -95,7 +110,7 @@
             return str[property];
         }
 
-        public bool Set(object target, string property, object value)
+        public bool Set(object target, string property, object value, object receiver)
         {
             if (property.NativeEquals("_firstChar"))
             {

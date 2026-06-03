@@ -254,6 +254,7 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 syntaxExpression = (CSharpSyntaxNode)n;
             }
+            ISymbol? fallbackReturnType = null;
             foreach (var s in _semanticModels)
             {
                 if (syntaxExpression.SyntaxTree == s.SyntaxTree)
@@ -271,10 +272,12 @@ namespace NetJs.Translator.CSharpToJavascript
                         return CodeSymbol.From(target);
                     }
                     var info = s.GetTypeInfo(syntaxExpression);
-                    if ((info.Type ?? info.ConvertedType) != null)
+                    if ((info.Type/* ?? info.ConvertedType*/) != null)
                     {
                         return CodeSymbol.From(info.Type ?? info.ConvertedType);
                     }
+                    if (info.ConvertedType != null)
+                        fallbackReturnType = info.ConvertedType;
                     //if (info.ConvertedType != null)
                     //{
                     //    var conversion = s.GetConversion(expression);
@@ -731,11 +734,11 @@ namespace NetJs.Translator.CSharpToJavascript
                     return CodeSymbol.From(_global.Union([asFunc, asAction], this));
                 }
             }
-            return default;
+            return CodeSymbol.From(fallbackReturnType);
         }
 
 
-        RefKind? GetRefKind(ExpressionSyntax expression)
+        public RefKind? GetRefKind(ExpressionSyntax expression)
         {
             if (expression.IsKind(SyntaxKind.RefExpression))
                 return RefKind.Ref;
@@ -753,6 +756,55 @@ namespace NetJs.Translator.CSharpToJavascript
                 return GetRefKind(pr.Expression);
             }
             return null;
+        }
+
+        public void WriteCompareEquals(CSharpSyntaxNode node, ITypeSymbol type, CodeNode first, CodeNode second)
+        {
+            if (type.IsJsPrimitive())
+            {
+                VisitNode(first);
+                CurrentTypeWriter.Write(node, $" === ");
+                VisitNode(second);
+            }
+            else
+            {
+                var eqOperator = type
+                    .GetMembers("op_Equality")
+                    .Cast<IMethodSymbol>()
+                    .FirstOrDefault(f => f.Parameters.Length == 2 && f.Parameters.All(p => SymbolEqualityComparer.Default.Equals(p.Type, type)));
+                if (eqOperator != null)
+                {
+                    WriteMethodInvocation(node, eqOperator, null, [first, second], null, type);
+                }
+                else if (type is INamedTypeSymbol nt &&
+                    (
+                        (nt.IsType("System.IEquatable<>") && nt.TypeArguments.Length == 0 && SymbolEqualityComparer.Default.Equals(nt.TypeArguments[0], type))
+                        ||
+                        type.AllInterfaces.Any(a => a.IsType("System.IEquatable<>") && a.TypeArguments.Length == 0 && SymbolEqualityComparer.Default.Equals(a.TypeArguments[0], type))
+                    )
+                )
+                {
+                    var iequatable = ((INamedTypeSymbol)_global.GetSymbol("System.IEquatable<>", this)).Construct(type);
+                    var equals = (IMethodSymbol)iequatable.GetMembers("Equals").Single();
+                    WriteMethodInvocation(node, equals, null, [second], first, type);
+                }
+                else
+                {
+                    var eqComparer = ((INamedTypeSymbol)_global.GetSymbol("System.Collections.Generic.EqualityComparer<>", this)).Construct(type);
+                    var equalsMethod = eqComparer
+                    .GetMembers("Equals")
+                    .Single(e => e is IMethodSymbol ms &&
+                                ms.Parameters.Length == 2 &&
+                                SymbolEqualityComparer.Default.Equals(ms.Parameters[0].Type, type) &&
+                                SymbolEqualityComparer.Default.Equals(ms.Parameters[1].Type, type));
+                    var metadata = _global.GetRequiredMetadata(equalsMethod);
+                    CurrentTypeWriter.Write(node, $"{eqComparer.ComputeOutputTypeName(_global)}.Default.{(metadata.OverloadName ?? "Equals")}(");
+                    VisitNode(first);
+                    CurrentTypeWriter.Write(node, $", ");
+                    VisitNode(second);
+                    CurrentTypeWriter.Write(node, $")");
+                }
+            }
         }
     }
 }

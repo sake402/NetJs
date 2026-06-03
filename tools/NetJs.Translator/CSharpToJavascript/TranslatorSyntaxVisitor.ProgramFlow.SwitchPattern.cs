@@ -69,7 +69,7 @@ namespace NetJs.Translator.CSharpToJavascript
             //var governor = node.FindClosest<SwitchExpressionSyntax>()!.GoverningExpression;
             if (!node.Pattern.IsKind(SyntaxKind.DiscardPattern) || node.WhenClause != null)
             {
-                CurrentTypeWriter.Write(node, "if", true);
+                CurrentTypeWriter.Write(node, "if ", true);
                 if (!node.Pattern.IsKind(SyntaxKind.DiscardPattern))
                 {
                     CurrentTypeWriter.Write(node, "(");

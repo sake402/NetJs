@@ -19,6 +19,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
         bool TryWriteMathBinaryExpression(CSharpSyntaxNode node, string _operator, ExpressionSyntax left, ExpressionSyntax right)
         {
+            return false;
             if (MathBinaryOperators.Contains(_operator))
             {
                 var leftType = _global.TryGetTypeSymbol(left, this);

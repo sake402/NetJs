@@ -15,6 +15,7 @@ using NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Ref;
 using NetJs.Translator.CSharpToJavascript.SyntaxEmitter.StaticConvention;
 using NetJs.Translator.CSharpToJavascript.SyntaxEmitter.String;
 using NetJs.Translator.CSharpToJavascript.SyntaxEmitter.SystemIndex;
+using NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Tuples;
 using NetJs.Translator.RazorToCSharp;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -44,7 +45,7 @@ namespace NetJs.Translator.CSharpToJavascript
         public ScriptWriter CurrentTypeWriter { get; set; } = new ScriptWriter();
 
 
-        static ISyntaxEmitter[] s_Emitters =
+        ISyntaxEmitter[] s_Emitters =
         [
             new ImplicitConversionSyntaxEmitter(),
             new RefTypeDereferenceOnAccessSyntaxEmitter(),
@@ -106,7 +107,10 @@ namespace NetJs.Translator.CSharpToJavascript
 
             new MethodDelegateCreateSyntaxEmitter(),
             new DelegateAddSyntaxEmitter(),
-            new DelegateRemoveSyntaxEmitter()
+            new DelegateRemoveSyntaxEmitter(),
+
+            new TupleEqualSyntaxEmitter(),
+            new IsLiteralSyntaxEmitter(),
         ];
         public TranslatorSyntaxVisitor(GlobalCompilationVisitor global, SyntaxTree tree)
         {
@@ -131,9 +135,8 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (node != null)
             {
-                if (node.ToString().Contains("GroupBy"))
+                if (node.ToString().Equals("out int _"))
                 {
-
                 }
                 var nodeType = node.GetType();
                 for (int i = 0; i < s_Emitters.Length; i++)
@@ -247,20 +250,16 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitUsingStatement(UsingStatementSyntax node)
         {
-            if (node.ToString().Contains("ExecutionContext.SuppressFlow()"))
-            {
-
-            }
             if (node.Declaration != null)
             {
                 foreach (var variable in node.Declaration.Variables)
                 {
-                    CurrentTypeWriter.WriteLine(node, $"const {variable.Identifier.ValueText} = null;", true);
+                    CurrentTypeWriter.WriteLine(node, $"let {variable.Identifier.ValueText} = null;", true);
                 }
             }
             else if (node.Expression != null)
             {
-                CurrentTypeWriter.WriteLine(node, "const $disposable = null;", true);
+                CurrentTypeWriter.WriteLine(node, "let $disposable = null;", true);
             }
             CurrentTypeWriter.WriteLine(node, "try", true);
             CurrentTypeWriter.WriteLine(node, "{", true);
@@ -273,7 +272,7 @@ namespace NetJs.Translator.CSharpToJavascript
             else if (node.Declaration != null)
             {
                 CurrentTypeWriter.Write(node, "", true);
-                Visit(node.Declaration);
+                VisitChildren(node.Declaration.Variables);
                 CurrentTypeWriter.WriteLine(node, ";");
             }
             //if (node.Expression != null)
@@ -507,7 +506,8 @@ namespace NetJs.Translator.CSharpToJavascript
         public override void VisitAwaitExpression(AwaitExpressionSyntax node)
         {
             CurrentTypeWriter.Write(node, $"await ");
-            WriteMethodInvocation(node, "System.Runtime.CompilerServices.RuntimeHelpers.TaskToPromise", arguments: [node.Expression]);
+            Visit(node.Expression);
+            //WriteMethodInvocation(node, "System.Runtime.CompilerServices.RuntimeHelpers.TaskToPromise", arguments: [node.Expression]);
             //base.VisitAwaitExpression(node);
         }
 
@@ -542,136 +542,143 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (node.RefKindKeyword.ValueText == "out" || node.RefKindKeyword.ValueText == "ref" || node.RefKindKeyword.ValueText == "in")
             {
-                var iNameMangling = ++CurrentTypeWriter.CurrentClosure.NameManglingSeed;
-                var rhs = _global.TryGetSymbol(node.Expression, this/*, out var rhs, out var rhsKind*/);
-                var rhsKind = rhs?.Kind;
-                //ISymbol? rhsRefTarget = (declaringType as IParameterSymbol) ??
-                //    (declaringType as IFieldSymbol) ??
-                //    (ISymbol?)(declaringType as ILocalSymbol);
-                //var rhsType = (declaringType as IParameterSymbol)?.Type ??
-                //    (declaringType as ILocalSymbol)?.Type ??
-                //    (declaringType as IFieldSymbol)?.Type ??
-                //    (declaringType as IPropertySymbol)?.Type ?? declaringType as ITypeSymbol;
-                var rhsRefKind = rhs?.GetRefKind();
-                //if (rhsKind == SymbolKind.Field || rhsKind == SymbolKind.Local || rhsKind == SymbolKind.Parameter)
-                //{
-                if (rhsRefKind != null && rhsRefKind != RefKind.None) //the referenced field is already a ref itself. No need to create a new ref
+                if (node.Expression.IsKind(SyntaxKind.DeclarationExpression) && ((DeclarationExpressionSyntax)node.Expression).Designation.IsKind(SyntaxKind.DiscardDesignation))
                 {
-                    if (!node.Expression.IsKind(SyntaxKind.ThisExpression))
+                    CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.DiscardRefName}");
+                }
+                else
+                {
+                    var iNameMangling = ++CurrentTypeWriter.CurrentClosure.NameManglingSeed;
+                    var rhs = _global.TryGetSymbol(node.Expression, this/*, out var rhs, out var rhsKind*/);
+                    var rhsKind = rhs?.Kind;
+                    //ISymbol? rhsRefTarget = (declaringType as IParameterSymbol) ??
+                    //    (declaringType as IFieldSymbol) ??
+                    //    (ISymbol?)(declaringType as ILocalSymbol);
+                    //var rhsType = (declaringType as IParameterSymbol)?.Type ??
+                    //    (declaringType as ILocalSymbol)?.Type ??
+                    //    (declaringType as IFieldSymbol)?.Type ??
+                    //    (declaringType as IPropertySymbol)?.Type ?? declaringType as ITypeSymbol;
+                    var rhsRefKind = rhs?.GetRefKind();
+                    //if (rhsKind == SymbolKind.Field || rhsKind == SymbolKind.Local || rhsKind == SymbolKind.Parameter)
+                    //{
+                    if (rhsRefKind != null && rhsRefKind != RefKind.None) //the referenced field is already a ref itself. No need to create a new ref
                     {
-                        Visit(node.Expression);
-                        return;
+                        if (!node.Expression.IsKind(SyntaxKind.ThisExpression))
+                        {
+                            Visit(node.Expression);
+                            return;
+                        }
                     }
+                    //}
+                    var expression = node.Expression;
+                    IDisposable? dispose1 = null;
+                    IDisposable? dispose2 = null;
+                    if (expression is DeclarationExpressionSyntax decl && decl.Designation is SingleVariableDesignationSyntax svd)
+                    {
+                        CurrentTypeWriter.InsertInCurrentClosure(node, $"/*{decl.Type}*/ let {svd.Identifier.ValueText} = null;", true);
+                        dispose1 = CurrentTypeWriter.SetReplacement("let ", "");
+                        dispose2 = CurrentTypeWriter.SetReplacement($"/*{decl.Type}*/ ", "");
+                    }
+                    WriteCreateRef(node, expression, rhs != null ? _global.GetTypeSymbol(rhs) : null);
+                    dispose1?.Dispose();
+                    dispose2?.Dispose();
+                    return;
+                    //string? boundIdentifierName = null;
+                    //string? bindToThis = null;
+                    //if (node.Expression is DeclarationExpressionSyntax dec && dec.Designation is SingleVariableDesignationSyntax sv)
+                    //{
+                    //    var boundLocalField = _global.TryGetTypeSymbol(sv, this/*, out _, out _*/);
+                    //    boundIdentifierName = sv.Identifier.ValueText;
+                    //    CurrentTypeWriter.InsertInCurrentClosure(node, $"let {boundIdentifierName} = null;", true);
+                    //    if (boundLocalField != null)
+                    //    {
+                    //        CurrentClosure.DefineIdentifierType(boundIdentifierName, CodeSymbol.From(boundLocalField));
+                    //    }
+                    //    else if (node.RefKindKeyword.ValueText == "out" && !dec.Type.IsVar)
+                    //    {
+                    //        CurrentClosure.DefineIdentifierType(boundIdentifierName, CodeSymbol.From(dec.Type, SymbolKind.Local));
+                    //    }
+                    //}
+                    //else if (node.Expression is IdentifierNameSyntax id)
+                    //{
+                    //    if (rhsKind == SymbolKind.Field || rhsKind == SymbolKind.Local || rhsKind == SymbolKind.Parameter)
+                    //    {
+                    //        if (rhsKind == SymbolKind.Field)
+                    //        {
+                    //            //While we could be cheking if the accessed field is static.
+                    //            //The "this" in the static method is most likely the prototype of the class itself though
+                    //            //So we expect it to work
+                    //            if (!rhs!.IsStatic)
+                    //                bindToThis = $"$this{iNameMangling}";
+                    //            var metadata = _global.GetRequiredMetadata(rhs!);
+                    //            boundIdentifierName = metadata.InvocationName ?? rhs!.Name;
+                    //            if (!rhs.IsStatic)
+                    //            {
+                    //                CurrentTypeWriter.InsertInCurrentClosure(node, $"const {bindToThis} = this;", true);
+                    //                bindToThis += ".";
+                    //            }
+                    //        }
+                    //        else
+                    //        {
+                    //            boundIdentifierName = rhs!.Name;
+                    //        }
+                    //    }
+                    //    else
+                    //    {
+                    //        boundIdentifierName = id.Identifier.ValueText;
+                    //    }
+                    //}
+                    //else if (node.Expression.IsKind(SyntaxKind.SimpleMemberAccessExpression))
+                    //{
+                    //    var identifierName = $"${node.RefKindKeyword.ValueText}_{node.Expression.ToString().Replace(" ", "_").Replace(".", "_").Replace("[", "_").Replace("]", "_").Replace("!", "_").Replace("(", "_").Replace(")", "_")}{iNameMangling}";
+                    //    CurrentTypeWriter.InsertAbove(node, () =>
+                    //    {
+                    //        var argType = _global.GetTypeSymbol(node.Expression, this).GetTypeSymbol();
+                    //        //var _thisCache = $"const $this{iNameMangling} = this;";
+                    //        //var line = CurrentTypeWriter.WriteLine(node, _thisCache, true);
+                    //        CurrentTypeWriter.Write(node, $"const {identifierName} = ", true);
+                    //        //var replaceThis = CurrentTypeWriter.SetReplacement("this", $"$this{iNameMangling}");
+                    //        WriteCreateRef(node, node.Expression, argType);
+                    //        //if (replaceThis.Hit == 0) //no this replacement was made, remove the redundant this assignment
+                    //        //{
+                    //        //    line.Remove(_thisCache);
+                    //        //}
+                    //        //replaceThis.Dispose();
+                    //        CurrentTypeWriter.Write(node, $";");
+                    //    }, true);
+                    //    CurrentTypeWriter.Write(node, identifierName);
+                    //    return;
+                    //}
+                    //else if (node.Expression.IsKind(SyntaxKind.FieldExpression))
+                    //{
+                    //    var containigType = node.FindClosestParent<BaseTypeDeclarationSyntax>() ?? throw new InvalidOperationException("field must be inside a property");
+                    //    var typeSymbol = _global.GetTypeSymbol(containigType, this);
+                    //    var typeMetadata = _global.GetRequiredMetadata(typeSymbol);
+                    //    var containigProperty = node.FindClosestParent<PropertyDeclarationSyntax>() ?? throw new InvalidOperationException("field must be inside a property");
+                    //    var propertyName = containigProperty.Identifier.ValueText;
+                    //    bool isStatic = containigProperty.Modifiers.IsStatic();
+                    //    boundIdentifierName = $"{(!isStatic ? "this" : typeMetadata.InvocationName ?? typeSymbol.Name)}.{propertyName}$";
+                    //}
+                    //else
+                    //{
+                    //    Visit(node.Expression);
+                    //    return;
+                    //}
+                    //var fieldName = $"{bindToThis}{boundIdentifierName}";
+                    //if (boundIdentifierName == "_")//discard
+                    //{
+                    //    CurrentTypeWriter.Write(node, $"$.{Constants.DiscardRefName}");
+                    //}
+                    //else
+                    //{
+                    //    var argType = _global.GetTypeSymbol(node, this).GetTypeSymbol();
+                    //    var simpleBoundIdentifierName = boundIdentifierName.Split('.').Last();
+                    //    var ix = ++CurrentTypeWriter.CurrentClosure.NameManglingSeed;
+                    //    WriteCreateRef(node, argType, fieldName, $"/*{node.RefKindKeyword.ValueText} {boundIdentifierName}*/ const ${node.RefKindKeyword.ValueText}_{simpleBoundIdentifierName}{ix} = ", ";", _readOnly: node.RefKindKeyword.ValueText == "in");
+                    //    CurrentTypeWriter.Write(node, $"${node.RefKindKeyword.ValueText}_{simpleBoundIdentifierName}{ix}");
+                    //}
+                    ////Writer.InsertInCurrentClosure($"/*{node.RefKindKeyword.ValueText} {boundIdentifierName}*/ const ${node.RefKindKeyword.ValueText}{iNameMangling} = {{ get value(){{ return {bindToThis}{boundIdentifierName}; }}, set value(v){{ {bindToThis}{boundIdentifierName} = v; }} }};", true);
                 }
-                //}
-                var expression = node.Expression;
-                IDisposable? dispose1 = null;
-                IDisposable? dispose2 = null;
-                if (expression is DeclarationExpressionSyntax decl && decl.Designation is SingleVariableDesignationSyntax svd)
-                {
-                    CurrentTypeWriter.InsertInCurrentClosure(node, $"/*{decl.Type}*/ let {svd.Identifier.ValueText} = null;", true);
-                    dispose1 = CurrentTypeWriter.SetReplacement("let ", "");
-                    dispose2 = CurrentTypeWriter.SetReplacement($"/*{decl.Type}*/ ", "");
-                }
-                WriteCreateRef(node, expression, rhs != null ? _global.GetTypeSymbol(rhs) : null);
-                dispose1?.Dispose();
-                dispose2?.Dispose();
-                return;
-                //string? boundIdentifierName = null;
-                //string? bindToThis = null;
-                //if (node.Expression is DeclarationExpressionSyntax dec && dec.Designation is SingleVariableDesignationSyntax sv)
-                //{
-                //    var boundLocalField = _global.TryGetTypeSymbol(sv, this/*, out _, out _*/);
-                //    boundIdentifierName = sv.Identifier.ValueText;
-                //    CurrentTypeWriter.InsertInCurrentClosure(node, $"let {boundIdentifierName} = null;", true);
-                //    if (boundLocalField != null)
-                //    {
-                //        CurrentClosure.DefineIdentifierType(boundIdentifierName, CodeSymbol.From(boundLocalField));
-                //    }
-                //    else if (node.RefKindKeyword.ValueText == "out" && !dec.Type.IsVar)
-                //    {
-                //        CurrentClosure.DefineIdentifierType(boundIdentifierName, CodeSymbol.From(dec.Type, SymbolKind.Local));
-                //    }
-                //}
-                //else if (node.Expression is IdentifierNameSyntax id)
-                //{
-                //    if (rhsKind == SymbolKind.Field || rhsKind == SymbolKind.Local || rhsKind == SymbolKind.Parameter)
-                //    {
-                //        if (rhsKind == SymbolKind.Field)
-                //        {
-                //            //While we could be cheking if the accessed field is static.
-                //            //The "this" in the static method is most likely the prototype of the class itself though
-                //            //So we expect it to work
-                //            if (!rhs!.IsStatic)
-                //                bindToThis = $"$this{iNameMangling}";
-                //            var metadata = _global.GetRequiredMetadata(rhs!);
-                //            boundIdentifierName = metadata.InvocationName ?? rhs!.Name;
-                //            if (!rhs.IsStatic)
-                //            {
-                //                CurrentTypeWriter.InsertInCurrentClosure(node, $"const {bindToThis} = this;", true);
-                //                bindToThis += ".";
-                //            }
-                //        }
-                //        else
-                //        {
-                //            boundIdentifierName = rhs!.Name;
-                //        }
-                //    }
-                //    else
-                //    {
-                //        boundIdentifierName = id.Identifier.ValueText;
-                //    }
-                //}
-                //else if (node.Expression.IsKind(SyntaxKind.SimpleMemberAccessExpression))
-                //{
-                //    var identifierName = $"${node.RefKindKeyword.ValueText}_{node.Expression.ToString().Replace(" ", "_").Replace(".", "_").Replace("[", "_").Replace("]", "_").Replace("!", "_").Replace("(", "_").Replace(")", "_")}{iNameMangling}";
-                //    CurrentTypeWriter.InsertAbove(node, () =>
-                //    {
-                //        var argType = _global.GetTypeSymbol(node.Expression, this).GetTypeSymbol();
-                //        //var _thisCache = $"const $this{iNameMangling} = this;";
-                //        //var line = CurrentTypeWriter.WriteLine(node, _thisCache, true);
-                //        CurrentTypeWriter.Write(node, $"const {identifierName} = ", true);
-                //        //var replaceThis = CurrentTypeWriter.SetReplacement("this", $"$this{iNameMangling}");
-                //        WriteCreateRef(node, node.Expression, argType);
-                //        //if (replaceThis.Hit == 0) //no this replacement was made, remove the redundant this assignment
-                //        //{
-                //        //    line.Remove(_thisCache);
-                //        //}
-                //        //replaceThis.Dispose();
-                //        CurrentTypeWriter.Write(node, $";");
-                //    }, true);
-                //    CurrentTypeWriter.Write(node, identifierName);
-                //    return;
-                //}
-                //else if (node.Expression.IsKind(SyntaxKind.FieldExpression))
-                //{
-                //    var containigType = node.FindClosestParent<BaseTypeDeclarationSyntax>() ?? throw new InvalidOperationException("field must be inside a property");
-                //    var typeSymbol = _global.GetTypeSymbol(containigType, this);
-                //    var typeMetadata = _global.GetRequiredMetadata(typeSymbol);
-                //    var containigProperty = node.FindClosestParent<PropertyDeclarationSyntax>() ?? throw new InvalidOperationException("field must be inside a property");
-                //    var propertyName = containigProperty.Identifier.ValueText;
-                //    bool isStatic = containigProperty.Modifiers.IsStatic();
-                //    boundIdentifierName = $"{(!isStatic ? "this" : typeMetadata.InvocationName ?? typeSymbol.Name)}.{propertyName}$";
-                //}
-                //else
-                //{
-                //    Visit(node.Expression);
-                //    return;
-                //}
-                //var fieldName = $"{bindToThis}{boundIdentifierName}";
-                //if (boundIdentifierName == "_")//discard
-                //{
-                //    CurrentTypeWriter.Write(node, $"$.{Constants.DiscardRefName}");
-                //}
-                //else
-                //{
-                //    var argType = _global.GetTypeSymbol(node, this).GetTypeSymbol();
-                //    var simpleBoundIdentifierName = boundIdentifierName.Split('.').Last();
-                //    var ix = ++CurrentTypeWriter.CurrentClosure.NameManglingSeed;
-                //    WriteCreateRef(node, argType, fieldName, $"/*{node.RefKindKeyword.ValueText} {boundIdentifierName}*/ const ${node.RefKindKeyword.ValueText}_{simpleBoundIdentifierName}{ix} = ", ";", _readOnly: node.RefKindKeyword.ValueText == "in");
-                //    CurrentTypeWriter.Write(node, $"${node.RefKindKeyword.ValueText}_{simpleBoundIdentifierName}{ix}");
-                //}
-                ////Writer.InsertInCurrentClosure($"/*{node.RefKindKeyword.ValueText} {boundIdentifierName}*/ const ${node.RefKindKeyword.ValueText}{iNameMangling} = {{ get value(){{ return {bindToThis}{boundIdentifierName}; }}, set value(v){{ {bindToThis}{boundIdentifierName} = v; }} }};", true);
             }
             //else if (node.RefKindKeyword.ValueText == "in")
             //{
@@ -722,14 +729,38 @@ namespace NetJs.Translator.CSharpToJavascript
                 var arrayType = (IArrayTypeSymbol?)_global.TryGetTypeSymbol(node, this);
                 if (arrayType != null)
                 {
-                    WriteCreateArray(node, arrayType.ElementType, lengths: null, bounds: null, values: new CodeNode(() =>
+                    bool isMultiDimensionalArray = arrayType.Rank > 1;
+                    WriteCreateArray(node, arrayType.ElementType, lengths: arrayType.Rank > 1 ? new CodeNode(() =>
+                    {
+                        var lenghts = new int[arrayType.Rank];
+                        var exp = node;
+                        int i = 0;
+                        while (exp != null)
+                        {
+                            lenghts[i++] = exp.Expressions.Count;
+                            exp = exp.Expressions[0] as InitializerExpressionSyntax;
+                        }
+                        int ix = 0;
+                        CurrentTypeWriter.Write(node, "[");
+                        foreach (var l in lenghts)
+                        {
+                            if (ix > 0)
+                                CurrentTypeWriter.Write(node, ", ");
+                            CurrentTypeWriter.Write(node, l.ToString());
+                            ix++;
+                        }
+                        CurrentTypeWriter.Write(node, "]");
+                    }) : null, bounds: null, values: new CodeNode(() =>
                     {
                         CurrentTypeWriter.Write(node, "[");
                         int ix = 0;
                         foreach (var i in node.Expressions)
                         {
-                            if (ix > 0)
-                                CurrentTypeWriter.Write(node, ", ");
+                            if (!isMultiDimensionalArray)
+                            {
+                                if (ix > 0)
+                                    CurrentTypeWriter.Write(node, ", ");
+                            }
                             Visit(i);
                             ix++;
                         }
@@ -738,8 +769,17 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
                 else
                 {
-                    CurrentTypeWriter.Write(node, "[");
+                    bool isMultiDimensionalArray = node.Parent.IsKind(SyntaxKind.ArrayInitializerExpression);
+                    if (!isMultiDimensionalArray) //multidimensional array?, flatten the inner arrays
+                        CurrentTypeWriter.Write(node, "[");
                     int i = 0;
+                    if (isMultiDimensionalArray)
+                    {
+                        if (States.TryGetValue(nameof(SyntaxKind.ArrayInitializerExpression), out var v))
+                        {
+                            i = (int)v;
+                        }
+                    }
                     foreach (var n in node.Expressions)
                     {
                         if (i > 0)
@@ -747,7 +787,12 @@ namespace NetJs.Translator.CSharpToJavascript
                         Visit(n);
                         i++;
                     }
-                    CurrentTypeWriter.Write(node, "]");
+                    if (!isMultiDimensionalArray)
+                        CurrentTypeWriter.Write(node, "]");
+                    if (isMultiDimensionalArray)
+                    {
+                        States[nameof(SyntaxKind.ArrayInitializerExpression)] = i;
+                    }
                 }
             }
             else
@@ -1204,31 +1249,57 @@ namespace NetJs.Translator.CSharpToJavascript
                                 CurrentTypeWriter.WriteLine(node, ";");
                             }
                         }
-                        CurrentTypeWriter.WriteLine(node, $"{_global.GlobalName}.{Constants.TupleUnPack}(($tp) =>");
-                        CurrentTypeWriter.WriteLine(node, "{", true);
-                        int ix = 0;
-                        foreach (var arg in node.Arguments)
+                        if (false)
                         {
-                            CurrentTypeWriter.Write(node, "", true);
-                            WriteVariableAssignment(node, arg.Expression is DeclarationExpressionSyntax de ? de.Designation : arg.Expression, null, "=", new CodeNode(() =>
+                            CurrentTypeWriter.Write(node, "{ ");
+                            int i = 0;
+                            foreach (var e in node.Arguments)
                             {
-                                CurrentTypeWriter.Write(node, $"$tp.Item{(ix + 1)}");
-                            }), rhs: _global.TryGetTypeSymbol(arg.Expression, this));
-                            //if (arg.Expression is DeclarationExpressionSyntax de)
-                            //{
-                            //    Visit(de.Designation);
-                            //}
-                            //else
-                            //{
-                            //    Visit(arg.Expression);
-                            //}
-                            //Writer.Write(node, " = ");
-                            //Writer.Write(node, "$tp.Item");
-                            //Writer.Write(node, ix.ToString());
-                            CurrentTypeWriter.WriteLine(node, ";");
-                            ix++;
+                                if (i > 0)
+                                    CurrentTypeWriter.Write(node, ", ");
+                                CurrentTypeWriter.Write(node, "Item");
+                                CurrentTypeWriter.Write(node, (i + 1).ToString());
+                                CurrentTypeWriter.Write(node, ": ");
+                                if (e.Expression is DeclarationExpressionSyntax de)
+                                {
+                                    Visit(de.Designation);
+                                }
+                                else
+                                {
+                                    Visit(e.Expression);
+                                }
+                                i++;
+                            }
+                            CurrentTypeWriter.Write(node, " }");
                         }
-                        CurrentTypeWriter.Write(node, "}).$v", true);
+                        else
+                        {
+                            CurrentTypeWriter.WriteLine(node, $"{_global.GlobalName}.{Constants.TupleUnPack}(($tp) =>");
+                            CurrentTypeWriter.WriteLine(node, "{", true);
+                            int ix = 0;
+                            foreach (var arg in node.Arguments)
+                            {
+                                CurrentTypeWriter.Write(node, "", true);
+                                WriteVariableAssignment(node, arg.Expression is DeclarationExpressionSyntax de ? de.Designation : arg.Expression, null, "=", new CodeNode(() =>
+                                {
+                                    CurrentTypeWriter.Write(node, $"$tp.Item{(ix + 1)}");
+                                }), rhs: _global.TryGetTypeSymbol(arg.Expression, this));
+                                //if (arg.Expression is DeclarationExpressionSyntax de)
+                                //{
+                                //    Visit(de.Designation);
+                                //}
+                                //else
+                                //{
+                                //    Visit(arg.Expression);
+                                //}
+                                //Writer.Write(node, " = ");
+                                //Writer.Write(node, "$tp.Item");
+                                //Writer.Write(node, ix.ToString());
+                                CurrentTypeWriter.WriteLine(node, ";");
+                                ix++;
+                            }
+                            CurrentTypeWriter.Write(node, "}).$v", true);
+                        }
                     }
                 }
             }
@@ -1429,10 +1500,16 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public void WrapStatementsInExpression(CSharpSyntaxNode node, Action statementsWriter)
         {
-            CurrentTypeWriter.WriteLine(node, $"{_global.GlobalName}.{Constants.Expression}(() =>");
+            CurrentTypeWriter.WriteLine(node, $"(() =>");
             CurrentTypeWriter.WriteLine(node, $"{{", true);
             statementsWriter();
-            CurrentTypeWriter.Write(node, $"}})", true);
+            CurrentTypeWriter.Write(node, $"}})()", true);
+
+
+            //CurrentTypeWriter.WriteLine(node, $"{_global.GlobalName}.{Constants.Expression}(() =>");
+            //CurrentTypeWriter.WriteLine(node, $"{{", true);
+            //statementsWriter();
+            //CurrentTypeWriter.Write(node, $"}})", true);
 
             //CurrentTypeWriter.WriteLine(node, $"{_global.GlobalName}.{Constants.Expression}(function()");
             //CurrentTypeWriter.WriteLine(node, $"{{", true);

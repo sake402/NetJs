@@ -130,9 +130,15 @@
         [InlineConst]
         public const string PrototypeFullName = "$fullName";
         [InlineConst]
+        public const string PrototypeMetadata = "$metadata";
+        [InlineConst]
         public const string NumericShift = "$nsh";
         [InlineConst]
         public const string Dispatch = "$dsp";
+        [InlineConst]
+        public const string Destructure = "$destructure";
+        [InlineConst]
+        public const string NativeDelagateFunction = "$nativeFunction";
         [InlineConst]
         public const string Clone = "Clone";
         [InlineConst]

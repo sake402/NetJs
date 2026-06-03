@@ -16,7 +16,7 @@ namespace System.Reflection
         }
 
         [Name(Constants.PrototypeFullName)]
-        string FullName { get; }
+        internal string FullName { get; }
         /// <summary>
         /// The finally created type we will proxy to
         /// </summary>
@@ -40,6 +40,14 @@ namespace System.Reflection
                 return FullName.As<object>();
             else if (property.NativeEquals("$type"))
                 return this;
+            else if (NetJs.Script.TypeOf(property).NativeEquals("string") && property.NativeStartsWith("$itype$")) //proxy inner types that are not yet defined
+            {
+                var name = property.NativeSubstring(7);
+                var proxyHandler = new InnerTypeProxyHandler(this, name);
+                object? proxy = null;
+                NetJs.Script.Write("proxy = new Proxy({}, proxyHandler)");
+                return proxy;
+            }
             else if (property.NativeEquals("$isProxy"))
                 return true.As<object>();
             else if (property.NativeEquals("IsGenericTypeDefinition"))
@@ -61,6 +69,43 @@ namespace System.Reflection
                 return true;
             }
             return false;
+        }
+    }
+
+    class InnerTypeProxyHandler
+    {
+        TypeProxyHandler _parentProxy;
+        string _innerTypeName;
+        public InnerTypeProxyHandler(TypeProxyHandler parentProxy, string innerTypeName) 
+        {
+            _parentProxy = parentProxy;
+            _innerTypeName = innerTypeName;
+        }
+        /// <summary> 
+        /// The finally created type we will proxy to
+        /// </summary>
+        internal Type? TargetType { get; set; }
+        internal TypePrototype? Prototype { get; set; }
+        [Name("get")]
+        public object? Get(object target, string property, object receiver)
+        {
+            if (TargetType is not null && Prototype is not null)
+            {
+                var v1 = Prototype[property];
+                var v2 = TargetType[property];
+                if (Script.IsDefined(v1) && Script.IsDefined(v2) & v1 != v2)
+                {
+                    throw new AmbiguousMatchException($"Due to a limitation on the type system, Type \"{_parentProxy.FullName}.{_innerTypeName}\"(being dependent on itself and implemented via a TypeProxy), cannot have a member whose name clashes with a System.Type member. Name \"{property}\" caused a clash.");
+                }
+                return v1 ?? v2;
+            }
+            if (property.NativeEquals("IsGenericTypeDefinition"))
+                return _innerTypeName.NativeEndsWith(">").As<object>();
+            else if (property.NativeEquals("$type"))
+                return this;
+            else if (property.NativeEquals("_prototype"))
+                return this;
+            return null;
         }
     }
 }

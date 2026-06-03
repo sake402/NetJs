@@ -35,7 +35,7 @@ namespace System
         [NetJs.Convention(NetJs.Notation.CamelCase)]
         public virtual extern bool PropertyIsEnumerable(object v);
         [NetJs.Template("{this}.constructor")]
-        public  extern TypePrototype GetPrototype();
+        public extern TypePrototype GetPrototype();
 
         [NetJs.Convention(NetJs.Notation.CamelCase)]
         [NetJs.Template("{obj}.hasOwnProperty({name})")]
@@ -80,19 +80,19 @@ namespace System
             var value = this;
             if (value == null)
                 throw new NullReferenceException();
-            if (Array<object>.Is(value))
+            if (Array<object>.Is(value) || NetJs.Script.IsArray(value))
             {
                 return Array.GetArrayType(value.As<Array>());
             }
             var prototype = NetJs.Script.Write<TypePrototype>("window.Object.getPrototypeOf(value)");// Object.GetPrototypeOf(value);
-            var pType = prototype.Type ?? NetJs.Script.Write<Type>("value.constructor.$type");
+            var pType = NetJs.Script.Write<Type>("value.constructor?.$type") ?? prototype.Type;
             if (NetJs.Script.IsDefined(pType))
             {
-                return pType;
+                return pType!;
             }
-            prototype = NetJs.Script.Write<TypePrototype>("value.constructor");
-            if (NetJs.Script.IsDefined(prototype) && NetJs.Script.IsDefined(prototype.Type))
-                return prototype!.Type!;
+            //prototype = NetJs.Script.Write<TypePrototype>("value.constructor");
+            //if (NetJs.Script.IsDefined(prototype) && NetJs.Script.IsDefined(prototype.Type))
+            //return prototype!.Type!;
             var jsType = NetJs.Script.TypeOf(value);
             switch (jsType)
             {
@@ -102,22 +102,52 @@ namespace System
                     return typeof(string);
                 case "boolean":
                     return typeof(bool);
+                case "bigint":
+                    return typeof(long);
             }
             return typeof(object);
         }
         [NetJs.MemberReplace(nameof(ToString))]
-        //[NetJs.StaticCallConvention]
+        [NetJs.StaticCallConvention]
         //[NetJs.Template("{global.}" + NetJs.Constants.ToStringName + "({this:!super}, \"\")")] //make sure we dont pass super keyword in here. JS doesnt support it
         public virtual string ToStringImpl()
         {
+            var value = NetJs.Script.Unbox(this);
+            var type = NetJs.Script.TypeOf(value);
+            if (type.NativeEquals("string"))
+                return value.As<string>();
+            if (type.NativeEquals("boolean"))
+                return value.As<bool>() ? "True" : "False";
+            if (type.NativeEquals("number") || type.NativeEquals("bigint"))
+                return value.As<string>() + "";
+            var callerName = NetJs.Script.Write<string>("{global.}getCallerName()");
+            if (callerName.NativeNotEquals("ToString"))//not called by subclass? call the subsclass ToString if there is one
+            {
+                var method = this["ToString"];
+                if (NetJs.Script.IsDefined(method))
+                {
+                    var str = NetJs.Script.Write<string>("method.call(this)");
+                    return str;
+                }
+            }
             return GetType().ToString();
         }
 
         [NetJs.MemberReplace(nameof(GetHashCode))]
+        [NetJs.StaticCallConvention]
         //[NetJs.Template("{global.}" + NetJs.Constants.GetHashCodeName + "({this:!super})")] //make sure we dont pass super keyword in here. JS doesnt support it
-        //[NetJs.StaticCallConvention]
         public virtual int GetHashCodeImpl()
         {
+            var callerName = NetJs.Script.Write<string>("{global.}getCallerName()");
+            if (callerName.NativeNotEquals("GetHashCode")) //not called by subclass? call the subsclass GetHashCode if there is one
+            {
+                var method = this["GetHashCode"];
+                if (NetJs.Script.IsDefined(method))
+                {
+                    var hashCode = NetJs.Script.Write<int>("method.call(this)");
+                    return hashCode;
+                }
+            }
             return RuntimeHelpers.GetHashCode(this);
         }
 
@@ -403,7 +433,7 @@ namespace System
                     var mobject = offsetObjects[offset];
                     if (NetJs.Script.IsUndefinedOrNull(mobject))
                     {
-                        var realSize = size.As<TypePrototype>().Model!.Size ?? 0;
+                        var realSize = size.As<TypePrototype>().Metadata!.Size ?? 0;
                         mobject = size.As<TypePrototype>().New();
                         var fields = JSProxy.Create<object[]>(new ArrayWindowProxyHandler(_fields, offset, realSize));
                         mobject._fields = fields;
@@ -435,7 +465,7 @@ namespace System
                 bool isNumber = NetJs.Script.TypeOf(size).NativeEquals("number");
                 if (!isNumber)
                 {
-                    var realSize = size.As<TypePrototype>().Model!.Size ?? 0;
+                    var realSize = size.As<TypePrototype>().Metadata!.Size ?? 0;
                     if (_fields.Length < offset)
                         NetJs.Script.Write("this.$fields.length = offset");
                     var sourceFields = value._fields;

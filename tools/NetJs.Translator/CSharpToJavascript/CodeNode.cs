@@ -19,8 +19,8 @@ namespace NetJs.Translator.CSharpToJavascript
         //{
         //}
 
-        public static implicit operator CodeNode(CSharpSyntaxNode? _) => _ == null ? null! : new CodeNode(_);
-        public static implicit operator CodeNode(Action? _) => _ == null ? null! : new CodeNode(_);
+        public static implicit operator CodeNode(CSharpSyntaxNode? node) => node == null ? null! : new CodeNode(node);
+        public static implicit operator CodeNode(Action? writer) => writer == null ? null! : new CodeNode(writer);
         //public static implicit operator MethodArgument(string? _) => _ == null ? null! : new MethodArgument(_);
     }
 }

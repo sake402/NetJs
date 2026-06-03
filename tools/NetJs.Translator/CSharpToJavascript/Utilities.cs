@@ -142,6 +142,15 @@ namespace NetJs.Translator.CSharpToJavascript
             }
         }
 
+        public static void VisitParentHierachy(this SyntaxNode source, Func<SyntaxNode, int, bool> visitor, int depth = 0)
+        {
+            var @continue = visitor(source, depth);
+            if (@continue && source.Parent != null)
+            {
+                VisitParentHierachy(source.Parent, visitor, depth++);
+            }
+        }
+
         public static bool ChildIsBlock(this SyntaxNode node)
         {
             return node.ChildNodes().Count() == 1 && node.ChildNodes().Single() is BlockSyntax;
@@ -155,7 +164,9 @@ namespace NetJs.Translator.CSharpToJavascript
                 return "$function";
             if (token.Text == "arguments")
                 return "$arguments";
-            return token.Text.Replace("@", "$");
+            if (token.Text.StartsWith("@"))
+                return token.Text.Substring(1);
+            return token.Text;
         }
 
         public static string ResolveTypeName(SyntaxToken type)
@@ -376,6 +387,14 @@ namespace NetJs.Translator.CSharpToJavascript
                 var tt = Unsafe.As<IArrayTypeSymbol>(current);
                 current = tt.ElementType;
             }
+            if (current.Kind == SymbolKind.PointerType)
+            {
+                __CreateSignatures(builder, ((IPointerTypeSymbol)current).PointedAtType, global, withGlobalNamespace);
+                builder.WithTypeParameter.Append("*");
+                builder.WithoutTypeParameter.Append("*");
+                return;
+            }
+            var nName = current.Name.Replace(".", "$");
             var parent = current.ContainingType ?? (ISymbol)current.ContainingNamespace;
             if (parent != null /*&& parent.Name.Length > 0 && !ReferenceEquals(parent, global.Compilation.GlobalNamespace)*/)
             {
@@ -434,13 +453,15 @@ namespace NetJs.Translator.CSharpToJavascript
                         builder.WithTypeParameter.Append(">");
                         builder.WithoutTypeParameter.Append(">");
                     }
-                    builder.WithTypeParameter.Append(".");
-                    builder.WithoutTypeParameter.Append(".");
                     i--;
                     done++;
+                    if (i > 0 || !string.IsNullOrEmpty(nName))
+                    {
+                        builder.WithTypeParameter.Append(".");
+                        builder.WithoutTypeParameter.Append(".");
+                    }
                 }
             }
-            var nName = current.Name.Replace(".", "$");
             //if (ReferenceEquals(current, global.Compilation.GlobalNamespace))
             //{
             //    nName = "$";
@@ -548,49 +569,62 @@ namespace NetJs.Translator.CSharpToJavascript
         }
 
         //static Dictionary<ISymbol, (string WithTypeParameter, string WithoutTypeParameter)> cacheFullName = new Dictionary<ISymbol, (string, string)>(SymbolEqualityComparer.Default);
-        public static (string WithTypeParameter, string WithoutTypeParameter) CreateSignatures(this ISymbol type, GlobalCompilationVisitor global)
-        {
-            if (type.Kind == SymbolKind.NamedType)
-            {
-                var tt = Unsafe.As<INamedTypeSymbol>(type);
-                if (/*type is INamedTypeSymbol tt &&*/ tt.IsNullable(out var nt))
-                {
-                    if (!nt!.IsValueType)
-                    {
-                        type = nt;
-                    }
-                }
-            }
-            StringBuilder withTypeParameterBuilder = new StringBuilder(1024);
-            StringBuilder withoutTypeParameterBuilder = new StringBuilder(1024);
-            __CreateSignatures((withTypeParameterBuilder, withoutTypeParameterBuilder), type, global);
-            (string WithTypeParameter, string WithoutTypeParameter) values = (withTypeParameterBuilder.ToString(), withoutTypeParameterBuilder.ToString());
-            return values;
-        }
+        //public static (string WithTypeParameter, string WithoutTypeParameter) CreateSignatures(this ISymbol type, GlobalCompilationVisitor global)
+        //{
+        //    if (type.Kind == SymbolKind.NamedType)
+        //    {
+        //        var tt = Unsafe.As<INamedTypeSymbol>(type);
+        //        if (/*type is INamedTypeSymbol tt &&*/ tt.IsNullable(out var nt))
+        //        {
+        //            if (!nt!.IsValueType)
+        //            {
+        //                type = nt;
+        //            }
+        //        }
+        //    }
+        //    StringBuilder withTypeParameterBuilder = new StringBuilder(1024);
+        //    StringBuilder withoutTypeParameterBuilder = new StringBuilder(1024);
+        //    __CreateSignatures((withTypeParameterBuilder, withoutTypeParameterBuilder), type, global);
+        //    (string WithTypeParameter, string WithoutTypeParameter) values = (withTypeParameterBuilder.ToString(), withoutTypeParameterBuilder.ToString());
+        //    return values;
+        //}
 
-        public static string CreateFullTypeName(this ISymbol type, GlobalCompilationVisitor global, bool withTypeParameterNames = false, bool withGlobalNamespace = true)
+        public static string CreateSignature(this ISymbol symbol, GlobalCompilationVisitor global, bool withTypeParameterNames = false, bool withGlobalNamespace = true, bool withAssemblySlugNamespace = false)
         {
-            if (global.FullTypeNameCache.TryGetValue(type, out var s))
+            if (symbol.HasAttribute(typeof(SignatureAttribute).FullName, false, out var pa))
+            {
+                return (string)pa[0]!;
+            }
+            string? prefix = null;
+            if (withGlobalNamespace && symbol.ContainingAssembly != null)
+            {
+                prefix = global.GlobalName + "." + global.GetAssemblyGlobalSlug(symbol.ContainingAssembly) + ".";
+            }
+            else if (withAssemblySlugNamespace && symbol.ContainingAssembly != null)
+            {
+                prefix = global.GetAssemblyGlobalSlug(symbol.ContainingAssembly) + ".";
+            }
+            if (global.FullTypeNameCache.TryGetValue(symbol, out var s))
             {
                 if (withTypeParameterNames)
-                    return s.WithTypeParameter;
-                return s.WithoutTypeParameter;
+                    return prefix + s.WithTypeParameter;
+                return prefix + s.WithoutTypeParameter;
             }
-            if (type is INamedTypeSymbol tt && tt.IsNullable(out var nt))
+            if (symbol is INamedTypeSymbol tt && tt.IsNullable(out var nt))
             {
                 if (!nt!.IsValueType)
                 {
-                    type = nt;
+                    symbol = nt;
                 }
             }
             StringBuilder withTypeParameterBuilder = new StringBuilder(1024);
             StringBuilder withoutTypeParameterBuilder = new StringBuilder(1024);
-            __CreateSignatures((withTypeParameterBuilder, withoutTypeParameterBuilder), type, global, withGlobalNamespace);
+            __CreateSignatures((withTypeParameterBuilder, withoutTypeParameterBuilder), symbol, global, /*withGlobalNamespace*/false);
             (string WithTypeParameter, string WithoutTypeParameter) values = (withTypeParameterBuilder.ToString(), withoutTypeParameterBuilder.ToString());
-            global.FullTypeNameCache[type] = values;
+            global.FullTypeNameCache[symbol] = values;
             if (withTypeParameterNames)
-                return values.WithTypeParameter;
-            return values.WithoutTypeParameter;
+                return prefix + values.WithTypeParameter;
+            return prefix + values.WithoutTypeParameter;
         }
 
         //public static string _CreateFullTypeName(this ISymbol type, GlobalCompilationVisitor global, bool withTypeParameterNames = false)
@@ -740,9 +774,9 @@ namespace NetJs.Translator.CSharpToJavascript
                 else if (!node.Parent.IsKind(SyntaxKind.RefExpression))
                     return true;
             }
-            if (node.Parent.IsKind(SyntaxKind.SimpleAssignmentExpression))
+            if (node.Parent is AssignmentExpressionSyntax ass2)
             {
-                if (((AssignmentExpressionSyntax)node.Parent).Right == node)
+                if (ass2.Right == node)
                 {
                     return true;
                 }
@@ -792,7 +826,8 @@ namespace NetJs.Translator.CSharpToJavascript
                 node.Parent.IsKind(SyntaxKind.GreaterThanExpression) ||
                 node.Parent.IsKind(SyntaxKind.LessThanOrEqualExpression) ||
                 node.Parent.IsKind(SyntaxKind.GreaterThanOrEqualExpression) ||
-                node.Parent.IsKind(SyntaxKind.UnaryMinusExpression))
+                node.Parent.IsKind(SyntaxKind.UnaryMinusExpression) ||
+                node.Parent.IsKind(SyntaxKind.SwitchExpressionArm))
             {
                 return true;
             }
@@ -909,6 +944,10 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public static string ComputeOutputTypeName(this ISymbol type, GlobalCompilationVisitor global)
         {
+            if (global.IsAnonymousType(type))
+            {
+                return ComputeOutputTypeName(global.SystemObject, global);
+            }
             if (type is ITypeParameterSymbol tp)
             {
                 return tp.Name;
@@ -936,14 +975,123 @@ namespace NetJs.Translator.CSharpToJavascript
             //        return $"{originalName}({string.Join(", ", nt.TypeArguments.Select(t => ComputeOutputTypeName(t, global)))})";
             //    }
             //}
-            return type.CreateFullTypeName(global).Trim().ResolvePredefinedTypeName();
+            return type.CreateSignature(global).Trim().ResolvePredefinedTypeName();
+        }
+
+        /// <summary>
+        /// Calculates a tiered dependency score for an INamedTypeSymbol.
+        /// Guarantees concrete/declared types outrank pure interfaces, even with huge cyclic loops.
+        /// </summary>
+        public static int GetDependencyScore(this INamedTypeSymbol symbol)
+        {
+            if (symbol.Name == "StringSearchValuesBase")
+            {
+
+            }
+            if (symbol.Name == "SearchValues")
+            {
+
+            }
+            // 1. Calculate Major Tier Priority (High-order bits)
+            // Classes, Structs, and Records sit in the highest tier. Interfaces sit below them.
+            int tierPriority = 0;
+            if (symbol.TypeKind == TypeKind.Class || symbol.TypeKind == TypeKind.Struct)
+            {
+                if (symbol.IsAbstract)
+                    tierPriority = 1 << 23; // A large bitwise offset ensuring 100% isolation from structural counts
+                else
+                    tierPriority = 1 << 24; // A large bitwise offset ensuring 100% isolation from structural counts
+            }
+            else if (symbol.TypeKind == TypeKind.Delegate)
+            {
+                tierPriority = 1 << 25; // delegate ranks more than its abstract base class
+            }
+            else if (symbol.TypeKind == TypeKind.Enum)
+            {
+                tierPriority = 1 << 25; // enum ranks more than its abtract base class
+            }
+
+            // 2. Calculate Minor Structural Hierarchy Weight (Low-order bits)
+            var visited = new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default);
+            int structuralWeight = CalculateStructuralScore(symbol, visited);
+
+            // Combine both layers into a single deterministic int for OrderBy
+            return tierPriority + structuralWeight;
+        }
+
+        private static int CalculateStructuralScore(ITypeSymbol symbol, HashSet<ITypeSymbol> visited)
+        {
+            symbol = symbol.OriginalDefinition;
+
+            // Infinite loop/recursion safety switch
+            if (!visited.Add(symbol))
+            {
+                return 0;
+            }
+
+            int baseWeight = 1;
+
+            if (symbol is ITypeParameterSymbol)
+            {
+                baseWeight = 1;
+            }
+            else if (symbol is INamedTypeSymbol namedType)
+            {
+                if (!namedType.IsGenericType || IsBoundSerializableType(namedType))
+                {
+                    baseWeight = 2;
+                }
+            }
+
+            int cumulativeScore = baseWeight;
+
+            if (symbol is INamedTypeSymbol currentType)
+            {
+                // 1. Accumulate structural weight from Generic Type Arguments
+                if (currentType.IsGenericType && !currentType.IsUnboundGenericType)
+                {
+                    foreach (var typeArg in currentType.TypeArguments)
+                    {
+                        cumulativeScore += CalculateStructuralScore(typeArg, visited);
+                    }
+                }
+
+                // Normalize back to original definition for structural hierarchy checks
+                var definition = currentType.IsGenericType ? currentType.OriginalDefinition : currentType;
+
+                // 2. Accumulate structural weight from Base Class Hierarchy
+                if (definition.BaseType != null)
+                {
+                    cumulativeScore += CalculateStructuralScore(definition.BaseType, visited);
+                }
+
+                // 3. Accumulate structural weight from Implemented Interfaces
+                foreach (var @interface in definition.Interfaces)
+                {
+                    cumulativeScore += CalculateStructuralScore(@interface, visited);
+                }
+            }
+            else if (symbol is IArrayTypeSymbol arrayType)
+            {
+                cumulativeScore += CalculateStructuralScore(arrayType.ElementType, visited);
+            }
+
+            // Unwind the track set for other sibling branches
+            visited.Remove(symbol);
+
+            return cumulativeScore;
+        }
+
+        private static bool IsBoundSerializableType(INamedTypeSymbol namedType)
+        {
+            return namedType.TypeArguments.Length > 0 && !(namedType.TypeArguments[0] is ITypeParameterSymbol);
         }
 
         static long RecursiveOutputRank(INamedTypeSymbol symbol, int depth, HashSet<INamedTypeSymbol> found)
         {
             if (!found.Add(symbol))
                 return 0;
-            if (depth > 10)
+            if (depth > 50)
                 return 0;
             var parentRank = symbol.ContainingType != null ? RecursiveOutputRank(symbol.ContainingType, depth + 1, found) : 0;
             var baseRank = symbol.BaseType != null ? RecursiveOutputRank(symbol.BaseType, depth + 1, found) : 0;
@@ -958,8 +1106,74 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public static long OutputRank(this INamedTypeSymbol symbol, int depth)
         {
+            //return GetDependencyScore(symbol);
             var found = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
             return RecursiveOutputRank(symbol, depth, found);
+        }
+        public static IEnumerable<INamedTypeSymbol> SortByDependencies(this IEnumerable<INamedTypeSymbol> types)
+        {
+            var typeSet = new HashSet<INamedTypeSymbol>(types, SymbolEqualityComparer.Default);
+            var visited = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+            var visiting = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+            var sortedList = new List<INamedTypeSymbol>();
+
+            foreach (var type in typeSet)
+            {
+                Visit(type, typeSet, visiting, visited, sortedList);
+            }
+
+            return sortedList;
+        }
+
+        private static void Visit(
+            INamedTypeSymbol type,
+            HashSet<INamedTypeSymbol> typeSet,
+            HashSet<INamedTypeSymbol> visiting,
+            HashSet<INamedTypeSymbol> visited,
+            List<INamedTypeSymbol> sortedList)
+        {
+            // Already fully processed? Skip.
+            if (visited.Contains(type)) return;
+
+            // Loop/Infinite recursion detected in the graph!
+            // Instead of throwing an error, we gracefully return. This resolves the loop.
+            if (visiting.Contains(type)) return;
+
+            // Mark as actively processing on the current stack branch
+            visiting.Add(type);
+
+            // Gather all valid type dependencies
+            var dependencies = new List<INamedTypeSymbol>();
+
+            if (type.BaseType != null) dependencies.Add(type.BaseType);
+            dependencies.AddRange(type.Interfaces);
+
+            // OPTIONAL: Uncomment if you also sort by property/field types
+            /*
+            foreach (var member in type.GetMembers())
+            {
+                if (member is IPropertySymbol prop && prop.Type is INamedTypeSymbol propType) dependencies.Add(propType);
+                if (member is IFieldSymbol field && field.Type is INamedTypeSymbol fieldType) dependencies.Add(fieldType);
+            }
+            */
+
+            foreach (var dependency in dependencies)
+            {
+                // Normalize generics (e.g., Node<T> instead of Node<int>)
+                var targetDependency = dependency.IsGenericType ? dependency.OriginalDefinition : dependency;
+
+                if (typeSet.Contains(targetDependency))
+                {
+                    Visit(targetDependency, typeSet, visiting, visited, sortedList);
+                }
+            }
+
+            // Backtrack: Remove from active stack, mark as completely processed
+            visiting.Remove(type);
+            visited.Add(type);
+
+            // Add to the sorted result
+            sortedList.Add(type);
         }
 
         public static bool IsPredefinedTypeName(this string? name)
@@ -1964,6 +2178,8 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 return false;
             }
+            if (name.EndsWith("."))
+                return false;
             return true;
         }
 
@@ -2255,6 +2471,15 @@ namespace NetJs.Translator.CSharpToJavascript
         }
 
 
+        public static bool IsExtensionMember(this ISymbol symbol, GlobalCompilationVisitor _global)
+        {
+            if (symbol.Kind == SymbolKind.Property && symbol.ContainingType.IsExtension)
+            {
+                return true;
+            }
+            return false;
+        }
+
         public static bool IsStaticCallConvention(this ISymbol symbol, GlobalCompilationVisitor _global, bool? inherits = null)
         {
             if (symbol.IsStatic)
@@ -2327,7 +2552,14 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public static string Escape(this string str)
         {
-            return str.Replace(@"\", @"\\").Replace("\"", "\\\"").Replace("\r", "\\r").Replace("\n", "\\n").Replace("\t", "\\t").Replace("\b", "\\b").Replace("\f", "\\f").Replace("\v", "\\v")/*.Replace("\0", "\\0")*/;
+            return str.Replace(@"\", @"\\")
+                .Replace("\"", "\\\"")
+                .Replace("\r", "\\r")
+                .Replace("\n", "\\n")
+                .Replace("\t", "\\t")
+                .Replace("\b", "\\b")
+                .Replace("\f", "\\f")
+                .Replace("\v", "\\v")/*.Replace("\0", "\\0")*/;
         }
 
 
@@ -2335,7 +2567,6 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             return GetLiteralString(node.ToString(), (SyntaxKind)node.RawKind, global);
         }
-
         public static string GetLiteralString(this string txt, SyntaxKind kind, GlobalCompilationVisitor global)
         {
             if (txt == "default")
@@ -2346,10 +2577,7 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 if (txt.StartsWith("@") && txt[1] == '\"' && txt.EndsWith("\""))
                 {
-                    txt = txt.Substring(1).Replace("\"\"", "\"")
-                        .Replace("\\", "\\\\")
-                        .Replace("\r", "\\r")
-                        .Replace("\n", "\\n");
+                    txt = "\"" + txt.Substring(2, txt.Length - 3).Escape() + "\"";
                 }
                 else if (txt.StartsWith("\"\"\""))
                 {
@@ -2362,9 +2590,7 @@ namespace NetJs.Translator.CSharpToJavascript
                             break;
                     }
                     txt = "\"" + txt.Substring(startingQuotes, txt.Length - startingQuotes - startingQuotes)
-                        .Replace("\\", "\\\\")
-                        .Replace("\r", "\\r")
-                        .Replace("\n", "\\n") + "\"";
+                        .Escape() + "\"";
                 }
             }
             else if (kind == SyntaxKind.MultiLineRawStringLiteralToken) //handless """jsdd""" string 
@@ -2378,8 +2604,9 @@ namespace NetJs.Translator.CSharpToJavascript
                         break;
                 }
                 txt = "\"" + txt.Substring(startingQuotes, txt.Length - startingQuotes - startingQuotes)
-                    .Replace("\r", "\\r")
-                    .Replace("\n", "\\n") + "\"";
+                    .Escape();
+                //.Replace("\r", "\\r")
+                //.Replace("\n", "\\n") + "\"";
             }
             //Char literal written as plain number
             else if (kind == SyntaxKind.CharacterLiteralExpression) //handless ''
@@ -2780,5 +3007,45 @@ namespace NetJs.Translator.CSharpToJavascript
             return null;
         }
 
+        public static bool IsAwaitable(this ITypeSymbol type)
+        {
+            bool IsINotifyCompletionOrICriticalNotifyCompletion(ITypeSymbol type)
+            {
+                if (type.IsType("System.Runtime.CompilerServices.INotifyCompletion"))
+                {
+                    return true;
+                }
+                if (type.IsType("System.Runtime.CompilerServices.ICriticalNotifyCompletion"))
+                {
+                    return true;
+                }
+                return false;
+            }
+            bool HasIsCompleted(ITypeSymbol type)
+            {
+                var isCompleted = type.GetMembers("IsCompleted").Where(e => e is IPropertySymbol ps && ps.GetMethod != null && ps.Type.IsType("System.Boolean"));
+                var getResult = type.GetMembers("GetResult").Where(e => e is IMethodSymbol ms && ms.Parameters.Length == 0);
+                return isCompleted.Any() && getResult.Any();
+            }
+            var getAwaiter = type.GetMembers("GetAwaiter")
+                .Where(e => e is IMethodSymbol ms &&
+                        ms.DeclaredAccessibility == Accessibility.Public &&
+                        ms.ReturnType.AllInterfaces.Any(i => IsINotifyCompletionOrICriticalNotifyCompletion(i)) &&
+                        HasIsCompleted(ms.ReturnType));
+            var ret = getAwaiter.Any();
+            return ret;
+        }
+
+        public static bool IsDefinedTypeParameter(this INamedTypeSymbol type, GlobalCompilationVisitor global)
+        {
+            if (type.IsSealed &&
+                SymbolEqualityComparer.Default.Equals(type.ContainingNamespace, global.Compilation.GlobalNamespace) &&
+                type.Name.StartsWith("T") &&
+                HasAttribute(type, typeof(BootAttribute).FullName, false, out _))
+            {
+                return true;
+            }
+            return false;
+        }
     }
 }

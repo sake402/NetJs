@@ -20,7 +20,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.StaticConvention
                     CodeNode? leftLeftNode = null;
                     if (node.Left.IsKind(SyntaxKind.IdentifierName))
                     {
-                        leftLeftNode = SyntaxFactory.ThisExpression();
+                        leftLeftNode = new CodeNode(() => visitor.CurrentTypeWriter.Write(node, "this")); //SyntaxFactory.ThisExpression();
                     }
                     else if (node.Left.IsKind(SyntaxKind.SimpleMemberAccessExpression) && node.Left is MemberAccessExpressionSyntax ma)
                     {

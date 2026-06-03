@@ -115,7 +115,7 @@ namespace System
         [NetJs.MemberReplace(nameof(AllocPinnedArray))]
         private static Array AllocPinnedArrayImpl(Type t, int length)
         {
-            return Array.CreateNested(t.As<RuntimeType>(), [length], null, null, 0);
+            return Array.CreateFinal(t.As<RuntimeType>(), [length], null, null, 0);
         }
 
 

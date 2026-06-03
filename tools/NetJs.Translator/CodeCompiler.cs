@@ -339,7 +339,7 @@ namespace NetJs.Translator
                     if (!File.Exists(binPath) && !File.Exists(binPathJs))
                         throw new InvalidOperationException($"Expected dll file not found at {binPath} or {binPathJs}. Ensure that project has built successfully.");
                     refs.Add(MetadataReference.CreateFromFile(File.Exists(binPathJs) ? binPathJs : binPath));
-                    var symbolFile = libProjectFolder + $"/bin/wasm/{project.Evaluate("Configuration")}/{project.Evaluate("TargetFramework")}/{Constants.OutputFolderName}/" + Path.GetFileName(lib.Name) + ".SymbolNames.yaml";
+                    var symbolFile = libProjectFolder + $"/bin/wasm/{project.Evaluate("Configuration")}/{project.Evaluate("TargetFramework")}/" + Path.GetFileName(lib.Name) + ".SymbolNames.yaml";
                     if (File.Exists(symbolFile))
                     {
                         symbols.Add(symbolFile);

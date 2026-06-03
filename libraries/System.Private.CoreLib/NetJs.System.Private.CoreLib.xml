@@ -75947,11 +75947,6 @@
             Describes how values are pushed onto a stack or popped off a stack.
             </summary>
         </member>
-        <member name="T:System.Reflection.GenericTypeArgument">
-            <summary>
-            A placeholder for generic type arguments
-            </summary>
-        </member>
         <member name="M:System.Reflection.Assembly.SetEntryAssembly(System.Reflection.Assembly)">
             <summary>
             Sets the application's entry assembly to the provided assembly object.
@@ -75991,6 +75986,11 @@
         </member>
         <member name="P:System.Reflection.TypeProxyHandler.TargetType">
             <summary>
+            The finally created type we will proxy to
+            </summary>
+        </member>
+        <member name="P:System.Reflection.InnerTypeProxyHandler.TargetType">
+            <summary> 
             The finally created type we will proxy to
             </summary>
         </member>
@@ -85360,6 +85360,12 @@
             </summary>
             <param name="timeout">The timeout on waiting for a full collection</param>
             <returns>The status of a registered full GC notification</returns>
+        </member>
+        <member name="T:System.IAwaitable">
+            <summary>
+            The compile will plug this interface automatically into any awaitable object.
+            Js simply required the then method to make await work
+            </summary>
         </member>
         <member name="T:System.Threading.Interlocked">
             <summary>Provides atomic operations for variables that are shared by multiple threads.</summary>
@@ -110201,6 +110207,14 @@
         <member name="M:System.Object.GetHashCode">
             <summary>Serves as the default hash function.</summary>
             <returns>A hash code for the current object.</returns>
+        </member>
+        <member name="M:System.RefOrPointer`1.BitsIsDirectlyConvertible(System.Type,System.Type)">
+            <summary>
+            We already ascetain that size if from and to are the same, just check if safe to cast their bits
+            </summary>
+            <param name="tfrom"></param>
+            <param name="tto"></param>
+            <returns></returns>
         </member>
         <member name="M:System.RuntimeType.GetEnumValuesAsUnderlyingType">
             <summary>
@@ -145985,8 +145999,8 @@
         </member>
         <member name="T:NetJs.NameAttribute">
             <summary>
-            Specifies full path name of the entity (namespace+entity), when emitting JavaScript-equivalent
-            code. This overrides the inferred namespace.class.method name, for example.
+            Specifies name of the entity, when emitting JavaScript-equivalent
+            code. This overrides the inferred name, for example.
             </summary>
             <remarks>
             Use "Object" (with quotes) to hide its type in JavaScript-level (useful when you create
@@ -146068,6 +146082,7 @@
             this attribute is used.
             </summary>
         </member>
+        <!-- Badly formed XML comment ignored for member "T:NetJs.SignatureAttribute" -->
         <member name="T:NetJs.StaticCallConventionAttribute">
             <summary>
             Call a method using static conventions. Eg Array a; a.GetValue(...) => System.Array.GetValue.call(a, ...)
@@ -146318,6 +146333,166 @@
             </summary>
             <param name="fn">Function to run</param>
             <returns>Return either function result or false in case of catch</returns>
+        </member>
+        <member name="T:T1">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T2">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T3">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T4">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T5">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T6">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T7">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T8">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T9">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T10">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T11">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T12">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T13">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T14">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T15">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T16">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T17">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T18">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T19">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T20">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T21">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T22">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T23">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T24">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T25">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T26">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T27">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T28">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T29">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T30">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T31">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
+        <member name="T:T32">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
         </member>
         <member name="M:Interop.Sys.FLock(System.IntPtr,Interop.Sys.LockOperations)">
             <summary>

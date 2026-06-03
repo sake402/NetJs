@@ -81,7 +81,7 @@ namespace System
         [NetJs.MemberReplace(nameof(Clone))]
         public object CloneImpl()
         {
-            var clone = CreateNested(this[ElementTypeName].As<RuntimeType>(), this[SizesName].As<int[]>(), this[LowerBoundsName].As<int[]>(), this.As<object[]>(), 0);
+            var clone = CreateFinal(this[ElementTypeName].As<RuntimeType>(), this[SizesName].As<int[]>(), this[LowerBoundsName].As<int[]>(), this.As<object[]>(), 0);
             //if (NetJs.Script.IsDefined(this[ElementTypeName]))
             //    clone[ElementTypeName] = this[ElementTypeName];
             //if (NetJs.Script.IsDefined(this[SizesName]))
@@ -110,7 +110,7 @@ namespace System
             {
                 var elementType = this[ElementTypeName].As<RuntimeType>();
                 var value = this[index];
-                var boxValue = NetJs.Script.Write<object>("{global.}$box(value, elementType._prototype)");
+                var boxValue = NetJs.Script.IsDefined(elementType) ? NetJs.Script.Write<object>("{global.}$box(value, elementType._prototype)") : value;
                 return boxValue;
             }
         }
@@ -133,7 +133,7 @@ namespace System
             unchecked
             {
                 var elementType = this[ElementTypeName].As<RuntimeType>();
-                var unBoxValue = NetJs.Script.Write<object>("{global.}$cast(value, elementType._prototype)");
+                var unBoxValue = NetJs.Script.IsDefined(elementType) ? NetJs.Script.Write<object>("{global.}$cast(value, elementType._prototype)") : value;
                 this[index] = unBoxValue;
             }
         }
@@ -154,7 +154,7 @@ namespace System
                     var index = indices[0];
                     var elementType = this[ElementTypeName].As<RuntimeType>();
                     var value = this[index];
-                    var boxValue = NetJs.Script.Write<object>("{global.}$box(value, elementType._prototype)");
+                    var boxValue = NetJs.Script.IsDefined(elementType) ? NetJs.Script.Write<object>("{global.}$box(value, elementType._prototype)") : value;
                     return boxValue;
                 }
             }
@@ -176,7 +176,7 @@ namespace System
                 {
                     var index = indices[0];
                     var elementType = this[ElementTypeName].As<RuntimeType>();
-                    var unBoxValue = NetJs.Script.Write<object>("{global.}$cast(value, elementType._prototype)");
+                    var unBoxValue = NetJs.Script.IsDefined(elementType) ? NetJs.Script.Write<object>("{global.}$cast(value, elementType._prototype)") : value;
                     this[index] = unBoxValue;
                 }
             }
@@ -246,9 +246,13 @@ namespace System
                 {
                     var index = indices[0];
                     var value = this[index];
+                    return value!;
                 }
             }
-            return this.As<object[]>()[GetFlattenedIndex(indices)];
+            unchecked
+            {
+                return this.As<object[]>()[GetFlattenedIndex(indices)];
+            }
         }
 
         [NetJs.StaticCallConvention]
@@ -269,7 +273,12 @@ namespace System
                 }
             }
             else
-                this.As<object[]>()[GetFlattenedIndex(indices)] = value;
+            {
+                unchecked
+                {
+                    this.As<object[]>()[GetFlattenedIndex(indices)] = value;
+                }
+            }
         }
 
         [NetJs.Unbox(false)]
@@ -346,9 +355,9 @@ namespace System
             //return typeof(Array<>).MakeGenericType(elementType);
         }
 
-        internal static void AddMetadata(Array arr, Type elementType, int[]? sizes = null, int[]? lowerBounds = null)
+        public static void AddMetadata(Array arr, Type elementType, int[]? sizes = null, int[]? lowerBounds = null)
         {
-            arr[SizesName] = sizes ?? [arr.Length];
+            arr[SizesName] = sizes ?? NetJs.Script.CreateArrayFromValues(arr.Length);
             arr[ElementTypeName] = elementType;
             if (NetJs.Script.HasValue(lowerBounds))
             {
@@ -356,7 +365,7 @@ namespace System
             }
         }
 
-        internal static Array CreateNested(RuntimeType type, int[] sizes, int[]? lowerBounds, NetJs.Union<object, object[]>? fill, int depth)
+        internal static Array CreateFinal(RuntimeType type, int[] sizes, int[]? lowerBounds, NetJs.Union<object, object[]>? fill, int depth)
         {
             unchecked
             {
@@ -370,7 +379,7 @@ namespace System
                 {
                     for (int i = 0; i < sizes[depth]; i++)
                     {
-                        var innerArray = CreateNested(type, sizes, lowerBounds, fill, depth + 1);
+                        var innerArray = CreateFinal(type, sizes, lowerBounds, fill, depth + 1);
                         arr.Push(innerArray);
                     }
                 }
@@ -437,7 +446,7 @@ namespace System
         [NetJs.Name(NetJs.Constants.CreateArray)]
         internal static Array CreateFromScript(RuntimeType type, int len)
         {
-            return CreateNested(type, NetJs.Script.CreateArrayFromValues(len), null, null, 0);
+            return CreateFinal(type, NetJs.Script.CreateArrayFromValues(len), null, null, 0);
         }
 
         [NetJs.MemberReplace(nameof(InternalCreate))]
@@ -456,7 +465,7 @@ namespace System
                     }
                 }
                 var type = AppDomain.GetType((uint)elementType) ?? throw new InvalidOperationException();
-                var arr = CreateNested(type, sizes, lb, null, 0);
+                var arr = CreateFinal(type, sizes, lb, null, 0);
                 result = arr;
             }
         }
@@ -675,6 +684,20 @@ namespace System
         //    SetGenericValueImpl<T>(GetFlattenedIndex(indices).As<int>(), ref value);
         //}
 
+
+        [NetJs.Name(NetJs.Constants.IsTypeName)]
+        public static bool Is(object? instance)
+        {
+            if (instance == null)
+                return false;
+            if (NetJs.Script.Write<bool>("window.Array.isArray(instance)"))
+                return true;
+            if (NetJs.Script.InstanceOf(instance, typeof(Array)))
+            {
+                return true;
+            }
+            return false;
+        }
     }
 
     //Class only defined for generator use

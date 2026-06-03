@@ -12,42 +12,51 @@ namespace NetJs.Translator.CSharpToJavascript
 {
     public partial class TranslatorSyntaxVisitor
     {
-        public void WriteIndexOperator(CSharpSyntaxNode node, ExpressionSyntax operand)
+        public void WriteCreateIndexFromStart(CSharpSyntaxNode node, CodeNode numericIndex)
         {
-            var index = (ITypeSymbol)_global.GetSymbol("System.Index", this/*, out _, out _*/);
-            var fromEnd = index.GetMembers("FromEnd").Cast<IMethodSymbol>().FirstOrDefault();
-            WriteMethodInvocation(node, fromEnd, null, [operand], null, null, null, false);
+            //var index = (ITypeSymbol)_global.GetSymbol("System.Index", this/*, out _, out _*/);
+            var fromEnd = _global.SystemIndex.GetMembers("FromStart").Cast<IMethodSymbol>().FirstOrDefault();
+            WriteMethodInvocation(node, fromEnd, null, [numericIndex], null, null, null, false);
         }
 
-        public void WriteRangeOperator(CSharpSyntaxNode node, ExpressionSyntax? leftOperand, ExpressionSyntax? rightOperand)
+        public void WriteCreateIndexFromEnd(CSharpSyntaxNode node, CodeNode numericIndex)
         {
-            var index = (ITypeSymbol)_global.GetSymbol("System.Index", this/*, out _, out _*/);
-            var range = (INamedTypeSymbol)_global.GetSymbol("System.Range", this/*, out _, out _*/);
-            if (leftOperand == null && rightOperand == null)
+            //var index = (ITypeSymbol)_global.GetSymbol("System.Index", this/*, out _, out _*/);
+            var fromEnd = _global.SystemIndex.GetMembers("FromEnd").Cast<IMethodSymbol>().FirstOrDefault();
+            WriteMethodInvocation(node, fromEnd, null, [numericIndex], null, null, null, false);
+        }
+
+        public void WriteCreateRange(CSharpSyntaxNode node, CodeNode? startIndex, CodeNode? endIndex)
+        {
+            //var index = (ITypeSymbol)_global.GetSymbol("System.Index", this/*, out _, out _*/);
+            //var range = (INamedTypeSymbol)_global.GetSymbol("System.Range", this/*, out _, out _*/);
+            if (startIndex == null && endIndex == null)
             {
-                WriteMemberAccess(node, null, range, "All", null);
+                WriteMemberAccess(node, null, _global.SystemRange, "All", null);
             }
-            else if (leftOperand != null && rightOperand != null)
+            else if (startIndex != null && endIndex != null)
             {
-                var startEndConstructor = range.GetMembers(".ctor").Cast<IMethodSymbol>().Single(e => e.Parameters.Count() == 2 && e.Parameters.All(p => p.Type.Equals(index, SymbolEqualityComparer.Default)));
-                WriteConstructorCall(node, range, startEndConstructor, null, [leftOperand, rightOperand]);
+                var startEndConstructor = _global.SystemRange.GetMembers(".ctor")
+                    .Cast<IMethodSymbol>()
+                    .Single(e => e.Parameters.Count() == 2 && e.Parameters.All(p => p.Type.Equals(_global.SystemIndex, SymbolEqualityComparer.Default)));
+                WriteConstructorCall(node, _global.SystemRange, startEndConstructor, null, [startIndex, endIndex]);
             }
-            else if (leftOperand != null)
+            else if (startIndex != null)
             {
-                var startMethod = range.GetMembers("StartAt").Cast<IMethodSymbol>().Single(e => e.Parameters.Count() == 1 && e.Parameters.All(p => p.Type.Equals(index, SymbolEqualityComparer.Default)));
-                WriteMethodInvocation(node, startMethod, null, [leftOperand], null, null, null, false);
+                var startMethod = _global.SystemRange.GetMembers("StartAt").Cast<IMethodSymbol>().Single(e => e.Parameters.Count() == 1 && e.Parameters.All(p => p.Type.Equals(_global.SystemIndex, SymbolEqualityComparer.Default)));
+                WriteMethodInvocation(node, startMethod, null, [startIndex], null, null, null, false);
             }
-            else if (rightOperand != null)
+            else if (endIndex != null)
             {
-                var endMethod = range.GetMembers("EndAt").Cast<IMethodSymbol>().Single(e => e.Parameters.Count() == 1 && e.Parameters.All(p => p.Type.Equals(index, SymbolEqualityComparer.Default)));
-                WriteMethodInvocation(node, endMethod, null, [rightOperand], null, null, null, false);
+                var endMethod = _global.SystemRange.GetMembers("EndAt").Cast<IMethodSymbol>().Single(e => e.Parameters.Count() == 1 && e.Parameters.All(p => p.Type.Equals(_global.SystemIndex, SymbolEqualityComparer.Default)));
+                WriteMethodInvocation(node, endMethod, null, [endIndex], null, null, null, false);
             }
         }
 
         
         public override void VisitRangeExpression(RangeExpressionSyntax node)
         {
-            WriteRangeOperator(node, node.LeftOperand, node.RightOperand);
+            WriteCreateRange(node, node.LeftOperand, node.RightOperand);
             //base.VisitRangeExpression(node);
         }
     }

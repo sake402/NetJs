@@ -7,6 +7,68 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
 {
     sealed class ImplicitConversionSyntaxEmitter : SyntaxEmitter<CSharpSyntaxNode>
     {
+        public static bool NumberImplicitlyConvertsToLong(CSharpSyntaxNode node, SemanticModel semanticModel, TranslatorSyntaxVisitor visitor, Conversion? conversion = null)
+        {
+            conversion ??= semanticModel.GetConversion(node);
+            if (conversion.Value.Exists &&
+                        conversion.Value.IsImplicit &&
+                        (conversion.Value.IsNumeric || conversion.Value.IsConstantExpression))
+            {
+                var from = semanticModel.GetOperation(node)?.Type;
+                var to = (semanticModel.GetOperation(node)?.Parent as IConversionOperation)?.Type;
+                if (from != null && to != null)
+                {
+                    bool skip = false;
+                    ElementAccessExpressionSyntax? el = null;
+                    //node.Parent.IsKind(SyntaxKind.ElementAccessExpression) ? (ElementAccessExpressionSyntax)node.Parent :
+                    //    node.Parent.IsKind(SyntaxKind.Argument) && node.Parent.Parent.IsKind(SyntaxKind.BracketedArgumentList) && node.Parent.Parent.Parent.IsKind(SyntaxKind.ElementAccessExpression) ? (ElementAccessExpressionSyntax)node.Parent.Parent.Parent :
+                    //    null;
+                    if (/*el != null*/(el = node.FindClosestParent<ElementAccessExpressionSyntax>()) != null && el.ArgumentList.DescendantNodes().Contains(node))
+                    {
+                        var ex = visitor.Global.GetTypeSymbol(el.Expression, visitor);
+                        if (ex.IsPointer(out _) || ex.IsArray(out _)) //dont convert pointer index to BigInt
+                            skip = true;
+                    }
+                    if (!skip && from.IsIntegerNumericType() && to.IsLongNumericType())
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public static bool LongImplicitlyConvertsToNumber(CSharpSyntaxNode node, SemanticModel semanticModel, TranslatorSyntaxVisitor visitor, Conversion? conversion = null)
+        {
+            conversion ??= semanticModel.GetConversion(node);
+            if (conversion.Value.Exists &&
+                        conversion.Value.IsImplicit &&
+                        (conversion.Value.IsNumeric || conversion.Value.IsConstantExpression))
+            {
+                var from = semanticModel.GetOperation(node)?.Type;
+                var to = (semanticModel.GetOperation(node)?.Parent as IConversionOperation)?.Type;
+                if (from != null && to != null)
+                {
+                    bool skip = false;
+                    ElementAccessExpressionSyntax? el = null;
+                    //node.Parent.IsKind(SyntaxKind.ElementAccessExpression) ? (ElementAccessExpressionSyntax)node.Parent :
+                    //    node.Parent.IsKind(SyntaxKind.Argument) && node.Parent.Parent.IsKind(SyntaxKind.BracketedArgumentList) && node.Parent.Parent.Parent.IsKind(SyntaxKind.ElementAccessExpression) ? (ElementAccessExpressionSyntax)node.Parent.Parent.Parent :
+                    //    null;
+                    if (/*el != null*/(el = node.FindClosestParent<ElementAccessExpressionSyntax>()) != null && el.ArgumentList.DescendantNodes().Contains(node))
+                    {
+                        var ex = visitor.Global.GetTypeSymbol(el.Expression, visitor);
+                        if (ex.IsPointer(out _) || ex.IsArray(out _)) //dont convert pointer index to BigInt
+                            skip = true;
+                    }
+                    if (!skip && from.IsLongNumericType() && to.IsFloatingNumericType())
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
         static List<CSharpSyntaxNode?> _disabled = new List<CSharpSyntaxNode?>();
         public static IDisposable Disable(CSharpSyntaxNode? node)
         {
@@ -146,7 +208,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                             }
                         }
                     }
-                    else if (node.IsKind(SyntaxKind.NumericLiteralExpression) &&
+                    else if ((node.IsKind(SyntaxKind.NumericLiteralExpression) || node.IsKind(SyntaxKind.CharacterLiteralExpression)) &&
                         node is LiteralExpressionSyntax lt &&
                         !lt.Token.Text.EndsWith("UL") &&
                         !lt.Token.Text.EndsWith("L") &&
@@ -172,60 +234,53 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                             finally { _processing.Pop(); }
                         }
                     }
-                    else if (conversion.Exists &&
-                        conversion.IsImplicit &&
-                        conversion.IsNumeric)
+                    //else if (conversion.Exists &&
+                    //    conversion.IsImplicit &&
+                    //   (conversion.IsNumeric || conversion.IsConstantExpression))
+                    //{
+                    if (NumberImplicitlyConvertsToLong(node, sm, visitor, conversion))
                     {
-                        var from = sm.GetOperation(node)?.Type;
-                        var to = (sm.GetOperation(node)?.Parent as IConversionOperation)?.Type;
-                        if (from != null && to != null)
+                        _processing.Push(node);
+                        try
                         {
-                            bool skip = false;
-                            ElementAccessExpressionSyntax? el = null;
-                            //node.Parent.IsKind(SyntaxKind.ElementAccessExpression) ? (ElementAccessExpressionSyntax)node.Parent :
-                            //    node.Parent.IsKind(SyntaxKind.Argument) && node.Parent.Parent.IsKind(SyntaxKind.BracketedArgumentList) && node.Parent.Parent.Parent.IsKind(SyntaxKind.ElementAccessExpression) ? (ElementAccessExpressionSyntax)node.Parent.Parent.Parent :
-                            //    null;
-                            if (/*el != null*/(el = node.FindClosestParent<ElementAccessExpressionSyntax>()) != null && el.ArgumentList.DescendantNodes().Contains(node))
+                            if (node.IsKind(SyntaxKind.NumericLiteralExpression))
                             {
-                                var ex = visitor.Global.GetTypeSymbol(el.Expression, visitor);
-                                if (ex.IsPointer(out _) || ex.IsArray(out _)) //dont convert pointer index to BigInt
-                                    skip = true;
+                                visitor.Visit(node);
+                                visitor.CurrentTypeWriter.Write(node, "n");
                             }
-                            if (!skip && from.IsIntegerNumericType() && to.IsLongNumericType())
+                            else
                             {
-                                _processing.Push(node);
-                                try
+                                //If we are inside the class BigInt(could be user defined), make sure to generate window.BigInt
+                                if (visitor.CurrentTypes.Any(t => t.Identifier.ValueText == "BigInt"))
                                 {
-                                    if (node.IsKind(SyntaxKind.NumericLiteralExpression))
-                                    {
-                                        visitor.Visit(node);
-                                        visitor.CurrentTypeWriter.Write(node, "n");
-                                    }
-                                    else
-                                    {
-                                        visitor.CurrentTypeWriter.Write(node, "BigInt(");
-                                        visitor.Visit(node);
-                                        visitor.CurrentTypeWriter.Write(node, ")");
-                                    }
-                                    return true;
+                                    visitor.CurrentTypeWriter.Write(node, "window.");
                                 }
-                                finally { _processing.Pop(); }
+                                visitor.CurrentTypeWriter.Write(node, "BigInt(");
+                                visitor.Visit(node);
+                                visitor.CurrentTypeWriter.Write(node, ")");
                             }
-                            else if (!skip && from.IsLongNumericType() && to.IsFloatingNumericType())
-                            {
-                                _processing.Push(node);
-                                try
-                                {
-                                    visitor.CurrentTypeWriter.Write(node, "Number(");
-                                    visitor.Visit(node);
-                                    visitor.CurrentTypeWriter.Write(node, ")");
-                                    return true;
-                                }
-                                finally { _processing.Pop(); }
-                            }
+                            return true;
                         }
+                        finally { _processing.Pop(); }
                     }
-
+                    else if (LongImplicitlyConvertsToNumber(node, sm, visitor, conversion))
+                    {
+                        _processing.Push(node);
+                        try
+                        {
+                            //If we are inside the class Number, make sure to generate window.Number
+                            if (visitor.CurrentTypes.Any(t => t.Identifier.ValueText == "Number"))
+                            {
+                                visitor.CurrentTypeWriter.Write(node, "window.");
+                            }
+                            visitor.CurrentTypeWriter.Write(node, "Number(");
+                            visitor.Visit(node);
+                            visitor.CurrentTypeWriter.Write(node, ")");
+                            return true;
+                        }
+                        finally { _processing.Pop(); }
+                    }
+                    //}
                 }
             }
             return false;

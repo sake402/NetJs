@@ -37,7 +37,18 @@ namespace NetJs.Translator.CSharpToJavascript
             throw new InvalidOperationException();
         }
 
-        void WritePatternExpressionFilter(CSharpSyntaxNode node)
+        int patternExpressionWrittenAlready;
+        Stack<string> patternExpressions = new Stack<string>();
+        string? currentPatternExpression
+        {
+            get
+            {
+                if (patternExpressions.TryPeek(out var pe))
+                    return pe;
+                return null;
+            }
+        }
+        void WritePatternExpressionFilter(CSharpSyntaxNode node, bool dereferenceListPattern = true)
         {
             var listPattern = node.FindClosestParent<ListPatternSyntax>();
             var containingIsPatternExpression = node.FindClosestParent<IsPatternExpressionSyntax>();
@@ -46,55 +57,91 @@ namespace NetJs.Translator.CSharpToJavascript
             var switchClosure = CurrentClosure.FindHierachy<SwitchStatementSyntax>() ?? CurrentClosure.FindHierachy<SwitchExpressionSyntax>() ?? CurrentClosure;
             var swVariableName = switchClosure.Tags.GetValueOrDefault(SwitchExpressionVariableName);
             var isVariableName = switchClosure.Tags.GetValueOrDefault(IsPatternExpressionVariableName);
-            if (containingSwitchExpression != null)
+            void DoWrite()
             {
-                if (swVariableName != null)
+                if (currentPatternExpression != null)
                 {
-                    CurrentTypeWriter.Write(node, swVariableName);
+                    CurrentTypeWriter.Write(node, currentPatternExpression);
+                    return;
                 }
-                else
+                if (containingSwitchExpression != null)
                 {
-                    Visit(containingSwitchExpression.GoverningExpression);
+                    if (swVariableName != null)
+                    {
+                        CurrentTypeWriter.Write(node, swVariableName);
+                    }
+                    else
+                    {
+                        Visit(containingSwitchExpression.GoverningExpression);
+                    }
+                }
+                else if (containingSwitchStatement != null)
+                {
+                    if (swVariableName != null)
+                    {
+                        CurrentTypeWriter.Write(node, swVariableName);
+                    }
+                    else
+                    {
+                        Visit(containingSwitchStatement.Expression);
+                    }
+                }
+                else if (containingIsPatternExpression != null)
+                {
+                    if (isVariableName != null)
+                    {
+                        CurrentTypeWriter.Write(node, isVariableName);
+                    }
+                    else
+                    {
+                        Visit(containingIsPatternExpression.Expression);
+                    }
                 }
             }
-            else if (containingSwitchStatement != null)
-            {
-                if (swVariableName != null)
-                {
-                    CurrentTypeWriter.Write(node, swVariableName);
-                }
-                else
-                {
-                    Visit(containingSwitchStatement.Expression);
-                }
-            }
-            else if (containingIsPatternExpression != null)
-            {
-                if (isVariableName != null)
-                {
-                    CurrentTypeWriter.Write(node, isVariableName);
-                }
-                else
-                {
-                    Visit(containingIsPatternExpression.Expression);
-                }
-            }
+            DoWrite();
             //Inside a list pattern?
-            if (listPattern != null && currentListPatternContext != null)
+            if (dereferenceListPattern && listPattern != null && currentListPatternContext != null)
             {
                 CurrentTypeWriter.Write(node, "[");
-                CurrentTypeWriter.Write(node, currentListPatternContext!.CurrentIndex.ToString());
+                if (currentListPatternContext.SpreadStartIndex >= 0 &&
+                    currentListPatternContext.PatternSymbol != null &&
+                    currentListPatternContext.LenghtProperty != null)
+                {
+                    WriteMemberAccess(node, new CodeNode(() => DoWrite()), _global.GetTypeSymbol(currentListPatternContext.PatternSymbol), null, currentListPatternContext.LenghtProperty);
+                    //DoWrite();
+                    //CurrentTypeWriter.Write(node, ".");
+                    //WriteMemberName(node, currentListPatternContext.LenghtProperty.ContainingType, currentListPatternContext.LenghtProperty);
+                    //CurrentTypeWriter.Write(node, " - ");
+                }
+                CurrentTypeWriter.Write(node, currentListPatternContext.CurrentIndex.ToString());
                 CurrentTypeWriter.Write(node, "]");
             }
         }
 
-        bool patternExpressionWrittenAlready;
         public override void VisitConstantPattern(ConstantPatternSyntax node)
         {
-            var type = (node.Parent.IsKind(SyntaxKind.NotPattern) || node.Parent.IsKind(SyntaxKind.IsPatternExpression)) && !node.Expression.IsKind(SyntaxKind.NullLiteralExpression) ?
+            var containingIsPatternExpression = node.FindClosestParent<IsPatternExpressionSyntax>();
+            var leftPatternType = containingIsPatternExpression != null ? _global.GetTypeSymbol(containingIsPatternExpression.Expression, this) : null;
+            var rightPatternSymbol = (node.Parent.IsKind(SyntaxKind.NotPattern) || node.Parent.IsKind(SyntaxKind.IsPatternExpression)) && !node.Expression.IsKind(SyntaxKind.NullLiteralExpression) ?
                 _global.GetSymbol(node.Expression, this) :
                 null;
-            if (type != null && type.Kind == SymbolKind.NamedType)
+            if (leftPatternType != null &&
+                leftPatternType.Kind == SymbolKind.NamedType &&
+                SymbolEqualityComparer.Default.Equals(leftPatternType, _global.SystemObject) &&
+                rightPatternSymbol != null)
+            {
+                var var_i = ++CurrentTypeWriter.CurrentClosure.NameManglingSeed;
+                CurrentTypeWriter.InsertAbove(node, $"let $t{var_i};", true);
+                CurrentTypeWriter.Write(node, $"({(node.Parent.IsKind(SyntaxKind.NotPattern) ? "!" : "")}{_global.GlobalName}.{Constants.IsTypeName}(");
+                WritePatternExpressionFilter(node);
+                CurrentTypeWriter.Write(node, $", ");
+                CurrentTypeWriter.Write(node, rightPatternSymbol.ComputeOutputTypeName(_global));
+                CurrentTypeWriter.Write(node, $", {{ set {Constants.RefValueName}(v){{ $t{var_i} = v }} }}");
+                CurrentTypeWriter.Write(node, $") && $t{var_i} === ");
+                Visit(node.Expression);
+                CurrentTypeWriter.Write(node, $")");
+            }
+            else if (rightPatternSymbol != null && rightPatternSymbol.Kind == SymbolKind.NamedType && node.Expression is not LiteralExpressionSyntax)
             {
                 CurrentTypeWriter.Write(node, $"{(node.Parent.IsKind(SyntaxKind.NotPattern) ? "!" : "")}{_global.GlobalName}.{Constants.IsTypeName}(");
                 WritePatternExpressionFilter(node);
@@ -104,10 +151,18 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             else
             {
-                if (!patternExpressionWrittenAlready && !node.Parent.IsKind(SyntaxKind.PropertyPatternClause) && !node.Parent.IsKind(SyntaxKind.Subpattern))
+                if (patternExpressionWrittenAlready == 0/* && !node.Parent.IsKind(SyntaxKind.PropertyPatternClause) && !node.Parent.IsKind(SyntaxKind.Subpattern)*/)
                     WritePatternExpressionFilter(node);
                 CurrentTypeWriter.Write(node, node.Parent.IsKind(SyntaxKind.NotPattern) ? " !== " : " === ");
+                if (node.Expression is BinaryExpressionSyntax)
+                {
+                    CurrentTypeWriter.Write(node, $"(");
+                }
                 Visit(node.Expression);
+                if (node.Expression is BinaryExpressionSyntax)
+                {
+                    CurrentTypeWriter.Write(node, $")");
+                }
             }
         }
 
@@ -119,7 +174,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitRelationalPattern(RelationalPatternSyntax node)
         {
-            if (!patternExpressionWrittenAlready)
+            if (patternExpressionWrittenAlready == 0)
                 WritePatternExpressionFilter(node);
             CurrentTypeWriter.Write(node, " ");
             CurrentTypeWriter.Write(node, node.OperatorToken.ValueText);
@@ -190,29 +245,99 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 if (ix > 0)
                     CurrentTypeWriter.Write(node, " && ");
-                //Writer.Write(node, "(");
-                if (sub.ExpressionColon?.Expression is IdentifierNameSyntax id)
+                if (sub.Pattern.IsKind(SyntaxKind.ConstantPattern) || sub.Pattern.IsKind(SyntaxKind.RelationalPattern))
                 {
-                    var lhsType = _global.GetTypeSymbol(containingIsPatternExpression.Expression, this);
-                    WriteMemberAccess(id, new CodeNode(() => WritePatternExpressionFilter(node)), lhsType, id.Identifier.ValueText, null);
+                    List<SubpatternSyntax> pathToRoot = new List<SubpatternSyntax>();
+                    sub.Pattern.VisitParentHierachy((p, d) =>
+                    {
+                        if (p == containingIsPatternExpression)
+                            return false;
+                        if (p is SubpatternSyntax ss)
+                        {
+                            pathToRoot.Add(ss);
+                        }
+                        return true;
+                    });
+                    pathToRoot.Reverse();
+                    if (patternExpressionWrittenAlready == 0)
+                        WritePatternExpressionFilter(node);
+                    //SubpatternSyntax? last = null;
+                    //ITypeSymbol currentTypeSymbol = _global.GetTypeSymbol(containingIsPatternExpression.Expression, this);
+                    foreach (var p in pathToRoot)
+                    {
+                        //CurrentTypeWriter.Write(node, ".");
+                        var id = p.NameColon?.Name;
+                        if (id == null)
+                            continue;
+                        var property = (IPropertySymbol)_global.GetSymbol(id, this);
+                        WriteMemberAccess(p, new CodeNode(() => { }), property.ContainingType, id.Identifier.ValueText, null);
+                        //currentTypeSymbol = _global.GetTypeSymbol(id, this);
+                        //last = p;
+                    }
+                    patternExpressionWrittenAlready++;
+                    Visit(pathToRoot.Last().Pattern);
+                    patternExpressionWrittenAlready--;
+                    //CurrentTypeWriter.Write(node, ".");
+                    //Visit(sub.ExpressionColon.Expression);
                 }
                 else
                 {
-                    WritePatternExpressionFilter(node);
-                    if (sub.ExpressionColon != null)
-                    {
-                        CurrentTypeWriter.Write(node, ".");
-                        Visit(sub.ExpressionColon.Expression);
-                    }
-                    else
-                    {
-
-                    }
+                    Visit(sub.Pattern);
                 }
-                patternExpressionWrittenAlready = true;
-                Visit(sub.Pattern);
-                patternExpressionWrittenAlready = false;
-                //Writer.Write(node, ")");
+                //Writer.Write(node, "(");
+                //else if (sub.ExpressionColon?.Expression is IdentifierNameSyntax id)
+                //{
+                //    var lhsType = _global.GetTypeSymbol(containingIsPatternExpression.Expression, this);
+                //    WriteMemberAccess(sub.ExpressionColon.Expression, new CodeNode(() => WritePatternExpressionFilter(node)), lhsType, id.Identifier.ValueText, null);
+                //    patternExpressionWrittenAlready = true;
+                //    Visit(sub.Pattern);
+                //    patternExpressionWrittenAlready = false;
+                //    //CurrentTypeWriter.Write(node, ".");
+                //    //Visit(sub.ExpressionColon.Expression);
+                //    ix++;
+                //    continue;
+                //}
+
+                //if (node.Parent.IsKind(SyntaxKind.RecursivePattern) && node.Parent.Parent.IsKind(SyntaxKind.Subpattern) && node.Parent.Parent.Parent.IsKind(SyntaxKind.PropertyPatternClause))
+                //{
+                //    if (sub.ExpressionColon?.Expression is IdentifierNameSyntax id)
+                //    {
+                //        var lhsType = _global.GetTypeSymbol(containingIsPatternExpression.Expression, this);
+                //        WriteMemberAccess(sub.ExpressionColon.Expression, new CodeNode(() => WritePatternExpressionFilter(node)), lhsType, id.Identifier.ValueText, null);
+                //        CurrentTypeWriter.Write(node, ".");
+                //        Visit(sub.ExpressionColon.Expression);
+                //        ix++;
+                //        continue;
+                //    }
+                //    else
+                //    {
+
+                //    }
+                //}
+                //else if (sub.ExpressionColon?.Expression is IdentifierNameSyntax id)
+                //{
+                //    var lhsType = _global.GetTypeSymbol(containingIsPatternExpression.Expression, this);
+                //    WriteMemberAccess(id, new CodeNode(() => WritePatternExpressionFilter(node)), lhsType, id.Identifier.ValueText, null);
+                //    //CurrentTypeWriter.Write(node, " != null && ");
+                //    //WriteMemberAccess(id, new CodeNode(() => WritePatternExpressionFilter(node)), lhsType, id.Identifier.ValueText, null);
+                //}
+                //else
+                //{
+                //    WritePatternExpressionFilter(node);
+                //    if (sub.ExpressionColon != null)
+                //    {
+                //        CurrentTypeWriter.Write(node, ".");
+                //        Visit(sub.ExpressionColon.Expression);
+                //    }
+                //    else
+                //    {
+
+                //    }
+                //}
+                //patternExpressionWrittenAlready = true;
+                //Visit(sub.Pattern);
+                //patternExpressionWrittenAlready = false;
+                ////Writer.Write(node, ")");
                 ix++;
             }
             if (node.Subpatterns.Count == 0)
@@ -225,19 +350,50 @@ namespace NetJs.Translator.CSharpToJavascript
         public override void VisitPositionalPatternClause(PositionalPatternClauseSyntax node)
         {
             var containingIsPatternExpression = node.FindClosestParent<IsPatternExpressionSyntax>();
+            var typeSymbol = containingIsPatternExpression != null ? _global.GetTypeSymbol(containingIsPatternExpression.Expression, this) : null;
+            bool isTuple = typeSymbol?.IsTupleType??false;
+            Dictionary<SubpatternSyntax, int> variables = new();
+            if (!isTuple)
+            {
+                for (int i = 0; i < node.Subpatterns.Count; i++)
+                {
+                    var varIndex = ++CurrentTypeWriter.CurrentClosure.NameManglingSeed;
+                    CurrentTypeWriter.InsertAbove(node, $"let $t{varIndex};", true);
+                    variables.Add(node.Subpatterns[i], varIndex);
+                }
+                CurrentTypeWriter.InsertAbove(node, () =>
+                {
+                    WritePatternExpressionFilter(node);
+                    CurrentTypeWriter.Write(node, "?.");
+                    CurrentTypeWriter.Write(node, "Deconstruct(");
+                    CurrentTypeWriter.Write(node, string.Join(", ", variables.Select(v => $"{{ set $v(v) {{ $t{v.Value} = v }} }}")));
+                    CurrentTypeWriter.Write(node, ");");
+                }, true);
+            }
             int ix = 0;
             foreach (var sub in node.Subpatterns)
             {
-                if (sub.IsKind(SyntaxKind.DiscardPattern))
+                if (sub.Pattern.IsKind(SyntaxKind.DiscardPattern))
                     continue;
                 if (ix > 0)
                     CurrentTypeWriter.Write(node, " && ");
                 CurrentTypeWriter.Write(node, "(");
-                WritePatternExpressionFilter(node);
-                CurrentTypeWriter.Write(node, ".");
-                CurrentTypeWriter.Write(node, "Item");
-                CurrentTypeWriter.Write(node, (ix + 1).ToString());
-                Visit(sub.Pattern);
+                if (isTuple)
+                {
+                    WritePatternExpressionFilter(node);
+                    CurrentTypeWriter.Write(node, ".");
+                    CurrentTypeWriter.Write(node, "Item");
+                    CurrentTypeWriter.Write(node, (ix + 1).ToString());
+                    patternExpressionWrittenAlready++;
+                    Visit(sub.Pattern);
+                    patternExpressionWrittenAlready--;
+                }
+                else
+                {
+                    patternExpressions.Push($"$t{variables[sub]}");
+                    Visit(sub.Pattern);
+                    patternExpressions.Pop();
+                }
                 CurrentTypeWriter.Write(node, ")");
                 ix++;
             }
@@ -250,6 +406,8 @@ namespace NetJs.Translator.CSharpToJavascript
             public int PatternIndex;
             public int SpreadStartIndex = -1;
             public int SpreadRemainingElements = -1;
+            public ISymbol? PatternSymbol = null;
+            public IPropertySymbol? LenghtProperty = null;
             public int CurrentIndex
             {
                 get
@@ -267,9 +425,11 @@ namespace NetJs.Translator.CSharpToJavascript
         public override void VisitListPattern(ListPatternSyntax node)
         {
             var patternExpression = GetPatternExpression(node);
-            var patteryType = _global.TryGetTypeSymbol(patternExpression, this);
+            var patterySymbol = _global.TryGetSymbol(patternExpression, this);
+            var patternType = patterySymbol != null ? _global.TryGetTypeSymbol(patterySymbol) : null;
             var lenghtPropertyName = "Length";
-            var lenghtProperty = patteryType?.GetMembers().FirstOrDefault(m => m.Name == "Length" || m.Name == "Count");
+            var lenghtProperty = (IPropertySymbol?)(patternType?.GetMembers(null, _global).FirstOrDefault(m => m.Name == "Length") ??
+                patternType?.GetMembers(null, _global).FirstOrDefault(m => m.Name == "Count"));
             if (lenghtProperty != null)
             {
                 lenghtPropertyName = lenghtProperty.Name;
@@ -286,7 +446,7 @@ namespace NetJs.Translator.CSharpToJavascript
             bool hasTemplate = lenghtProperty?.GetTemplateAttribute(_global) != null;
             if (lenghtProperty != null)
             {
-                WriteMemberAccess(node, new CodeNode(() => WritePatternExpressionFilter(node)), patteryType, null, lenghtProperty);
+                WriteMemberAccess(node, new CodeNode(() => WritePatternExpressionFilter(node)), patternType, null, lenghtProperty);
                 //if (isStaticConvention || hasTemplate)
                 //{
                 //    WriteMemberName(node, patteryType!, lenghtProperty, new CodeNode(() => WritePatternExpressionFilter(node)));
@@ -307,6 +467,8 @@ namespace NetJs.Translator.CSharpToJavascript
             CurrentTypeWriter.Write(node, (node.Patterns.Count + countOffset).ToString());
             ListPatternBuidingContext context = new();
             context.Items = node.Patterns.Count;
+            context.PatternSymbol = patterySymbol;
+            context.LenghtProperty = lenghtProperty;
             currentListPatternContext = context;
             foreach (var pattern in node.Patterns)
             {
@@ -314,6 +476,34 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     context.SpreadStartIndex = context.PatternIndex;
                     context.SpreadRemainingElements = node.Patterns.Count - context.PatternIndex;
+                    var slice = (SlicePatternSyntax)pattern;
+                    if (patternType != null && patternType.IsArray(out var elementType) && slice.Pattern is VarPatternSyntax varPattern)
+                    {
+                        CurrentTypeWriter.InsertAbove(node, $"let {((SingleVariableDesignationSyntax)varPattern.Designation).Identifier.ValueText};", true);
+                        CurrentTypeWriter.Write(node, " && ");
+                        CurrentTypeWriter.Write(node, $"({((SingleVariableDesignationSyntax)varPattern.Designation).Identifier.ValueText} = ");
+                        WriteCreateSubArray(node, elementType, new CodeNode(() => WritePatternExpressionFilter(node, dereferenceListPattern: false)), new CodeNode(() =>
+                        {
+                            WriteCreateRange(node, new CodeNode(() =>
+                            {
+                                WriteCreateIndexFromStart(node, new CodeNode(() =>
+                                {
+                                    CurrentTypeWriter.Write(node, context.PatternIndex.ToString());
+                                }));
+                            }), new CodeNode(() =>
+                            {
+                                WriteCreateIndexFromStart(node, new CodeNode(() =>
+                                {
+                                    CurrentTypeWriter.Write(node, context.PatternIndex.ToString());
+                                    CurrentTypeWriter.Write(node, " + ");
+                                    WriteMemberAccess(node, new CodeNode(() => WritePatternExpressionFilter(node, dereferenceListPattern: false)), patternType, null, lenghtProperty);
+                                    CurrentTypeWriter.Write(node, " - ");
+                                    CurrentTypeWriter.Write(node, node.Patterns.Count(e => !e.IsKind(SyntaxKind.SlicePattern)).ToString());
+                                }));
+                            }));
+                        }));
+                        CurrentTypeWriter.Write(node, ")");
+                    }
                 }
                 else if (pattern.IsKind(SyntaxKind.DiscardPattern))
                 {
@@ -377,6 +567,22 @@ namespace NetJs.Translator.CSharpToJavascript
             //base.VisitRecursivePattern(node);
             if (hasOpeningBracket)
                 CurrentTypeWriter.Write(node, ")");
+        }
+
+        public override void VisitVarPattern(VarPatternSyntax node)
+        {
+            var varName = ((SingleVariableDesignationSyntax)node.Designation).Identifier.ValueText;
+            CurrentTypeWriter.InsertAbove(node, $"let {varName};", true);
+            CurrentTypeWriter.Write(node, $"{(node.Parent.IsKind(SyntaxKind.NotPattern) ? "!" : "")}({varName} = ");
+            WritePatternExpressionFilter(node);
+            CurrentTypeWriter.Write(node, $")");
+            //CurrentTypeWriter.Write(node, $"{(node.Parent.IsKind(SyntaxKind.NotPattern) ? "!" : "")}{_global.GlobalName}.{Constants.IsTypeName}(");
+            //WritePatternExpressionFilter(node);
+            //CurrentTypeWriter.Write(node, $", ");
+            //CurrentTypeWriter.Write(node, "null");
+            //CurrentTypeWriter.Write(node, $", {{ set {Constants.RefValueName}(v){{ {varName} = v }} }}");
+            //CurrentTypeWriter.Write(node, $")");
+            //base.VisitVarPattern(node);
         }
 
         const string IsPatternExpressionVariableName = "__isPatternExpressionVariableName__";
@@ -492,13 +698,19 @@ namespace NetJs.Translator.CSharpToJavascript
                     //Visit(node.Expression);
                 }
                 bool patterIsNull = node.Pattern.IsKind(SyntaxKind.ConstantPattern) && (((ConstantPatternSyntax)node.Pattern).Expression.IsKind(SyntaxKind.NullLiteralExpression));
-                if (!patterIsNull)
+                bool patternIsValueType = false;
+                if (node.Pattern.IsKind(SyntaxKind.ConstantPattern))
+                {
+                    var patternValueType = _global.GetTypeSymbol(((ConstantPatternSyntax)node.Pattern).Expression, this);
+                    patternIsValueType = patternValueType.IsValueType;
+                }
+                if (!patterIsNull && !patternIsValueType)
                 {
                     WritePatternExpressionFilter(node);
                     CurrentTypeWriter.Write(node, " !== null && (");
                 }
                 Visit(node.Pattern);
-                if (!patterIsNull)
+                if (!patterIsNull && !patternIsValueType)
                 {
                     CurrentTypeWriter.Write(node, ")");
                 }

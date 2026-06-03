@@ -9,15 +9,16 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Array
     {
         public override bool TryEmit(ElementAccessExpressionSyntax node, TranslatorSyntaxVisitor visitor)
         {
-            if (node.ArgumentList.Arguments.Count == 1 && node.ArgumentList.Arguments[0].IsKind(SyntaxKind.RangeExpression))
+            if (node.ArgumentList.Arguments.Count == 1 && node.ArgumentList.Arguments[0].Expression.IsKind(SyntaxKind.RangeExpression))
             {
                 var type = visitor.Global.GetTypeSymbol(node.Expression, visitor);
                 if (type != null && type.IsArray(out var elementType))
                 {
-                    var runtimeHelpers = (ITypeSymbol)visitor.Global.GetSymbol("System.Runtime.CompilerServices.RuntimeHelpers", visitor);
-                    var getSubArray = (IMethodSymbol)runtimeHelpers.GetMembers("GetSubArray").Single();
-                    getSubArray = getSubArray.Construct(elementType);
-                    visitor.WriteMethodInvocation(node, getSubArray, null, [node.Expression, .. node.ArgumentList.Arguments], null, runtimeHelpers, null, false);
+                    visitor.WriteCreateSubArray(node, elementType, node.Expression, node.ArgumentList.Arguments[0].Expression);
+                    //var runtimeHelpers = (ITypeSymbol)visitor.Global.GetSymbol("System.Runtime.CompilerServices.RuntimeHelpers", visitor);
+                    //var getSubArray = (IMethodSymbol)runtimeHelpers.GetMembers("GetSubArray").Single();
+                    //getSubArray = getSubArray.Construct(elementType);
+                    //visitor.WriteMethodInvocation(node, getSubArray, null, [node.Expression, .. node.ArgumentList.Arguments], null, runtimeHelpers, null, false);
                     return true;
                 }
             }

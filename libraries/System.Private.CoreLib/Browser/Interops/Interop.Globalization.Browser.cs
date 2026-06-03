@@ -292,6 +292,15 @@ internal static partial class Interop
                                 })()");
                     return true;
 
+                case LocaleNumberData.NegativeMonetaryNumberFormat:
+                    // 0: $1, 1: 1$, 2: $ 1, 3: 1 $
+                    value = NetJs.Script.Write<int>(@"
+                                (function(){
+                                    const parts = new Intl.NumberFormat(locale.baseName, {style:'currency', currency:'USD'}).formatToParts(1);
+                                    return parts[0].type === 'currency' ? 0 : 1;
+                                })()");
+                    return true;
+
                 case LocaleNumberData.AnsiCodePage:
                 case LocaleNumberData.OemCodePage:
                 case LocaleNumberData.MacCodePage:
@@ -302,7 +311,12 @@ internal static partial class Interop
                 case LocaleNumberData.GeoId:
                     // No direct mapping in JS. Return false to allow .NET to resolve from locale name string.
                     return false;
-
+                case LocaleNumberData.PositivePercentFormat:
+                    value = 1; //"#%"
+                    return true;
+                case LocaleNumberData.NegativePercentFormat:
+                    value = 1; //"-#%"
+                    return true;
                 default:
                     return false;
             }
@@ -349,9 +363,9 @@ internal static partial class Interop
             var locale = NetJs.Script.Write<Locale>("new Intl.Locale(localeName)");
             string? result = null;
             // Helper to extract parts from NumberFormat
-            string getNFPart(string type, object options)
+            static string getNFPart(string type, object options)
             {
-                return NetJs.Script.Write<string>("new Intl.NumberFormat(locale.baseName, options).formatToParts(1.1).find(p => p.type === type)?.value");
+                return NetJs.Script.Write<string>("new Intl.NumberFormat(locale.baseName, options).formatToParts(1000.1).find(p => p.type === type)?.value");
             }
 
             //// Helper to get NumberFormat properties
@@ -633,9 +647,9 @@ internal static partial class Interop
 
             if (!string.IsNullOrEmpty(sizes))
             {
-                var parts = sizes.Split(';');
-                primaryGroupSize = int.Parse(parts[0]);
-                secondaryGroupSize = int.Parse(parts[1]);
+                var parts = sizes.NativeSplit(";");
+                primaryGroupSize = NetJs.Script.ParseInt(parts[0]);
+                secondaryGroupSize = NetJs.Script.ParseInt(parts[1]);
                 return true;
             }
 

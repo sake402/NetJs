@@ -25,7 +25,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Delegate
                             .GetMembers("Remove")
                             .OfType<IMethodSymbol>()
                             .First(m => m.Parameters.Length == 2);
-                        visitor.CurrentTypeWriter.Write(node, "", true);
+                        visitor.CurrentTypeWriter.Write(node, "");
                         visitor.VisitNode(node.Left);
                         visitor.CurrentTypeWriter.Write(node, " = ");
                         visitor.WriteMethodInvocation(node, delegateRemoveMethod, null, [node.Left, node.Right], null, null);

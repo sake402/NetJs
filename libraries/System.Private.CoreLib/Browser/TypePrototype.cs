@@ -11,12 +11,14 @@ namespace System
     {
         [Name(Constants.AssemblyRegistryName)]
         public Assembly? Assembly { get; set; }
-        [Name("$name")]
-        public string? Name { get; set; }
+        [Name("name")]
+        public string Name { get; }
         [Name(Constants.ObjectTypeName)]
         public Type? Type { get; set; }
-        [Name("$model")]
-        public TypeModel? Model { get; set; }
+        //[Name("$model")]
+        //public TypeModel? Model { get; set; }
+        [Name(NetJs.Constants.PrototypeMetadata)]
+        public TypeModel? Metadata { get; }
         [Name("$args")]
         public TypePrototype[]? Arguments { get; set; }
         [Name("$element")]
@@ -31,11 +33,11 @@ namespace System
         public extern bool StaticInitializeMembers();
         [Name(Constants.StaticConstructorName)]
         public extern bool StaticConstructor();
-        [Name(Constants.DefaultConstructorName)]
+        [Template("new {this}()." + Constants.DefaultConstructorName + "()")]
         public extern object CallDefaultConstructor();
         [Name("constructor")]
         public extern object NativeConstructor();
-        [Template("new {this}()")]
+        [Template("new {this}()." + Constants.DefaultConstructorName + "()")]
         public extern object New();
     }
 

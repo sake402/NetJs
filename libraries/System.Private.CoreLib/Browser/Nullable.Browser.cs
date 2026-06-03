@@ -12,7 +12,7 @@ namespace System
         {
             get
             {
-                var isNull = NetJs.Script.IsNull(this);
+                var isNull = NetJs.Script.IsUndefinedOrNull(this);
                 if (isNull)
                     return false;
                 var isNullable = Object.HasOwnProperty(this, nameof(hasValue));
@@ -30,7 +30,7 @@ namespace System
         {
             get
             {
-                var isNull = NetJs.Script.IsNull(this);
+                var isNull = NetJs.Script.IsUndefinedOrNull(this);
                 if (isNull)
                     ThrowHelper.ThrowInvalidOperationException_InvalidOperation_NoValue();
                 var isNullable = Object.HasOwnProperty(this, nameof(hasValue));
@@ -46,8 +46,25 @@ namespace System
             }
         }
 
-        //[NonVersionable]
-        //public readonly T GetValueOrDefault() => value;
+        [NetJs.MemberReplace(nameof(GetValueOrDefault))]
+        [NetJs.StaticCallConvention]
+        public readonly T GetValueOrDefaultImpl()
+        {
+            var isNull = NetJs.Script.IsUndefinedOrNull(this);
+            if (isNull)
+                return default(T);
+            return Value;
+        }
+
+        [NetJs.MemberReplace(nameof(GetValueOrDefault)+"(T)")]
+        [NetJs.StaticCallConvention]
+        public readonly T GetValueOrDefaultImpl(T defaultValue)
+        {
+            var isNull = NetJs.Script.IsUndefinedOrNull(this);
+            if (isNull)
+                return defaultValue;
+            return Value;
+        }
 
         //[NonVersionable]
         //public readonly T GetValueOrDefault(T defaultValue) =>

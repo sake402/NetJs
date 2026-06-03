@@ -12,7 +12,7 @@ namespace NetJs.Translator.CSharpToJavascript
 {
     public partial class TranslatorSyntaxVisitor
     {
-        void WriteLambdaExpression(CSharpSyntaxNode node, string? modifiers, IEnumerable<ParameterSyntax>? lamdaParameters)
+        void WriteLambdaExpression(CSharpSyntaxNode node, string? modifiers, IEnumerable<ParameterSyntax>? lamdaParameters, CSharpSyntaxNode? body)
         {
             var previousClosure = CurrentClosure;
             OpenClosure(node);
@@ -49,18 +49,18 @@ namespace NetJs.Translator.CSharpToJavascript
             var parameters = string.Join(", ", lamdaParameters?.Select((p, i) => $"/*{p.Type?.ToString().Trim() ?? _global.TryGetSymbol(p.Identifier.Text, this)?.Name}*/ {(p.Identifier.Text == "_" ? $"_{i}" : p.Identifier.Text)}") ?? Enumerable.Empty<string>());
             CurrentTypeWriter.WriteLine(node, $"/*{modifiers}*/ ({parameters}) =>");
             CurrentTypeWriter.WriteLine(node, "{", true);
-            var child = node.ChildNodes().Where(t => !t.IsKind(SyntaxKind.ParameterList)/* is not ParameterListSyntax*/ && !t.IsKind(SyntaxKind.Parameter)/* is not ParameterSyntax*/);
+            //var child = node.ChildNodes().Where(t => !t.IsKind(SyntaxKind.ParameterList)/* is not ParameterListSyntax*/ && !t.IsKind(SyntaxKind.Parameter)/* is not ParameterSyntax*/);
             bool implicitReturn = false;
             bool isThrow = false;
-            if (child.Count() == 1 && child.Single().IsKind(SyntaxKind.ThrowExpression))
+            if (body.IsKind(SyntaxKind.ThrowExpression))
                 isThrow = true;
-            if (child.Count() == 1 && child.Single() is BlockSyntax block)
+            if (body is BlockSyntax block)
             {
-                child = block.Statements;
+                //body = block.Statements;
             }
             else
             {
-                implicitReturn = child.Count() == 1 && child.Single() is not ReturnStatementSyntax;
+                implicitReturn = body is not ReturnStatementSyntax;
             }
             if (implicitReturn)
             {
@@ -69,7 +69,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 else
                     CurrentTypeWriter.Write(node, "", true);
             }
-            VisitChildren(child);
+            Visit(body);
             if (implicitReturn)
             {
                 CurrentTypeWriter.WriteLine(node, ";");
@@ -78,26 +78,25 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 CurrentTypeWriter.EnsureNewLine();
             }
-            bool _static = modifiers?.Contains("static") ?? false;
             CurrentTypeWriter.Write(node, "}", true);
             CloseClosure();
         }
 
         public override void VisitAnonymousMethodExpression(AnonymousMethodExpressionSyntax node)
         {
-            WriteLambdaExpression(node, GetMethodModifier(node, node.Modifiers, null), node.ParameterList?.Parameters);
+            WriteLambdaExpression(node, GetMethodModifier(node, node.Modifiers, null), node.ParameterList?.Parameters, node.Body??node.ExpressionBody);
             //base.VisitAnonymousMethodExpression(node);
         }
 
         public override void VisitParenthesizedLambdaExpression(ParenthesizedLambdaExpressionSyntax node)
         {
-            WriteLambdaExpression(node, GetMethodModifier(node, node.Modifiers, null), node.ParameterList.Parameters);
+            WriteLambdaExpression(node, GetMethodModifier(node, node.Modifiers, null), node.ParameterList.Parameters, node.Body ?? node.ExpressionBody);
             //base.VisitParenthesizedLambdaExpression(node);
         }
 
         public override void VisitSimpleLambdaExpression(SimpleLambdaExpressionSyntax node)
         {
-            WriteLambdaExpression(node, GetMethodModifier(node, node.Modifiers, null), [node.Parameter]);
+            WriteLambdaExpression(node, GetMethodModifier(node, node.Modifiers, null), [node.Parameter], node.Body ?? node.ExpressionBody);
             //base.VisitSimpleLambdaExpression(node);
         }
 

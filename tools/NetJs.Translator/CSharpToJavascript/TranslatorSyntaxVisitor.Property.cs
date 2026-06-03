@@ -207,7 +207,7 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (node.Modifiers.IsExtern())
                 return;
-            if (node.Modifiers.IsPartial())
+            if (node.Modifiers.IsPartial() && (node.AccessorList == null || node.AccessorList.Accessors.All(a => a.ExpressionBody == null && a.Body == null)))
                 return;
             if (node.Parent.IsKind(SyntaxKind.InterfaceDeclaration) &&
                 (node.AccessorList == null || node.AccessorList.Accessors.All(a => a.ExpressionBody == null && a.Body == null)) &&
@@ -328,7 +328,7 @@ namespace NetJs.Translator.CSharpToJavascript
                                 {
                                     var extensionBlock = (ExtensionBlockDeclarationSyntax)node.Parent;
                                     var extensionParameter = extensionBlock.ParameterList!.Parameters.Single();
-                                    CurrentTypeWriter.WriteLine(node, $"{smodifier}{modifier} {propertyName}(/*this {extensionParameter.Type}*/{extensionParameter.Identifier.ValueText})", true);
+                                    CurrentTypeWriter.WriteLine(node, $"static {smodifier}{modifier} {propertyName}$get(/*this {extensionParameter.Type}*/{extensionParameter.Identifier.ValueText})", true);
                                 }
                                 else
                                 {
@@ -342,7 +342,7 @@ namespace NetJs.Translator.CSharpToJavascript
                                 {
                                     var extensionBlock = (ExtensionBlockDeclarationSyntax)node.Parent;
                                     var extensionParameter = extensionBlock.ParameterList!.Parameters.Single();
-                                    CurrentTypeWriter.WriteLine(node, $"{smodifier}{modifier} {propertyName}(/*this {extensionParameter.Type}*/{extensionParameter.Identifier.ValueText}, value)", true);
+                                    CurrentTypeWriter.WriteLine(node, $"static {smodifier}{modifier} {propertyName}$set(/*this {extensionParameter.Type}*/{extensionParameter.Identifier.ValueText}, value)", true);
                                 }
                                 else
                                 {

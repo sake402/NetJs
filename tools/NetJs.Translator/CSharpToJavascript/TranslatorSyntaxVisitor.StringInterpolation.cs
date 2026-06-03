@@ -16,13 +16,31 @@ namespace NetJs.Translator.CSharpToJavascript
         public override void VisitInterpolation(InterpolationSyntax node)
         {
             var handler = (ITypeSymbol)_global.GetSymbol("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler", this);
+            var appendFormattedObjectMethod = handler.GetMembers("AppendFormatted")
+                .Cast<IMethodSymbol>()
+                .Single(e => e.Parameters.Count() == 3 &&
+                        e.Parameters[0].Type.Equals(_global.SystemObject, SymbolEqualityComparer.Default) &&
+                        e.Parameters[1].Type.Equals(_global.SystemInt32, SymbolEqualityComparer.Default) &&
+                        e.Parameters[2].Type.Equals(_global.SystemString, SymbolEqualityComparer.Default));
             CurrentTypeWriter.Write(node, $"$handler.", true);
-            var sint = (ITypeSymbol)_global.GetSymbol("System.Int32", this);
-            var sstring = (ITypeSymbol)_global.GetSymbol("System.String", this);
-            var appendFormattedObjectMethod = handler.GetMembers("AppendFormatted").Cast<IMethodSymbol>().Single(e => e.Parameters.Count() == 3 && e.Parameters[0].Type.Equals(_global.Compilation.ObjectType, SymbolEqualityComparer.Default) && e.Parameters[1].Type.Equals(sint, SymbolEqualityComparer.Default) && e.Parameters[2].Type.Equals(sstring, SymbolEqualityComparer.Default));
             WriteMemberName(node, handler, appendFormattedObjectMethod);
             CurrentTypeWriter.Write(node, $"(");
-            Visit(node.Expression);
+            var expressionType = _global.GetTypeSymbol(node.Expression, this);
+            if (!SymbolEqualityComparer.Default.Equals(expressionType, _global.SystemObject))
+            {
+                CurrentTypeWriter.Write(node, _global.GlobalName);
+                CurrentTypeWriter.Write(node, ".");
+                CurrentTypeWriter.Write(node, Constants.BoxName);
+                CurrentTypeWriter.Write(node, "(");
+                Visit(node.Expression);
+                CurrentTypeWriter.Write(node, ", ");
+                CurrentTypeWriter.Write(node, expressionType.ComputeOutputTypeName(_global));
+                CurrentTypeWriter.Write(node, ")");
+            }
+            else
+            {
+                Visit(node.Expression);
+            }
             CurrentTypeWriter.Write(node, $", ");
             if (node.AlignmentClause != null)
             {
@@ -47,7 +65,11 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             var handler = (ITypeSymbol)_global.GetSymbol("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler", this);
             CurrentTypeWriter.Write(node, $"$handler.", true);
-            WriteMemberName(node, handler, "AppendLiteral");
+            var appendLiteralStringMethod = handler.GetMembers("AppendLiteral")
+                .Cast<IMethodSymbol>()
+                .Single(e => e.Parameters.Count() == 1 &&
+                        e.Parameters[0].Type.Equals(_global.SystemString, SymbolEqualityComparer.Default));
+            WriteMemberName(node, handler, appendLiteralStringMethod);
             CurrentTypeWriter.Write(node, $"(\"");
             CurrentTypeWriter.Write(node, node.TextToken.ValueText.Escape());
             CurrentTypeWriter.WriteLine(node, $"\");");
@@ -63,7 +85,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     if (token is InterpolatedStringTextSyntax str)
                     {
-                        CurrentTypeWriter.Write(node, str/*.ToFullString()*/.TextToken.ValueText);
+                        CurrentTypeWriter.Write(node, str/*.ToFullString()*/.TextToken.ValueText.Escape());
                     }
                     else if (token is InterpolationSyntax format)
                     {
@@ -71,14 +93,32 @@ namespace NetJs.Translator.CSharpToJavascript
                         var type = _global.TryGetTypeSymbol(format.Expression, this);
                         string? formatSpecifier = null;
                         //Cant handle char like a regular primitive. THough char is a numeric type, its conversion to string is not numeric
-                        if (type != null && 
+                        if (type != null &&
                             !SymbolEqualityComparer.Default.Equals(type, _global.SystemString) &&
                             (!type.IsJsPrimitive() || SymbolEqualityComparer.Default.Equals(type, _global.SystemChar)))
                         {
                             var toString = type.GetMembers("ToString", _global).Where(e => e is IMethodSymbol m && m.Parameters.Count() == (formatSpecifier == null ? 0 : 1)).Cast<IMethodSymbol>().FirstOrDefault();
                             if (toString != null)
                             {
-                                WriteMethodInvocation(node, toString, null, null, format.Expression, null, null, false);
+                                if (IsGenericDispatch(type, toString))
+                                {
+                                    CurrentTypeWriter.Write(node, _global.GlobalName);
+                                    CurrentTypeWriter.Write(node, ".");
+                                    CurrentTypeWriter.Write(node, Constants.Dispatch);
+                                    CurrentTypeWriter.Write(node, "(");
+                                    VisitNode(format.Expression);
+                                    CurrentTypeWriter.Write(node, ", ");
+                                    CurrentTypeWriter.Write(node, type.Name);
+                                    CurrentTypeWriter.Write(node, ", ");
+                                    CurrentTypeWriter.Write(node, "($t) => ");
+                                    CurrentTypeWriter.Write(node, "$t.ToString");
+                                    //WriteMethodInvocation(node, toString, null, null, new CodeNode(() => CurrentTypeWriter.Write(node, "$t")), null, null, false);
+                                    CurrentTypeWriter.Write(node, ")");
+                                }
+                                else
+                                {
+                                    WriteMethodInvocation(node, toString, null, null, format.Expression, null, null, false);
+                                }
                             }
                             else
                             {

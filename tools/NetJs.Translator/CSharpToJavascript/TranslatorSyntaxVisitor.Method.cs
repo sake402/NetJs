@@ -632,6 +632,27 @@ namespace NetJs.Translator.CSharpToJavascript
                 throw new InvalidOperationException("Cannot write method without a body");
             //TODO: operator methods are not getting their symbols
             var methodSymbol = _global.TryGetSymbol(node, this/*, out _, out _*/);
+            // If this method has a covariant parameter,
+            // eg
+            // private interface IConsumer<in T> { void Consume(T item); }
+            // void Consume(object item){} 
+            // private class ObjectConsumer : IConsumer<object> { public void Consume(object item){} }
+            // Variance: IConsumer<object> can be used as IConsumer<string>
+            // IConsumer<string> contravariant = new ObjectConsumer();
+            // contravariant.Consume("world");
+            // Calling consume with js string will break things,
+            // unless the string is boxed as an object,
+            // so we need to box the parameter in this case.
+            // We can detect this by checking if the parameter is contravariant and the argument type is a value type,
+            // then we know we need to box it.
+            // We can also check if the parameter has a custom attribute [Box] to force boxing even for reference types, or disable boxing for value types.
+            //if (methodSymbol is IMethodSymbol method1)
+            //{
+            //    foreach (var p in method1.Parameters)
+            //    {
+            //        if (p.Var)
+            //    }
+            //}
             if (node.ExpressionBody != null || writePrologue != null)
             {
                 CurrentTypeWriter.WriteLine(node, "{", true);
@@ -967,7 +988,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     if (lhsExpression != null)
                     {
-                        //calling object method on primitive type,
+                        //calling object method on js primitive type,
                         //We need to box it first to be able to call the method
                         //Or we call the method statically
                         if (lhsSymbol != null && _global.GetTypeSymbol(lhsSymbol).IsJsPrimitive())
@@ -1366,7 +1387,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
         bool ShouldExportMethod(CSharpSyntaxNode node)
         {
-            if (node is BaseMethodDeclarationSyntax bm && (bm.Modifiers.IsExtern() || bm.Modifiers.IsPartial()))
+            if (node is BaseMethodDeclarationSyntax bm && bm.Modifiers.IsExtern())
                 return false;
             //var symbol = _global.TryGetTypeSymbol(node, this/*, out _, out _*/);
             //if (symbol is IMethodSymbol methodSymbol)
@@ -1379,12 +1400,13 @@ namespace NetJs.Translator.CSharpToJavascript
             //}
             return true;
         }
+
         public override void VisitMethodDeclaration(MethodDeclarationSyntax node)
         {
             if (!ShouldExportMethod(node))
                 return;
-            //if (node.Modifiers.IsPartial() && node.Body == null && node.ExpressionBody == null)
-            //    return;
+            if (node.Modifiers.IsPartial() && node.Body == null && node.ExpressionBody == null)
+                return;
             //if (node.Body == null && node.ExpressionBody == null)
             //    return;
             var methodSymbol = (IMethodSymbol)OpenClosure(node);// _global.TryGetTypeSymbol(node, this, out _, out _);
@@ -1392,7 +1414,6 @@ namespace NetJs.Translator.CSharpToJavascript
                 return;
             //if (methodSymbol.Name== "FilterHelper")
             //{
-
             //}
             bool external = _global.HasAttribute(methodSymbol, typeof(TemplateAttribute).FullName!, this, false, out _);
             bool export = _global.ShouldExportType(methodSymbol, this);

@@ -13,7 +13,7 @@ namespace System
         [Name("get")]
         public object? Get(object target, string property, object receiver);
         [Name("set")]
-        public bool Set(object target, string property, object value);
+        public bool Set(object target, string property, object value, object receiver);
     }
 
     [NetJs.Reflectable(false)]

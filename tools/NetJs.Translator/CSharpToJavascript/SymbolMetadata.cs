@@ -47,7 +47,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
         void InitializeTypeName()
         {
-            if (Symbol is INamespaceSymbol nnamespace)
+            if (Symbol.Kind == SymbolKind.Namespace && Symbol is INamespaceSymbol nnamespace)
             {
                 _originalInvocationName = OverloadName;
                 _invocationName = OverloadName;
@@ -78,22 +78,22 @@ namespace NetJs.Translator.CSharpToJavascript
                     _invocationName = ComputeInvocatioNameForType(ttype, OverloadName, _global);
                 }
             }
-            else if (Symbol is IFieldSymbol ffield)
+            else if (Symbol.Kind == SymbolKind.Field && Symbol is IFieldSymbol ffield)
             {
                 _originalInvocationName = ComputeInvocationNameForField(ffield, OriginalOverloadName, _global);
                 _invocationName = ComputeInvocationNameForField(ffield, OverloadName, _global);
             }
-            else if (Symbol is IEventSymbol eevent)
+            else if (Symbol.Kind == SymbolKind.Event && Symbol is IEventSymbol eevent)
             {
                 _originalInvocationName = ComputeInvocationNameForEvent(eevent, OriginalOverloadName, _global);
                 _invocationName = ComputeInvocationNameForEvent(eevent, OverloadName, _global);
             }
-            else if (Symbol is IPropertySymbol pproperty)
+            else if (Symbol.Kind == SymbolKind.Property && Symbol is IPropertySymbol pproperty)
             {
                 _originalInvocationName = ComputeInvocatioNameForProperty(pproperty, OriginalOverloadName, _global);
                 _invocationName = ComputeInvocatioNameForProperty(pproperty, OverloadName, _global);
             }
-            else if (Symbol is IMethodSymbol mmethod)
+            else if (Symbol.Kind == SymbolKind.Method && Symbol is IMethodSymbol mmethod)
             {
                 _originalInvocationName = ComputeInvocatioNameForMethod(mmethod, OriginalOverloadName, _global);
                 _invocationName = ComputeInvocatioNameForMethod(mmethod, OverloadName, _global);
@@ -109,7 +109,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 //}
             }
             //Handles primary constructor parameter created as field
-            else if (Symbol is IParameterSymbol pparameter)
+            else if (Symbol.Kind == SymbolKind.TypeParameter && Symbol is IParameterSymbol pparameter)
             {
                 _originalInvocationName = ComputeInvocationNameForParameterField(pparameter, OriginalOverloadName, _global);
                 _invocationName = ComputeInvocationNameForParameterField(pparameter, OverloadName, _global);
@@ -166,7 +166,7 @@ namespace NetJs.Translator.CSharpToJavascript
         }
 
         const string ShortenedNameIdentitfier = "\\";
-        public static string ShortName(GlobalCompilationVisitor _global, string? shortPrefix, string? longPrefix, string signature, string name, Dictionary<string, string> exportNames, bool generate = true, bool export = true)
+        public static string ShortName(GlobalCompilationVisitor _global, string? shortPrefix, string? longPrefix, string signature, string name, Dictionary<string, SymbolValue> exportNames, bool generate = true, bool export = true)
         {
             if (!generate || !_global.OutputMode.HasFlag(OutputMode.ShortNames))
             {
@@ -178,7 +178,11 @@ namespace NetJs.Translator.CSharpToJavascript
                     //{
                     //    key = name + "|" + resolvedName;
                     //}
-                    exportNames.Add(resolvedName, signature);
+                    //if (signature== "Ceiling($spc.System.Runtime.Intrinsics.Vector256<$spc.System.Double>)$$2")
+                    //{
+
+                    //}
+                    exportNames.Add(resolvedName, new SymbolValue { Signature = signature });
                 }
                 return resolvedName;
             }
@@ -282,7 +286,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 shortName += padded;
                 nextTry++;
             }
-            exportNames.Add(shortName, signature);
+            exportNames.Add(shortName, new SymbolValue { Signature = signature });
             //usedNames.Add(shortName, (longPrefix != null ? longPrefix + "." : "") + name + suffix);
             //shortName += keepSuffix;
             return shortName;
@@ -290,6 +294,10 @@ namespace NetJs.Translator.CSharpToJavascript
 
         static string ComputeInvocatioNameForType(ITypeSymbol type, string? overloadName, GlobalCompilationVisitor _global)
         {
+            //if (type is INamedTypeSymbol ts && ts.IsExtension)
+            //{
+
+            //}
             if (type.IsAnonymousType)
             {
                 return ComputeInvocatioNameForType(_global.SystemObject, null, _global);
@@ -398,7 +406,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 overloadName = typeMeta.OverloadName ?? throw new InvalidOperationException("Containing type must be processed before contained type");
             }
             var invocationName = overloadName;
-            if (property.IsStatic || property.IsStaticCallConvention(_global))
+            if (property.IsStatic || property.IsStaticCallConvention(_global) || property.IsExtensionMember(_global))
             {
                 var declaringType = property.ContainingType;
                 var declaringTypeMetadata = _global.GetRequiredMetadata(declaringType);

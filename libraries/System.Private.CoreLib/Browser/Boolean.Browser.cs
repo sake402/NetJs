@@ -123,5 +123,10 @@ namespace System
             return NetJs.Script.TypeOf(value).NativeEquals("boolean");
         }
 
+        [NetJs.Name(NetJs.Constants.DefaultTypeName)]
+        public static bool Default()
+        {
+            return false;
+        }
     }
 }

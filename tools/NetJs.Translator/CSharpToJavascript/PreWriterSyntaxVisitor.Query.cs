@@ -6,6 +6,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
+//Sourced from https://github.com/dudikeleti/Roslyn
 namespace NetJs.Translator.CSharpToJavascript
 {
     // This is a sub class of a bigger class that do the rewrite, among other things.

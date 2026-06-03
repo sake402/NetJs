@@ -39,8 +39,10 @@ namespace System
         public static extern string NativeFromCharCode(char[] codes);
         [NetJs.Template("{this}.charCodeAt({i})")]
         public extern char NativeCharCodeAt(int i);
-        [NetJs.Template("{this} == {b}")]
+        [NetJs.Template("{this} === {b}")]
         public extern bool NativeEquals(string b);
+        [NetJs.Template("{this} !== {b}")]
+        public extern bool NativeNotEquals(string b);
         [NetJs.Template("{this}.toLowerCase()")]
         public extern string NativeToLower();
         [NetJs.Template("{this}.toUpperCase()")]

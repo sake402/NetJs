@@ -259,8 +259,14 @@ namespace NetJs.Translator.CSharpToJavascript
         ISymbol? InferReturnType(CSharpSyntaxNode node)
         {
             ISymbol? returnType = null;
+            var localMethod = node.FindClosestParent<LocalFunctionStatementSyntax>();
             var method = node.FindClosestParent<MethodDeclarationSyntax>();
-            if (method != null)
+            if (localMethod != null)
+            {
+                var methodSymbol = (IMethodSymbol)_global.GetSymbol(localMethod, this/*, out _, out _*/);
+                returnType = methodSymbol;
+            }
+            else if (method != null)
             {
                 var methodSymbol = (IMethodSymbol)_global.GetSymbol(method, this/*, out _, out _*/);
                 returnType = methodSymbol;

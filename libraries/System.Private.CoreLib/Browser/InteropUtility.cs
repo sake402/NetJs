@@ -153,8 +153,8 @@ public static class InteropUtility
             address -= virtualBlockAddressOffset;
             var block = address / virtualAddressSpaceSlotSize;
             var ptr = virtualAddressSpaces[block].As<RefOrPointer<object>>();
-            var toModel = ptrType != null ? ptrType.Arguments![0].Model : null;
-            var fromModel = ptr.GetPrototype().Arguments![0].Model;
+            var toModel = ptrType != null ? ptrType.Arguments![0].Metadata : null;
+            var fromModel = ptr.GetPrototype().Arguments![0].Metadata;
             if (fromModel != null && toModel != null)
             {
                 //If both are numeric type, create a new TTo ref such that it can read from the TFrom ref

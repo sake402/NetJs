@@ -57,7 +57,7 @@ namespace System
                 return new RuntimeType(assembly, prototype, model, scriptFullName);
             }
         }
-
+        
         //DO NOT CALL DIRECTLY. We only call this in the static function above
         //we are merging these two constructor overload into one (with union) so there is no overload on System.Type and we can call it deterministically from Script.Write above
         [Name("__ctor__")] //we are renaming this constructor so it doesn't conflict with the js prototype we mix with it above
@@ -84,8 +84,8 @@ namespace System
                 //prototype.As<object>()["$type"] = this;
             }
             prototype.As<TypePrototype>().Assembly = assembly;
-            prototype.As<TypePrototype>().Name = scriptFullName;
-            prototype.As<TypePrototype>().Model = model;
+            //prototype.As<TypePrototype>().Name = scriptFullName;
+            //prototype.As<TypePrototype>().Model = model;
             Object.DefineProperty(prototype.As<object>(), Constants.ObjectTypeName, new PropertyDescriptor { Value = this });
             //prototype.As<TypePrototype>().Type = this;
             if (_assembly != null)
@@ -389,17 +389,17 @@ namespace System
             return AppDomain.GetType(typeHandle.As<uint>());
         }
 
-        public static string? GetTypeNameFromHandle(uint typeHandle)
-        {
-            var assemblyHandle = typeHandle.AssemblyHandle();
-            var metadata = AppDomain.GlobalMetadataRegistry[assemblyHandle.As<uint>()];
-            if (Script.IsUndefined(metadata))
-                return null;
-            var name = metadata.TypeNames[typeHandle.TypeHandle()];
-            if (Script.IsUndefined(name))
-                return null;
-            return name;
-        }
+        //public static string? GetTypeNameFromHandle(uint typeHandle)
+        //{
+        //    var assemblyHandle = typeHandle.AssemblyHandle();
+        //    var metadata = AppDomain.GlobalMetadataRegistry[assemblyHandle.As<uint>()];
+        //    if (Script.IsUndefined(metadata))
+        //        return null;
+        //    var name = metadata.TypeNames[typeHandle.TypeHandle()];
+        //    if (Script.IsUndefined(name))
+        //        return null;
+        //    return name;
+        //}
 
         //public static Type? GetType(AssemblyModel assembly, int typeIndex)
         //{
@@ -552,7 +552,7 @@ namespace System
             var runtimeType = RuntimeHelpers.QCallTypeHandleToRuntimeType(type);
             if (runtimeType._model.As<TypeModel>().Kind == TypeKindModel.Class || runtimeType._model.As<TypeModel>().Kind == TypeKindModel.Struct)
             {
-                if (runtimeType._model.As<TypeModel>().BaseType != null)
+                if (NetJs.Script.IsDefined(runtimeType._model.As<TypeModel>().BaseType))
                 {
                     res.GetObjectHandleOnStack<RuntimeType?>() = AppDomain.GetType(runtimeType._model.As<TypeModel>().BaseType!.Value.As<uint>());
                 }

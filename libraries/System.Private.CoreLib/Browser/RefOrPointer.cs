@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Window;
 
 namespace System
 {
@@ -12,7 +13,7 @@ namespace System
         object? Value { get; set; }
         //int? _arrayOffset { get; }
     }
-
+    
     public static class RefOrPointer
     {
         public static int Compare(IRefOrPointer? first, IRefOrPointer? second)
@@ -21,7 +22,13 @@ namespace System
                 return second == null ? 0 : -1;
             if (second == null)
                 return 1;
-            //Comparing two pointers should point to same memory allocation
+            if (first.As<RefOrPointer<object>>()._object != null && second.As<RefOrPointer<object>>()._object != null)
+            {
+                //object pointer, not sure how to compare this yet
+                //Shold return zero if referencing the same object though
+                return -1;
+            }
+            //Comparing two array pointers should point to same memory allocation
             Debug.Assert(first.As<RefOrPointer<object>>().Overlaps(second), "Reference/Pointer must overlap before comparing them");
             return first.As<RefOrPointer<object>>()._arrayOffset - second.As<RefOrPointer<object>>()._arrayOffset;
         }
@@ -77,7 +84,7 @@ namespace System
         internal int? _sizeOfItem;
         public int SizeOfItem => _sizeOfItem ??= Marshal.SizeOf(Type);
         internal Type? _type;
-        public Type Type => _type ?? typeof(T);
+        public Type Type => _type ??= typeof(T);
 
         public T Value
         {
@@ -105,80 +112,212 @@ namespace System
             Array.Copy(_array, start, newArray, 0, length);
             return newArray;
         }
+        internal DataView? _dataView;
+        DataView DataView
+        {
+            get
+            {
+                if (_dataView != null)
+                    return _dataView;
+                if (_array == null && _object == null)
+                    throw new InvalidOperationException("Not based on an array/object");
+                var knownType = Type.As<RuntimeType>()._model.As<TypeModel>().KnownType;
+                if (!knownType.IsNumeric())
+                    throw new InvalidOperationException("Not supported on non-numeric types");
+                if (_arrayOffset != 0)
+                    throw new InvalidOperationException("Not supported on non-root ref");
+                T[] arr = _array ?? NetJs.Script.CreateArrayFromValues(_object!);
+                var bytes = knownType switch
+                {
+                    KnownTypeHandle.SystemSByte => new Window.Int8Array(arr).buffer,
+                    KnownTypeHandle.SystemByte => new Window.Uint8Array(arr).buffer,
+                    KnownTypeHandle.SystemInt16 => new Window.Int16Array(arr).buffer,
+                    KnownTypeHandle.SystemUInt16 or KnownTypeHandle.SystemChar => new Window.Uint16Array(arr).buffer,
+                    KnownTypeHandle.SystemInt32 or KnownTypeHandle.SystemIntPtr => new Window.Int32Array(arr).buffer,
+                    KnownTypeHandle.SystemUint32 or KnownTypeHandle.SystemUintPtr => new Window.Uint32Array(arr).buffer,
+                    KnownTypeHandle.SystemInt64 => new Window.BigInt64Array(arr).buffer,
+                    KnownTypeHandle.SystemUint64 => new Window.BigUint64Array(arr).buffer,
+                    KnownTypeHandle.SystemFloat => new Window.Float32Array(arr).buffer,
+                    KnownTypeHandle.SystemDouble => new Window.Float64Array(arr).buffer,
+                    // Handle other sizes as needed
+                    _ => throw new NotSupportedException("Size not supported")
+                };
+                _dataView = new DataView(bytes);
+                //_dataView["array"] = arr;
+                return _dataView;
+            }
+        }
+
+        //void UpdateOriginalArray()
+        //{
+        //    if (_dataView != null)
+        //    {
+        //        var knownType = Type.As<RuntimeType>()._model.As<TypeModel>().KnownType;
+        //        //update the original array from the dataView
+        //        //var originalArray = _dataView["array"].As<Array>();
+        //        Array originalArray = _array!;
+        //        if (NetJs.Script.IsDefined(originalArray))
+        //        {
+        //            for (int i = 0; i < originalArray.Length; i++)
+        //            {
+        //                var ix = i * SizeOfItem;
+        //                var value = knownType switch
+        //                {
+        //                    KnownTypeHandle.SystemByte => _dataView.getUint8(ix).As<object>(),
+        //                    KnownTypeHandle.SystemInt16 => _dataView.getInt16(ix, true).As<object>(),
+        //                    KnownTypeHandle.SystemUInt16 or KnownTypeHandle.SystemChar => _dataView.getUint16(ix, true).As<object>(),
+        //                    KnownTypeHandle.SystemInt32 or KnownTypeHandle.SystemIntPtr => _dataView.getInt32(ix, true).As<object>(),
+        //                    KnownTypeHandle.SystemUint32 or KnownTypeHandle.SystemUintPtr => _dataView.getUint32(ix, true).As<object>(),
+        //                    KnownTypeHandle.SystemInt64 => _dataView.getBigInt64(ix, true).As<object>(),
+        //                    KnownTypeHandle.SystemUint64 => _dataView.getBigUint64(ix, true).As<object>(),
+        //                    KnownTypeHandle.SystemFloat => _dataView.getFloat32(ix, true).As<object>(),
+        //                    KnownTypeHandle.SystemDouble => _dataView.getFloat64(ix, true).As<object>(),
+        //                    // Handle other sizes as needed
+        //                    _ => throw new NotSupportedException("Size not supported")
+        //                };
+        //                originalArray[i] = value;
+        //            }
+        //        }
+        //    }
+        //}
+
+
+        void UpdateOriginalArrayItem(int arrayStartIndex, int byteStartIndex, int count)
+        {
+            if (_dataView != null)
+            {
+                //copy it, this dataView could be invalidated, while modifying the underlying array
+                var dataView = _dataView;
+                var knownType = Type.As<RuntimeType>()._model.As<TypeModel>().KnownType;
+                Array originalArray = _array!;
+                //byte should start in the right place. eg for 2 sized item [0,1] => 0, [2,3]=>2
+                byteStartIndex = (byteStartIndex / SizeOfItem) * SizeOfItem;
+                do
+                {
+                    var value = knownType switch
+                    {
+                        KnownTypeHandle.SystemSByte => dataView.getInt8(byteStartIndex).As<object>(),
+                        KnownTypeHandle.SystemByte => dataView.getUint8(byteStartIndex).As<object>(),
+                        KnownTypeHandle.SystemInt16 => dataView.getInt16(byteStartIndex, true).As<object>(),
+                        KnownTypeHandle.SystemUInt16 or KnownTypeHandle.SystemChar => dataView.getUint16(byteStartIndex, true).As<object>(),
+                        KnownTypeHandle.SystemInt32 or KnownTypeHandle.SystemIntPtr => dataView.getInt32(byteStartIndex, true).As<object>(),
+                        KnownTypeHandle.SystemUint32 or KnownTypeHandle.SystemUintPtr => dataView.getUint32(byteStartIndex, true).As<object>(),
+                        KnownTypeHandle.SystemInt64 => dataView.getBigInt64(byteStartIndex, true).As<object>(),
+                        KnownTypeHandle.SystemUint64 => dataView.getBigUint64(byteStartIndex, true).As<object>(),
+                        KnownTypeHandle.SystemFloat => dataView.getFloat32(byteStartIndex, true).As<object>(),
+                        KnownTypeHandle.SystemDouble => dataView.getFloat64(byteStartIndex, true).As<object>(),
+                        // Handle other sizes as needed
+                        _ => throw new NotSupportedException("Size not supported")
+                    };
+                    originalArray[arrayStartIndex] = value;
+                    byteStartIndex += SizeOfItem;
+                    arrayStartIndex++;
+                } while (--count > 0);
+            }
+        }
 
         public T GetAt(int offset)
         {
             if (NetJs.Script.TypeOf(offset).NativeEquals("bigint"))
                 offset = NetJs.Script.Write<int>("Number(offset)");
-            offset += _arrayOffset;
             if (_parentRef != null)
             {
                 var parentO = _parentRef.As<RefOrPointer<object>>();
-                var sourceSize = _parentRef.SizeOfItem;
-                var thisSize = SizeOfItem;
-                if (thisSize > sourceSize) //eg int > byte, getting int from underlying byte[]
+                var arrayRootRef = GetRefWithBackingArray(out var byteOffset, out var arrayOffset).As<RefOrPointer<object>>();
+                byteOffset += offset * SizeOfItem;
+                var isNumeric = parentO.Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsNumeric() &&
+                        Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsNumeric();
+                if (arrayRootRef == null)
+                    byteOffset = 0;
+                if (isNumeric && (arrayRootRef != null || parentO._object != null))
                 {
-                    var ratio = Math.DivRem(thisSize, sourceSize);
-                    Debug.Assert(ratio.Remainder == 0);
-                    ulong numeric = 0;
-                    var isNumeric = _parentRef.Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric() &&
-                        Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric();
-                    var raw = !isNumeric ? new object[ratio.Quotient] : null;
-                    for (int i = 0; i < ratio.Quotient; i++)
+                    var sourceView = arrayRootRef?.DataView ?? parentO.DataView;
+                    var knownType = Type.As<RuntimeType>()._model.As<TypeModel>().KnownType;
+                    var value = knownType switch
                     {
-                        var value = parentO.GetAt(offset * ratio.Quotient + i);
-                        if (isNumeric)
-                        {
-                            numeric |= (ulong)value.As<uint>() << (i * sourceSize * 8);
-                        }
-                        else
-                        {
-                            raw![i] = value;
-                        }
-                    }
-                    if (isNumeric)
-                    {
-                        return (T)numeric.As<object>();
-                    }
-                    else if (Type.As<RuntimeType>()._model.As<TypeModel>().KnownType == KnownTypeHandle.SystemDouble)
-                    {
-                        NetJs.Script.Write("const bytes = new Uint8Array(raw)");
-                        NetJs.Script.Write("const view = new DataView(bytes.buffer)");
-                        return NetJs.Script.Write<T>("view.getFloat64(0, true)");
-                    }
-                    else if (Type.As<RuntimeType>()._model.As<TypeModel>().KnownType == KnownTypeHandle.SystemFloat)
-                    {
-                        NetJs.Script.Write("const bytes = new Uint8Array(raw)");
-                        NetJs.Script.Write("const view = new DataView(bytes.buffer)");
-                        return NetJs.Script.Write<T>("view.getFloat32(0, true)");
-                    }
-                    else
-                    {
-                        throw null;
-                        //var t = NetJs.Script.Write<T>("new T()")!;
-                        //t._fields = raw;
-                        //return t;
-                    }
-                }
-                else if (thisSize < sourceSize) //eg byte < int, getting byte from underlying int[]
-                {
-                    var ratio = Math.DivRem(sourceSize, thisSize);
-                    Debug.Assert(ratio.Remainder == 0);
-                    var d = (ulong)parentO.GetAt(offset / ratio.Quotient).As<uint>();
-                    var i = offset % ratio.Quotient;
-                    if (_parentRef.Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric() && Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric())
-                    {
-                        return (T)(d >> (8 * i)).As<object>();
-                    }
-                    else
-                    {
-                        throw null;
-                        //d.As<object>()._fields;
-                    }
+                        KnownTypeHandle.SystemSByte => sourceView.getInt8(byteOffset).As<T>(),
+                        KnownTypeHandle.SystemByte => sourceView.getUint8(byteOffset).As<T>(),
+                        KnownTypeHandle.SystemInt16 => sourceView.getInt16(byteOffset, true).As<T>(),
+                        KnownTypeHandle.SystemUInt16 or KnownTypeHandle.SystemChar => sourceView.getUint16(byteOffset, true).As<T>(),
+                        KnownTypeHandle.SystemInt32 or KnownTypeHandle.SystemIntPtr => sourceView.getInt32(byteOffset, true).As<T>(),
+                        KnownTypeHandle.SystemUint32 or KnownTypeHandle.SystemUintPtr => sourceView.getUint32(byteOffset, true).As<T>(),
+                        KnownTypeHandle.SystemInt64 => sourceView.getBigInt64(byteOffset, true).As<T>(),
+                        KnownTypeHandle.SystemUint64 => sourceView.getBigUint64(byteOffset, true).As<T>(),
+                        KnownTypeHandle.SystemFloat => sourceView.getFloat32(byteOffset, true).As<T>(),
+                        KnownTypeHandle.SystemDouble => sourceView.getFloat64(byteOffset, true).As<T>(),
+                        _ => throw new NotSupportedException("Size not supported")
+                    };
+                    return value;
                 }
                 else
                 {
-                    return (T)parentO.GetAt(offset);
+                    offset += _arrayOffset;
+                    var sourceSize = _parentRef.SizeOfItem;
+                    var thisSize = SizeOfItem;
+                    if (thisSize > sourceSize) //eg int > byte, getting int from underlying byte[]
+                    {
+                        var ratio = Math.DivRem(thisSize, sourceSize);
+                        Debug.Assert(ratio.Remainder == 0);
+                        ulong numeric = 0;
+                        var isIntegerNumeric = _parentRef.Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric() &&
+                            Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric();
+                        var raw = !isIntegerNumeric ? new object[ratio.Quotient] : null;
+                        for (int i = 0; i < ratio.Quotient; i++)
+                        {
+                            var value = parentO.GetAt(offset * ratio.Quotient + i);
+                            if (isIntegerNumeric)
+                            {
+                                numeric |= (ulong)value.As<uint>() << (i * sourceSize * 8);
+                            }
+                            else
+                            {
+                                raw![i] = value;
+                            }
+                        }
+                        if (isIntegerNumeric)
+                        {
+                            return (T)numeric.As<object>();
+                        }
+                        else if (Type.As<RuntimeType>()._model.As<TypeModel>().KnownType == KnownTypeHandle.SystemDouble)
+                        {
+                            NetJs.Script.Write("const bytes = new Uint8Array(raw)");
+                            NetJs.Script.Write("const view = new DataView(bytes.buffer)");
+                            return NetJs.Script.Write<T>("view.getFloat64(0, true)");
+                        }
+                        else if (Type.As<RuntimeType>()._model.As<TypeModel>().KnownType == KnownTypeHandle.SystemFloat)
+                        {
+                            NetJs.Script.Write("const bytes = new Uint8Array(raw)");
+                            NetJs.Script.Write("const view = new DataView(bytes.buffer)");
+                            return NetJs.Script.Write<T>("view.getFloat32(0, true)");
+                        }
+                        else
+                        {
+                            throw null;
+                            //var t = NetJs.Script.Write<T>("new T()")!;
+                            //t._fields = raw;
+                            //return t;
+                        }
+                    }
+                    else if (thisSize < sourceSize) //eg byte < int, getting byte from underlying int[]
+                    {
+                        var ratio = Math.DivRem(sourceSize, thisSize);
+                        Debug.Assert(ratio.Remainder == 0);
+                        var d = (ulong)parentO.GetAt(offset / ratio.Quotient).As<uint>();
+                        var i = offset % ratio.Quotient;
+                        if (_parentRef.Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric() && Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric())
+                        {
+                            return (T)(d >> (8 * i)).As<object>();
+                        }
+                        else
+                        {
+                            throw null;
+                            //d.As<object>()._fields;
+                        }
+                    }
+                    else
+                    {
+                        return (T)parentO.GetAt(offset);
+                    }
                 }
             }
             //else if (_primitiveWindowItems > 0) //eg getting int from underlying byte[]
@@ -195,6 +334,7 @@ namespace System
             //    ulong result = (_getter(ArrayOffset).As<ulong>() >> ((Math.Abs(_primitiveWindowItems) - 1) * 8)) & _primitiveWindowItemMask;
             //    return result.As<T>();
             //}
+            offset += _arrayOffset;
             return _getter(offset);
         }
 
@@ -202,69 +342,151 @@ namespace System
         {
             if (NetJs.Script.TypeOf(offset).NativeEquals("bigint"))
                 offset = NetJs.Script.Write<int>("Number(offset)");
-            offset += _arrayOffset;
             if (_parentRef != null)
             {
                 var parentO = _parentRef.As<RefOrPointer<object>>();
-                var sourceSize = _parentRef.SizeOfItem;
-                var thisSize = SizeOfItem;
-                if (thisSize > sourceSize) //eg int > byte, setting int to underlying byte[]
+                var arrayRootRef = GetRefWithBackingArray(out var byteOffset, out var arrayOffset).As<RefOrPointer<object>?>();
+                byteOffset += offset * SizeOfItem;
+                int arrayOffsetInRoot = arrayRootRef != null ? byteOffset / arrayRootRef.SizeOfItem : 0;
+                var isNumeric = parentO.Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsNumeric() &&
+                        Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsNumeric();
+                if (arrayRootRef == null)
                 {
-                    var ratio = Math.DivRem(thisSize, sourceSize);
-                    Debug.Assert(ratio.Remainder == 0);
-                    var isNumeric = _parentRef.Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric() &&
-                        Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric();
-                    ulong mask = sourceSize switch
-                    {
-                        1 => 0xFF,
-                        2 => 0xFFFF,
-                        4 => 0xFFFFFFFF,
-                        8 => 0xFFFFFFFFFFFFFFFF,
-                        _ => 0
-                    };
-                    var parentPrototype = parentO.Type.As<RuntimeType>()._prototype;
-                    for (int i = 0; i < ratio.Quotient; i++)
-                    {
-                        if (isNumeric)
-                        {
-                            var longValue = ((ulong)value.As<uint>() >> (i * sourceSize * 8)) & mask;
-                            var parValue = NetJs.Script.Write<object>($"{NetJs.Constants.GlobalName}.{NetJs.Constants.CastName}({nameof(longValue)}, {nameof(parentPrototype)})");
-                            parentO.SetAt(parValue, offset * ratio.Quotient + i);
-                        }
-                        else
-                        {
-                            throw null!;
-                        }
-                    }
+                    byteOffset = offset;
                 }
-                else if (thisSize < sourceSize) //eg byte < int, setting byte to underlying int[]
+                if (isNumeric && (arrayRootRef != null || parentO._object != null))
                 {
-                    var ratio = Math.DivRem(sourceSize, thisSize);
-                    Debug.Assert(ratio.Remainder == 0);
-                    var parValue = _parentRef.As<RefOrPointer<object>>().GetAt(offset / ratio.Quotient);
-                    if (NetJs.Script.IsUndefined(parValue)) //this can happen with ref to unititialized local reference
+                    var sourceView = arrayRootRef?.DataView ?? parentO.DataView;
+                    var knownType = Type.As<RuntimeType>()._model.As<TypeModel>().KnownType;
+                    switch (knownType)
                     {
-                        parValue = 0.As<object>();
+                        case KnownTypeHandle.SystemByte:
+                            sourceView.setUint8(byteOffset, value.As<byte>());
+                            break;
+                        case KnownTypeHandle.SystemSByte:
+                            sourceView.setInt8(byteOffset, value.As<sbyte>());
+                            break;
+                        case KnownTypeHandle.SystemChar:
+                        case KnownTypeHandle.SystemUInt16:
+                            sourceView.setUint16(byteOffset, value.As<ushort>(), true);
+                            break;
+                        case KnownTypeHandle.SystemInt16:
+                            sourceView.setInt16(byteOffset, value.As<short>(), true);
+                            break;
+                        case KnownTypeHandle.SystemUint32:
+                        case KnownTypeHandle.SystemUintPtr:
+                            sourceView.setUint32(byteOffset, value.As<uint>(), true);
+                            break;
+                        case KnownTypeHandle.SystemInt32:
+                        case KnownTypeHandle.SystemIntPtr:
+                            sourceView.setInt32(byteOffset, value.As<int>(), true);
+                            break;
+                        case KnownTypeHandle.SystemUint64:
+                            sourceView.setBigUint64(byteOffset, value.As<ulong>(), true);
+                            break;
+                        case KnownTypeHandle.SystemInt64:
+                            sourceView.setBigInt64(byteOffset, value.As<long>(), true);
+                            break;
+                        case KnownTypeHandle.SystemFloat:
+                            sourceView.setFloat32(byteOffset, value.As<float>(), true);
+                            break;
+                        case KnownTypeHandle.SystemDouble:
+                            sourceView.setFloat64(byteOffset, value.As<double>(), true);
+                            break;
+                        default:
+                            throw new NotSupportedException("Size not supported");
                     }
-                    var longValue = (ulong)parValue.As<uint>();
-                    var i = offset % ratio.Quotient;
-                    if (_parentRef.Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric() && Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric())
+                    if (arrayRootRef != null)
                     {
-                        var maskSet = (ulong)value.As<uint>();
-                        var maskClear = ~(0xffUL << (8 * i));
-                        longValue = (longValue & maskClear) | (maskSet << (8 * i));
-                        var parentPrototype = parentO.Type.As<RuntimeType>()._prototype;
-                        var dd = NetJs.Script.Write<object>($"{NetJs.Constants.GlobalName}.{NetJs.Constants.CastName}({nameof(longValue)}, {nameof(parentPrototype)})");
-                        parentO.SetAt(dd, offset / ratio.Quotient);
+                        //update the original array from the dataView
+                        //rootRef.UpdateOriginalArray();
+                        arrayRootRef?.UpdateOriginalArrayItem(arrayOffsetInRoot, byteOffset, SizeOfItem / _parentRef.SizeOfItem);
                     }
                     else
                     {
-                        throw null;
+                        var parentKnownType = parentO.Type.As<RuntimeType>()._model.As<TypeModel>().KnownType;
+                        //Object reference, update the parent
+                        var parentValue = parentKnownType switch
+                        {
+                            KnownTypeHandle.SystemSByte => sourceView.getInt8(0).As<T>(),
+                            KnownTypeHandle.SystemByte => sourceView.getUint8(0).As<T>(),
+                            KnownTypeHandle.SystemInt16 => sourceView.getInt16(0, true).As<T>(),
+                            KnownTypeHandle.SystemUInt16 or KnownTypeHandle.SystemChar => sourceView.getUint16(0, true).As<T>(),
+                            KnownTypeHandle.SystemInt32 or KnownTypeHandle.SystemIntPtr => sourceView.getInt32(0, true).As<T>(),
+                            KnownTypeHandle.SystemUint32 or KnownTypeHandle.SystemUintPtr => sourceView.getUint32(0, true).As<T>(),
+                            KnownTypeHandle.SystemInt64 => sourceView.getBigInt64(0, true).As<T>(),
+                            KnownTypeHandle.SystemUint64 => sourceView.getBigUint64(0, true).As<T>(),
+                            KnownTypeHandle.SystemFloat => sourceView.getFloat32(0, true).As<T>(),
+                            KnownTypeHandle.SystemDouble => sourceView.getFloat64(0, true).As<T>(),
+                            _ => throw new NotSupportedException("Size not supported")
+                        };
+                        parentO.SetAt(parentValue.As<object>(), 0);
                     }
+                    return;
                 }
                 else
                 {
-                    parentO.SetAt(value.As<object>(), offset);
+                    offset += _arrayOffset;
+                    var sourceSize = _parentRef.SizeOfItem;
+                    var thisSize = SizeOfItem;
+                    if (thisSize > sourceSize) //eg int > byte, setting int to underlying byte[]
+                    {
+                        var ratio = Math.DivRem(thisSize, sourceSize);
+                        Debug.Assert(ratio.Remainder == 0);
+                        var isIntegerNumeric = _parentRef.Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric() &&
+                            Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric();
+                        ulong mask = sourceSize switch
+                        {
+                            1 => 0xFF,
+                            2 => 0xFFFF,
+                            4 => 0xFFFFFFFF,
+                            8 => 0xFFFFFFFFFFFFFFFF,
+                            _ => 0
+                        };
+                        var parentPrototype = parentO.Type.As<RuntimeType>()._prototype;
+                        for (int i = 0; i < ratio.Quotient; i++)
+                        {
+                            if (isIntegerNumeric)
+                            {
+                                var longValue = ((ulong)value.As<uint>() >> (i * sourceSize * 8)) & mask;
+                                var parValue = NetJs.Script.Write<object>($"{NetJs.Constants.GlobalName}.{NetJs.Constants.CastName}({nameof(longValue)}, {nameof(parentPrototype)})");
+                                parentO.SetAt(parValue, offset * ratio.Quotient + i);
+                            }
+                            else
+                            {
+                                throw null!;
+                            }
+                        }
+                    }
+                    else if (thisSize < sourceSize) //eg byte < int, setting byte to underlying int[]
+                    {
+                        var ratio = Math.DivRem(sourceSize, thisSize);
+                        Debug.Assert(ratio.Remainder == 0);
+                        var parValue = _parentRef.As<RefOrPointer<object>>().GetAt(offset / ratio.Quotient);
+                        if (NetJs.Script.IsUndefined(parValue)) //this can happen with ref to unititialized local reference
+                        {
+                            parValue = 0.As<object>();
+                        }
+                        var longValue = (ulong)parValue.As<uint>();
+                        var i = offset % ratio.Quotient;
+                        if (_parentRef.Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric() && Type.As<RuntimeType>()._model.As<TypeModel>().KnownType.IsIntegerNumeric())
+                        {
+                            var maskSet = (ulong)value.As<uint>();
+                            var maskClear = ~(0xffUL << (8 * i));
+                            longValue = (longValue & maskClear) | (maskSet << (8 * i));
+                            var parentPrototype = parentO.Type.As<RuntimeType>()._prototype;
+                            var dd = NetJs.Script.Write<object>($"{NetJs.Constants.GlobalName}.{NetJs.Constants.CastName}({nameof(longValue)}, {nameof(parentPrototype)})");
+                            parentO.SetAt(dd, offset / ratio.Quotient);
+                        }
+                        else
+                        {
+                            throw null;
+                        }
+                    }
+                    else
+                    {
+                        parentO.SetAt(value.As<object>(), offset);
+                    }
                 }
             }
             //else if (_primitiveWindowItems > 0) //eg setting int to underlying byte[]
@@ -286,6 +508,8 @@ namespace System
             //}
             else
             {
+                _dataView = null; //if dataView exists, it is no longer valid, not in sync with the backing array
+                offset += _arrayOffset;
                 _setter(value, offset);
             }
         }
@@ -341,7 +565,7 @@ namespace System
                 return this with
                 {
                     _parentRef = root,
-                    _byteOffset = totalByteOffset+ offset ,
+                    _byteOffset = totalByteOffset + offset,
                     _sizeOfItem = _sizeOfItem, //No point recomputing this if it is already computed
                     _getter = null!,
                     _setter = null!
@@ -423,7 +647,7 @@ namespace System
         //    return reference.Value;
         //}
 
-        public IRefOrPointer GetRefWithBackingArray(out int byteOffset, out int arrayOffset)
+        public IRefOrPointer? GetRefWithBackingArray(out int byteOffset, out int arrayOffset)
         {
             IRefOrPointer? where = this;
             int bOffset = 0;
@@ -460,6 +684,21 @@ namespace System
 
         //[NetJs.Template("{0}")]
         //public static extern unsafe T* ToPointer(ref T valueRef);
+
+        /// <summary>
+        /// We already ascetain that size if from and to are the same, just check if safe to cast their bits
+        /// </summary>
+        /// <param name="tfrom"></param>
+        /// <param name="tto"></param>
+        /// <returns></returns>
+        protected static bool BitsIsDirectlyConvertible(Type tfrom, Type tto)
+        {
+            var tFrom = tfrom.As<RuntimeType>()._prototype!.Metadata!.KnownType;
+            var tTo = tto.As<RuntimeType>()._prototype!.Metadata!.KnownType;
+            if (tFrom.IsNumeric() && tTo.IsNumeric())
+                return true;
+            return false;
+        }
     }
 
     public record class Ref<T> : RefOrPointer<T>
@@ -506,7 +745,7 @@ namespace System
             {
                 var toSize = Marshal.SizeOf<T>();
                 var fromSize = rref.SizeOfItem;
-                if (toSize != fromSize)
+                if (toSize != fromSize || (rref.Type != typeof(T) && BitsIsDirectlyConvertible(rref.Type, typeof(T)))  /*size is equal, and bits is directly convertible. eg double => long*/)
                 {
                     //coarse the new ref to a new size
                     var newRef = new Ref<T>(rref);
@@ -569,16 +808,9 @@ namespace System
             {
                 var toSize = Marshal.SizeOf<T>();
                 var fromSize = rref.SizeOfItem;
-                if (toSize != fromSize)
+                if (toSize != fromSize || (rref.Type != typeof(T) && BitsIsDirectlyConvertible(rref.Type, typeof(T)))  /*size is equal, and bits is directly convertible. eg double => long*/)
                 {
-                    //coarse the new ref to a new size
                     var newRef = new Pointer<T>(rref);
-                    //var newRef = rref.As<Pointer<T>>() with
-                    //{
-                    //    _sizeOfItem = toSize,
-                    //    _type = typeof(T),
-                    //    _castFrom = rref
-                    //};
                     result = newRef;
                 }
                 return true;

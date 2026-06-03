@@ -14,28 +14,45 @@
         int _length;
         public object? Get(object target, string property, object receiver)
         {
-            if (property.NativeEquals("$isProxy"))
+            var propertyType = NetJs.Script.TypeOf(property);
+            if (propertyType.NativeEquals("string"))
             {
-                return true.As<object>();
+                if (property.NativeEquals("$isProxy"))
+                {
+                    return true.As<object>();
+                }
+                if (property.NativeEquals("length"))
+                {
+                    return _length.As<object>();
+                }
+                if (property.NativeStartsWith("$"))
+                {
+                    return _array[property];
+                }
+                unchecked
+                {
+                    var index = NetJs.Script.ParseInt(property);
+                    if (!NetJs.Script.IsNaN(index))
+                        return _array[index + _offset];
+                }
             }
-            if (property.NativeEquals("length"))
-            {
-                return _length.As<object>();
-            }
-            if (property.NativeStartsWith("$"))
-            {
-                return _array[property];
-            }
-            unchecked
-            {
-                return _array[NetJs.Script.ParseInt(property) + _offset];
-            }
+            return NetJs.Script.Write<object>("Reflect.get(this._array, property, this._array)");
         }
-        public bool Set(object target, string property, object value)
+        public bool Set(object target, string property, object value, object receiver)
         {
-            unchecked
+            var propertyType = NetJs.Script.TypeOf(property);
+            if (propertyType.NativeEquals("string"))
             {
-                _array[NetJs.Script.ParseInt(property) + _offset] = value;
+                unchecked
+                {
+                    var index = NetJs.Script.ParseInt(property);
+                    if (!NetJs.Script.IsNaN(index))
+                        _array[index + _offset] = value;
+                }
+            }
+            else
+            {
+                NetJs.Script.Write<object>("Reflect.set(this._array, property, value, this._array)");
             }
             return true;
         }

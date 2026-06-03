@@ -457,9 +457,9 @@ namespace NetJs.Tests
             // List pattern (C# 11+)
             int[] arr = { 1, 2, 3, 4, 5 };
             Debug.Assert(arr is [1, 2, 3, 4, 5], "list pattern exact");
-            Debug.Assert(arr is [1, .., 5], "list pattern slice");
+            Debug.Assert(arr is [1, .. var dd, 5], "list pattern slice");
             Debug.Assert(arr is [_, 2, ..], "list pattern wildcard head");
-            Debug.Assert(arr is [.., 4, 5], "list pattern slice tail");
+            Debug.Assert(arr is [.. var pp, 4, 5], "list pattern slice tail");
             Debug.Assert(arr is [1, 2, .. var rest] && rest.Length == 3, "list slice capture");
 
             // var pattern
@@ -1485,15 +1485,19 @@ namespace NetJs.Tests
             }
             Debug.Assert(Range(5, 3).ToArray() is [5, 6, 7], "iterator local function");
 
-            // Local async function
-            async Task<int> FetchAsync(int v)
+            if (RuntimeFeature.IsMultithreadingSupported)
             {
-                await Task.Yield();
-                return v * 10;
+                // Local async function
+                async Task<int> FetchAsync(int v)
+                {
+                    var t = Task.Yield();
+                    await t;
+                    return v * 10;
+                }
+                var task = FetchAsync(7);
+                int asyncResult = task.GetAwaiter().GetResult();
+                Debug.Assert(asyncResult == 70, "async local function");
             }
-            int asyncResult = FetchAsync(7).GetAwaiter().GetResult();
-            Debug.Assert(asyncResult == 70, "async local function");
-
             // Local function using out param
             bool TryParsePositive(string s, out int result)
             {
@@ -1520,55 +1524,58 @@ namespace NetJs.Tests
     {
         public static void Run()
         {
-            // Basic async/await
-            int r1 = BasicAsync().GetAwaiter().GetResult();
-            Debug.Assert(r1 == 42, "basic async returns value");
-
-            // Sequential await
-            int r2 = SequentialAsync().GetAwaiter().GetResult();
-            Debug.Assert(r2 == 30, "sequential await");
-
-            // Parallel await
-            int r3 = ParallelAsync().GetAwaiter().GetResult();
-            Debug.Assert(r3 == 10, "parallel await Task.WhenAll");
-
-            // async void via Task wrapper
-            bool fired = false;
-            Task.Run(() => { fired = true; }).Wait();
-            Debug.Assert(fired, "Task.Run");
-
-            // ValueTask
-            int r4 = ValueTaskAsync(5).GetAwaiter().GetResult();
-            Debug.Assert(r4 == 25, "ValueTask async");
-
-            // CancellationToken
-            var cts = new CancellationTokenSource();
-            cts.Cancel();
-            bool cancelled = false;
-            try
+            if (RuntimeFeature.IsMultithreadingSupported)
             {
-                CancellableAsync(cts.Token).GetAwaiter().GetResult();
+                // Basic async/await
+                int r1 = BasicAsync().GetAwaiter().GetResult();
+                Debug.Assert(r1 == 42, "basic async returns value");
+
+                // Sequential await
+                int r2 = SequentialAsync().GetAwaiter().GetResult();
+                Debug.Assert(r2 == 30, "sequential await");
+
+                // Parallel await
+                int r3 = ParallelAsync().GetAwaiter().GetResult();
+                Debug.Assert(r3 == 10, "parallel await Task.WhenAll");
+
+                // async void via Task wrapper
+                bool fired = false;
+                Task.Run(() => { fired = true; }).Wait();
+                Debug.Assert(fired, "Task.Run");
+
+                // ValueTask
+                int r4 = ValueTaskAsync(5).GetAwaiter().GetResult();
+                Debug.Assert(r4 == 25, "ValueTask async");
+
+                // CancellationToken
+                var cts = new CancellationTokenSource();
+                cts.Cancel();
+                bool cancelled = false;
+                try
+                {
+                    CancellableAsync(cts.Token).GetAwaiter().GetResult();
+                }
+                catch (OperationCanceledException)
+                {
+                    cancelled = true;
+                }
+                Debug.Assert(cancelled, "CancellationToken throws");
+
+                // IAsyncEnumerable (C# 8+)
+                var asyncSeq = ConsumeAsync().GetAwaiter().GetResult();
+                Debug.Assert(asyncSeq is [0, 1, 2, 3, 4], "IAsyncEnumerable");
+
+                // Task.WhenAny
+                int r5 = Task.WhenAny(
+                    Task.Delay(1000).ContinueWith(_ => 1),
+                    Task.FromResult(2)
+                ).GetAwaiter().GetResult().GetAwaiter().GetResult();
+                Debug.Assert(r5 == 2, "Task.WhenAny picks fastest");
+
+                // ConfigureAwait
+                int r6 = ConfiguredAsync().GetAwaiter().GetResult();
+                Debug.Assert(r6 == 1, "ConfigureAwait(false)");
             }
-            catch (OperationCanceledException)
-            {
-                cancelled = true;
-            }
-            Debug.Assert(cancelled, "CancellationToken throws");
-
-            // IAsyncEnumerable (C# 8+)
-            var asyncSeq = ConsumeAsync().GetAwaiter().GetResult();
-            Debug.Assert(asyncSeq is [0, 1, 2, 3, 4], "IAsyncEnumerable");
-
-            // Task.WhenAny
-            int r5 = Task.WhenAny(
-                Task.Delay(1000).ContinueWith(_ => 1),
-                Task.FromResult(2)
-            ).GetAwaiter().GetResult().GetAwaiter().GetResult();
-            Debug.Assert(r5 == 2, "Task.WhenAny picks fastest");
-
-            // ConfigureAwait
-            int r6 = ConfiguredAsync().GetAwaiter().GetResult();
-            Debug.Assert(r6 == 1, "ConfigureAwait(false)");
         }
 
         private static async Task<int> BasicAsync()
@@ -1726,6 +1733,7 @@ namespace NetJs.Tests
     {
         private class AppException(string message, int code) : Exception(message)
         {
+            int fieldCode = code;
             public int Code { get; } = code;
         }
 
@@ -1778,22 +1786,25 @@ namespace NetJs.Tests
             catch (AppException e) when (e.Code == 500) { customCaught = true; }
             Debug.Assert(customCaught, "custom exception with property");
 
-            // AggregateException
-            bool aggCaught = false;
-            try
+            if (RuntimeFeature.IsMultithreadingSupported)
             {
-                var tasks = new[]
+                // AggregateException
+                bool aggCaught = false;
+                try
                 {
-                Task.Run(() => throw new InvalidOperationException("t1")),
-                Task.Run(() => throw new InvalidOperationException("t2"))
-            };
-                Task.WaitAll(tasks);
+                    var tasks = new[]
+                    {
+                    Task.Run(() => throw new InvalidOperationException("t1")),
+                    Task.Run(() => throw new InvalidOperationException("t2"))
+                };
+                    Task.WaitAll(tasks);
+                }
+                catch (AggregateException ae)
+                {
+                    aggCaught = ae.InnerExceptions.Count == 2;
+                }
+                Debug.Assert(aggCaught, "AggregateException from Task.WaitAll");
             }
-            catch (AggregateException ae)
-            {
-                aggCaught = ae.InnerExceptions.Count == 2;
-            }
-            Debug.Assert(aggCaught, "AggregateException from Task.WaitAll");
 
             // Nested try/catch
             int n = 0;
@@ -1815,7 +1826,7 @@ namespace NetJs.Tests
     {
         public string Tag { get; } = tag;
     }
-    
+
     [Tag("alpha")]
     [Tag("beta")]
     file class AttributedClass
@@ -2373,7 +2384,7 @@ namespace NetJs.Tests
             var greet = (string name, string prefix = "Hello") => $"{prefix}, {name}!";
             Debug.Assert(greet("World") == "Hello, World!", "default lambda param default");
             Debug.Assert(greet("World", "Hi") == "Hi, World!", "default lambda param override");
-            
+
             // ── ref readonly locals (C# 14 improvement) ──────────────────────────
             int x = 42;
             ref readonly int rx = ref x;

@@ -52,18 +52,18 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Delegate
                             {
                                 if (!visitor.Global.IsNativeFunction(delegateCreate.Type!))
                                 {
-                                    var _this = (node as MemberAccessExpressionSyntax)?.Expression;
+                                    CodeNode _this = (node as MemberAccessExpressionSyntax)?.Expression;
                                     var methodGroup = node;// as MemberAccessExpressionSyntax ?? node as IdentifierNameSyntax; 
                                     if (_this == null)
                                     {
                                         var methodSymbol = (IMethodSymbol)visitor.Global.GetSymbol(methodGroup, visitor);
                                         if (!methodSymbol.IsStatic)
                                         {
-                                            _this = SyntaxFactory.ThisExpression();
+                                            _this = new CodeNode(() => visitor.CurrentTypeWriter.Write(node, "this"));// SyntaxFactory.ThisExpression();
                                         }
                                         else
                                         {
-                                            _this = SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression);
+                                            _this = new CodeNode(() => visitor.CurrentTypeWriter.Write(node, "null")); //SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression);
                                         }
                                     }
                                     _processing.Push(node);
@@ -83,7 +83,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Delegate
                                             visitor.CurrentTypeWriter.Write(node, ")");
                                         }
                                         visitor.CurrentTypeWriter.Write(node, "().$ctor(");
-                                        visitor.Visit(_this);
+                                        visitor.VisitNode(_this);
                                         visitor.CurrentTypeWriter.Write(node, ", ");
                                         visitor.Visit(methodGroup);
                                         visitor.CurrentTypeWriter.Write(node, ")");

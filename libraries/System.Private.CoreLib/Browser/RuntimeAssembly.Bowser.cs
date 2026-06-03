@@ -6,6 +6,7 @@ using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks.Sources;
 
 namespace System.Reflection
@@ -21,7 +22,7 @@ namespace System.Reflection
         internal RuntimeModule_Partial _module;
         internal RuntimeType[] _types = [];
         internal AssemblyModel _model;
-        uint _nextTypeHandle;
+        uint _nextTypeHandle = 0x8000;
 
         public RuntimeAssembly_Partial(AssemblyModel model, string assemblyName)
         {
@@ -30,15 +31,29 @@ namespace System.Reflection
             _module = new RuntimeModule_Partial(this);
             if (model.AssemblyFlags.TypeHasFlag(AssemblyFlags.Entry))
                 Assembly._entry = this.As<Assembly>();
-            _nextTypeHandle = _model.TypeNames.Length.As<uint>();
+            //_nextTypeHandle = _model.TypeNames.Length.As<uint>();
         }
 
         internal static TypeProxyHandler CreateTypeProxy(string fullTypeName)
         {
-            var proxyHandler = new TypeProxyHandler(fullTypeName);
-            object? proxy = null;
-            NetJs.Script.Write("proxy = new Proxy({}, proxyHandler)");
-            return proxy.As<TypeProxyHandler>();
+            TypeProxyHandler CreateProxy()
+            {
+                var proxyHandler = new TypeProxyHandler(fullTypeName);
+                object? proxy = null;
+                NetJs.Script.Write("proxy = new Proxy({}, proxyHandler)");
+                return proxy.As<TypeProxyHandler>();
+            }
+            //return JSProxy.Create<TypeProxyHandler>(new TypeProxyHandler(fullTypeName));
+            if (fullTypeName.NativeEndsWith(">"))
+            {
+                TypeProxyHandler? _handler = null;
+                NativeFunction<TypeProxyHandler> deferedType = () => _handler ??= CreateProxy();
+                return deferedType.As<TypeProxyHandler>();
+            }
+            else
+            {
+                return CreateProxy();
+            }
         }
 
         /// <summary>
@@ -50,7 +65,7 @@ namespace System.Reflection
         {
             if (!AppDomain.GlobalPrototypeRegistry.ContainsKey(fullTypeName))
             {
-                object? proxy = CreateTypeProxy(fullTypeName);
+                var proxy = CreateTypeProxy(fullTypeName);
                 AppDomain.GlobalPrototypeRegistry.SetNested(fullTypeName.NativeReplaceAll("<", "$").NativeReplaceAll(",", "$").NativeReplaceAll(">", "$"), proxy.As<TypePrototype>());
             }
         }
@@ -58,29 +73,29 @@ namespace System.Reflection
         internal ulong CreateHandle(string typeName)
         {
             var handle = ((_model.Handle.As<uint>() << ReflectionHandleExtension.AssemblyShift) | (_nextTypeHandle << ReflectionHandleExtension.TypeShift));
-            _model.TypeNames.Push(typeName);
+            //_model.TypeNames.Push(typeName);
             _nextTypeHandle++;
             return handle.As<ulong>();
         }
 
-        TypeModel GetModel(string fullTypeName, TypeFlagsModel flag, TypePrototype? parent = null)
+        TypeModel GetModel(TypePrototype prototype, TypeFlagsModel flag, TypePrototype? parent = null)
         {
-            var localAssemblyTypeName = fullTypeName;
+            var localAssemblyTypeName = prototype.FullName;
             if (localAssemblyTypeName.NativeStartsWith("$"))
             {
                 var firstDot = localAssemblyTypeName.NativeIndexOf(".");
                 localAssemblyTypeName = localAssemblyTypeName.NativeSubstring(firstDot + 1);
             }
-            TypeModel? typeMetadata;
-            unchecked
-            {
-                typeMetadata = _model.Types?.Filter(t =>
-                {
-                    if (NetJs.Script.IsUndefinedOrNull(t.Handle))
-                        return false;
-                    return _model.TypeNames[t.Handle.As<uint>().GetTypeHandle()].NativeEquals(localAssemblyTypeName);
-                })[0];
-            }
+            TypeModel? typeMetadata = prototype.Metadata ?? null;
+            //unchecked
+            //{
+            //    typeMetadata = _model.Types?.Filter(t =>
+            //    {
+            //        if (NetJs.Script.IsUndefinedOrNull(t.Handle))
+            //            return false;
+            //        return _model.TypeNames[t.Handle.As<uint>().GetTypeHandle()].NativeEquals(localAssemblyTypeName);
+            //    })[0];
+            //}
             //type has no metadata exported, create one
             if (NetJs.Script.IsUndefinedOrNull(typeMetadata))
             {
@@ -137,7 +152,6 @@ namespace System.Reflection
                 flags = TypeFlagsModel.None;
             provider.As<object>()["$fn"] = fullTypeName.As<object>();
             var jsName = GetJsName(fullTypeName);
-            TypeModel typeMetadata = GetModel(fullTypeName, flags, parent);
             //bool isNestedClass = Constants.NestedClassAsNestedStaticObject && typeMetadata!.Flags.TypeHasFlag(TypeFlagsModel.IsNested);
             //if (_isCompleted) //if the assembly was marked completed, any other class defined after that is a nested class
             var isNestedClass = flags.TypeHasFlag(TypeFlagsModel.IsNested);
@@ -148,19 +162,26 @@ namespace System.Reflection
                 //if we have created a typestub, this is existing as Proxy type with handler TypeProxyHandler, now we have its prototype
 #pragma warning disable CS0184 // 'is' expression's given expression is never of the provided type
                 //if (!(existing is TypeProxyHandler))
-                if (!(NetJs.Script.Write<bool>("existing.$isProxy === true")))
+                if (!(NetJs.Script.Write<bool>("existing.$isProxy === true")) && NetJs.Script.TypeOf(existing).NativeNotEquals("function"))
                     return existing!;
 #pragma warning restore CS0184 // 'is' expression's given expression is never of the provided type
             }
+            
             bool isGenericDefinition = fullTypeName.NativeEndsWith("$") || fullTypeName.NativeEndsWith(">");
+
+            var selfProxy = NetJs.Script.TypeOf(existing).NativeEquals("function") ?
+                existing.As<NativeFunction<TypeProxyHandler>>()() :
+                existing.As<TypeProxyHandler>() ?? CreateTypeProxy(fullTypeName);
+            var genericTypes = AppDomain.GenericTypes;
+            TypePrototype prototype = !isGenericDefinition ? provider(selfProxy, null, null) : NetJs.Script.Write<TypePrototype>("provider( ...genericTypes)");
+            TypeModel typeMetadata = GetModel(prototype, flags, parent);
+
             bool isInterface = typeMetadata.Kind == TypeKindModel.Interface;
             bool isInterfaceMixin = isInterface && NetJs.Script.Write<int>("provider.length") >= 2;
             RuntimeType? type = null;
-            TypePrototype? prototype = null;
             //If this type depends on itself, its proxy was created before we even run DefineType, otherwize create a new proxy for it,
             //and pass the proxy into the provider so it can be used in the type definition,
             //and later we will update the proxy with the real type and prototype
-            var selfProxy = existing.As<TypeProxyHandler>() ?? CreateTypeProxy(fullTypeName);
             if (isInterfaceMixin)
             {
                 type = RuntimeType.Create(THIS, provider, typeMetadata, fullTypeName);
@@ -174,7 +195,7 @@ namespace System.Reflection
                 //Pass the proxy object as this into the provider
                 //existing = existing ?? CreateTypeProxy(fullTypeName).As<TypePrototype>();
                 //prototype = NetJs.Script.Write<TypePrototype>("provider(selfProxy, null, null)");
-                prototype = provider(selfProxy, null, null);
+                //prototype = provider(selfProxy, null, null);
                 type = RuntimeType.Create(THIS, prototype, typeMetadata, fullTypeName);
             }
             //Now that we have the concrete type and some js closure already holds the stub/proxy
@@ -193,7 +214,7 @@ namespace System.Reflection
             if (!isNestedClass)
             {
                 //Dont initialize type until they are actually accessed
-                AppDomain.GlobalPrototypeRegistry.SetNested(jsName, prototype ?? provider.As<TypePrototype>(), onAccess: (mtype) =>
+                AppDomain.GlobalPrototypeRegistry.SetNested(jsName, isGenericDefinition ? provider : prototype, onAccess: (mtype) =>
                 {
                     if (_isCompleted && !type._isCompleted)
                     {
@@ -296,7 +317,7 @@ namespace System.Reflection
                         //return false;
                     }
 #pragma warning restore CS0184 // 'is' expression's given expression is never of the provided type
-                    return t.FullName!.NativeEndsWith("<>") || t.FullName!.NativeEndsWith(",>");
+                    return (t.FullName.NativeEquals("") && t.Name.NativeStartsWith("$T")/*Test generic type*/) || t.FullName!.NativeEndsWith("<>") || t.FullName!.NativeEndsWith(",>");
                     //return !t.Type!.IsGenericTypeDefinition;
                 }
                 //this is a new class prototype, define its System.Type if any of the typArgument is not a genericName
@@ -495,9 +516,20 @@ namespace System.Reflection
             var manifest = runtimeAssembly._model.Manifests?.ArrayFirstOrDefault(a => a.Name == name);
             if (manifest?.Data != null)
             {
-                var bytes = (NetJs.Script.IsArray(manifest.Data) || NetJs.Script.InstanceOf(manifest.Data, typeof(Array))) ?
-                    manifest.Data.As<byte[]>() :
-                    Convert.FromBase64String(manifest.Data);
+                byte[] bytes;
+                //= (NetJs.Script.IsArray(manifest.Data) || NetJs.Script.InstanceOf(manifest.Data, typeof(Array))) ?
+                //    manifest.Data.As<byte[]>() : 
+                //    NetJs.Script.ArrayFrom(Window.Uint8Array.fromBase64(manifest.Data));
+                if ((NetJs.Script.IsArray(manifest.Data) || NetJs.Script.InstanceOf(manifest.Data, typeof(Array))))
+                {
+                    bytes = manifest.Data.As<byte[]>();
+                }
+                else
+                {
+                    bytes = NetJs.Script.ArrayFrom(Window.Uint8Array.fromBase64(manifest.Data));
+                    Array.AddMetadata(bytes, typeof(byte));
+                }
+                //Convert.FromBase64String(manifest.Data);
                 //we dont want to keep converting from base64 to byte[], cache by replacinf the original string
                 manifest.Data = bytes.As<string>();
                 size = bytes.Length;

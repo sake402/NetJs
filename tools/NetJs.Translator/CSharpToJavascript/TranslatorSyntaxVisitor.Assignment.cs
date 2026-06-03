@@ -211,12 +211,12 @@ namespace NetJs.Translator.CSharpToJavascript
                     //assigning a ref from a non-ref
                     //eg ref int field; int a; field = a;
                     //Dereference and rewrite as field.$v = a
-                    TryDereference(node);
+                    //TryDereference(lhsExpression);
                 }
                 CurrentTypeWriter.Write(node, $" {_operator} ");
                 if (lhsExpression.IsKind(SyntaxKind.DeclarationExpression)/* is DeclarationExpressionSyntax*/)
                 {
-                    CurrentTypeWriter.Write(node, $"{_global.GlobalName}.Destructure(");
+                    CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.Destructure}(");
                 }
             }
             bool needBoxing = lhsType != null && rhsType != null && NeedBoxing(lhsType, rhsType);
@@ -323,7 +323,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 //RhsEmitted:
                 if (rightDereference)
                 {
-                    TryDereference(node);
+                    //TryDereference(rhsExpression!);
                 }
                 if (rhsType != null &&
                     rhsType.SpecialType != SpecialType.System_Void &&

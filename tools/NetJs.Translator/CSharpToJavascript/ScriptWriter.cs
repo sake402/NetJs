@@ -172,6 +172,7 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 if (code.StartsWith("}"))
                 {
+                    CurrentClosure.RaiseOnClosing();
                     closures.Pop();
                     ClosureDepth--;
                 }

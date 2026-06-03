@@ -25,8 +25,11 @@ namespace System.Runtime.CompilerServices
                         }
                     }
                 }
+                //int[] inferedGridLenghts;
+                //var isGridArray = false;
                 var arr = lowerBound != null ? Array.CreateInstance(type, lengths ?? NetJs.Script.CreateArrayFromValues<int>(jsArray!.Length), lowerBound) :
                     lengths != null ? Array.CreateInstance(type, lengths) :
+                    //isGridArray ? Array.CreateInstance(type, inferedGridLenghts) :
                     Array.CreateInstance(type, jsArray!.Length);
                 if (jsArray != null)
                 {
@@ -57,24 +60,57 @@ namespace System.Runtime.CompilerServices
             return CreateArray(typeof(T), jsArray.As<object[]>(), null, null).As<T[]>();
         }
 
-        public static IPromise TaskToPromise(Task task)
+        public static IPromise TaskToPromise(object taskLike)
         {
-            if (NetJs.Script.TypeOf(task).NativeEquals("Promise"))
-                return task.As<IPromise>();
-            return new Promise<object>((resolve, reject) =>
+            if (NetJs.Script.TypeOf(taskLike).NativeEquals("Promise"))
+                return taskLike.As<IPromise>();
+            //if (taskLike is Task task)
+            //{
+            //    return new Promise<object>((resolve, reject) =>
+            //    {
+            //        task.ContinueWith(t =>
+            //        {
+            //            if (t.IsCompletedSuccessfully)
+            //            {
+            //                resolve(t.As<Task<object>>().Result);
+            //            }
+            //            else
+            //            {
+            //                reject(t.Exception);
+            //            }
+            //        });
+            //    });
+            //}
+            var getAwaiter = taskLike["GetAwaiter"].As<NativeFunction<INotifyCompletion>>();
+            if (NetJs.Script.IsDefined(getAwaiter))
             {
-                task.ContinueWith(t =>
+                return new Promise<object>((resolve, reject) =>
                 {
-                    if (t.IsCompletedSuccessfully)
+                    var awaiter = getAwaiter.Invoke(taskLike);
+                    awaiter.OnCompleted(() =>
                     {
-                        resolve(t.As<Task<object>>().Result);
-                    }
-                    else
-                    {
-                        reject(t.Exception);
-                    }
+                        try
+                        {
+                            var isCompleted = awaiter["IsCompleted"].As<bool>();
+                            if (isCompleted)
+                            {
+                                var getResult = awaiter["GetResult"].As<NativeFunction<object>>();
+                                var result = getResult.Invoke(awaiter);
+                                resolve(result);
+                            }
+                            else
+                            {
+                                reject(new Exception("Awaiter is not completed"));
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            reject(ex);
+                        }
+                    });
                 });
-            });
+            }
+            throw null!;
         }
 
         public static Ref<T> CreateObjectReference<T>([NativeDelegate] Func<T> getValue, [NativeDelegate] Action<T>? setValue)
@@ -88,10 +124,11 @@ namespace System.Runtime.CompilerServices
                 if (setValue != null)
                     setValue(v);
             });
-            rref._object = getValue();
+            //variable being referenced may be uninitialized, make sure _object is not undefined
+            rref._object = getValue() ?? default(T);
             return rref;
         }
-
+        
         public static Ref<T?> CreateArrayReference<T>(T[] array, int? index = null, bool _checked = false)
         {
             Ref<T?> refs;
@@ -316,14 +353,16 @@ namespace System.Runtime.CompilerServices
         {
             if (o == null)
                 return 0;
-            if (NetJs.Script.TypeOf(o).NativeEquals("number"))
-            {
-                return Math.Truncate(o.As<double>()).As<int>();
-            }
-            if (NetJs.Script.TypeOf(o).NativeEquals("boolean"))
-                return o.As<bool>() ? 1 : 0;
-            if (NetJs.Script.TypeOf(o).NativeEquals("string"))
-                return StringToHashCode(o.As<string>());
+            var value = NetJs.Script.Unbox(o);
+            var type = NetJs.Script.TypeOf(value);
+            if (type.NativeEquals("number"))
+                return value.As<double>().GetHashCode();
+            if (type.NativeEquals("bigint"))
+                return value.As<long>().GetHashCode();
+            if (type.NativeEquals("boolean"))
+                return value.As<bool>().GetHashCode();
+            if (type.NativeEquals("string"))
+                return value.As<string>().GetHashCode();
             //if (a.ToString)
             //{
             //    var str = a.ToString();
@@ -336,8 +375,15 @@ namespace System.Runtime.CompilerServices
             //const jsonString = JSON.stringify(a);
             //return stringHashCode(jsonString);
 
-            if (NetJs.Script.TypeOf(o).NativeEquals("object"))
+            if (type.NativeEquals("object"))
             {
+                //var method = o["GetHashCode"];
+                //if (NetJs.Script.IsDefined(method))
+                //{
+                //    var hashCode = NetJs.Script.Write<int>("method.call(o)");
+                //    if (NetJs.Script.TypeOf(hashCode).NativeEquals("number"))
+                //        return hashCode.As<int>();
+                //}
                 var existinghashCode = o[NetJs.Constants.HashCodeKey].As<int>();
                 if (NetJs.Script.IsUndefinedOrNull(existinghashCode))
                 {
@@ -372,8 +418,15 @@ namespace System.Runtime.CompilerServices
         [NetJs.Template("false/*IsBitwiseEquatable<T>()*/")]
         internal static extern bool IsBitwiseEquatableImpl<T>();
 
-        [NetJs.MemberReplace(nameof(ObjectHasComponentSize) + "<>")]
-        [NetJs.Template("false/*ObjectHasComponentSize<T>()*/")]
-        internal static extern bool ObjectHasComponentSizeImpl(object obj);
+        [NetJs.MemberReplace(nameof(ObjectHasComponentSize))]
+        internal static bool ObjectHasComponentSizeImpl(object obj)
+        {
+            var type = NetJs.Script.TypeOf(obj);
+            if (type.NativeEquals("string"))
+                return true;
+            if (Array.Is(obj))
+                return true;
+            return false;
+        }
     }
 }

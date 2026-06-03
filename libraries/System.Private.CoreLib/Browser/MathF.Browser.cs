@@ -10,64 +10,64 @@ namespace System
         public static extern float Random();
 
         [NetJs.MemberReplace(nameof(Acos) + "(float)")]
-        [NetJs.Template("Math.acos({d})")]
-        public static extern float AcosImpl(float d);
+        [NetJs.Template("Math.acos({x})")]
+        public static extern float AcosImpl(float x);
 
         [NetJs.MemberReplace(nameof(Acosh) + "(float)")]
-        [NetJs.Template("Math.acosh({d})")]
-        public static extern float AcoshImpl(float d);
+        [NetJs.Template("Math.acosh({x})")]
+        public static extern float AcoshImpl(float x);
 
         [NetJs.MemberReplace(nameof(Asin) + "(float)")]
-        [NetJs.Template("Math.asin({d})")]
-        public static extern float AsinImpl(float d);
+        [NetJs.Template("Math.asin({x})")]
+        public static extern float AsinImpl(float x);
 
         [NetJs.MemberReplace(nameof(Asinh) + "(float)")]
-        [NetJs.Template("Math.asinh({d})")]
-        public static extern float AsinhImpl(float d);
+        [NetJs.Template("Math.asinh({x})")]
+        public static extern float AsinhImpl(float x);
 
         [NetJs.MemberReplace(nameof(Atan) + "(float)")]
-        [NetJs.Template("Math.atan({d})")]
-        public static extern float AtanImpl(float d);
+        [NetJs.Template("Math.atan({x})")]
+        public static extern float AtanImpl(float x);
 
         [NetJs.MemberReplace(nameof(Atan2) + "(float, float)")]
         [NetJs.Template("Math.atan2({y}, {x})")]
         public static extern float Atan2Impl(float y, float x);
 
         [NetJs.MemberReplace(nameof(Atanh) + "(float)")]
-        [NetJs.Template("Math.atanh({d})")]
-        public static extern float AtanhImpl(float d);
+        [NetJs.Template("Math.atanh({x})")]
+        public static extern float AtanhImpl(float x);
 
         [NetJs.MemberReplace(nameof(Cbrt) + "(float)")]
-        [NetJs.Template("Math.cbrt({d})")]
-        public static extern float CbrtImpl(float d);
+        [NetJs.Template("Math.cbrt({x})")]
+        public static extern float CbrtImpl(float x);
 
         [NetJs.MemberReplace(nameof(Ceiling) + "(float)")]
         [NetJs.Template("Math.ceil({a})")]
         public static extern float CeilingImpl(float a);
 
         [NetJs.MemberReplace(nameof(Cos) + "(float)")]
-        [NetJs.Template("Math.cos({d})")]
-        public static extern float CosImpl(float d);
+        [NetJs.Template("Math.cos({x})")]
+        public static extern float CosImpl(float x);
 
         [NetJs.MemberReplace(nameof(Cosh) + "(float)")]
         [NetJs.Template("Math.cosh({value})")]
         public static extern float CoshImpl(float value);
 
         [NetJs.MemberReplace(nameof(Exp) + "(float)")]
-        [NetJs.Template("Math.exp({d})")]
-        public static extern float ExpImpl(float d);
+        [NetJs.Template("Math.exp({x})")]
+        public static extern float ExpImpl(float x);
 
         [NetJs.MemberReplace(nameof(Floor) + "(float)")]
-        [NetJs.Template("Math.floor({d})")]
-        public static extern float FloorImpl(float d);
+        [NetJs.Template("Math.floor({x})")]
+        public static extern float FloorImpl(float x);
 
         [NetJs.MemberReplace(nameof(Log) + "(float)")]
-        [NetJs.Template("Math.log({d})")]
-        public static extern float LogImpl(float d);
+        [NetJs.Template("Math.log({x})")]
+        public static extern float LogImpl(float x);
 
         [NetJs.MemberReplace(nameof(Log10) + "(float)")]
-        [NetJs.Template("Math.log10({d})")]
-        public static extern float Log10Impl(float d);
+        [NetJs.Template("Math.log10({x})")]
+        public static extern float Log10Impl(float x);
 
         [NetJs.MemberReplace(nameof(Pow) + "(float, float)")]
         [NetJs.Template("Math.pow({x}, {y})")]
@@ -82,8 +82,8 @@ namespace System
         public static extern float SinhImpl(float value);
 
         [NetJs.MemberReplace(nameof(Sqrt) + "(float)")]
-        [NetJs.Template("Math.sqrt({d})")]
-        public static extern float SqrtImpl(float d);
+        [NetJs.Template("Math.sqrt({x})")]
+        public static extern float SqrtImpl(float x);
 
         [NetJs.MemberReplace(nameof(Tan) + "(float)")]
         [NetJs.Template("Math.tan({a})")]

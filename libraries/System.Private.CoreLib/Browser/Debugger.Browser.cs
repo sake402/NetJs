@@ -9,7 +9,11 @@ namespace System.Diagnostics
         [NetJs.MemberReplace(nameof(IsAttached_internal))]
         private static bool IsAttached_internalImpl()
         {
+#if DEBUG
+            return true;
+#else
             return false;
+#endif
         }
 
         [NetJs.MemberReplace(nameof(Break))]

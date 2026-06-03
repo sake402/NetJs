@@ -15,6 +15,7 @@ namespace System
         internal static SimpleDictionary<RuntimeAssembly> GlobalAssemblyRegistry;
         internal static SimpleDictionary<Union<TypePrototype, TypePrototypeProvider>> GlobalPrototypeRegistry;
         internal static SimpleDictionary<RuntimeType> GlobalTypeRegistry;
+        internal static TypePrototype[] GenericTypes;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
         [Name(Constants.AppDomainInitialize)]
@@ -26,6 +27,40 @@ namespace System
             //GlobalPrototypeRegistry = Script.Write<SimpleDictionary<TypePrototypeRegistrar>>("window.dotnetJs");
             GlobalPrototypeRegistry = Script.Write<SimpleDictionary<Union<TypePrototype, TypePrototypeProvider>>>($"window.{Constants.ProjectName}");
             //Script.Write($"{Constants.GlobalName}.typesReady = true");
+            GenericTypes = Script.CreateArrayFromValues(
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T1"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T2"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T3"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T4"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T5"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T6"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T7"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T8"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T9"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T10"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T11"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T12"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T13"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T14"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T15"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T16"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T17"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T18"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T19"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T20"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T21"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T22"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T23"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T24"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T25"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T26"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T27"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T28"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T29"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T30"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T31"),
+                Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T32"));
+
             Script.Write($"{Constants.GlobalName}.{Constants.AssemblyRegistryName} = this.{Constants.AssemblyRegistryName}");
             Script.Write($"{Constants.GlobalName}.{Constants.AssemblyMetadataRegistryName} = this.{Constants.AssemblyMetadataRegistryName}");
             Script.Write($"{Constants.GlobalName}.castPtr2Address = {Constants.GlobalName}.$spc.{nameof(InteropUtility)}.{nameof(InteropUtility.castPtr2Address)}");
@@ -90,12 +125,12 @@ namespace System
 
         //public static AppDomain CurrentDomain { get; } = new AppDomain();
 
-        public static string GetTypeName(uint typeHandle)
-        {
-            var assemblyHandle = typeHandle.GetAssemblyHandle();
-            var assemblyMetadata = GlobalMetadataRegistry[assemblyHandle];
-            return assemblyMetadata.TypeNames[typeHandle.GetTypeHandle()];
-        }
+        //public static string GetTypeName(uint typeHandle)
+        //{
+        //    var assemblyHandle = typeHandle.GetAssemblyHandle();
+        //    var assemblyMetadata = GlobalMetadataRegistry[assemblyHandle];
+        //    return assemblyMetadata.TypeNames[typeHandle.GetTypeHandle()];
+        //}
 
         public static string? GetAssemblyName(uint assemblyHandle)
         {

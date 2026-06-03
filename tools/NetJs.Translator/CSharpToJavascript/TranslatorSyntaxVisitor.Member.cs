@@ -107,6 +107,7 @@ namespace NetJs.Translator.CSharpToJavascript
             member ??= lhsType.GetMembers(memberName, _global).FirstOrDefault();
             memberName ??= member.Name;
             bool isStaticConvention = member?.IsStaticCallConvention(_global) ?? false;
+            bool isExtensionMember = member?.IsExtensionMember(_global) ?? false;
             if (member is IFieldSymbol field &&
                 field.IsConst &&
                 field.ConstantValue != null &&
@@ -158,7 +159,7 @@ namespace NetJs.Translator.CSharpToJavascript
             if (member != null)
             {
                 var memberMetadata = _global.GetMetadata(member);
-                if (member.IsStatic || isStaticConvention)
+                if (member.IsStatic || isStaticConvention || isExtensionMember)
                 {
                     if (thisSymbol is ITypeParameterSymbol tp)
                     {
@@ -170,7 +171,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     {
                         CurrentTypeWriter.Write(node, memberMetadata?.InvocationName ?? member.Name);
                     }
-                    if (isStaticConvention)
+                    if (isStaticConvention || isExtensionMember)
                     {
                         if (setValue != null)
                         {
@@ -291,7 +292,7 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 var type = _global.GetTypeSymbol(node, this);
                 var metadata = _global.GetRequiredMetadata(type);
-                CurrentTypeWriter.Write(node, metadata.InvocationName?? type.Name);
+                CurrentTypeWriter.Write(node, metadata.InvocationName ?? type.Name);
             }
             return;
 

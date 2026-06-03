@@ -80,11 +80,11 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             //if (values != null)
             //{
-            var typeMetadata = _global.GetMetadata(elementType!);
-            var typeName = typeMetadata?.InvocationName ?? elementType!.Name;
+            //var typeMetadata = _global.GetMetadata(elementType!);
+            //var typeName = elementType.ComputeOutputTypeName(_global);// typeMetadata?.InvocationName ?? elementType!.Name;
             WriteMethodInvocation(node, "System.Runtime.CompilerServices.RuntimeHelpers.CreateArray", arguments: [new CodeNode(() => {
                     CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.TypeOf}(");
-                    CurrentTypeWriter.Write(node, typeName);
+                    CurrentTypeWriter.Write(node, elementType.ComputeOutputTypeName(_global));
                     CurrentTypeWriter.Write(node, $")");
                 }), values?? new CodeNode(()=>{
                     CurrentTypeWriter.Write(node, $"null");
@@ -270,7 +270,10 @@ namespace NetJs.Translator.CSharpToJavascript
                 arraySize = null;
             WriteMethodInvocation(node,
                 $"System.Runtime.CompilerServices.RuntimeHelpers.{methodName}", methodGenericTypes: [elementType],
-                arguments: [arraySize ?? SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression), (CSharpSyntaxNode?)node.Initializer ?? SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression)]);
+                arguments: [
+                    arraySize ?? new CodeNode(() => CurrentTypeWriter.Write(node, "null")),//SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression), 
+                    (CSharpSyntaxNode?)node.Initializer ?? new CodeNode(() => CurrentTypeWriter.Write(node, "null"))//SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression)
+                ]);
             //WriteMethodInvocation(node, stackAlloc, null, null, [arraySize ?? SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression), (CSharpSyntaxNode?)node.Initializer ?? SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression)], null, runtimeHelpers, false);
             //base.VisitStackAllocArrayCreationExpression(node);
         }
@@ -303,10 +306,10 @@ namespace NetJs.Translator.CSharpToJavascript
             return null;
         }
 
-        public void WriteCollectionElementsAsArray(CollectionExpressionSyntax node)
+        public void WriteCollectionElementsAsArray(CollectionExpressionSyntax node, bool createNetArray = true)
         {
             bool hasSpreadElement = node.Elements.Any(e => e.IsKind(SyntaxKind.SpreadElement));
-            if (hasSpreadElement)
+            if (createNetArray && hasSpreadElement)
             {
                 CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.ToArray}(");
             }
@@ -320,10 +323,18 @@ namespace NetJs.Translator.CSharpToJavascript
                 i++;
             }
             CurrentTypeWriter.Write(node, " ]");
-            if (hasSpreadElement)
+            if (createNetArray && hasSpreadElement)
             {
                 CurrentTypeWriter.Write(node, ")");
             }
+        }
+
+        public void WriteCreateSubArray(CSharpSyntaxNode node, ITypeSymbol elementType, CodeNode array, CodeNode range)
+        {
+            var runtimeHelpers = (ITypeSymbol)_global.GetSymbol("System.Runtime.CompilerServices.RuntimeHelpers", this);
+            var getSubArray = (IMethodSymbol)runtimeHelpers.GetMembers("GetSubArray").Single();
+            getSubArray = getSubArray.Construct(elementType);
+            WriteMethodInvocation(node, getSubArray, null, [array, range], null, runtimeHelpers, null, false);
         }
 
         public override void VisitCollectionExpression(CollectionExpressionSyntax node)
@@ -344,15 +355,15 @@ namespace NetJs.Translator.CSharpToJavascript
                 WriteMethodInvocation(node, "System.Runtime.CompilerServices.RuntimeHelpers.CreateArray", arguments: [new CodeNode(() => {
                     CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.TypeOf}({typeName})");
                 }), new CodeNode(()=>{
-                    WriteCollectionElementsAsArray(node);
+                    WriteCollectionElementsAsArray(node, createNetArray:false);
                 })]);
             }
             else if (lhsType != null)
             {
                 if (_global.HasAttribute(lhsType, "System.Runtime.CompilerServices.CollectionBuilderAttribute"/*typeof(CollectionBuilderAttribute).FullName*/, this, false, out var args))
                 {
-                    var builderTypeArg = (ITypeSymbol)args[0];
-                    var builderMethodName = (string)args[1];
+                    var builderTypeArg = (ITypeSymbol)args[0]!;
+                    var builderMethodName = (string)args[1]!;
                     var method = builderTypeArg.GetMembers(builderMethodName).FirstOrDefault() as IMethodSymbol;
                     if (method == null)
                     {

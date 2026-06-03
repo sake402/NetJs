@@ -16,5 +16,14 @@ namespace NetJs.Translator.CSharpToJavascript
         public int Inserts { get; set; }
         public int NameManglingSeed { get; set; }
         public bool ForbidsInsertion { get; set; }
+        public event EventHandler? OnClosing;
+        bool onClosingRaised;
+        internal void RaiseOnClosing()
+        {
+            if (onClosingRaised)
+                return;
+            onClosingRaised = true;
+            OnClosing?.Invoke(this, EventArgs.Empty);
+        }
     }
 }

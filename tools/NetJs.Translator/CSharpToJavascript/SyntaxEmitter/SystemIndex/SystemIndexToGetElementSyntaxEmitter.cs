@@ -75,7 +75,11 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.SystemIndex
                                         }
                                         else
                                         {
-                                            visitor.Visit(identifierIndex);
+                                            //visitor.Visit(identifierIndex);
+                                            var getOffset = (IMethodSymbol)visitor.Global.SystemIndex.GetMembers("GetOffset").Single();
+                                            visitor.WriteMethodInvocation(node, getOffset, null,[new CodeNode(() => {
+                                                visitor.WriteMemberAccess(node, expressionNode, targetType, null, lenGetProperty);
+                                            })], identifierIndex, null);
                                         }
                                     })], expressionNode, targetType, null, false);
                                     //}

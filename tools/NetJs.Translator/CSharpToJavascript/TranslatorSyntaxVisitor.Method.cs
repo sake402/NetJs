@@ -187,7 +187,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     var box = enableBoxing ?? true;
                     if (_global.HasAttribute(parameter, typeof(BoxAttribute).FullName, this, false, out var barg))
                     {
-                        box = (bool)barg![0];
+                        box = (bool)barg[0]!;
                     }
                     else if (method.IsExtern)
                     {
@@ -233,7 +233,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     CurrentClosure.DefineIdentifierType(p.Identifier.ValueText, p.Type, SymbolKind.Parameter);
                 if (i > 0)
                     CurrentTypeWriter.Write(node, ", ");
-                CurrentTypeWriter.Write(node, $"{GetMethodParameterModifier(p)} {Utilities.ResolveIdentifierName(p.Identifier)}");
+                CurrentTypeWriter.Write(node, $"{GetMethodParameterModifier(p)} {p.Identifier.ResolveIdentifierName()}");
                 i++;
             }
             //if (parameters.Where(e => e.Default != null).Any())
@@ -359,7 +359,7 @@ namespace NetJs.Translator.CSharpToJavascript
                                 {
                                     if (_global.HasAttribute(parameter, "System.Runtime.CompilerServices.CallerArgumentExpressionAttribute", this, false, out var args))
                                     {
-                                        var name = (string)args[0];
+                                        var name = (string)args[0]!;
                                         var marg = argumentsMapping.Single(e => e.Key.Name == name).Value;
                                         if (marg.IsT0)
                                         {
@@ -391,7 +391,7 @@ namespace NetJs.Translator.CSharpToJavascript
                                         int lineNumber = lineSpan.StartLinePosition.Line + 1;
                                         // You can also get the character (column) position
                                         int columnNumber = lineSpan.StartLinePosition.Character + 1;
-                                        CurrentTypeWriter.Write(node, $"\"{lineNumber}\"");
+                                        CurrentTypeWriter.Write(node, $"{lineNumber}");
                                         return;
                                     }
                                     if (!TryWriteConstant(node, parameter.Type, null, new Optional<object?>(parameter.ExplicitDefaultValue)))
@@ -442,7 +442,9 @@ namespace NetJs.Translator.CSharpToJavascript
                                 CurrentTypeWriter.Write(node, ", ");
                             int iip = 0;
                             bool isReadOnlySpan = SymbolEqualityComparer.Default.Equals(parameter.Type.OriginalDefinition, _global.SystemReadOnlySpan);
-                            void WriteRemainingArgsAsArray()
+                            bool isIEnumerable = SymbolEqualityComparer.Default.Equals(parameter.Type.OriginalDefinition, _global.SystemIEnumerableT);
+
+                            void WriteRemainingArgsAsArray(ITypeSymbol? argType = null)
                             {
                                 bool spread = parameter.HasAttribute(typeof(SpreadAttribute).FullName, false, out _);
                                 if (!spread)
@@ -451,7 +453,7 @@ namespace NetJs.Translator.CSharpToJavascript
                                 {
                                     if (iip > 0)
                                         CurrentTypeWriter.Write(node, ", ");
-                                    WriteSingleMethodInvocationArgument(node, arg_i, argument, null, parameter, overloadResult, null);
+                                    WriteSingleMethodInvocationArgument(node, arg_i, argument, argType, parameter, overloadResult, null);
                                     //Visit(argument.Expression);
                                     iip++;
                                 }
@@ -460,12 +462,20 @@ namespace NetJs.Translator.CSharpToJavascript
                             }
                             if (isReadOnlySpan)
                             {
+                                ITypeSymbol? largType = null;
                                 var implicitConverter = parameter.Type.GetMembers(ImplicitOperatorName)
                                     .Cast<IMethodSymbol>()
-                                    .Single(e => e.Parameters.Length == 1 && e.Parameters[0].Type.IsArray(out _));
-                                WriteConstructorCall(node, parameter.Type, implicitConverter, null, [new CodeNode(()=>{
-                                    WriteRemainingArgsAsArray();
-                                })]);
+                                    .Single(e => e.Parameters.Length == 1 && e.Parameters[0].Type.IsArray(out largType));
+                                WriteMethodInvocation(node, implicitConverter, null, [new CodeNode(()=>{
+                                    WriteRemainingArgsAsArray(largType);
+                                })], null, null);
+                            }
+                            else if (isIEnumerable)
+                            {
+                                WriteCreateArray(node, ((INamedTypeSymbol)parameter.Type).TypeArguments[0], null, null, new CodeNode(() =>
+                                {
+                                    WriteRemainingArgsAsArray(((INamedTypeSymbol)parameter.Type).TypeArguments[0]);
+                                }));
                             }
                             else
                             {
@@ -1180,7 +1190,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     if (argName == null)
                         throw new InvalidOperationException("nameof expects one argument");
                     CurrentTypeWriter.Write(node, "\"");
-                    CurrentTypeWriter.Write(node, argName.ToString());
+                    CurrentTypeWriter.Write(node, argName.ToString().Split('.').Last().Split('<').First());
                     CurrentTypeWriter.Write(node, "\"");
                     return;
                 }
@@ -1364,7 +1374,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
                 else
                 {
-                    method = method ?? rhsSymbol as IMethodSymbol ?? GetBestOverloadMethod(lhsTypeSymbol!, rhsName, explicitGenericArgs, parameterArgs?.Arguments, null, out overloadResult);
+                    method = method ?? rhsSymbol as IMethodSymbol ?? (lhsTypeSymbol != null ? GetBestOverloadMethod(lhsTypeSymbol!, rhsName, explicitGenericArgs, parameterArgs?.Arguments, null, out overloadResult) : null);
                 }
                 if (method != null)
                 {

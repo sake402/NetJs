@@ -15,7 +15,7 @@
     <DefineConstants Condition="'$(EnableComBinder)' == 'true'">$(DefineConstants);ENABLECOMBINDER</DefineConstants>
     <AllowUnsafeBlocks Condition="'$(EnableComBinder)' == 'true'">true</AllowUnsafeBlocks>
     <DefineConstants>$(DefineConstants);LEGACY_GETRESOURCESTRING_USER</DefineConstants>
-    <IsAotCompatible>true</IsAotCompatible>
+    <!--<IsAotCompatible>true</IsAotCompatible>-->
   </PropertyGroup>
   <ItemGroup>
     <ILLinkDescriptorsXmls Include="$(ILLinkDirectory)ILLink.Descriptors.Shared.xml" />

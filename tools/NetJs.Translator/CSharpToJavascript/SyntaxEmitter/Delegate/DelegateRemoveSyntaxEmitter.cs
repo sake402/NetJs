@@ -19,16 +19,17 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Delegate
                     leftType.IsDelegate(out _, out _) &&
                     (rightType.IsDelegate(out _, out _) || rightSymbol.Kind == SymbolKind.Method))
                 {
-                    if (leftSymbol.Kind == SymbolKind.Local)
+                    if (leftSymbol.Kind == SymbolKind.Local|| leftSymbol.Kind == SymbolKind.Field)
                     {
-                        var delegateRemoveMethod = visitor.Global.SystemDelegate
-                            .GetMembers("Remove")
-                            .OfType<IMethodSymbol>()
-                            .First(m => m.Parameters.Length == 2);
-                        visitor.CurrentTypeWriter.Write(node, "");
-                        visitor.VisitNode(node.Left);
-                        visitor.CurrentTypeWriter.Write(node, " = ");
-                        visitor.WriteMethodInvocation(node, delegateRemoveMethod, null, [node.Left, node.Right], null, null);
+                        visitor.WriteDelegateRemove(node, node.Left, node.Right);
+                        //var delegateRemoveMethod = visitor.Global.SystemDelegate
+                        //    .GetMembers("Remove")
+                        //    .OfType<IMethodSymbol>()
+                        //    .First(m => m.Parameters.Length == 2);
+                        //visitor.CurrentTypeWriter.Write(node, "");
+                        //visitor.VisitNode(node.Left);
+                        //visitor.CurrentTypeWriter.Write(node, " = ");
+                        //visitor.WriteMethodInvocation(node, delegateRemoveMethod, null, [node.Left, node.Right], null, null);
                     }
                     else
                     {

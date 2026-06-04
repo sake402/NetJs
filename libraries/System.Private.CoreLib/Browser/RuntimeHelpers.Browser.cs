@@ -396,7 +396,7 @@ namespace System.Runtime.CompilerServices
         }
 
         [NetJs.MemberReplace(nameof(GetHashCode))]
-        internal static int GetHashCodeImpl(object? o)
+        public static int GetHashCodeImpl(object? o)
         {
             return TryGetHashCode(o);
         }

@@ -54,16 +54,8 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             else if (Symbol is ITypeSymbol ttype)
             {
-                if (ttype.Name.Contains("_ArrayEnumerator"))
-                {
-
-                }
-                if (ttype.Name == "ReflectionHandleModel")
-                {
-
-                }
                 bool isExtern = Symbol.IsExtern || _global.HasAttribute(Symbol, typeof(ExternalAttribute).FullName!, null, false, out _);
-                if (ttype.ContainingSymbol is INamedTypeSymbol)
+                if ((ttype is not INamedTypeSymbol nt || nt.IsExtension) && ttype.ContainingSymbol is INamedTypeSymbol)
                 {
                     //type.OriginalInvocationName = (originalPrefixInvocationName != null ? originalPrefixInvocationName + "." : "") + overloadedName;
                     //type.InvocationName = ComputeInvocatioNameForType(ttype, type.OverloadName);
@@ -345,7 +337,12 @@ namespace NetJs.Translator.CSharpToJavascript
                     var containingType = _global.GetRequiredMetadata(container);
                     if (containingType.InvocationName == null)
                         throw new InvalidOperationException("Containing type must be processed before contained type");
-                    invocationName = containingType.InvocationName + "." + (overloadName ?? type.Name);
+                    if (type is INamedTypeSymbol nt2 && nt2.IsExtension)
+                    {
+                        invocationName = containingType.InvocationName;
+                    }
+                    else
+                        invocationName = containingType.InvocationName + "." + (overloadName ?? type.Name);
                 }
                 else
                 {
@@ -406,7 +403,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 overloadName = typeMeta.OverloadName ?? throw new InvalidOperationException("Containing type must be processed before contained type");
             }
             var invocationName = overloadName;
-            if (property.IsStatic || property.IsStaticCallConvention(_global) || property.IsExtensionMember(_global))
+            if (property.IsStatic || property.IsStaticCallConvention(_global) || property.IsExtensionPropertyMember(_global))
             {
                 var declaringType = property.ContainingType;
                 var declaringTypeMetadata = _global.GetRequiredMetadata(declaringType);

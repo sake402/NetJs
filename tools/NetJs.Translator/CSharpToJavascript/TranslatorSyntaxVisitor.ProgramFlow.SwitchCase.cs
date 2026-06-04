@@ -126,19 +126,51 @@ namespace NetJs.Translator.CSharpToJavascript
             }
         }
 
-        bool HasGotoCase(SwitchStatementSyntax node)
+        static bool SwitchHasGotoCase(SwitchStatementSyntax node)
         {
             return node.DescendantNodes().Any(c => c.IsKind(SyntaxKind.GotoCaseStatement) || c.IsKind(SyntaxKind.GotoDefaultStatement));
         }
 
-        bool IsSimpleSwitchCase(SwitchLabelSyntax node)
+        static bool SwitchCaseHasGotoStatement(SwitchSectionSyntax node)
         {
+            //if (node.IsKind(SyntaxKind.GotoStatement))
+            //    return true;
+            return node.Statements.Any(e => e.IsKind(SyntaxKind.GotoStatement));
+        }
+
+        //bool SwitchCaseHasLabeledStatement(SwitchLabelSyntax node)
+        //{
+        //    return node.DescendantNodes().Any(e => e.IsKind(SyntaxKind.LabeledStatement));
+        //}
+
+        static bool SwitchCaseHasLabeledStatement(SwitchSectionSyntax node)
+        {
+            return node.Statements.Any(e => e.IsKind(SyntaxKind.LabeledStatement));
+        }
+
+        static bool IsSimpleSwitchCase(SwitchLabelSyntax node)
+        {
+            //if (/*SwitchCaseHasLabeledStatement(node) || */SwitchCaseHasGotoStatement(node))
+            //{
+            //    return false;
+            //}
             return node.IsKind(SyntaxKind.CaseSwitchLabel) || node.IsKind(SyntaxKind.DefaultSwitchLabel);
         }
 
-        bool IsSimpleSwitchCase(SwitchStatementSyntax node)
+        static bool SwitchHasGotoJump(SwitchStatementSyntax node)
         {
-            return node.Sections.SelectMany(c => c.Labels).All(c => IsSimpleSwitchCase(c));
+            return node.Sections.Any(c => SwitchCaseHasGotoStatement(c));
+        }
+
+        static bool SwitchCaseHasLabeledStatement(SwitchStatementSyntax node)
+        {
+            return node.Sections.Any(c => SwitchCaseHasLabeledStatement(c));
+        }
+
+        static bool IsSimpleSwitchCase(SwitchStatementSyntax node)
+        {
+            return node.Sections.SelectMany(c => c.Labels).All(c => IsSimpleSwitchCase(c)) &&
+                node.Sections.All(c => !SwitchCaseHasLabeledStatement(c)/* && !SwitchCaseHasGotoStatement(c)*/);
         }
 
         //bool IsTypeSwitchStatement(SwitchStatementSyntax node)
@@ -149,15 +181,92 @@ namespace NetJs.Translator.CSharpToJavascript
         //}
 
         const string SwitchExpressionVariableName = "__switchExpressionVariableName__";
+        static List<StatementSyntax> GetStatementsFromSwitchLabel(LabeledStatementSyntax labelNode)
+        {
+            static bool IsStopStatement(StatementSyntax statement)
+            {
+                // Stop immediately on break
+                if (statement is BreakStatementSyntax)
+                {
+                    return true;
+                }
+
+                //// Stop immediately on a new label to prevent fall-through bleeding
+                //if (statement is LabeledStatementSyntax)
+                //{
+                //    return true;
+                //}
+
+                return false;
+            }
+
+            var collectedStatements = new List<StatementSyntax>();
+
+            if (labelNode == null)
+            {
+                return collectedStatements;
+            }
+
+            if (labelNode.Statement != null)
+            {
+                if (IsStopStatement(labelNode.Statement))
+                {
+                    return collectedStatements;
+                }
+                collectedStatements.Add(labelNode.Statement);
+            }
+
+            var nextNode = labelNode.NextSibling();
+            while (nextNode != null)
+            {
+                // Stop if we hit a completely different switch section
+                if (nextNode is SwitchSectionSyntax)
+                {
+                    break;
+                }
+
+                if (nextNode is StatementSyntax statement)
+                {
+                    if (IsStopStatement(statement))
+                    {
+                        break;
+                    }
+                    collectedStatements.Add(statement);
+                }
+
+                nextNode = nextNode.NextSibling();
+            }
+
+            return collectedStatements;
+        }
+
         public override void VisitSwitchStatement(SwitchStatementSyntax node)
         {
             bool isSimpleSwitchCase = IsSimpleSwitchCase(node);
-            var hasGotoCase = HasGotoCase(node);
+            var hasGotoCase = SwitchHasGotoCase(node);
+            bool hasGotoLabel = SwitchCaseHasLabeledStatement(node);
             //if any of the case is a CasePatternSwitchLabelSyntax, use.GetType()
             //bool isTypeSwitch = IsTypeSwitchStatement(node);
             OpenClosure(node);
             var switchClosure = CurrentClosure;
-            if (hasGotoCase)
+            if (hasGotoLabel)
+            {
+                foreach (var section in node.Sections)
+                {
+                    var labels = CollectGotoLabelsIntoCurrentClosure(section);
+                    //Collect each label statements, an queue them for insertion directly into the goto places
+                    foreach (var label in labels)
+                    {
+                        //get all statement after this label, until we see break;
+                        var statements = GetStatementsFromSwitchLabel(label);
+                        //force a break after, unless we already jumped again
+                        if (!statements.Last().IsKind(SyntaxKind.GotoStatement))
+                            statements.Add(SyntaxFactory.BreakStatement());
+                        switchClosure.GotoInsertInlineStatements.Add(label.Identifier.ValueText, statements);
+                    }
+                }
+            }
+            if (hasGotoCase || hasGotoLabel)
             {
                 var manglingSeed = ++CurrentTypeWriter.CurrentClosure.NameManglingSeed;
                 string jumpStart = $"$switchJumpStart{manglingSeed}";
@@ -223,6 +332,7 @@ namespace NetJs.Translator.CSharpToJavascript
         public override void VisitSwitchSection(SwitchSectionSyntax node)
         {
             var switchStatement = node.FindClosestParent<SwitchStatementSyntax>() ?? throw new InvalidOperationException("Case should be inside a switch");
+            var switchClosure = GetClosureOf(switchStatement);
             bool isSimpleSwitch = IsSimpleSwitchCase(switchStatement);
             bool sectionIsDefault = node.Labels.All(l => l.IsKind(SyntaxKind.DefaultSwitchLabel));
             //bool hasGotoCase = HasGotoCase(switchStatement);

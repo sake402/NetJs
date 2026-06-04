@@ -272,6 +272,8 @@ namespace {project.GetNamespace()}
             (string FilePath, string Source)[] replacements = new (string, string)[syntaxTrees.Count()];
             //Delete all existing files first, we want to check for filename duplicates since this is a flat directory structure
             var projectTempFolder = Path.Combine(tempFolder, project.GetName());
+            if (!Directory.Exists(projectTempFolder))
+                Directory.CreateDirectory(projectTempFolder);
             var files = Directory.GetFiles(projectTempFolder);
             foreach (var f in files)
                 File.Delete(f);

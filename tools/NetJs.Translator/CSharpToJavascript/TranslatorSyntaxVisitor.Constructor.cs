@@ -170,7 +170,7 @@ namespace NetJs.Translator.CSharpToJavascript
             var meta = _global.GetRequiredMetadata(constructorSymbol);
             //need to make sure the parameters of a constructor are available early before body, as base clas call may use it
             //this will be repeated uneccassrily by WriteMethodBody though
-            var cParameters = string.Join(", ", parameters.Select(p => $"{GetMethodParameterModifier(p)} {Utilities.ResolveIdentifierName(p.Identifier)}"));
+            var cParameters = string.Join(", ", parameters.Select(p => $"{GetMethodParameterModifier(p)} {p.Identifier.ResolveIdentifierName()}"));
             DefineParametersInClosure(parameters, constructorSymbol);
             var baseType = ((ITypeSymbol)constructorSymbol.ContainingSymbol).BaseType;
             var boundBaseConstructor = baseInitializer != null ? GetExpressionBoundTarget(baseInitializer).TypeSyntaxOrSymbol as IMethodSymbol : null;
@@ -629,7 +629,7 @@ namespace NetJs.Translator.CSharpToJavascript
                                     var member = typeSymbol.GetMembers(id.Identifier.ValueText, _global).First();
                                     //var idType = GetTypeSymbol(id);
                                     var metadata = _global.GetRequiredMetadata(member);
-                                    CurrentTypeWriter.Write(node, metadata.InvocationName ?? Utilities.ResolveIdentifierName(id.Identifier));
+                                    CurrentTypeWriter.Write(node, metadata.InvocationName ?? id.Identifier.ResolveIdentifierName());
                                 }
                                 else
                                 {

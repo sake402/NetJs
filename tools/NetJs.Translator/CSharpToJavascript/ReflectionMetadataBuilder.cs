@@ -22,6 +22,13 @@ namespace NetJs.Translator.CSharpToJavascript
         string[] embeddedFiles;
         string[] resxFiles;
 
+        static ulong? NullIfZero(ulong value)
+        {
+            if (value == 0)
+                return null;
+            return value;
+        }
+
         static T[]? NullIfEmpty<T>(T[]? value)
         {
             if (value == null)
@@ -47,7 +54,7 @@ namespace NetJs.Translator.CSharpToJavascript
         //}
 
         uint assemblyHandle;
-        string[] typeNames = default!;
+        ITypeSymbol[] types = default!;
         ulong TypeHandle(ITypeSymbol type, ulong orWith = 0)
         {
             if (type.Kind == SymbolKind.TypeParameter)
@@ -67,7 +74,7 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             if (type is INamedTypeSymbol nt && nt.IsDefinedTypeParameter(global))
             {
-                var index = int.Parse( type.Name.Substring("T".Length));
+                var index = int.Parse(type.Name.Substring("T".Length));
                 return GenericTypeHandle(index);
             }
             //if (type.IsArray(out var elementType))
@@ -75,8 +82,8 @@ namespace NetJs.Translator.CSharpToJavascript
             //    var th = TypeHandle(elementType);
             //    return new ReflectionHandleModel { Value = th.Value | (ulong)TypeHandleFlags.Array };
             //}
-            var name = type.CreateSignature(global, withGlobalNamespace: false);
-            int typeHandle = Array.IndexOf(typeNames, name);
+            //var name = type.CreateSignature(global, withGlobalNamespace: false);
+            int typeHandle = Array.IndexOf(types, type.OriginalDefinition);
             if (typeHandle < 0)
             {
                 var nn = type.CreateSignature(global, withGlobalNamespace: true);
@@ -88,13 +95,13 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             if (typeHandle < 0)
                 return 0;
-            return (assemblyHandle << ReflectionHandleExtension.AssemblyShift) | ((ulong)typeHandle << ReflectionHandleExtension.TypeShift)|orWith;
+            return (assemblyHandle << ReflectionHandleExtension.AssemblyShift) | ((ulong)typeHandle << ReflectionHandleExtension.TypeShift) | orWith;
         }
 
         ulong GenericTypeHandle(int typeIndex)
         {
             var typeHandle = typeIndex + (int)KnownTypeHandle.GenericType1Placeholder;
-            return  ((ulong)typeHandle << ReflectionHandleExtension.TypeShift);
+            return ((ulong)typeHandle << ReflectionHandleExtension.TypeShift);
         }
 
         ulong GenericMethodHandle(IMethodSymbol method, int typeIndex)
@@ -127,7 +134,6 @@ namespace NetJs.Translator.CSharpToJavascript
                         t == "System.UIntPtr" ? KnownTypeHandle.SystemUintPtr :
                         t == "System.Int64" ? KnownTypeHandle.SystemInt64 :
                         t == "System.UInt64" ? KnownTypeHandle.SystemUint64 :
-                        t == "System.Float" ? KnownTypeHandle.SystemFloat :
                         t == "System.Single" ? KnownTypeHandle.SystemSingle :
                         t == "System.Double" ? KnownTypeHandle.SystemDouble :
                         t == "System.String" ? KnownTypeHandle.SystemString :
@@ -151,67 +157,67 @@ namespace NetJs.Translator.CSharpToJavascript
                 .Distinct(SymbolEqualityComparer.Default)
                 .Cast<INamedTypeSymbol>()
                 .ToList();
-            var _typeNames = new string[] { "" }
-                .Concat(Enumerable.Range(1, isSystemPrivateCoreLib ? 32 : 0)
-                .Select(i => $"$T{i}")).Concat(types.Select(t => t.CreateSignature(global, withGlobalNamespace: false))).Distinct();
+            //var _typeNames = new string[] { "" }
+            //.Concat(Enumerable.Range(1, isSystemPrivateCoreLib ? 32 : 0)
+            //.Select(i => $"$T{i}")).Concat(types.Select(t => t.CreateSignature(global, withGlobalNamespace: false))).Distinct();
             //make sure unknown type is index zero, System.Object is at index 1
-            typeNames = _typeNames.OrderBy(t =>
-            t == "" ? (int)KnownTypeHandle.Unknown :
-            t == "System.Object" ? (int)KnownTypeHandle.SystemObject :
-            t == "System.Boolean" ? (int)KnownTypeHandle.SystemBool :
-            t == "System.Char" ? (int)KnownTypeHandle.SystemChar :
-            t == "System.SByte" ? (int)KnownTypeHandle.SystemSByte :
-            t == "System.Byte" ? (int)KnownTypeHandle.SystemByte :
-            t == "System.Int16" ? (int)KnownTypeHandle.SystemInt16 :
-            t == "System.UInt16" ? (int)KnownTypeHandle.SystemUInt16 :
-            t == "System.Int32" ? (int)KnownTypeHandle.SystemInt32 :
-            t == "System.UInt32" ? (int)KnownTypeHandle.SystemUint32 :
-            t == "System.Int64" ? (int)KnownTypeHandle.SystemInt64 :
-            t == "System.UInt64" ? (int)KnownTypeHandle.SystemUint64 :
-            t == "System.Float" ? (int)KnownTypeHandle.SystemFloat :
-            t == "System.Single" ? (int)KnownTypeHandle.SystemSingle :
-            t == "System.Double" ? (int)KnownTypeHandle.SystemDouble :
-            t == "System.Array" ? (int)KnownTypeHandle.SystemArray :
-            t == "System.Enum" ? (int)KnownTypeHandle.SystemEnum :
-            t == "System.String" ? (int)KnownTypeHandle.SystemString :
-            t == "$T1" ? (int)KnownTypeHandle.GenericType1Placeholder :
-            t == "$T2" ? (int)KnownTypeHandle.GenericType2Placeholder :
-            t == "$T3" ? (int)KnownTypeHandle.GenericType3Placeholder :
-            t == "$T4" ? (int)KnownTypeHandle.GenericType4Placeholder :
-            t == "$T5" ? (int)KnownTypeHandle.GenericType5Placeholder :
-            t == "$T6" ? (int)KnownTypeHandle.GenericType6Placeholder :
-            t == "$T7" ? (int)KnownTypeHandle.GenericType7Placeholder :
-            t == "$T8" ? (int)KnownTypeHandle.GenericType8Placeholder :
-            t == "$T9" ? (int)KnownTypeHandle.GenericType9Placeholder :
-            t == "$T10" ? (int)KnownTypeHandle.GenericType10Placeholder :
-            t == "$T11" ? (int)KnownTypeHandle.GenericType11Placeholder :
-            t == "$T12" ? (int)KnownTypeHandle.GenericType12Placeholder :
-            t == "$T13" ? (int)KnownTypeHandle.GenericType13Placeholder :
-            t == "$T14" ? (int)KnownTypeHandle.GenericType14Placeholder :
-            t == "$T15" ? (int)KnownTypeHandle.GenericType15Placeholder :
-            t == "$T16" ? (int)KnownTypeHandle.GenericType16Placeholder :
-            t == "$T17" ? (int)KnownTypeHandle.GenericType17Placeholder :
-            t == "$T18" ? (int)KnownTypeHandle.GenericType18Placeholder :
-            t == "$T19" ? (int)KnownTypeHandle.GenericType19Placeholder :
-            t == "$T20" ? (int)KnownTypeHandle.GenericType20Placeholder :
-            t == "$T21" ? (int)KnownTypeHandle.GenericType21Placeholder :
-            t == "$T22" ? (int)KnownTypeHandle.GenericType22Placeholder :
-            t == "$T23" ? (int)KnownTypeHandle.GenericType23Placeholder :
-            t == "$T24" ? (int)KnownTypeHandle.GenericType24Placeholder :
-            t == "$T25" ? (int)KnownTypeHandle.GenericType25Placeholder :
-            t == "$T26" ? (int)KnownTypeHandle.GenericType26Placeholder :
-            t == "$T27" ? (int)KnownTypeHandle.GenericType27Placeholder :
-            t == "$T28" ? (int)KnownTypeHandle.GenericType28Placeholder :
-            t == "$T29" ? (int)KnownTypeHandle.GenericType29Placeholder :
-            t == "$T30" ? (int)KnownTypeHandle.GenericType30Placeholder :
-            t == "$T31" ? (int)KnownTypeHandle.GenericType31Placeholder :
-            t == "$T32" ? (int)KnownTypeHandle.GenericType32Placeholder :
+            this.types = new ITypeSymbol[] { null }.Concat( types).OrderBy(t =>
+            t == null ? (int)KnownTypeHandle.Unknown :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemObject) ? (int)KnownTypeHandle.SystemObject :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemValueType) ? (int)KnownTypeHandle.SystemValueType :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemBoolean) ? (int)KnownTypeHandle.SystemBool :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemChar) ? (int)KnownTypeHandle.SystemChar :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemSByte) ? (int)KnownTypeHandle.SystemSByte :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemByte) ? (int)KnownTypeHandle.SystemByte :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemInt16) ? (int)KnownTypeHandle.SystemInt16 :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemUInt16) ? (int)KnownTypeHandle.SystemUInt16 :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemInt32) ? (int)KnownTypeHandle.SystemInt32 :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemUInt32) ? (int)KnownTypeHandle.SystemUint32 :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemInt64) ? (int)KnownTypeHandle.SystemInt64 :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemUInt64) ? (int)KnownTypeHandle.SystemUint64 :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemSingle) ? (int)KnownTypeHandle.SystemSingle :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemDouble) ? (int)KnownTypeHandle.SystemDouble :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemArray) ? (int)KnownTypeHandle.SystemArray :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemEnum) ? (int)KnownTypeHandle.SystemEnum :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemString) ? (int)KnownTypeHandle.SystemString :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT1) ? (int)KnownTypeHandle.GenericType1Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT2) ? (int)KnownTypeHandle.GenericType2Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT3) ? (int)KnownTypeHandle.GenericType3Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT4) ? (int)KnownTypeHandle.GenericType4Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT5) ? (int)KnownTypeHandle.GenericType5Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT6) ? (int)KnownTypeHandle.GenericType6Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT7) ? (int)KnownTypeHandle.GenericType7Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT8) ? (int)KnownTypeHandle.GenericType8Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT9) ? (int)KnownTypeHandle.GenericType9Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT10) ? (int)KnownTypeHandle.GenericType10Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT11) ? (int)KnownTypeHandle.GenericType11Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT12) ? (int)KnownTypeHandle.GenericType12Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT13) ? (int)KnownTypeHandle.GenericType13Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT14) ? (int)KnownTypeHandle.GenericType14Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT15) ? (int)KnownTypeHandle.GenericType15Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT16) ? (int)KnownTypeHandle.GenericType16Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT17) ? (int)KnownTypeHandle.GenericType17Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT18) ? (int)KnownTypeHandle.GenericType18Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT19) ? (int)KnownTypeHandle.GenericType19Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT20) ? (int)KnownTypeHandle.GenericType20Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT21) ? (int)KnownTypeHandle.GenericType21Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT22) ? (int)KnownTypeHandle.GenericType22Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT23) ? (int)KnownTypeHandle.GenericType23Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT24) ? (int)KnownTypeHandle.GenericType24Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT25) ? (int)KnownTypeHandle.GenericType25Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT26) ? (int)KnownTypeHandle.GenericType26Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT27) ? (int)KnownTypeHandle.GenericType27Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT28) ? (int)KnownTypeHandle.GenericType28Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT29) ? (int)KnownTypeHandle.GenericType29Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT30) ? (int)KnownTypeHandle.GenericType30Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT31) ? (int)KnownTypeHandle.GenericType31Placeholder :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemT32) ? (int)KnownTypeHandle.GenericType32Placeholder :
             int.MaxValue).ToArray();
             var symbolDictionary = global.Symbols.Types.ToDictionary(e => e.Value.Signature, e => e.Value);
             foreach (var type in types)
             {
                 var handle = TypeHandle(type);
-                var name = type.CreateSignature(global, withTypeParameterNames: true, withGlobalNamespace: false);
+                var name = type.CreateSignature(global, withTypeParameterNames: true, withGlobalNamespace: true);
                 var symbol = symbolDictionary.GetValueOrDefault(name);
                 if (symbol != null)
                 {
@@ -293,7 +299,7 @@ namespace NetJs.Translator.CSharpToJavascript
             return model;
         }
 
-        public TypeModel FromTypeSymbol(ITypeSymbol? symbol)
+        public TypeModel FromTypeSymbol(ITypeSymbol? symbol, bool minimal = false)
         {
             if (symbol == null) return new TypeModel { };
             var model = new TypeModel
@@ -301,7 +307,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 //Name = symbol.Name,
                 Handle = TypeHandle(symbol),
                 //AssemblyQualifiedName = $"{RemoveGlobal(symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))}, {symbol.ContainingAssembly?.Name}",
-                BaseType = symbol.BaseType != null ? TypeHandle(symbol.BaseType) : null,
+                BaseType = symbol.BaseType != null ? NullIfZero(TypeHandle(symbol.BaseType)) : null,
                 DeclaringType = symbol.ContainingType != null ? TypeHandle(symbol.ContainingType) : default,
                 UnderlyingType = (symbol is INamedTypeSymbol nt && nt.EnumUnderlyingType != null)
                     ? TypeHandle(nt.EnumUnderlyingType)
@@ -310,12 +316,12 @@ namespace NetJs.Translator.CSharpToJavascript
                 Flags = symbol.GetTypeFlags(),
                 //TypeAttributes = 0,
                 KnownType = KnownTypeFromName(symbol.CreateSignature(global, withGlobalNamespace: false)),
-                Properties = NullIfEmpty(symbol.GetMembers()
+                Properties = minimal ? null : NullIfEmpty(symbol.GetMembers()
                             .Where(m => global.IsReflectable(m, null))
                             .Where(m => !m.IsExtern/*Extern methods are called via templates, not reflectable*/)
                             //.Where(m => !m.DeclaredAccessibility.HasFlag(Accessibility.Internal)/*Internal methods are used by compiler only*/)
                             .OfType<IPropertySymbol>().Select(FromPropertySymbol).ToArray()),
-                Methods = NullIfEmpty(symbol.GetMembers()
+                Methods = minimal ? null : NullIfEmpty(symbol.GetMembers()
                             .Where(m => global.IsReflectable(m, null))
                             .Where(m => !m.IsExtern/*Extern methods are called via templates, not reflectable*/)
                             //.Where(m => !m.DeclaredAccessibility.HasFlag(Accessibility.Internal)/*Internal methods are used by compiler only*/)
@@ -324,7 +330,7 @@ namespace NetJs.Translator.CSharpToJavascript
                             .Where(m => !global.LinkTrimOutMethod(m))
                             .Select(e => FromMethodSymbol(e))
                             .ToArray()),
-                Constructors = NullIfEmpty(symbol.GetMembers()
+                Constructors = minimal ? null : NullIfEmpty(symbol.GetMembers()
                             .Where(m => global.IsReflectable(m, null))
                             .Where(m => !m.IsExtern/*Extern methods are called via templates, not reflectable*/)
                             //.Where(m => !m.DeclaredAccessibility.HasFlag(Accessibility.Internal)/*Internal methods are used by compiler only*/)
@@ -332,22 +338,22 @@ namespace NetJs.Translator.CSharpToJavascript
                             .Where(m => m.MethodKind == MethodKind.Constructor)
                             .Where(m => !global.LinkTrimOutMethod(m))
                             .Select(FromConstructorSymbol).ToArray()),
-                Fields = NullIfEmpty(symbol.GetMembers()
+                Fields = minimal ? null : NullIfEmpty(symbol.GetMembers()
                             .Where(m => global.IsReflectable(m, null))
                             .Where(m => !m.IsExtern/*Extern methods are called via templates, not reflectable*/)
                             //.Where(m => !m.DeclaredAccessibility.HasFlag(Accessibility.Internal)/*Internal methods are used by compiler only*/)
                             .Where(m => !m.Name.Contains("k__BackingField")/*Property backing fields are not needed*/)
                             .OfType<IFieldSymbol>().Select(FromFieldSymbol).ToArray()),
-                Events = NullIfEmpty(symbol.GetMembers()
+                Events = minimal ? null : NullIfEmpty(symbol.GetMembers()
                             .Where(m => global.IsReflectable(m, null))
                              .Where(m => !m.IsExtern/*Extern methods are called via templates, not reflectable*/)
                             //.Where(m => !m.DeclaredAccessibility.HasFlag(Accessibility.Internal)/*Internal methods are used by compiler only*/)
                             .OfType<IEventSymbol>().Select(FromEventSymbol).ToArray()),
-                Interfaces = NullIfEmpty(symbol.AllInterfaces.Where(i => global.ShouldExportType(i, null)).Select(i => TypeHandle(i)).ToArray()),
-                Attributes = NullIfEmpty(symbol.GetAttributes()
+                Interfaces = minimal ? null : NullIfEmpty(symbol.AllInterfaces.Where(i => global.ShouldExportType(i, null)).Select(i => TypeHandle(i)).ToArray()),
+                Attributes = minimal ? null : NullIfEmpty(symbol.GetAttributes()
                 .Where(a => a.AttributeClass != null && global.ShouldExportType(a.AttributeClass, null))
                 .Select(a => FromAttribute(a)).ToArray()),
-                GenericArguments = NullIfEmpty(symbol is INamedTypeSymbol g && g.TypeArguments.Any()
+                GenericArguments = minimal ? null : NullIfEmpty(symbol is INamedTypeSymbol g && g.TypeArguments.Any()
                     ? g.TypeArguments.Select((t, i) =>
                     {
                         var handle = TypeHandle(t);
@@ -358,8 +364,8 @@ namespace NetJs.Translator.CSharpToJavascript
                         return handle;
                     }).ToArray()
                     : Array.Empty<ulong>()),
-                GenericConstraints = NullIfEmpty(Array.Empty<GenericParameterConstraintModel>()),
-                NestedTypes = NullIfEmpty(symbol.GetTypeMembers().Where(t => global.ShouldExportType(t, null) && global.IsReflectable(t, null)).Select(t => TypeHandle(t)).ToArray()),
+                GenericConstraints = minimal ? null : NullIfEmpty(Array.Empty<GenericParameterConstraintModel>()),
+                NestedTypes = minimal ? null : NullIfEmpty(symbol.GetTypeMembers().Where(t => global.ShouldExportType(t, null) && global.IsReflectable(t, null)).Select(t => TypeHandle(t)).ToArray()),
                 GenericParameterCount = symbol is INamedTypeSymbol ng ? ng.TypeParameters.Length : 0,
                 Size = symbol.SizeOf()
             };
@@ -372,10 +378,10 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             foreach (var nested in ns.GetTypeMembers())
             {
-                if (global.ShouldExportType(nested, null) && global.IsReflectable(nested, null))
+                if (global.ShouldExportType(nested, null) /*&& global.IsReflectable(nested, null)*/)
                     yield return nested;
                 foreach (var inner in GetInnerTypes(nested))
-                    if (global.ShouldExportType(inner, null) && global.IsReflectable(inner, null))
+                    if (global.ShouldExportType(inner, null)/* && global.IsReflectable(inner, null)*/)
                         yield return inner;
             }
         }
@@ -383,7 +389,7 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             foreach (var type in ns.GetTypeMembers())
             {
-                if (global.ShouldExportType(type, null) && global.IsReflectable(type, null))
+                if (global.ShouldExportType(type, null) /*&& global.IsReflectable(type, null)*/)
                     yield return type;
                 foreach (var inner in GetInnerTypes(type))
                     yield return inner;

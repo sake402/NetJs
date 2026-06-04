@@ -93,10 +93,19 @@ namespace NetJs.Translator.CSharpToJavascript
                 if (metadata != null)
                     return metadata;
             }
+            if (metadata == null && symbol is IEventSymbol evt && evt.PartialDefinitionPart != null)
+            {
+                metadata = SymbolMetadatas.GetValueOrDefault(evt.PartialDefinitionPart.OriginalDefinition);
+                if (metadata != null)
+                    return metadata;
+            }
             if (metadata == null && symbol is INamedTypeSymbol type && type.ConstructedFrom != null)
             {
                 metadata = SymbolMetadatas.GetValueOrDefault(type.ConstructedFrom);
-                var original = type.ConstructedFrom;
+            }
+            if (metadata == null && symbol.Kind == SymbolKind.DynamicType)
+            {
+                metadata = SymbolMetadatas.GetValueOrDefault(SystemDynamic);
             }
             if (metadata == null && symbol is IFieldSymbol field && symbol.ContainingType.IsTupleType)
             {
@@ -642,9 +651,20 @@ namespace NetJs.Translator.CSharpToJavascript
                                     //}
                                     //else
                                     {
-                                        var prefix = GlobalName + "." + assemblyNamespace + ".";
-                                        var fn = type.FullName.Replace(",", "$").Replace("<", "$").Replace(">", "$").Replace(" ", "");
-                                        overloadedName = (fn.StartsWith(prefix) ? null : prefix) + fn;
+                                        if (ttype.IsExtension)
+                                        {
+                                            var parentSaticClass = ttype.ContainingType;
+                                            var parentSaticClassMetadata = SymbolMetadatas![parentSaticClass];
+                                            type.OriginalOverloadName = parentSaticClassMetadata.OriginalOverloadName;
+                                            type.OverloadName = parentSaticClassMetadata.OverloadName;
+                                            continue;
+                                        }
+                                        else
+                                        {
+                                            var prefix = GlobalName + "." + assemblyNamespace + ".";
+                                            var fn = type.FullName.Replace(",", "$").Replace("<", "$").Replace(">", "$").Replace(" ", "");
+                                            overloadedName = (fn.StartsWith(prefix) ? null : prefix) + fn;
+                                        }
                                     }
                                 }
                                 if (!usedTypeNames.TryGetValue(overloadedName, out var usedName))
@@ -1762,19 +1782,63 @@ namespace NetJs.Translator.CSharpToJavascript
         }
 
         public INamedTypeSymbol SystemObject => field ??= (INamedTypeSymbol)GetSymbol("System.Object", null/*, out _, out _*/);
+        public INamedTypeSymbol SystemValueType => field ??= (INamedTypeSymbol)GetSymbol("System.ValueType", null/*, out _, out _*/);
         public INamedTypeSymbol SystemBoolean => field ??= (INamedTypeSymbol)GetSymbol("System.Boolean", null/*, out _, out _*/);
         public INamedTypeSymbol SystemChar => field ??= (INamedTypeSymbol)GetSymbol("System.Char", null/*, out _, out _*/);
+        public INamedTypeSymbol SystemSByte => field ??= (INamedTypeSymbol)GetSymbol("System.SByte", null/*, out _, out _*/);
+        public INamedTypeSymbol SystemByte => field ??= (INamedTypeSymbol)GetSymbol("System.Byte", null/*, out _, out _*/);
         public INamedTypeSymbol SystemString => field ??= (INamedTypeSymbol)GetSymbol("System.String", null/*, out _, out _*/);
+        public INamedTypeSymbol SystemInt16 => field ??= (INamedTypeSymbol)GetSymbol("System.Int16", null/*, out _, out _*/);
+        public INamedTypeSymbol SystemUInt16 => field ??= (INamedTypeSymbol)GetSymbol("System.UInt16", null/*, out _, out _*/);
         public INamedTypeSymbol SystemInt32 => field ??= (INamedTypeSymbol)GetSymbol("System.Int32", null/*, out _, out _*/);
         public INamedTypeSymbol SystemUInt32 => field ??= (INamedTypeSymbol)GetSymbol("System.UInt32", null/*, out _, out _*/);
         public INamedTypeSymbol SystemInt64 => field ??= (INamedTypeSymbol)GetSymbol("System.Int64", null/*, out _, out _*/);
         public INamedTypeSymbol SystemUInt64 => field ??= (INamedTypeSymbol)GetSymbol("System.UInt64", null/*, out _, out _*/);
+        public INamedTypeSymbol SystemDouble => field ??= (INamedTypeSymbol)GetSymbol("System.Double", null/*, out _, out _*/);
+        public INamedTypeSymbol SystemSingle => field ??= (INamedTypeSymbol)GetSymbol("System.Single", null/*, out _, out _*/);
+        public INamedTypeSymbol SystemArray => field ??= (INamedTypeSymbol)GetSymbol("System.Array", null/*, out _, out _*/);
+        public INamedTypeSymbol SystemEnum => field ??= (INamedTypeSymbol)GetSymbol("System.Enum", null/*, out _, out _*/);
         public INamedTypeSymbol SystemType => field ??= (INamedTypeSymbol)GetSymbol("System.Type", null/*, out _, out _*/);
         public INamedTypeSymbol SystemReadOnlySpan => field ??= (INamedTypeSymbol)GetSymbol("System.ReadOnlySpan<>", null);
         public INamedTypeSymbol SystemSpan => field ??= (INamedTypeSymbol)GetSymbol("System.Span<>", null);
         public INamedTypeSymbol SystemRange => field ??= (INamedTypeSymbol)GetSymbol("System.Range", null);
         public INamedTypeSymbol SystemIndex => field ??= (INamedTypeSymbol)GetSymbol("System.Index", null);
         public INamedTypeSymbol SystemDelegate => field ??= (INamedTypeSymbol)GetSymbol("System.Delegate", null);
+        public INamedTypeSymbol SystemIEnumerable => field ??= (INamedTypeSymbol)GetSymbol("System.Collections.IEnumerable", null);
+        public INamedTypeSymbol SystemIEnumerableT => field ??= (INamedTypeSymbol)GetSymbol("System.Collections.Generic.IEnumerable<>", null);
+        public INamedTypeSymbol SystemDynamic => field ??= (INamedTypeSymbol)GetSymbol("System.DynamicType", null);
+        public INamedTypeSymbol SystemT1 => field ??= (INamedTypeSymbol)GetSymbol("T1", null);
+        public INamedTypeSymbol SystemT2 => field ??= (INamedTypeSymbol)GetSymbol("T2", null);
+        public INamedTypeSymbol SystemT3 => field ??= (INamedTypeSymbol)GetSymbol("T3", null);
+        public INamedTypeSymbol SystemT4 => field ??= (INamedTypeSymbol)GetSymbol("T4", null);
+        public INamedTypeSymbol SystemT5 => field ??= (INamedTypeSymbol)GetSymbol("T5", null);
+        public INamedTypeSymbol SystemT6 => field ??= (INamedTypeSymbol)GetSymbol("T6", null);
+        public INamedTypeSymbol SystemT7 => field ??= (INamedTypeSymbol)GetSymbol("T7", null);
+        public INamedTypeSymbol SystemT8 => field ??= (INamedTypeSymbol)GetSymbol("T8", null);
+        public INamedTypeSymbol SystemT9 => field ??= (INamedTypeSymbol)GetSymbol("T9", null);
+        public INamedTypeSymbol SystemT10 => field ??= (INamedTypeSymbol)GetSymbol("T10", null);
+        public INamedTypeSymbol SystemT11 => field ??= (INamedTypeSymbol)GetSymbol("T11", null);
+        public INamedTypeSymbol SystemT12 => field ??= (INamedTypeSymbol)GetSymbol("T12", null);
+        public INamedTypeSymbol SystemT13 => field ??= (INamedTypeSymbol)GetSymbol("T13", null);
+        public INamedTypeSymbol SystemT14 => field ??= (INamedTypeSymbol)GetSymbol("T14", null);
+        public INamedTypeSymbol SystemT15 => field ??= (INamedTypeSymbol)GetSymbol("T15", null);
+        public INamedTypeSymbol SystemT16 => field ??= (INamedTypeSymbol)GetSymbol("T16", null);
+        public INamedTypeSymbol SystemT17 => field ??= (INamedTypeSymbol)GetSymbol("T17", null);
+        public INamedTypeSymbol SystemT18 => field ??= (INamedTypeSymbol)GetSymbol("T18", null);
+        public INamedTypeSymbol SystemT19 => field ??= (INamedTypeSymbol)GetSymbol("T19", null);
+        public INamedTypeSymbol SystemT20 => field ??= (INamedTypeSymbol)GetSymbol("T20", null);
+        public INamedTypeSymbol SystemT21 => field ??= (INamedTypeSymbol)GetSymbol("T21", null);
+        public INamedTypeSymbol SystemT22 => field ??= (INamedTypeSymbol)GetSymbol("T22", null);
+        public INamedTypeSymbol SystemT23 => field ??= (INamedTypeSymbol)GetSymbol("T23", null);
+        public INamedTypeSymbol SystemT24 => field ??= (INamedTypeSymbol)GetSymbol("T24", null);
+        public INamedTypeSymbol SystemT25 => field ??= (INamedTypeSymbol)GetSymbol("T25", null);
+        public INamedTypeSymbol SystemT26 => field ??= (INamedTypeSymbol)GetSymbol("T26", null);
+        public INamedTypeSymbol SystemT27 => field ??= (INamedTypeSymbol)GetSymbol("T27", null);
+        public INamedTypeSymbol SystemT28 => field ??= (INamedTypeSymbol)GetSymbol("T28", null);
+        public INamedTypeSymbol SystemT29 => field ??= (INamedTypeSymbol)GetSymbol("T29", null);
+        public INamedTypeSymbol SystemT30 => field ??= (INamedTypeSymbol)GetSymbol("T30", null);
+        public INamedTypeSymbol SystemT31 => field ??= (INamedTypeSymbol)GetSymbol("T31", null);
+        public INamedTypeSymbol SystemT32 => field ??= (INamedTypeSymbol)GetSymbol("T32", null);
 
         public INamedTypeSymbol DeletedObject => field ??= (INamedTypeSymbol)GetSymbol("DeletedObject", null/*, out _, out _*/);
 
@@ -2338,6 +2402,8 @@ namespace NetJs.Translator.CSharpToJavascript
             //    //}
             //    return type;
             //}
+            if (symbol.Kind == SymbolKind.DynamicType)
+                return (ITypeSymbol)symbol;
             if ((symbol.Kind == SymbolKind.NamedType || symbol.Kind == SymbolKind.ArrayType || symbol.Kind == SymbolKind.PointerType || symbol.Kind == SymbolKind.FunctionPointerType) &&
                 symbol is ITypeSymbol type)
             {
@@ -2745,10 +2811,6 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public bool IsReflectable(ISymbol symbol, TranslatorSyntaxVisitor? visitor, bool skipAssemblyCheck = false)
         {
-            if (symbol.Name.StartsWith("Interop"))
-            {
-
-            }
             var has = HasAttribute(symbol, typeof(ReflectableAttribute).FullName, visitor, false, out var args);
             if (has)
             {
@@ -2976,13 +3038,20 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (assemblyGlobalNamespaceCache.TryGetValue(assembly.Name, out var slug))
                 return slug;
-            var name = assembly.Name;
-            if (name.StartsWith($"{Constants.ProjectName}."))
-                name = name.Substring(6);
-            slug = "$" + string.Join("", name.Split('.').Select(c => char.ToLower(c[0])));
-            if (assemblyGlobalNamespaceCache.Values.Contains(slug))
+            if (HasAttribute(assembly, typeof(AssemblySlugAttribute).FullName, null, false, out var args))
             {
-                //throw new InvalidOperationException($"Auto generated global namespace for {assembly} clashes with an existing slug");
+                slug = (string)args![0]!;
+            }
+            else
+            {
+                var name = assembly.Name;
+                if (name.StartsWith($"{Constants.ProjectName}."))
+                    name = name.Substring(6);
+                slug = "$" + string.Join("", name.Split('.').Select(c => char.ToLower(c[0])));
+                if (assemblyGlobalNamespaceCache.Values.Contains(slug))
+                {
+                    //throw new InvalidOperationException($"Auto generated global namespace for {assembly} clashes with an existing slug");
+                }
             }
             assemblyGlobalNamespaceCache[assembly.Name] = slug;
             return slug;

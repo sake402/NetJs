@@ -169,7 +169,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
                 else
                 {
-                    CurrentTypeWriter.Write(node, Utilities.ResolveIdentifierName(identifier));
+                    CurrentTypeWriter.Write(node, identifier.ResolveIdentifierName());
                 }
                 var refKind = identifierSymbol?.GetRefKind();
                 if (refKind != null && refKind != RefKind.None)

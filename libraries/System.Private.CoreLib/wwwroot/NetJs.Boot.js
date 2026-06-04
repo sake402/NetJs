@@ -34,7 +34,7 @@
         return spcAssembly;
     }
     function isValueType(prototype) {
-        var model = prototype.$model;
+        var model = prototype.$metadata;
         if (model && model.fg) {//value type
             return (model.fg & (1 << 9)) !== 0;
         }
@@ -48,7 +48,7 @@
     }
 
     function isPrimitive(prototype) {
-        var model = prototype.$model;
+        var model = prototype.$metadata;
         if (model && model.fg) {//ks primitives
             return (model.fg & (1 << 10)) !== 0;
         }
@@ -233,7 +233,7 @@
             return prototype.Zero;
         if (prototype.$is && prototype.$is(0, NetJs.$discardRef))
             return 0;
-        var model = prototype.$model;
+        // var model = prototype.$model;
         if (isValueType(prototype) === false) {
             return null;
         }
@@ -303,11 +303,11 @@
         get $v() { },
         set $v(v) { }
     }
-    NetJs.$typeOf = function (type) {
-        return type.$type ?? type;
+    NetJs.$typeOf = function (prototype) {
+        return prototype.$type ?? prototype;
     }
-    NetJs.$sizeOf = function (type) {
-        return type.$type?.$metadata?.sz;
+    NetJs.$sizeOf = function (prototype) {
+        return prototype.$metadata?.sz;
     }
     NetJs.$firstOf = function (value, otherwise) {
         if (value)

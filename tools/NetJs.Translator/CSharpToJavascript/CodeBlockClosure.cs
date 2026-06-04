@@ -94,6 +94,7 @@ namespace NetJs.Translator.CSharpToJavascript
         public string? JumpStateMachineVariableName { get; set; }
         public Dictionary<CSharpSyntaxNode, string> JumpLabels { get; } = new Dictionary<CSharpSyntaxNode, string>();
         public List<string> GotoJumpLabels { get; } = new List<string>();
+        public Dictionary<string, List<StatementSyntax>> GotoInsertInlineStatements { get; } = new();
         Stack<IEnumerable<ISymbol>> _anonymousMethodParameterTypes = new Stack<IEnumerable<ISymbol>>();
         public IDisposable DefineAnonymousMethodParameterTypes(IEnumerable<ISymbol> types)
         {

@@ -17,12 +17,13 @@ namespace System.Reflection
     internal sealed partial class RuntimeAssembly_Partial : ForcedPartialBase<RuntimeAssembly>
     {
         [NetJs.NativeDelegate]
+        [NetJs.External]
         delegate void OnCompleted();
 
         internal RuntimeModule_Partial _module;
         internal RuntimeType[] _types = [];
         internal AssemblyModel _model;
-        uint _nextTypeHandle = 0x8000;
+        uint _nextTypeHandle = 0x4000;
 
         public RuntimeAssembly_Partial(AssemblyModel model, string assemblyName)
         {
@@ -166,7 +167,7 @@ namespace System.Reflection
                     return existing!;
 #pragma warning restore CS0184 // 'is' expression's given expression is never of the provided type
             }
-            
+
             bool isGenericDefinition = fullTypeName.NativeEndsWith("$") || fullTypeName.NativeEndsWith(">");
 
             var selfProxy = NetJs.Script.TypeOf(existing).NativeEquals("function") ?
@@ -243,14 +244,14 @@ namespace System.Reflection
             }
             if (isNestedClass)
             {
-                if (prototype != null)
+                if (prototype != null && NetJs.Script.IsDefined(parent))
                 {
                     prototype.Parent = parent;
                 }
                 //Initialize nested types immedialty. If we are crrating it, it means we already access it
                 RegisterCompletionNotification(type);
             }
-            return prototype ?? provider.As<TypePrototype>();
+            return (!isGenericDefinition ? prototype : null) ?? provider.As<TypePrototype>();
         }
 
         internal static string InsertGenericNames(string fullTypeName, string[] genericArguments)

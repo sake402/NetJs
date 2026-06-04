@@ -135,7 +135,7 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (node != null)
             {
-                if (node.ToString().Equals("out int _"))
+                if (node.ToString().StartsWith("public partial event EventHandler? OnRun"))
                 {
                 }
                 var nodeType = node.GetType();

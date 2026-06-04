@@ -96,7 +96,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 return;
             }
             var parent = (VariableDeclarationSyntax)node.Parent!;
-            CurrentTypeWriter.Write(node, node.Identifier.Text);
+            CurrentTypeWriter.Write(node, node.Identifier.ResolveIdentifierName());
             var localSymbol = _global.TryGetSymbol(node, this/*, out _, out _*/);
             if (localSymbol != null)
             {
@@ -138,7 +138,7 @@ namespace NetJs.Translator.CSharpToJavascript
         public override void VisitSingleVariableDesignation(SingleVariableDesignationSyntax node)
         {
             //Writer.InsertInCurrentClosure($"let {node.Identifier.ValueText};", true);
-            CurrentTypeWriter.Write(node, Utilities.ResolveIdentifierName(node.Identifier));
+            CurrentTypeWriter.Write(node, node.Identifier.ResolveIdentifierName());
             //base.VisitSingleVariableDesignation(node);
         }
 

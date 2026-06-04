@@ -18,14 +18,21 @@ namespace NetJs.Translator.CSharpToJavascript
         List<VariableDeclarationSyntax> gotoDeclarationDefined = new List<VariableDeclarationSyntax>();
 
         bool GotoHasDefinedVariable(VariableDeclarationSyntax variable) => gotoGeneratorActive > 0 && gotoDeclarationDefined.Contains(variable);
-        bool BlockTryHandleJumpLabels(BlockSyntax node)
+
+        List<LabeledStatementSyntax> CollectGotoLabelsIntoCurrentClosure(CSharpSyntaxNode node)
         {
-            //Debug.Assert(CurrentClosure.Syntax == node);
             var labels = node.ChildNodes().Where(e => e.IsKind(SyntaxKind.LabeledStatement)).Cast<LabeledStatementSyntax>().ToList();
             foreach (var label in labels)
             {
                 CurrentClosure.GotoJumpLabels.Add(label.Identifier.ValueText);
             }
+            return labels;
+        }
+
+        bool BlockTryHandleJumpLabels(BlockSyntax node)
+        {
+            //Debug.Assert(CurrentClosure.Syntax == node);
+            var labels = CollectGotoLabelsIntoCurrentClosure(node);
             if (labels.Count > 0)
             {
                 gotoVariableDeclarationActive = true;
@@ -117,10 +124,41 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitLabeledStatement(LabeledStatementSyntax node)
         {
-            var index = CurrentClosure.GotoJumpLabels.IndexOf(node.Identifier.ValueText) + 1;
-            CurrentTypeWriter.Write(node, $"case ", true);
-            CurrentTypeWriter.Write(node, index.ToString());
-            CurrentTypeWriter.WriteLine(node, $": /*{node.Identifier.ValueText}*/");
+            bool writeCase = true;
+            //If this label statements is inlined into the respective goto places, no need of case
+            CSharpSyntaxNode? blockOrSwitch = (CSharpSyntaxNode?)node.FindClosestParent<BlockSyntax>(e =>
+            {
+                var blockClosure = GetClosureOf(e);
+                if (blockClosure.GotoJumpLabels.Contains(node.Identifier.ValueText))
+                    return true;
+                return false;
+            }) ?? node.FindClosestParent<SwitchStatementSyntax>(e =>
+            {
+                var switchClosure = GetClosureOf(e);
+                if (switchClosure.GotoJumpLabels.Contains(node.Identifier.ValueText))
+                    return true;
+                return false;
+            });
+            if (blockOrSwitch != null)
+            {
+                var blockOrSwitchClosure = GetClosureOf(blockOrSwitch);
+                var statements = blockOrSwitchClosure.GotoInsertInlineStatements.GetValueOrDefault(node.Identifier.ValueText);
+                if (statements != null)
+                {
+                    writeCase = false;
+                }
+            }
+            if (writeCase)
+            {
+                var index = CurrentClosure.GotoJumpLabels.IndexOf(node.Identifier.ValueText) + 1;
+                CurrentTypeWriter.Write(node, $"case ", true);
+                CurrentTypeWriter.Write(node, index.ToString());
+                CurrentTypeWriter.WriteLine(node, $": /*{node.Identifier.ValueText}*/");
+            }
+            else
+            {
+                CurrentTypeWriter.WriteLine(node, $"// {node.Identifier.ValueText}: labelled statement inlined", true);
+            }
             Visit(node.Statement);
             //Writer.WriteLine(node, "break;", true);
             //base.VisitLabeledStatement(node);
@@ -130,19 +168,37 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (node.Expression is IdentifierNameSyntax id)
             {
-                BlockSyntax block = node.FindClosestParent<BlockSyntax>(e =>
+                CSharpSyntaxNode blockOrSwitch = (CSharpSyntaxNode?)node.FindClosestParent<BlockSyntax>(e =>
                 {
                     var blockClosure = GetClosureOf(e);
                     if (blockClosure.GotoJumpLabels.Contains(id.Identifier.ValueText))
                         return true;
                     return false;
+                }) ?? node.FindClosestParent<SwitchStatementSyntax>(e =>
+                {
+                    var switchClosure = GetClosureOf(e);
+                    if (switchClosure.GotoJumpLabels.Contains(id.Identifier.ValueText))
+                        return true;
+                    return false;
                 }) ?? throw new InvalidOperationException("Goto must be within a block");
-                var blockClosure = GetClosureOf(block);
-                var index = blockClosure.GotoJumpLabels.IndexOf(id.Identifier.ValueText) + 1;
-                CurrentTypeWriter.Write(node, $"{blockClosure.JumpStateMachineVariableName} = ", true);
-                CurrentTypeWriter.Write(node, index.ToString());
-                CurrentTypeWriter.WriteLine(node, $"; /*goto {id.Identifier.ValueText}*/");
-                CurrentTypeWriter.WriteLine(node, $"continue {blockClosure.JumpStartLabelName};", true);
+                var blockOrSwitchClosure = GetClosureOf(blockOrSwitch);
+                var statements = blockOrSwitchClosure.GotoInsertInlineStatements.GetValueOrDefault(id.Identifier.ValueText);
+                //If this goto target statements is to be inlined, simply inline the statements
+                if (statements != null)
+                {
+                    CurrentTypeWriter.WriteLine(node, $"//Begin Inlined goto {id.Identifier.ValueText}", true);
+                    foreach (var statement in statements)
+                        Visit(statement);
+                    CurrentTypeWriter.WriteLine(node, $"//End Inlined goto {id.Identifier.ValueText}", true);
+                }
+                else
+                {
+                    var index = blockOrSwitchClosure.GotoJumpLabels.IndexOf(id.Identifier.ValueText) + 1;
+                    CurrentTypeWriter.Write(node, $"{blockOrSwitchClosure.JumpStateMachineVariableName} = ", true);
+                    CurrentTypeWriter.Write(node, index.ToString());
+                    CurrentTypeWriter.WriteLine(node, $"; /*goto {id.Identifier.ValueText}*/");
+                    CurrentTypeWriter.WriteLine(node, $"continue {blockOrSwitchClosure.JumpStartLabelName};", true);
+                }
             }
             else if (node.IsKind(SyntaxKind.GotoCaseStatement) || node.IsKind(SyntaxKind.GotoDefaultStatement))
             {

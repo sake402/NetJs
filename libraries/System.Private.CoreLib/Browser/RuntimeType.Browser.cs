@@ -95,7 +95,14 @@ namespace System
             }
             AppDomain.GlobalTypeRegistry[scriptFullName] = this;
             if (model != null && model.Handle != 0)
+            {
+                var existing = AppDomain.GlobalTypeRegistry[model.Handle.As<uint>().GetAssemblyAndTypeHandle()];
+                if (NetJs.Script.IsDefined(existing))
+                {
+                    throw null!;
+                }
                 AppDomain.GlobalTypeRegistry[model.Handle.As<uint>().GetAssemblyAndTypeHandle()] = this;
+            }
             //if (model != null && _prototype != null)
             //    Initialize();
         }

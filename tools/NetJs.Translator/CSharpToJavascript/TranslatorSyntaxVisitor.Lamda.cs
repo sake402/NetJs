@@ -12,7 +12,7 @@ namespace NetJs.Translator.CSharpToJavascript
 {
     public partial class TranslatorSyntaxVisitor
     {
-        void WriteLambdaExpression(CSharpSyntaxNode node, string? modifiers, IEnumerable<ParameterSyntax>? lamdaParameters, CSharpSyntaxNode? body)
+        void WriteLambdaExpression(CSharpSyntaxNode node, SyntaxTokenList modifiers, IEnumerable<ParameterSyntax>? lamdaParameters, CSharpSyntaxNode? body)
         {
             var previousClosure = CurrentClosure;
             OpenClosure(node);
@@ -46,8 +46,9 @@ namespace NetJs.Translator.CSharpToJavascript
                     ix++;
                 }
             }
+            var smodifiers = GetMethodModifier(node, modifiers, null);
             var parameters = string.Join(", ", lamdaParameters?.Select((p, i) => $"/*{p.Type?.ToString().Trim() ?? _global.TryGetSymbol(p.Identifier.Text, this)?.Name}*/ {(p.Identifier.Text == "_" ? $"_{i}" : p.Identifier.Text)}") ?? Enumerable.Empty<string>());
-            CurrentTypeWriter.WriteLine(node, $"/*{modifiers}*/ ({parameters}) =>");
+            CurrentTypeWriter.WriteLine(node, $"/*{smodifiers}*/ {(modifiers.IsAsync() ? "async " : "")} ({parameters}) =>");
             CurrentTypeWriter.WriteLine(node, "{", true);
             //var child = node.ChildNodes().Where(t => !t.IsKind(SyntaxKind.ParameterList)/* is not ParameterListSyntax*/ && !t.IsKind(SyntaxKind.Parameter)/* is not ParameterSyntax*/);
             bool implicitReturn = false;
@@ -84,19 +85,19 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitAnonymousMethodExpression(AnonymousMethodExpressionSyntax node)
         {
-            WriteLambdaExpression(node, GetMethodModifier(node, node.Modifiers, null), node.ParameterList?.Parameters, node.Body??node.ExpressionBody);
+            WriteLambdaExpression(node, node.Modifiers, node.ParameterList?.Parameters, node.Body ?? node.ExpressionBody);
             //base.VisitAnonymousMethodExpression(node);
         }
 
         public override void VisitParenthesizedLambdaExpression(ParenthesizedLambdaExpressionSyntax node)
         {
-            WriteLambdaExpression(node, GetMethodModifier(node, node.Modifiers, null), node.ParameterList.Parameters, node.Body ?? node.ExpressionBody);
+            WriteLambdaExpression(node, node.Modifiers, node.ParameterList.Parameters, node.Body ?? node.ExpressionBody);
             //base.VisitParenthesizedLambdaExpression(node);
         }
 
         public override void VisitSimpleLambdaExpression(SimpleLambdaExpressionSyntax node)
         {
-            WriteLambdaExpression(node, GetMethodModifier(node, node.Modifiers, null), [node.Parameter], node.Body ?? node.ExpressionBody);
+            WriteLambdaExpression(node, node.Modifiers, [node.Parameter], node.Body ?? node.ExpressionBody);
             //base.VisitSimpleLambdaExpression(node);
         }
 

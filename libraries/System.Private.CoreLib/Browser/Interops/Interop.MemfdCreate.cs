@@ -3,19 +3,22 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
+#if SYSTEM_PRIVATE_CORELIB
+#else
 internal static partial class Interop
 {
     internal static unsafe partial class Sys
     {
-        internal static partial SafeFileHandle ShmOpen(string name, OpenFlags flags, int mode)
+        internal static partial SafeFileHandle MemfdCreate(string name, int isReadonly)
         {
             throw new PlatformNotSupportedException();
         }
 
-        internal static partial int ShmUnlink(string name)
+        private static partial int MemfdSupportedImpl()
         {
-            throw new PlatformNotSupportedException();
+            return 0;
         }
 
     }
 }
+#endif

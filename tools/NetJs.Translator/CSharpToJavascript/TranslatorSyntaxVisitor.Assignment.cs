@@ -70,7 +70,9 @@ namespace NetJs.Translator.CSharpToJavascript
             //Or from a type parameter, the runtime will check if boxing is really neccessary for the type parameter
             if (!fromType.IsAbstract && (fromType.Kind == SymbolKind.TypeParameter || fromType.IsJsPrimitive()))
             {
-                if (SymbolEqualityComparer.Default.Equals(toType, _global.SystemObject) || toType.TypeKind == TypeKind.Interface)
+                if (SymbolEqualityComparer.Default.Equals(toType, _global.SystemObject) ||
+                    (toType.TypeKind == TypeKind.Interface && fromType.AllInterfaces.Any(i => SymbolEqualityComparer.Default.Equals(i, toType))) ||
+                    (toType.TypeKind == TypeKind.Interface && fromType.Kind == SymbolKind.TypeParameter))
                     return true;
             }
             return false;

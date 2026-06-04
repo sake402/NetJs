@@ -13,6 +13,7 @@ namespace System
     {
         Unknown,
         SystemObject,
+        SystemValueType,
         SystemBool,
         SystemSByte,
         SystemByte,
@@ -26,7 +27,6 @@ namespace System
         SystemInt64,
         SystemUint64,
         SystemEnum,
-        SystemFloat,
         SystemSingle,
         SystemDouble,
         SystemArray,

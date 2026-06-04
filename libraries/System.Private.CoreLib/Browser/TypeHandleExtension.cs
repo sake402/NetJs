@@ -44,7 +44,7 @@ namespace System
                 KnownTypeHandle.SystemUintPtr => true,
                 KnownTypeHandle.SystemInt64 => true,
                 KnownTypeHandle.SystemUint64 => true,
-                KnownTypeHandle.SystemFloat => true,
+                KnownTypeHandle.SystemSingle => true,
                 KnownTypeHandle.SystemDouble => true,
                 _ => false
             };
@@ -65,7 +65,7 @@ namespace System
                 KnownTypeHandle.SystemUintPtr => true,
                 KnownTypeHandle.SystemInt64 => true,
                 KnownTypeHandle.SystemUint64 => true,
-                KnownTypeHandle.SystemFloat => true,
+                KnownTypeHandle.SystemSingle => true,
                 KnownTypeHandle.SystemDouble => true,
                 KnownTypeHandle.SystemString => true,
                 _ => false

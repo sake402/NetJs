@@ -147,7 +147,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitEventDeclaration(EventDeclarationSyntax node)
         {
-            if (node.Modifiers.IsPartial())
+            if (node.Modifiers.IsPartial() && node.AccessorList == null)
                 return;
             EnsureImported(node.Type);
             string? modifier = null;
@@ -216,7 +216,7 @@ namespace NetJs.Translator.CSharpToJavascript
             var propertySymbol = (IPropertySymbol)_global.GetSymbol(node, this/*, out _, out _*/);
             var propertyMetadata = _global.GetRequiredMetadata(propertySymbol);
             bool external = _global.HasAttribute(propertySymbol, typeof(TemplateAttribute).FullName!, this, false, out _);
-            var propertyName = propertyMetadata.OverloadName ?? Utilities.ResolveIdentifierName(node.Identifier);
+            var propertyName = propertyMetadata.OverloadName ?? node.Identifier.ResolveIdentifierName();
             if (external)
                 return;
             if (!node.Modifiers.IsAbstract())
@@ -523,8 +523,8 @@ namespace NetJs.Translator.CSharpToJavascript
 
                 }
             }
-            var mpropertySymbol = (IPropertySymbol)_global.GetSymbol(node, this/*, out _, out _*/);
-            var mpropertyMetadata = _global.GetRequiredMetadata(mpropertySymbol.GetMethod!);
+            //var mpropertySymbol = (IPropertySymbol)_global.GetSymbol(node, this/*, out _, out _*/);
+            //var mpropertyMetadata = _global.GetRequiredMetadata(mpropertySymbol.GetMethod!);
             //TryWriteImplementedPropertyGetter(node, mpropertySymbol, $"{mpropertyMetadata?.OverloadName ?? "get_Item"}(...arguments)");
             //TryWriteImplementedPropertySetter(node, mpropertySymbol, $"{mpropertyMetadata?.OverloadName ?? "set_Item"}(...arguments)");
             //base.VisitIndexerDeclaration(node);

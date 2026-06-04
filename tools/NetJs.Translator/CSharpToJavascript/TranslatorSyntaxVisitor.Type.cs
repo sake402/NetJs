@@ -85,30 +85,30 @@ namespace NetJs.Translator.CSharpToJavascript
                         }
                         if (!implementation.IsExtern && !_global.HasAttribute(implementation, typeof(ExternalAttribute).FullName, this, false, out _) && !_global.HasAttribute(implementation.ContainingSymbol, typeof(ExternalAttribute).FullName, this, false, out _))
                         {
-                            var methodMember = ((IMethodSymbol)interfaceMember);
-                            var methodImplementation = ((IMethodSymbol)implementation);
+                            //var methodMember = ((IMethodSymbol)interfaceMember);
+                            //var methodImplementation = implementation;
                             var interfaceMemberMetadata = _global.GetRequiredMetadata(interfaceMember);
                             ISymbol? memberAssociatedProperty = null;
                             bool isIndexer = false;
-                            if (interfaceMember.Kind == SymbolKind.Method && (memberAssociatedProperty = methodMember.AssociatedSymbol) != null)
+                            if (interfaceMember.Kind == SymbolKind.Method && (memberAssociatedProperty = ((IMethodSymbol)interfaceMember).AssociatedSymbol) != null)
                             {
-                                if (!((IPropertySymbol)memberAssociatedProperty).IsIndexer)
+                                if (memberAssociatedProperty.Kind == SymbolKind.Property && !((IPropertySymbol)memberAssociatedProperty).IsIndexer)
                                     interfaceMemberMetadata = _global.GetRequiredMetadata(memberAssociatedProperty);
                                 else
                                     isIndexer = true;
                             }
                             var implementationMetadata = _global.GetRequiredMetadata(implementation);
                             ISymbol? implementationAssociatedProperty = null;
-                            if (implementation.Kind == SymbolKind.Method && (implementationAssociatedProperty = methodImplementation.AssociatedSymbol) != null)
+                            if (implementation.Kind == SymbolKind.Method && (implementationAssociatedProperty = ((IMethodSymbol)implementation).AssociatedSymbol) != null)
                             {
-                                if (!((IPropertySymbol)implementationAssociatedProperty).IsIndexer)
+                                if (implementationAssociatedProperty.Kind == SymbolKind.Property && !((IPropertySymbol)implementationAssociatedProperty).IsIndexer)
                                     implementationMetadata = _global.GetRequiredMetadata(implementationAssociatedProperty);
                                 else
                                     isIndexer = true;
                             }
                             OpenClosure(node);
                             CurrentTypeWriter.WriteLine(node, $"//Generated explicit method implemetation for {interfaceMember}", true);
-                            CurrentTypeWriter.Write(node, $"{(implementation.IsStatic || implementation.IsStaticCallConvention(_global) ? "static " : "")}{(implementation.IsStaticCallConvention(_global) ? "/*conventional*/ " : "")}{(!isIndexer && methodImplementation.MethodKind == MethodKind.PropertyGet ? "get " : !isIndexer && methodImplementation.MethodKind == MethodKind.PropertySet ? "set " : "")}{interfaceMemberMetadata.OverloadName}", true);
+                            CurrentTypeWriter.Write(node, $"{(implementation.IsStatic || implementation.IsStaticCallConvention(_global) ? "static " : "")}{(implementation.IsStaticCallConvention(_global) ? "/*conventional*/ " : "")}{(!isIndexer && implementation is IMethodSymbol ms && ms.MethodKind == MethodKind.PropertyGet ? "get " : !isIndexer && implementation is IMethodSymbol ms2 && ms2.MethodKind == MethodKind.PropertySet ? "set " : "")}{interfaceMemberMetadata.OverloadName}", true);
 
                             CurrentTypeWriter.Write(node, $"(", false);
                             //No need to write method argument explicitly since we use sptread operator on arguments
@@ -152,11 +152,11 @@ namespace NetJs.Translator.CSharpToJavascript
                             //}
                             if (implementation.IsStaticCallConvention(_global))
                             {
-                                CurrentTypeWriter.WriteLine(node, $"{(interfaceMember.Kind == SymbolKind.Method && interfaceMember is IMethodSymbol method && method.ReturnType != null && method.ReturnType.Name != "void" ? "return " : "")}{implementationMetadata.InvocationName}{(methodImplementation.MethodKind == MethodKind.Ordinary || isIndexer ? ".apply(this, arguments)" : "")};", true);
+                                CurrentTypeWriter.WriteLine(node, $"{(interfaceMember.Kind == SymbolKind.Method && interfaceMember is IMethodSymbol method && method.ReturnType != null && method.ReturnType.Name != "void" ? "return " : "")}{implementationMetadata.InvocationName}{((implementation is IMethodSymbol ms3 && ms3.MethodKind == MethodKind.Ordinary) || isIndexer ? ".apply(this, arguments)" : "")};", true);
                             }
                             else
                             {
-                                CurrentTypeWriter.WriteLine(node, $"{(interfaceMember.Kind == SymbolKind.Method && interfaceMember is IMethodSymbol method && method.ReturnType != null && method.ReturnType.Name != "void" ? "return " : "")}{(!interfaceMember.IsStatic ? "this." : "")}{implementationMetadata.InvocationName}{(methodImplementation.MethodKind == MethodKind.Ordinary || isIndexer ? "(...arguments)" : "")};", true);
+                                CurrentTypeWriter.WriteLine(node, $"{(interfaceMember.Kind == SymbolKind.Method && interfaceMember is IMethodSymbol method && method.ReturnType != null && method.ReturnType.Name != "void" ? "return " : "")}{(!interfaceMember.IsStatic ? "this." : "")}{implementationMetadata.InvocationName}{((implementation is IMethodSymbol ms4 && ms4.MethodKind == MethodKind.Ordinary) || isIndexer ? "(...arguments)" : "")};", true);
                             }
                             CurrentTypeWriter.WriteLine(node, $"}}", true);
                             if (implementation.IsStaticCallConvention(_global) && !interfaceMember.IsStatic)
@@ -168,7 +168,7 @@ namespace NetJs.Translator.CSharpToJavascript
                                 //WriteMethodDeclarationParameters(node, parameters?.Parameters ?? default);
                                 CurrentTypeWriter.WriteLine(node, $")", false);
                                 CurrentTypeWriter.WriteLine(node, $"{{", true);
-                                CurrentTypeWriter.WriteLine(node, $"{(interfaceMember.Kind == SymbolKind.Method && interfaceMember is IMethodSymbol method && method.ReceiverType != null && method.ReturnType.Name != "void" ? "return " : "")}{implementationMetadata.InvocationName}{(methodImplementation.MethodKind == MethodKind.Ordinary || isIndexer ? ".apply(this, arguments)" : "")};", true);
+                                CurrentTypeWriter.WriteLine(node, $"{(interfaceMember.Kind == SymbolKind.Method && interfaceMember is IMethodSymbol method && method.ReceiverType != null && method.ReturnType.Name != "void" ? "return " : "")}{implementationMetadata.InvocationName}{((implementation is IMethodSymbol ms5 && ms5.MethodKind == MethodKind.Ordinary) || isIndexer ? ".apply(this, arguments)" : "")};", true);
                                 //CurrentTypeWriter.Write(node, $"return {symbol.InvocationName}.apply(this, ...arguments);", true);
                                 CurrentTypeWriter.WriteLine(node, $"}}", true);
                             }
@@ -1051,19 +1051,23 @@ namespace NetJs.Translator.CSharpToJavascript
                 //{
 
                 //}
-                if (isDefinedTypeParameter)
-                {
+                if (isDefinedTypeParameter || _global.IsReflectable(typeSymbol, null))
                     CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeMetadata} = {JsonSerializer.Serialize(_global.Reflection.FromTypeSymbol(typeSymbol), ReflectionMetadataBuilder.SerializationOption)};", true);
-                }
-                else if (_global.IsReflectable(typeSymbol, null))
-                    CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeMetadata} = {JsonSerializer.Serialize(_global.Reflection.FromTypeSymbol(typeSymbol), ReflectionMetadataBuilder.SerializationOption)};", true);
-                else if (isBootClass)
-                {
-                    CurrentTypeWriter.WriteLine(node, "static $bf()", true);
-                    CurrentTypeWriter.WriteLine(node, "{", true);
-                    CurrentTypeWriter.WriteLine(node, $"return {(int)typeSymbol.GetTypeFlags()};", true);
-                    CurrentTypeWriter.WriteLine(node, "}", true);
-                }
+                else
+                    CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeMetadata} = {JsonSerializer.Serialize(_global.Reflection.FromTypeSymbol(typeSymbol, minimal: true), ReflectionMetadataBuilder.SerializationOption)};", true);
+                //else if (isBootClass)
+                //{
+                //    CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeMetadata} = {JsonSerializer.Serialize(new TypeModel { Flags = typeSymbol.GetTypeFlags() }, ReflectionMetadataBuilder.SerializationOption)};", true);
+                //    //CurrentTypeWriter.WriteLine(node, "static $bf()", true);
+                //    //CurrentTypeWriter.WriteLine(node, "{", true);
+                //    //CurrentTypeWriter.WriteLine(node, $"return {(int)typeSymbol.GetTypeFlags()};", true);
+                //    //CurrentTypeWriter.WriteLine(node, "}", true);
+                //}
+                //else
+                //{
+                //    //We must write a metadata, else we will be using the base prototype metadata for this class. We write it as undefined
+                //    CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeMetadata};", true);
+                //}
 
                 if (isDefinedTypeParameter)
                 {

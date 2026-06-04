@@ -3,7 +3,7 @@
 namespace System
 {
     [NetJs.ForcePartial(typeof(Buffer))]
-    internal static partial class Buffer_Partial
+    public static partial class Buffer_Partial
     {
         [NetJs.MemberReplace(nameof(Buffer.Memmove) + "<>")]
         public static unsafe void MemmoveImpl<T>(ref T destination, ref T source, nuint elementCount)

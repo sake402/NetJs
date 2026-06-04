@@ -203,7 +203,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     continue;
                 var fieldMetadata = _global.GetRequiredMetadata(symbol);
                 var declaringSymbolMeta = _global.GetRequiredMetadata(symbol.ContainingSymbol);
-                var fieldName = fieldMetadata.OverloadName ?? Utilities.ResolveIdentifierName(var.Identifier);
+                var fieldName = fieldMetadata.OverloadName ?? var.Identifier.ResolveIdentifierName();
                 //if (fieldSymbol != null)
                 CurrentClosure.DefineIdentifierType(symbol.Name, CodeSymbol.From(symbol));
                 //else
@@ -338,6 +338,28 @@ namespace NetJs.Translator.CSharpToJavascript
             //base.VisitFieldDeclaration(node);
         }
 
+        public void WriteDelegateCombine(CSharpSyntaxNode node, CodeNode left, CodeNode right)
+        {
+            var delegateCombineMethod = _global.SystemDelegate
+                .GetMembers("Combine")
+                .OfType<IMethodSymbol>()
+                .First(m => m.Parameters.Length == 2);
+            VisitNode(left);
+            CurrentTypeWriter.Write(node, " = ");
+            WriteMethodInvocation(node, delegateCombineMethod, null, [left, right], null, null);
+        }
+
+        public void WriteDelegateRemove(CSharpSyntaxNode node, CodeNode left, CodeNode right)
+        {
+            var delegateRemoveMethod = _global.SystemDelegate
+                .GetMembers("Remove")
+                .OfType<IMethodSymbol>()
+                .First(m => m.Parameters.Length == 2);
+            VisitNode(left);
+            CurrentTypeWriter.Write(node, " = ");
+            WriteMethodInvocation(node, delegateRemoveMethod, null, [left, right], null, null);
+        }
+
         void WriteEventAddRemove(EventFieldDeclarationSyntax node)
         {
             string? modifier = null;
@@ -365,27 +387,15 @@ namespace NetJs.Translator.CSharpToJavascript
 
                 CurrentTypeWriter.WriteLine(node, $"{modifier} {metadata.OverloadName}$add(/*{node.Declaration.Type.ToString().Trim()}*/ value)", true);
                 CurrentTypeWriter.WriteLine(node, "{", true);
-                var delegateCombineMethod = _global.SystemDelegate
-                        .GetMembers("Combine")
-                        .OfType<IMethodSymbol>()
-                        .First(m => m.Parameters.Length == 2);
                 CurrentTypeWriter.Write(node, "", true);
-                VisitNode(left);
-                CurrentTypeWriter.Write(node, " = ");
-                WriteMethodInvocation(node, delegateCombineMethod, null, [left, right], null, null);
+                WriteDelegateCombine(node, left, right);
                 CurrentTypeWriter.WriteLine(node, ";");
                 CurrentTypeWriter.WriteLine(node, "}", true);
 
                 CurrentTypeWriter.WriteLine(node, $"{modifier} {metadata.OverloadName}$remove(/*{node.Declaration.Type.ToString().Trim()}*/ value)", true);
                 CurrentTypeWriter.WriteLine(node, "{", true);
-                var delegateRemoveMethod = _global.SystemDelegate
-                        .GetMembers("Remove")
-                        .OfType<IMethodSymbol>()
-                        .First(m => m.Parameters.Length == 2);
                 CurrentTypeWriter.Write(node, "", true);
-                VisitNode(left);
-                CurrentTypeWriter.Write(node, " = ");
-                WriteMethodInvocation(node, delegateRemoveMethod, null, [left, right], null, null);
+                WriteDelegateRemove(node, left, right);
                 CurrentTypeWriter.WriteLine(node, ";");
                 CurrentTypeWriter.WriteLine(node, "}", true);
             }

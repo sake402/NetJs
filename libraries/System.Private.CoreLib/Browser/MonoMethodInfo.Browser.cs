@@ -68,8 +68,8 @@ namespace System.Reflection
         private static ParameterInfo[] get_parameter_info(IntPtr handle, MemberInfo member)
         {
             var method = member.As<RuntimeMethodInfo>();
-            return method._model.As<MethodModel>().Parameters
-                ?.Map((p, i, all) => new RuntimeParameterInfo_Partial(p, AppDomain.GetType(p.ParameterType.As<uint>()) ?? throw new InvalidOperationException(), method, i).As<RuntimeParameterInfo>())
+            var parameters = method._model.As<MethodModel>().Parameters ?? null;
+            return parameters?.Map((p, i, all) => new RuntimeParameterInfo_Partial(p, AppDomain.GetType(p.ParameterType.As<uint>()) ?? throw new InvalidOperationException(), method, i).As<RuntimeParameterInfo>())
                 .AsNetArray() ??
                 Array.Empty<ParameterInfo>();
         }

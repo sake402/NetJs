@@ -137,7 +137,7 @@ namespace System
                     KnownTypeHandle.SystemUint32 or KnownTypeHandle.SystemUintPtr => new Window.Uint32Array(arr).buffer,
                     KnownTypeHandle.SystemInt64 => new Window.BigInt64Array(arr).buffer,
                     KnownTypeHandle.SystemUint64 => new Window.BigUint64Array(arr).buffer,
-                    KnownTypeHandle.SystemFloat => new Window.Float32Array(arr).buffer,
+                    KnownTypeHandle.SystemSingle => new Window.Float32Array(arr).buffer,
                     KnownTypeHandle.SystemDouble => new Window.Float64Array(arr).buffer,
                     // Handle other sizes as needed
                     _ => throw new NotSupportedException("Size not supported")
@@ -204,7 +204,7 @@ namespace System
                         KnownTypeHandle.SystemUint32 or KnownTypeHandle.SystemUintPtr => dataView.getUint32(byteStartIndex, true).As<object>(),
                         KnownTypeHandle.SystemInt64 => dataView.getBigInt64(byteStartIndex, true).As<object>(),
                         KnownTypeHandle.SystemUint64 => dataView.getBigUint64(byteStartIndex, true).As<object>(),
-                        KnownTypeHandle.SystemFloat => dataView.getFloat32(byteStartIndex, true).As<object>(),
+                        KnownTypeHandle.SystemSingle => dataView.getFloat32(byteStartIndex, true).As<object>(),
                         KnownTypeHandle.SystemDouble => dataView.getFloat64(byteStartIndex, true).As<object>(),
                         // Handle other sizes as needed
                         _ => throw new NotSupportedException("Size not supported")
@@ -243,7 +243,7 @@ namespace System
                         KnownTypeHandle.SystemUint32 or KnownTypeHandle.SystemUintPtr => sourceView.getUint32(byteOffset, true).As<T>(),
                         KnownTypeHandle.SystemInt64 => sourceView.getBigInt64(byteOffset, true).As<T>(),
                         KnownTypeHandle.SystemUint64 => sourceView.getBigUint64(byteOffset, true).As<T>(),
-                        KnownTypeHandle.SystemFloat => sourceView.getFloat32(byteOffset, true).As<T>(),
+                        KnownTypeHandle.SystemSingle => sourceView.getFloat32(byteOffset, true).As<T>(),
                         KnownTypeHandle.SystemDouble => sourceView.getFloat64(byteOffset, true).As<T>(),
                         _ => throw new NotSupportedException("Size not supported")
                     };
@@ -284,7 +284,7 @@ namespace System
                             NetJs.Script.Write("const view = new DataView(bytes.buffer)");
                             return NetJs.Script.Write<T>("view.getFloat64(0, true)");
                         }
-                        else if (Type.As<RuntimeType>()._model.As<TypeModel>().KnownType == KnownTypeHandle.SystemFloat)
+                        else if (Type.As<RuntimeType>()._model.As<TypeModel>().KnownType == KnownTypeHandle.SystemSingle)
                         {
                             NetJs.Script.Write("const bytes = new Uint8Array(raw)");
                             NetJs.Script.Write("const view = new DataView(bytes.buffer)");
@@ -387,7 +387,7 @@ namespace System
                         case KnownTypeHandle.SystemInt64:
                             sourceView.setBigInt64(byteOffset, value.As<long>(), true);
                             break;
-                        case KnownTypeHandle.SystemFloat:
+                        case KnownTypeHandle.SystemSingle:
                             sourceView.setFloat32(byteOffset, value.As<float>(), true);
                             break;
                         case KnownTypeHandle.SystemDouble:
@@ -416,7 +416,7 @@ namespace System
                             KnownTypeHandle.SystemUint32 or KnownTypeHandle.SystemUintPtr => sourceView.getUint32(0, true).As<T>(),
                             KnownTypeHandle.SystemInt64 => sourceView.getBigInt64(0, true).As<T>(),
                             KnownTypeHandle.SystemUint64 => sourceView.getBigUint64(0, true).As<T>(),
-                            KnownTypeHandle.SystemFloat => sourceView.getFloat32(0, true).As<T>(),
+                            KnownTypeHandle.SystemSingle => sourceView.getFloat32(0, true).As<T>(),
                             KnownTypeHandle.SystemDouble => sourceView.getFloat64(0, true).As<T>(),
                             _ => throw new NotSupportedException("Size not supported")
                         };

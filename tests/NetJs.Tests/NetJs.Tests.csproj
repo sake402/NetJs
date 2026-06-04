@@ -6,8 +6,10 @@
 
 	<ItemGroup>
 	  <!--<ProjectReference Include="..\..\libraries\dotnetJs.All\NetJs.All.csproj" />-->
+	  <ProjectReference Include="..\..\libraries\Microsoft.CSharp\NetJs.Microsoft.CSharp.csproj" />
 	  <ProjectReference Include="..\..\libraries\System.Collections.Immutable\NetJs.System.Collections.Immutable.csproj" />
 	  <ProjectReference Include="..\..\libraries\System.Console\NetJs.System.Console.csproj" />
+	  <ProjectReference Include="..\..\libraries\System.Linq.Expressions\NetJs.System.Linq.Expressions.csproj" />
 	  <ProjectReference Include="..\..\libraries\System.Linq\NetJs.System.Linq.csproj" />
 	  <ProjectReference Include="..\..\libraries\System.Private.CoreLib\NetJs.System.Private.CoreLib.csproj" />
 	</ItemGroup>

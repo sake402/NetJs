@@ -51,7 +51,7 @@ namespace System
                     return CorElementType.ELEMENT_TYPE_CHAR;
                 case KnownTypeHandle.SystemBool:
                     return CorElementType.ELEMENT_TYPE_BOOLEAN;
-                case KnownTypeHandle.SystemFloat:
+                case KnownTypeHandle.SystemSingle:
                     return CorElementType.ELEMENT_TYPE_R4;
                 case KnownTypeHandle.SystemDouble:
                     return CorElementType.ELEMENT_TYPE_R8;

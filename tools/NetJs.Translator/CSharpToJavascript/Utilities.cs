@@ -151,19 +151,66 @@ namespace NetJs.Translator.CSharpToJavascript
             }
         }
 
+        public static SyntaxNode? NextSibling(this SyntaxNode node)
+        {
+            if (node?.Parent == null) return null;
+
+            var siblings = node.Parent.ChildNodes();
+            using var enumerator = siblings.GetEnumerator();
+
+            while (enumerator.MoveNext())
+            {
+                if (enumerator.Current == node)
+                {
+                    if (enumerator.MoveNext())
+                    {
+                        return enumerator.Current;
+                    }
+                    break;
+                }
+            }
+            return null;
+        }
+
         public static bool ChildIsBlock(this SyntaxNode node)
         {
             return node.ChildNodes().Count() == 1 && node.ChildNodes().Single() is BlockSyntax;
         }
 
-        public static string ResolveIdentifierName(SyntaxToken token)
+        public static string ResolveIdentifierName(this SyntaxToken token)
         {
-            if (token.Text == "constructor")
+            if (token.Text == "constructor" || token.Text == "@constructor")
                 return "$constructor";
-            if (token.Text == "function")
+            if (token.Text == "function" || token.Text == "@function")
                 return "$function";
-            if (token.Text == "arguments")
+            if (token.Text == "arguments" || token.Text == "@arguments")
                 return "$arguments";
+            if (token.Text == "break" || token.Text == "@break")
+                return "$break";
+            if (token.Text == "continue" || token.Text == "@continue")
+                return "$continue";
+            if (token.Text == "extends" || token.Text == "@extends")
+                return "$extends";
+            if (token.Text == "case" || token.Text == "@case")
+                return "$case";
+            if (token.Text == "try" || token.Text == "@try")
+                return "$try";
+            if (token.Text == "catch" || token.Text == "@catch")
+                return "$catch";
+            if (token.Text == "finally" || token.Text == "@finally")
+                return "$finally";
+            if (token.Text == "if" || token.Text == "@if")
+                return "$if";
+            if (token.Text == "do" || token.Text == "@do")
+                return "$do";
+            if (token.Text == "while" || token.Text == "@while")
+                return "$while";
+            if (token.Text == "goto" || token.Text == "@goto")
+                return "$goto";
+            if (token.Text == "this" || token.Text == "@this")
+                return "$this";
+            if (token.Text == "class" || token.Text == "@class")
+                return "$class";
             if (token.Text.StartsWith("@"))
                 return token.Text.Substring(1);
             return token.Text;
@@ -2471,7 +2518,7 @@ namespace NetJs.Translator.CSharpToJavascript
         }
 
 
-        public static bool IsExtensionMember(this ISymbol symbol, GlobalCompilationVisitor _global)
+        public static bool IsExtensionPropertyMember(this ISymbol symbol, GlobalCompilationVisitor _global)
         {
             if (symbol.Kind == SymbolKind.Property && symbol.ContainingType.IsExtension)
             {
@@ -2922,13 +2969,13 @@ namespace NetJs.Translator.CSharpToJavascript
                     else
                     {
                         var type = (e.f as IFieldSymbol)?.Type ?? (e.f as IEventSymbol)?.Type ?? (e.f as IPropertySymbol)?.Type;
-                        //if (IsInlineArray(type!, out var iSize, out _))
-                        //{
-                        //    var selfOffset = nextOffset;
-                        //    nextOffset += iSize;
-                        //    return (e.f, selfOffset, iSize);
-                        //}
-                        //else
+                        if (IsInlineArray(type!, out var iSize, out _))
+                        {
+                            var selfOffset = nextOffset;
+                            nextOffset += iSize;
+                            return (e.f, selfOffset, iSize);
+                        }
+                        else
                         {
                             var selfOffset = nextOffset;
                             nextOffset += 1;

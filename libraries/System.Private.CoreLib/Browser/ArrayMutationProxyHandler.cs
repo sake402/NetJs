@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using NetJs;
+using System.Reflection;
 
 namespace System
 {
@@ -19,9 +20,13 @@ namespace System
         public event EventHandler<ArrayMutationEventArgs>? OnMutated;
         public object? Get(object target, string property, object receiver)
         {
-            if (property.NativeEquals("$isProxy"))
+            if (property.NativeEquals(Constants.IsProxy))
             {
                 return true.As<object>();
+            }
+            if (property.NativeEquals(Constants.ProxyType))
+            {
+                return _array.GetType();
             }
             unchecked
             {

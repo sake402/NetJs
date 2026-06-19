@@ -11,6 +11,7 @@ using NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Indexer;
 using NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Number;
 using NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Numbers;
 using NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Pointer;
+using NetJs.Translator.CSharpToJavascript.SyntaxEmitter.QCall;
 using NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Ref;
 using NetJs.Translator.CSharpToJavascript.SyntaxEmitter.StaticConvention;
 using NetJs.Translator.CSharpToJavascript.SyntaxEmitter.String;
@@ -48,6 +49,7 @@ namespace NetJs.Translator.CSharpToJavascript
         ISyntaxEmitter[] s_Emitters =
         [
             new ImplicitConversionSyntaxEmitter(),
+            new ImplicitTrueFalseOperatorSyntaxEmitter(),
             new RefTypeDereferenceOnAccessSyntaxEmitter(),
             new UnneccessaryUnsafeAddSyntaxEmitter(),
 
@@ -111,6 +113,14 @@ namespace NetJs.Translator.CSharpToJavascript
 
             new TupleEqualSyntaxEmitter(),
             new IsLiteralSyntaxEmitter(),
+
+            new SkipCreateQCallSyntaxEmitter(),
+            new SimpleObjectHandleOnStackCreateSyntaxEmitter(),
+
+            new BindLocalFunctionIdentifierToAvailableThisSyntaxEmitter(),
+
+            new RefOfSequentialStructSyntaxEmitter(),
+            new InOfSequentialStructSyntaxEmitter(),
         ];
         public TranslatorSyntaxVisitor(GlobalCompilationVisitor global, SyntaxTree tree)
         {
@@ -135,8 +145,9 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (node != null)
             {
-                if (node.ToString().StartsWith("public partial event EventHandler? OnRun"))
+                if (node.ToString().StartsWith("ref _blocks[0]"))
                 {
+
                 }
                 var nodeType = node.GetType();
                 for (int i = 0; i < s_Emitters.Length; i++)
@@ -250,69 +261,79 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitUsingStatement(UsingStatementSyntax node)
         {
+            ITypeSymbol? expressionType = null;
             if (node.Declaration != null)
             {
                 foreach (var variable in node.Declaration.Variables)
                 {
-                    CurrentTypeWriter.WriteLine(node, $"let {variable.Identifier.ValueText} = null;", true);
+                    CurrentTypeWriter.WriteLine(node, $"let {variable.Identifier.ResolveIdentifierName()} = null;", true);
                 }
             }
             else if (node.Expression != null)
             {
                 CurrentTypeWriter.WriteLine(node, "let $disposable = null;", true);
+                expressionType = _global.TryGetTypeSymbol(node.Expression, this);
             }
             CurrentTypeWriter.WriteLine(node, "try", true);
-            CurrentTypeWriter.WriteLine(node, "{", true);
-            if (node.Expression != null)
+            WriteBlock(node.Statement, new CodeNode(() =>
             {
-                CurrentTypeWriter.Write(node, "$disposable = ", true);
-                Visit(node.Expression);
-                CurrentTypeWriter.WriteLine(node, ";");
-            }
-            else if (node.Declaration != null)
-            {
-                CurrentTypeWriter.Write(node, "", true);
-                VisitChildren(node.Declaration.Variables);
-                CurrentTypeWriter.WriteLine(node, ";");
-            }
-            //if (node.Expression != null)
-            //{
-            //    VisitChildren(node.Expression.ChildNodes());
-            //}
-            if (node.Statement != null)
-            {
-                //if (node.Statement is BlockSyntax block)
+                if (node.Expression != null)
+                {
+                    CurrentTypeWriter.Write(node, "$disposable = ", true);
+                    Visit(node.Expression);
+                    CurrentTypeWriter.WriteLine(node, ";");
+                }
+                else if (node.Declaration != null)
+                {
+                    CurrentTypeWriter.Write(node, "", true);
+                    VisitChildren(node.Declaration.Variables);
+                    CurrentTypeWriter.WriteLine(node, ";");
+                }
                 if (node.Statement.IsKind(SyntaxKind.Block))
                     VisitChildren(node.Statement.ChildNodes());
                 else
                     Visit(node.Statement);
-            }
-            //base.VisitUsingStatement(node);
-            CurrentTypeWriter.WriteLine(node, "}", true);
+            }));
             CurrentTypeWriter.WriteLine(node, "finally", true);
-            CurrentTypeWriter.WriteLine(node, "{", true);
-            if (node.Expression != null)
+            WriteBlock(node, new CodeNode(() =>
             {
-                //Writer.WriteLine(node, "$disposable?.System$IDisposable$Dispose();", true);
-                WriteMethodInvocation(node, "System.IDisposable.Dispose", lhsExpression: new CodeNode(() =>
+                if (node.Expression != null)
                 {
-                    CurrentTypeWriter.Write(node, "$disposable?", true);
-                }));
-                CurrentTypeWriter.WriteLine(node, ";");
-            }
-            else if (node.Declaration != null)
-            {
-                foreach (var variable in node.Declaration.Variables)
-                {
-                    //Writer.WriteLine(node, $"{variable.Identifier.ValueText}?.System$IDisposable$Dispose();", true);
-                    WriteMethodInvocation(node, "System.IDisposable.Dispose", lhsExpression: new CodeNode(() =>
+                    if (expressionType != null && expressionType.AllInterfaces.Any(it => SymbolEqualityComparer.Default.Equals(it, _global.SystemIDisposable)))
                     {
-                        CurrentTypeWriter.Write(node, $"{variable.Identifier.ValueText}?", true);
-                    }));
-                    CurrentTypeWriter.WriteLine(node, ";");
+                        //Writer.WriteLine(node, "$disposable?.System$IDisposable$Dispose();", true);
+                        WriteMethodInvocation(node, "System.IDisposable.Dispose", lhsExpression: new CodeNode(() =>
+                        {
+                            CurrentTypeWriter.Write(node, "$disposable?", true);
+                        }));
+                        CurrentTypeWriter.WriteLine(node, ";");
+                    }
+                    else
+                    {
+                        CurrentTypeWriter.WriteLine(node, "$disposable?.Dispose();", true);
+                    }
                 }
-            }
-            CurrentTypeWriter.WriteLine(node, "}", true);
+                else if (node.Declaration != null)
+                {
+                    foreach (var variable in node.Declaration.Variables)
+                    {
+                        var declarationType = _global.TryGetTypeSymbol(variable, this);
+                        if (declarationType != null && declarationType.AllInterfaces.Any(it => SymbolEqualityComparer.Default.Equals(it, _global.SystemIDisposable)))
+                        {
+                            //Writer.WriteLine(node, $"{variable.Identifier.ValueText}?.System$IDisposable$Dispose();", true);
+                            WriteMethodInvocation(node, "System.IDisposable.Dispose", lhsExpression: new CodeNode(() =>
+                            {
+                                CurrentTypeWriter.Write(node, $"{variable.Identifier.ResolveIdentifierName()}?", true);
+                            }));
+                            CurrentTypeWriter.WriteLine(node, ";");
+                        }
+                        else
+                        {
+                            CurrentTypeWriter.WriteLine(node, $"{variable.Identifier.ResolveIdentifierName()}?.Dispose()", true);
+                        }
+                    }
+                }
+            }));
         }
 
         public void VisitChildren(IEnumerable<SyntaxNode> nodes, string? separator = null)
@@ -391,7 +412,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 return;
             CurrentTypeWriter.Write(node, $"{node.OperatorToken.ValueText}");
             Visit(node.Operand);
-            DereferenceIfReference(node.Operand);
+            //DereferenceIfReference(node.Operand);
             //base.VisitPrefixUnaryExpression(node);
         }
 
@@ -401,7 +422,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 if (TryInvokeMethodOperator(node, node.OperatorToken.ValueText, null, node.Operand, [node.Operand]))
                     return;
             Visit(node.Operand);
-            DereferenceIfReference(node.Operand);
+            //DereferenceIfReference(node.Operand);
             if (!node.IsKind(SyntaxKind.SuppressNullableWarningExpression))//remove shebang after null and default
                 CurrentTypeWriter.Write(node, $"{node.OperatorToken.ValueText}");
         }
@@ -518,14 +539,38 @@ namespace NetJs.Translator.CSharpToJavascript
             CurrentTypeWriter.Write(node, ")");
         }
 
-        public override void VisitBlock(BlockSyntax node)
+        public void WriteBlock(CSharpSyntaxNode node, CodeNode code)
         {
             CurrentTypeWriter.WriteLine(node, "{", true);
+            var blockClosure = CurrentTypeWriter.CurrentClosure;
             OpenClosure(node);
-            if (!BlockTryHandleJumpLabels(node))
-                base.VisitBlock(node);
-            CloseClosure();
+            VisitNode(code);
+            CloseClosure(node);
+            blockClosure.RaiseOnBlockClosing();
             CurrentTypeWriter.WriteLine(node, "}", true);
+        }
+
+        List<BlockSyntax> _blockBraceWritten = new();
+        void MarkBlockBraceWritten(BlockSyntax block)
+        {
+            _blockBraceWritten.Add(block);
+        }
+        public override void VisitBlock(BlockSyntax node)
+        {
+            if (_blockBraceWritten.Contains(node))
+            {
+                _blockBraceWritten.Remove(node);
+                if (!BlockTryHandleJumpLabels(node))
+                    base.VisitBlock(node);
+            }
+            else
+            {
+                WriteBlock(node, new CodeNode(() =>
+                {
+                    if (!BlockTryHandleJumpLabels(node))
+                        base.VisitBlock(node);
+                }));
+            }
         }
 
         //public override void VisitDeclarationPattern(DeclarationPatternSyntax node)
@@ -575,7 +620,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     IDisposable? dispose2 = null;
                     if (expression is DeclarationExpressionSyntax decl && decl.Designation is SingleVariableDesignationSyntax svd)
                     {
-                        CurrentTypeWriter.InsertInCurrentClosure(node, $"/*{decl.Type}*/ let {svd.Identifier.ValueText} = null;", true);
+                        CurrentTypeWriter.InsertInCurrentClosure(node, $"/*{decl.Type}*/ let {svd.Identifier.ResolveIdentifierName()};", true);
                         dispose1 = CurrentTypeWriter.SetReplacement("let ", "");
                         dispose2 = CurrentTypeWriter.SetReplacement($"/*{decl.Type}*/ ", "");
                     }
@@ -910,9 +955,17 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitSizeOfExpression(SizeOfExpressionSyntax node)
         {
-            CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.SizeOf}(");
+            var type = _global.GetTypeSymbol(node.Type, this);
+            if (type.Kind == SymbolKind.TypeParameter)
+                CurrentTypeWriter.Write(node, $"(");
             Visit(node.Type);
-            CurrentTypeWriter.Write(node, $")");
+            CurrentTypeWriter.Write(node, $".");
+            CurrentTypeWriter.Write(node, Constants.PrototypeStructSize);
+            if (type.Kind == SymbolKind.TypeParameter)
+                CurrentTypeWriter.Write(node, $"??4)");//ref type doesnt have their size exported
+            //CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.SizeOf}(");
+            //Visit(node.Type);
+            //CurrentTypeWriter.Write(node, $")");
             //base.VisitSizeOfExpression(node);
         }
 
@@ -1348,18 +1401,20 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             CurrentTypeWriter.WriteLine(node, "//lock", true);
             CurrentTypeWriter.WriteLine(node, "try", true);
-            CurrentTypeWriter.WriteLine(node, "{", true);
-            CurrentTypeWriter.Write(node, "", true);
-            WriteMethodInvocation(node, "System.Threading.Monitor.Enter", methodFilter: (m) => m.Parameters.Length == 1, arguments: [node.Expression]);
-            CurrentTypeWriter.WriteLine(node, "");
-            Visit(node.Statement);
-            CurrentTypeWriter.WriteLine(node, "}", true);
+            WriteBlock(node, new CodeNode(() =>
+            {
+                CurrentTypeWriter.Write(node, "", true);
+                WriteMethodInvocation(node, "System.Threading.Monitor.Enter", methodFilter: (m) => m.Parameters.Length == 1, arguments: [node.Expression]);
+                CurrentTypeWriter.WriteLine(node, "");
+                Visit(node.Statement);
+            }));
             CurrentTypeWriter.WriteLine(node, "finally", true);
-            CurrentTypeWriter.WriteLine(node, "{", true);
-            CurrentTypeWriter.Write(node, "", true);
-            WriteMethodInvocation(node, "System.Threading.Monitor.Exit", methodFilter: (m) => m.Parameters.Length == 1, arguments: [node.Expression]);
-            CurrentTypeWriter.WriteLine(node, "");
-            CurrentTypeWriter.WriteLine(node, "}", true);
+            WriteBlock(node, new CodeNode(() =>
+            {
+                CurrentTypeWriter.Write(node, "", true);
+                WriteMethodInvocation(node, "System.Threading.Monitor.Exit", methodFilter: (m) => m.Parameters.Length == 1, arguments: [node.Expression]);
+                CurrentTypeWriter.WriteLine(node, "");
+            }));
             //base.VisitLockStatement(node);
         }
 
@@ -1426,9 +1481,12 @@ namespace NetJs.Translator.CSharpToJavascript
 
         void WriteTypeOf(CSharpSyntaxNode node, CodeNode typePrototype)
         {
-            CurrentTypeWriter.Write(node, $"$.{Constants.TypeOf}(");
             VisitNode(typePrototype);
-            CurrentTypeWriter.Write(node, ")");
+            CurrentTypeWriter.Write(node, ".");
+            CurrentTypeWriter.Write(node, Constants.PrototypeTypeName);
+            //CurrentTypeWriter.Write(node, $"$.{Constants.TypeOf}(");
+            //VisitNode(typePrototype);
+            //CurrentTypeWriter.Write(node, ")");
         }
 
         public override void VisitTypeOfExpression(TypeOfExpressionSyntax node)
@@ -1443,16 +1501,27 @@ namespace NetJs.Translator.CSharpToJavascript
         public override void VisitFixedStatement(FixedStatementSyntax node)
         {
             OpenClosure(node);
-            if (!node.Statement.IsKind(SyntaxKind.Block))
-                CurrentTypeWriter.WriteLine(node, "{", true);
-            CurrentTypeWriter.Write(node, "/*fixed*/ ", true);
-            //CurrentTypeWriter.Write(node, "", true);
-            Visit(node.Declaration);
-            CurrentTypeWriter.WriteLine(node, ";");
-            Visit(node.Statement);
-            if (!node.Statement.IsKind(SyntaxKind.Block))
-                CurrentTypeWriter.WriteLine(node, "}", true);
-            CloseClosure();
+            //Keep all fixed in a separate block, lest we have variable names clasing
+            //eg 
+            // fixed(str = ...)
+            //{
+            //}
+            // fixed(str = ...)
+            //{
+            //}
+            //if (!node.Statement.IsKind(SyntaxKind.Block))
+            CurrentTypeWriter.WriteLine(node, $"/*fixed*/ ", true);
+            WriteBlock(node.Statement, new CodeNode(() =>
+            {
+                CurrentTypeWriter.Write(node, "", true);
+                Visit(node.Declaration);
+                CurrentTypeWriter.WriteLine(node, ";");
+                //Make the block to know it its opening brace is already manually written and so skip another brace
+                if (node.Statement.IsKind(SyntaxKind.Block))
+                    MarkBlockBraceWritten((BlockSyntax)node.Statement);
+                Visit(node.Statement);
+            }));
+            CloseClosure(node);
             //base.VisitFixedStatement(node);
         }
 

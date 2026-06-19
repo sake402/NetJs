@@ -14,9 +14,9 @@ internal static partial class Interop
             return -1;
         }
 
-        internal static unsafe partial int ReadFromNonblocking(SafeHandle fd, byte* buffer, int count)
-        {
-            throw new NotImplementedException();
-        }
+        //internal static unsafe partial int ReadFromNonblocking(SafeHandle fd, byte* buffer, int count)
+        //{
+        //    throw new NotImplementedException();
+        //}
     }
 }

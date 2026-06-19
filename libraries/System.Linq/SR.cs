@@ -11,7 +11,7 @@
 
 namespace System
 {
-    
+
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
     /// </summary>
@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Linq", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,7 +70,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("EmptyEnumerable", resourceCulture);
+                return "Enumeration yielded no results";
             }
         }
 
@@ -83,7 +83,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MoreThanOneElement", resourceCulture);
+                return "Sequence contains more than one element";
             }
         }
 
@@ -96,7 +96,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MoreThanOneMatch", resourceCulture);
+                return "Sequence contains more than one matching element";
             }
         }
 
@@ -109,7 +109,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NoElements", resourceCulture);
+                return "Sequence contains no elements";
             }
         }
 
@@ -122,7 +122,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NoMatch", resourceCulture);
+                return "Sequence contains no matching element";
             }
         }
 

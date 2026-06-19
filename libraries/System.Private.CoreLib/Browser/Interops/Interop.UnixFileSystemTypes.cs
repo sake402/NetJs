@@ -7,10 +7,10 @@ internal static partial class Interop
 {
     internal static unsafe partial class Sys
     {
-        //private static partial uint GetFileSystemType(SafeFileHandle fd)
-        //{
-        //    return 0;
-        //}
+        private static partial uint GetFileSystemType(SafeFileHandle fd)
+        {
+            return 0;
+        }
 
     }
 }

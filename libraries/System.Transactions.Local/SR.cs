@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Transactions.Local", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,7 +70,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AsyncFlowAndESInteropNotSupported", resourceCulture);
+                return "TransactionScope with TransactionScopeAsyncFlowOption.Enabled option is not supported when the TransactionScope is used within Enterprise Service context with Automatic or Full EnterpriseServicesInteropOption enabled in parent scope.";
             }
         }
 
@@ -83,7 +83,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BadAsyncResult", resourceCulture);
+                return "The IAsyncResult parameter must be the same parameter returned by BeginCommit.";
             }
         }
 
@@ -96,7 +96,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BadResourceManagerId", resourceCulture);
+                return "Resource Manager Identifiers cannot be Guid.Empty.";
             }
         }
 
@@ -109,7 +109,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotPromoteSnapshot", resourceCulture);
+                return "Transactions with IsolationLevel Snapshot cannot be promoted.";
             }
         }
 
@@ -122,7 +122,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotSetCurrent", resourceCulture);
+                return "Current cannot be set directly when Com+ Interop is enabled.";
             }
         }
 
@@ -135,7 +135,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CurrentDelegateSet", resourceCulture);
+                return "The delegate for an external current can only be set once.";
             }
         }
 
@@ -148,7 +148,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DisposeScope", resourceCulture);
+                return "The current TransactionScope is already complete. You should dispose the TransactionScope.";
             }
         }
 
@@ -161,7 +161,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("EnlistmentStateException", resourceCulture);
+                return "The operation is not valid for the current state of the enlistment.";
             }
         }
 
@@ -174,7 +174,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("EsNotSupported", resourceCulture);
+                return "Com+ Interop features cannot be supported.";
             }
         }
 
@@ -187,7 +187,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InternalError", resourceCulture);
+                return "Internal Error";
             }
         }
 
@@ -200,7 +200,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidArgument", resourceCulture);
+                return "The argument is invalid.";
             }
         }
 
@@ -213,7 +213,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidIPromotableSinglePhaseNotificationSpecified", resourceCulture);
+                return "The specified IPromotableSinglePhaseNotification is not the same as the one provided to EnlistPromotableSinglePhase.";
             }
         }
 
@@ -226,7 +226,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidRecoveryInformation", resourceCulture);
+                return "Transaction Manager in the Recovery Information does not match the configured transaction manager.";
             }
         }
 
@@ -239,7 +239,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidScopeThread", resourceCulture);
+                return "A TransactionScope must be disposed on the same thread that it was created.";
             }
         }
 
@@ -252,7 +252,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PromotionFailed", resourceCulture);
+                return "There was an error promoting the transaction to a distributed transaction.";
             }
         }
 
@@ -265,7 +265,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PromotedReturnedInvalidValue", resourceCulture);
+                return "The Promote method returned an invalid value for the distributed transaction.";
             }
         }
 
@@ -278,7 +278,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PromotedTransactionExists", resourceCulture);
+                return "The transaction returned from Promote already exists as a distributed transaction.";
             }
         }
 
@@ -291,7 +291,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TooLate", resourceCulture);
+                return "It is too late to add enlistments to this transaction.";
             }
         }
 
@@ -304,7 +304,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceTransactionTimeout", resourceCulture);
+                return "Transaction Timeout";
             }
         }
 
@@ -317,7 +317,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TransactionAborted", resourceCulture);
+                return "The transaction has aborted.";
             }
         }
 
@@ -330,7 +330,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TransactionAlreadyCompleted", resourceCulture);
+                return "DependentTransaction.Complete or CommittableTransaction.Commit has already been called for this transaction.";
             }
         }
 
@@ -343,7 +343,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TransactionIndoubt", resourceCulture);
+                return "The transaction is in doubt.";
             }
         }
 
@@ -356,7 +356,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TransactionManagerCommunicationException", resourceCulture);
+                return "Communication with the underlying transaction manager has failed.";
             }
         }
 
@@ -369,7 +369,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TransactionScopeComplete", resourceCulture);
+                return "The current TransactionScope is already complete.";
             }
         }
 
@@ -382,7 +382,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TransactionScopeIncorrectCurrent", resourceCulture);
+                return "Transaction.Current has changed inside of the TransactionScope.";
             }
         }
 
@@ -395,7 +395,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TransactionScopeInvalidNesting", resourceCulture);
+                return "TransactionScope nested incorrectly.";
             }
         }
 
@@ -408,7 +408,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TransactionScopeIsolationLevelDifferentFromTransaction", resourceCulture);
+                return "The transaction specified for TransactionScope has a different IsolationLevel than the value requested for the scope.";
             }
         }
 
@@ -421,7 +421,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TransactionScopeTimerObjectInvalid", resourceCulture);
+                return "TransactionScope timer object is invalid.";
             }
         }
 
@@ -434,7 +434,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TransactionStateException", resourceCulture);
+                return "The operation is not valid for the state of the transaction.";
             }
         }
 
@@ -447,7 +447,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnexpectedFailureOfThreadPool", resourceCulture);
+                return "There was an unexpected failure of QueueUserWorkItem.";
             }
         }
 
@@ -460,7 +460,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnexpectedTimerFailure", resourceCulture);
+                return "There was an unexpected failure of a timer.";
             }
         }
 
@@ -473,7 +473,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnrecognizedRecoveryInformation", resourceCulture);
+                return "The RecoveryInformation provided is not recognized by this version of System.Transactions.";
             }
         }
 
@@ -486,7 +486,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("VolEnlistNoRecoveryInfo", resourceCulture);
+                return "Volatile enlistments do not generate recovery information.";
             }
         }
 
@@ -499,14 +499,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DistributedTxIDInTransactionException", resourceCulture);
+                return "{0} Distributed Transaction ID is {1}";
             }
         }
 
 
         internal static string FormatDistributedTxIDInTransactionException(object arg1, object arg2)
         {
-            return string.Format(DistributedTxIDInTransactionException, arg1, arg2);
+            return string.Format("{0} Distributed Transaction ID is {1}", arg1, arg2);
         }
 
 
@@ -517,7 +517,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PromoterTypeInvalid", resourceCulture);
+                return "The specified PromoterType is invalid.";
             }
         }
 
@@ -530,14 +530,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PromoterTypeUnrecognized", resourceCulture);
+                return "There is a promotable enlistment for the transaction which has a PromoterType value that is not recognized by System.Transactions. {0}";
             }
         }
 
 
         internal static string FormatPromoterTypeUnrecognized(object arg1)
         {
-            return string.Format(PromoterTypeUnrecognized, arg1);
+            return string.Format("There is a promotable enlistment for the transaction which has a PromoterType value that is not recognized by System.Transactions. {0}", arg1);
         }
 
 
@@ -548,7 +548,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DistributedNotSupported", resourceCulture);
+                return "This platform does not support distributed transactions.";
             }
         }
 
@@ -561,7 +561,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceSourceOletx", resourceCulture);
+                return "[Distributed]";
             }
         }
 
@@ -574,7 +574,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceConfiguredDefaultTimeoutAdjusted", resourceCulture);
+                return "Configured DefaultTimeout is greater than configured DefaultMaximumTimeout - adjusting down to DefaultMaximumTimeout";
             }
         }
 
@@ -587,7 +587,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceMethodEntered", resourceCulture);
+                return "Method Entered";
             }
         }
 
@@ -600,7 +600,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceMethodExited", resourceCulture);
+                return "Method Exited";
             }
         }
 
@@ -613,7 +613,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("OperationInvalidOnAnEmptyDocument", resourceCulture);
+                return "The operation is invalid because the document is empty.";
             }
         }
 
@@ -626,7 +626,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotAddToClosedDocument", resourceCulture);
+                return "Cannot add an element to a closed document.";
             }
         }
 
@@ -639,7 +639,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TextNodeAlreadyPopulated", resourceCulture);
+                return "The text node already has a value.";
             }
         }
 
@@ -652,7 +652,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceEnlistment", resourceCulture);
+                return "Enlistment Created";
             }
         }
 
@@ -665,7 +665,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceTransactionPromoted", resourceCulture);
+                return "Transaction Promoted";
             }
         }
 
@@ -678,7 +678,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceEnlistmentNotificationCall", resourceCulture);
+                return "Enlistment Notification Call";
             }
         }
 
@@ -691,7 +691,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceEnlistmentCallbackPositive", resourceCulture);
+                return "Enlistment Callback Positive";
             }
         }
 
@@ -704,7 +704,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceEnlistmentCallbackNegative", resourceCulture);
+                return "Enlistment Callback Negative";
             }
         }
 
@@ -717,7 +717,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DocumentAlreadyClosed", resourceCulture);
+                return "Cannot close an element on a closed document.";
             }
         }
 
@@ -730,7 +730,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceInternalError", resourceCulture);
+                return "Internal Error";
             }
         }
 
@@ -743,7 +743,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceInvalidOperationException", resourceCulture);
+                return "InvalidOperationException Thrown";
             }
         }
 
@@ -756,7 +756,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceExceptionConsumed", resourceCulture);
+                return "Exception Consumed";
             }
         }
 
@@ -769,7 +769,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceTransactionException", resourceCulture);
+                return "TransactionException Thrown";
             }
         }
 
@@ -782,7 +782,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceTransactionDeserialized", resourceCulture);
+                return "Transaction Deserialized";
             }
         }
 
@@ -795,7 +795,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceTransactionSerialized", resourceCulture);
+                return "Transaction Serialized";
             }
         }
 
@@ -808,7 +808,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceTransactionManagerCreated", resourceCulture);
+                return "Transaction Manager Instance Created";
             }
         }
 
@@ -821,7 +821,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceReenlist", resourceCulture);
+                return "TransactionManager.Reenlist Called";
             }
         }
 
@@ -834,7 +834,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceTransactionCreated", resourceCulture);
+                return "Transaction Created";
             }
         }
 
@@ -847,7 +847,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceTransactionCommitCalled", resourceCulture);
+                return "CommittableTransaction.Commit Called";
             }
         }
 
@@ -860,7 +860,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceTransactionCommitted", resourceCulture);
+                return "Transaction Committed";
             }
         }
 
@@ -873,7 +873,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceTransactionAborted", resourceCulture);
+                return "Transaction Aborted";
             }
         }
 
@@ -886,7 +886,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceTransactionInDoubt", resourceCulture);
+                return "Transaction InDoubt";
             }
         }
 
@@ -899,7 +899,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceTransactionScopeCreated", resourceCulture);
+                return "TransactionScope Created";
             }
         }
 
@@ -912,7 +912,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceTransactionScopeDisposed", resourceCulture);
+                return "TransactionScope Disposed";
             }
         }
 
@@ -925,7 +925,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ProxyCannotSupportMultipleNodeNames", resourceCulture);
+                return "MSDTC Proxy cannot support specification of different node names in the same process.";
             }
         }
 
@@ -938,7 +938,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotSupportNodeNameSpecification", resourceCulture);
+                return "Cannot support specification of node name for the distributed transaction manager through System.Transactions due to MSDTC Proxy version.";
             }
         }
 
@@ -951,7 +951,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FailedToCreateTraceSource", resourceCulture);
+                return "Failed to create trace source.";
             }
         }
 
@@ -964,7 +964,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FailedToInitializeTraceSource", resourceCulture);
+                return "Failed to initialize trace source.";
             }
         }
 
@@ -977,7 +977,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceRecoveryComplete", resourceCulture);
+                return "TransactionManager.RecoveryComplete Called";
             }
         }
 
@@ -990,7 +990,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceCloneCreated", resourceCulture);
+                return "Clone Created";
             }
         }
 
@@ -1003,7 +1003,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceDependentCloneComplete", resourceCulture);
+                return "Dependent Clone Completed";
             }
         }
 
@@ -1016,7 +1016,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceDependentCloneCreated", resourceCulture);
+                return "Dependent Clone Created";
             }
         }
 
@@ -1029,7 +1029,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceTransactionScopeTimeout", resourceCulture);
+                return "TransactionScope Timeout";
             }
         }
 
@@ -1042,7 +1042,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceTransactionRollbackCalled", resourceCulture);
+                return "Transaction.Rollback Called";
             }
         }
 
@@ -1055,14 +1055,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceFailure", resourceCulture);
+                return "Trace Event Type: {0}\\nTrace Code: {1}\\nTrace Description {2}\\nObject: {3}";
             }
         }
 
 
         internal static string FormatTraceFailure(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(TraceFailure, arg1, arg2, arg3, arg4);
+            return string.Format("Trace Event Type: {0}\\nTrace Code: {1}\\nTrace Description {2}\\nObject: {3}", arg1, arg2, arg3, arg4);
         }
 
 
@@ -1073,7 +1073,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("OletxEnlistmentUnexpectedTransactionStatus", resourceCulture);
+                return "Internal Error - Unexpected transaction status value in enlistment constructor.";
             }
         }
 
@@ -1086,7 +1086,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnableToDeserializeTransaction", resourceCulture);
+                return "Unable to deserialize the transaction.";
             }
         }
 
@@ -1099,7 +1099,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnableToDeserializeTransactionInternalError", resourceCulture);
+                return "Internal Error - Unable to deserialize the transaction.";
             }
         }
 
@@ -1112,7 +1112,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TransactionAlreadyOver", resourceCulture);
+                return "The transaction has already been implicitly or explicitly committed or aborted.";
             }
         }
 
@@ -1125,14 +1125,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("EventLogValue", resourceCulture);
+                return "Process Name: {0}\\nProcess Id: {1}\\nCode: {2}\\nDescription: {3}";
             }
         }
 
 
         internal static string FormatEventLogValue(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(EventLogValue, arg1, arg2, arg3, arg4);
+            return string.Format("Process Name: {0}\\nProcess Id: {1}\\nCode: {2}\\nDescription: {3}", arg1, arg2, arg3, arg4);
         }
 
 
@@ -1143,14 +1143,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("EventLogSourceValue", resourceCulture);
+                return "Source: {0}";
             }
         }
 
 
         internal static string FormatEventLogSourceValue(object arg1)
         {
-            return string.Format(EventLogSourceValue, arg1);
+            return string.Format("Source: {0}", arg1);
         }
 
 
@@ -1161,14 +1161,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("EventLogExceptionValue", resourceCulture);
+                return "Exception: {0}";
             }
         }
 
 
         internal static string FormatEventLogExceptionValue(object arg1)
         {
-            return string.Format(EventLogExceptionValue, arg1);
+            return string.Format("Exception: {0}", arg1);
         }
 
 
@@ -1179,14 +1179,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("EventLogEventIdValue", resourceCulture);
+                return "Event ID: {0}";
             }
         }
 
 
         internal static string FormatEventLogEventIdValue(object arg1)
         {
-            return string.Format(EventLogEventIdValue, arg1);
+            return string.Format("Event ID: {0}", arg1);
         }
 
 
@@ -1197,14 +1197,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("EventLogTraceValue", resourceCulture);
+                return "Other information : {0}";
             }
         }
 
 
         internal static string FormatEventLogTraceValue(object arg1)
         {
-            return string.Format(EventLogTraceValue, arg1);
+            return string.Format("Other information : {0}", arg1);
         }
 
 
@@ -1215,7 +1215,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceTransactionScopeCurrentTransactionChanged", resourceCulture);
+                return "TransactionScope Current Transaction Changed";
             }
         }
 
@@ -1228,7 +1228,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceTransactionScopeNestedIncorrectly", resourceCulture);
+                return "TransactionScope Nested Incorrectly";
             }
         }
 
@@ -1241,7 +1241,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceTransactionScopeIncomplete", resourceCulture);
+                return "TransactionScope Incomplete";
             }
         }
 
@@ -1254,7 +1254,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnableToGetNotificationShimFactory", resourceCulture);
+                return "Distributed transaction manager is unable to create the NotificationShimFactory object.";
             }
         }
 
@@ -1267,7 +1267,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotGetTransactionIdentifier", resourceCulture);
+                return "Unable to obtain the transaction identifier.";
             }
         }
 
@@ -1280,7 +1280,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ReenlistAfterRecoveryComplete", resourceCulture);
+                return "Calling TransactionManager.Reenlist is not allowed after TransactionManager.RecoveryComplete is called for a given resource manager identifier.";
             }
         }
 
@@ -1293,7 +1293,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DuplicateRecoveryComplete", resourceCulture);
+                return "RecoveryComplete must not be called twice by the same resource manager identifier instance.";
             }
         }
 
@@ -1306,7 +1306,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DtcTransactionManagerUnavailable", resourceCulture);
+                return "MSDTC Transaction Manager is unavailable.";
             }
         }
 
@@ -1319,7 +1319,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NetworkTransactionsDisabled", resourceCulture);
+                return "Network access for Distributed Transaction Manager (MSDTC) has been disabled. Please enable DTC for network access in the security configuration for MSDTC using the Component Services Administrative tool.";
             }
         }
 
@@ -1332,7 +1332,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceSourceLtm", resourceCulture);
+                return "[Lightweight]";
             }
         }
 
@@ -1345,7 +1345,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceCodeAppDomainUnloading", resourceCulture);
+                return "AppDomain unloading.";
             }
         }
 
@@ -1358,7 +1358,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnhandledException", resourceCulture);
+                return "Unhandled Exception";
             }
         }
 
@@ -1371,7 +1371,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ResourceManagerIdDoesNotMatchRecoveryInformation", resourceCulture);
+                return "The resourceManagerIdentifier does not match the contents of the specified recovery information.";
             }
         }
 
@@ -1384,7 +1384,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("OletxTooManyEnlistments", resourceCulture);
+                return "The distributed transaction manager does not allow any more durable enlistments on the transaction.";
             }
         }
 
@@ -1397,14 +1397,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FailedToTraceEvent", resourceCulture);
+                return "Failed to trace event: {0}.";
             }
         }
 
 
         internal static string FormatFailedToTraceEvent(object arg1)
         {
-            return string.Format(FailedToTraceEvent, arg1);
+            return string.Format("Failed to trace event: {0}.", arg1);
         }
 
 
@@ -1415,7 +1415,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceSourceBase", resourceCulture);
+                return "[Base]";
             }
         }
 
@@ -1428,7 +1428,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DistributedNotSupportedOn32Bits", resourceCulture);
+                return "Distributed transactions are currently unsupported in 32-bit processes.";
             }
         }
 
@@ -1441,7 +1441,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ImplicitDistributedTransactionsDisabled", resourceCulture);
+                return "Implicit distributed transactions have not been enabled. If you're intentionally starting a distributed transaction, set TransactionManager.ImplicitDistributedTransactions to true.";
             }
         }
 
@@ -1454,7 +1454,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ImplicitDistributedTransactionsCannotBeChanged", resourceCulture);
+                return "TransactionManager.ImplicitDistributedTransaction cannot be changed once set, or once System.Transactions distributed transactions have been initialized. Set this flag once at the start of your program.";
             }
         }
 

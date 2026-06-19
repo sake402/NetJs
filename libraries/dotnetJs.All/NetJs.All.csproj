@@ -36,6 +36,7 @@
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.IO.Compression\NetJs.System.IO.Compression.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.IO.Compression.Brotli\NetJs.System.IO.Compression.Brotli.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Linq\NetJs.System.Linq.csproj" />
+    <ProjectReference Include="$(NewLibrariesProjectRoot)System.Linq.Queryable\NetJs.System.Linq.Queryable.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Linq.Expressions\NetJs.System.Linq.Expressions.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.ComponentModel\NetJs.System.ComponentModel.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.ComponentModel.Annotations\NetJs.System.ComponentModel.Annotations.csproj" />

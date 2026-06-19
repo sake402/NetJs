@@ -292,7 +292,7 @@ namespace NetJs.Translator.CSharpToJavascript
             return returnType;
         }
 
-        public void WriteReturn(CSharpSyntaxNode node, CodeNode? expression)
+        public void WriteReturn(CSharpSyntaxNode node, CodeNode? expression, string? cacheKeyVariable = null)
         {
             CurrentTypeWriter.Write(node, expression == null || !expression.IsT0 || !expression.AsT0.IsKind(SyntaxKind.ThrowExpression) ? "return " : "", true);
             if (expression != null)
@@ -303,6 +303,11 @@ namespace NetJs.Translator.CSharpToJavascript
                 if (rhsType == null)
                     rhsType = returnType != null ? _global.GetTypeSymbol(returnType) : null;
                 returnType ??= rhsType;
+                if (cacheKeyVariable!= null)
+                {
+                    CurrentTypeWriter.Write(node, cacheKeyVariable);
+                    CurrentTypeWriter.Write(node, " ??= ");
+                }
                 WriteVariableAssignment(node, null, returnType, null, expression, rhsType);
             }
             else

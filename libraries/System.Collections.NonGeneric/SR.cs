@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Collections.NonGeneric", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,14 +70,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_AddingDuplicate_OldAndNewKeys", resourceCulture);
+                return "Item has already been added. Key in dictionary: '{0}'  Key being added: '{1}'";
             }
         }
 
 
         internal static string FormatArgument_AddingDuplicate_OldAndNewKeys(object arg1, object arg2)
         {
-            return string.Format(Argument_AddingDuplicate_OldAndNewKeys, arg1, arg2);
+            return string.Format("Item has already been added. Key in dictionary: '{0}'  Key being added: '{1}'", arg1, arg2);
         }
 
 
@@ -88,7 +88,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_ArrayPlusOffTooSmall", resourceCulture);
+                return "Destination array is not long enough to copy all the items in the collection. Check array index and length.";
             }
         }
 
@@ -101,7 +101,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_RankMultiDimNotSupported", resourceCulture);
+                return "Only single dimensional arrays are supported for the requested action.";
             }
         }
 
@@ -114,7 +114,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_RemoveArgNotFound", resourceCulture);
+                return "Cannot remove the specified item because it was not found in the specified Collection.";
             }
         }
 
@@ -127,7 +127,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidOffLen", resourceCulture);
+                return "Offset and length were out of bounds for the array or count is greater than the number of elements from index to the end of the source collection.";
             }
         }
 
@@ -140,7 +140,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_IndexMustBeLess", resourceCulture);
+                return "Index was out of range. Must be non-negative and less than the size of the collection.";
             }
         }
 
@@ -153,7 +153,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_IndexMustBeLessOrEqual", resourceCulture);
+                return "Index was out of range. Must be non-negative and less than or equal to the size of the collection.";
             }
         }
 
@@ -166,7 +166,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_SmallCapacity", resourceCulture);
+                return "capacity was less than the current size.";
             }
         }
 
@@ -179,7 +179,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_EmptyQueue", resourceCulture);
+                return "Queue empty.";
             }
         }
 
@@ -192,7 +192,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_EmptyStack", resourceCulture);
+                return "Stack empty.";
             }
         }
 
@@ -205,7 +205,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_EnumEnded", resourceCulture);
+                return "Enumeration already finished.";
             }
         }
 
@@ -218,7 +218,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_EnumFailedVersion", resourceCulture);
+                return "Collection was modified after the enumerator was instantiated.";
             }
         }
 
@@ -231,7 +231,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_EnumNotStarted", resourceCulture);
+                return "Enumeration has not started. Call MoveNext.";
             }
         }
 
@@ -244,7 +244,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_EnumOpCantHappen", resourceCulture);
+                return "Enumeration has either not started or has already finished.";
             }
         }
 
@@ -257,7 +257,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_KeyCollectionSet", resourceCulture);
+                return "Mutating a key collection derived from a dictionary is not allowed.";
             }
         }
 
@@ -270,7 +270,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_SortedListNestedWrite", resourceCulture);
+                return "This operation is not supported on SortedList nested types because they require modifying the original SortedList.";
             }
         }
 

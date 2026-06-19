@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Drawing.Primitives", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,14 +70,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ConvertInvalidPrimitive", resourceCulture);
+                return "{0} is not a valid value for {1}.";
             }
         }
 
 
         internal static string FormatConvertInvalidPrimitive(object arg1, object arg2)
         {
-            return string.Format(ConvertInvalidPrimitive, arg1, arg2);
+            return string.Format("{0} is not a valid value for {1}.", arg1, arg2);
         }
 
 
@@ -88,14 +88,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidColor", resourceCulture);
+                return "Color '{0}' is not valid.";
             }
         }
 
 
         internal static string FormatInvalidColor(object arg1)
         {
-            return string.Format(InvalidColor, arg1);
+            return string.Format("Color '{0}' is not valid.", arg1);
         }
 
 
@@ -106,14 +106,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidEx2BoundArgument", resourceCulture);
+                return "Value of '{1}' is not valid for '{0}'. '{0}' should be greater than or equal to {2} and less than or equal to {3}.";
             }
         }
 
 
         internal static string FormatInvalidEx2BoundArgument(object arg1, object arg2, object arg3, object arg4, object arg5)
         {
-            return string.Format(InvalidEx2BoundArgument, arg1, arg2, arg3, arg4, arg5);
+            return string.Format("Value of '{1}' is not valid for '{0}'. '{0}' should be greater than or equal to {2} and less than or equal to {3}.", arg1, arg2, arg3, arg4, arg5);
         }
     }
 }

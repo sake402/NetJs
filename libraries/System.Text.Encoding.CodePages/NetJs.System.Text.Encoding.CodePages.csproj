@@ -73,7 +73,6 @@ System.Text.CodePagesEncodingProvider</PackageDescription>
   </ItemGroup>
   <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', '$(NetCoreAppCurrent)'))">
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Collections\NetJs.System.Collections.csproj" />
-    <ProjectReference Include="$(NewLibrariesProjectRoot)System.Collections.Concurrent\NetJs.System.Collections.Concurrent.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Memory\NetJs.System.Memory.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Runtime\NetJs.System.Runtime.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Runtime.InteropServices\NetJs.System.Runtime.InteropServices.csproj" />

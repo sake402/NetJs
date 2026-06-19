@@ -21,9 +21,9 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             if (svd != null)
             {
-                CurrentTypeWriter.InsertInCurrentClosure(node, $"let {svd.Identifier.ValueText};", true);
+                CurrentTypeWriter.InsertInCurrentClosure(node, $"let {svd.Identifier.ResolveIdentifierName()};", true);
                 CurrentTypeWriter.Write(node, "(");
-                CurrentTypeWriter.Write(node, svd.Identifier.ValueText);
+                CurrentTypeWriter.Write(node, svd.Identifier.ResolveIdentifierName());
                 CurrentTypeWriter.Write(node, $" = ");
                 WritePatternExpressionFilter(node);
                 CurrentTypeWriter.Write(node, $", ");
@@ -31,7 +31,7 @@ namespace NetJs.Translator.CSharpToJavascript
             CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.IsTypeName}(");
             if (svd != null)
             {
-                CurrentTypeWriter.Write(node, svd.Identifier.ValueText);
+                CurrentTypeWriter.Write(node, svd.Identifier.ResolveIdentifierName());
             }
             else
             {
@@ -110,7 +110,7 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             if (node.Pattern.IsKind(SyntaxKind.DeclarationPattern)) //need a closure to declare the variable into
             {
-                CloseClosure();
+                CloseClosure(node);
                 CurrentTypeWriter.WriteLine(node, "}", true);
             }
             //base.VisitSwitchExpressionArm(node);

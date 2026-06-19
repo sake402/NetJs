@@ -8,9 +8,9 @@ internal static partial class Interop
 {
     internal static partial class Sys
     {
-        internal static partial bool FileSystemSupportsLocking(SafeFileHandle fd, LockOperations lockOperation, bool accessWrite)
-        {
-            return false;
-        }
+        //internal static partial bool FileSystemSupportsLocking(SafeFileHandle fd, LockOperations lockOperation, bool accessWrite)
+        //{
+        //    return false;
+        //}
     }
 }

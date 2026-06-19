@@ -46,6 +46,7 @@
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.FileSystem.DriveInfo\src\System\IO\DriveInfo.Unix.cs" />
     <Compile Include="$(CommonPath)Interop\Unix\Interop.Libraries.cs" Link="Common\Interop\Unix\Interop.Libraries.cs" />
     <Compile Include="$(CommonPath)Interop\Unix\Interop.Errors.cs" Link="Common\Interop\Unix\Interop.Errors.cs" />
+    <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.UnixFileSystemTypes.cs" Link="Common\Interop\Unix\Interop.UnixFileSystemTypes.cs" />
     <Compile Include="$(CommonPath)Interop\Unix\Interop.IOErrors.cs" Link="Common\Interop\Unix\Interop.IOErrors.cs" />
     <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.PathConf.cs" Link="Common\Interop\Unix\Interop.PathConf.cs" />
     <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.MountPoints.cs" Link="Common\Interop\Unix\Interop.MountPoints.cs" />

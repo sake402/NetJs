@@ -685,29 +685,6 @@ internal static partial class Interop
             return lengthToCopy;
         }
 
-        internal static partial int ToAscii(uint flags, ReadOnlySpan<char> src, int srcLen, Span<char> dstBuffer, int dstBufferCapacity)
-        {
-            int i = 0;
-            for (i = 0; i < srcLen && i < dstBufferCapacity; i++)
-            {
-                if (src[i] <= 127)
-                    dstBuffer[i] = src[i];
-                else
-                    dstBuffer[i] = '\0'; //TODO: Transliterating Unicode to ASCII to limit loss of information
-            }
-            return i;
-        }
-
-        internal static partial int ToUnicode(uint flags, ReadOnlySpan<char> src, int srcLen, Span<char> dstBuffer, int dstBufferCapacity)
-        {
-            int i = 0;
-            for (i = 0; i < srcLen && i < dstBufferCapacity; i++)
-            {
-                dstBuffer[i] = src[i];
-            }
-            return i;
-        }
-
         [Template("String.fromCharCode({c}).toUpperCase().split('')[0].charCodeAt(0)")]
         static extern char u_toupper(char c);
         [Template("String.fromCharCode({c}).toLowerCase().split('')[0].charCodeAt(0)")]

@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Reflection.Metadata", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,7 +70,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ImageTooSmall", resourceCulture);
+                return "Image is too small.";
             }
         }
 
@@ -83,7 +83,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidCorHeaderSize", resourceCulture);
+                return "Invalid COR header size.";
             }
         }
 
@@ -96,7 +96,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidHandle", resourceCulture);
+                return "Invalid handle.";
             }
         }
 
@@ -109,14 +109,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnexpectedHandleKind", resourceCulture);
+                return "Unexpected handle kind: {0}.";
             }
         }
 
 
         internal static string FormatUnexpectedHandleKind(object arg1)
         {
-            return string.Format(UnexpectedHandleKind, arg1);
+            return string.Format("Unexpected handle kind: {0}.", arg1);
         }
 
 
@@ -127,14 +127,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnexpectedOpCode", resourceCulture);
+                return "Unexpected op-code: {0}.";
             }
         }
 
 
         internal static string FormatUnexpectedOpCode(object arg1)
         {
-            return string.Format(UnexpectedOpCode, arg1);
+            return string.Format("Unexpected op-code: {0}.", arg1);
         }
 
 
@@ -145,14 +145,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidLocalSignatureToken", resourceCulture);
+                return "Invalid local signature token: 0x{0:X8}";
             }
         }
 
 
         internal static string FormatInvalidLocalSignatureToken(object arg1)
         {
-            return string.Format(InvalidLocalSignatureToken, arg1);
+            return string.Format("Invalid local signature token: 0x{0:X8}", arg1);
         }
 
 
@@ -163,7 +163,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidMetadataSectionSpan", resourceCulture);
+                return "Invalid metadata section span.";
             }
         }
 
@@ -176,14 +176,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidMethodHeader1", resourceCulture);
+                return "Invalid method header: 0x{0:X2}";
             }
         }
 
 
         internal static string FormatInvalidMethodHeader1(object arg1)
         {
-            return string.Format(InvalidMethodHeader1, arg1);
+            return string.Format("Invalid method header: 0x{0:X2}", arg1);
         }
 
 
@@ -194,14 +194,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidMethodHeader2", resourceCulture);
+                return "Invalid method header: 0x{0:X2} 0x{1:X2}";
             }
         }
 
 
         internal static string FormatInvalidMethodHeader2(object arg1, object arg2)
         {
-            return string.Format(InvalidMethodHeader2, arg1, arg2);
+            return string.Format("Invalid method header: 0x{0:X2} 0x{1:X2}", arg1, arg2);
         }
 
 
@@ -212,7 +212,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidPESignature", resourceCulture);
+                return "Invalid PE signature.";
             }
         }
 
@@ -225,14 +225,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidSehHeader", resourceCulture);
+                return "Invalid SEH header: 0x{0:X2}";
             }
         }
 
 
         internal static string FormatInvalidSehHeader(object arg1)
         {
-            return string.Format(InvalidSehHeader, arg1);
+            return string.Format("Invalid SEH header: 0x{0:X2}", arg1);
         }
 
 
@@ -243,7 +243,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidToken", resourceCulture);
+                return "Invalid token.";
             }
         }
 
@@ -256,7 +256,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MetadataImageDoesNotRepresentAnAssembly", resourceCulture);
+                return "Metadata image doesn't represent an assembly.";
             }
         }
 
@@ -269,7 +269,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("StandaloneDebugMetadataImageDoesNotContainModuleTable", resourceCulture);
+                return "Standalone debug metadata image doesn't contain Module table.";
             }
         }
 
@@ -282,7 +282,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PEImageNotAvailable", resourceCulture);
+                return "PE image not available.";
             }
         }
 
@@ -295,7 +295,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MissingDataDirectory", resourceCulture);
+                return "Missing data directory.";
             }
         }
 
@@ -308,7 +308,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotMetadataHeapHandle", resourceCulture);
+                return "Specified handle is not a valid metadata heap handle.";
             }
         }
 
@@ -321,7 +321,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotMetadataTableOrUserStringHandle", resourceCulture);
+                return "Specified handle is not a valid metadata table or UserString heap handle.";
             }
         }
 
@@ -334,7 +334,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SectionTooSmall", resourceCulture);
+                return "Section too small.";
             }
         }
 
@@ -347,7 +347,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("StreamMustSupportReadAndSeek", resourceCulture);
+                return "Stream must support read and seek operations.";
             }
         }
 
@@ -360,7 +360,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnknownFileFormat", resourceCulture);
+                return "Unknown file format.";
             }
         }
 
@@ -373,7 +373,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnknownPEMagicValue", resourceCulture);
+                return "Unknown PE Magic value.";
             }
         }
 
@@ -386,14 +386,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MetadataTableNotSorted", resourceCulture);
+                return "Metadata table {0} not sorted.";
             }
         }
 
 
         internal static string FormatMetadataTableNotSorted(object arg1)
         {
-            return string.Format(MetadataTableNotSorted, arg1);
+            return string.Format("Metadata table {0} not sorted.", arg1);
         }
 
 
@@ -404,14 +404,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ModuleTableInvalidNumberOfRows", resourceCulture);
+                return "Invalid number of rows of Module table: {0}.";
             }
         }
 
 
         internal static string FormatModuleTableInvalidNumberOfRows(object arg1)
         {
-            return string.Format(ModuleTableInvalidNumberOfRows, arg1);
+            return string.Format("Invalid number of rows of Module table: {0}.", arg1);
         }
 
 
@@ -422,14 +422,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnknownTables", resourceCulture);
+                return "Unknown tables: 0x{0:x16}.";
             }
         }
 
 
         internal static string FormatUnknownTables(object arg1)
         {
-            return string.Format(UnknownTables, arg1);
+            return string.Format("Unknown tables: 0x{0:x16}.", arg1);
         }
 
 
@@ -440,7 +440,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IllegalTablesInCompressedMetadataStream", resourceCulture);
+                return "Illegal tables in compressed metadata stream.";
             }
         }
 
@@ -453,7 +453,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TableRowCountSpaceTooSmall", resourceCulture);
+                return "Table row count space to small.";
             }
         }
 
@@ -466,7 +466,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("OutOfBoundsRead", resourceCulture);
+                return "Read out of bounds.";
             }
         }
 
@@ -479,7 +479,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("OutOfBoundsWrite", resourceCulture);
+                return "Write out of bounds.";
             }
         }
 
@@ -492,7 +492,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MetadataHeaderTooSmall", resourceCulture);
+                return "Metadata header too small.";
             }
         }
 
@@ -505,7 +505,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MetadataSignature", resourceCulture);
+                return "Invalid COR20 header signature.";
             }
         }
 
@@ -518,7 +518,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotEnoughSpaceForVersionString", resourceCulture);
+                return "Not enough space for version string.";
             }
         }
 
@@ -531,7 +531,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("StreamHeaderTooSmall", resourceCulture);
+                return "Stream header too small.";
             }
         }
 
@@ -544,7 +544,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotEnoughSpaceForStreamHeaderName", resourceCulture);
+                return "Not enough space for stream header name.";
             }
         }
 
@@ -557,7 +557,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotEnoughSpaceForStringStream", resourceCulture);
+                return "Not enough space for String stream.";
             }
         }
 
@@ -570,7 +570,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotEnoughSpaceForBlobStream", resourceCulture);
+                return "Not enough space for Blob stream.";
             }
         }
 
@@ -583,7 +583,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotEnoughSpaceForGUIDStream", resourceCulture);
+                return "Not enough space for GUID stream.";
             }
         }
 
@@ -596,7 +596,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotEnoughSpaceForMetadataStream", resourceCulture);
+                return "Not enough space for Metadata stream.";
             }
         }
 
@@ -609,7 +609,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidMetadataStreamFormat", resourceCulture);
+                return "Invalid Metadata stream format.";
             }
         }
 
@@ -622,7 +622,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MetadataTablesTooSmall", resourceCulture);
+                return "Metadata tables too small.";
             }
         }
 
@@ -635,7 +635,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MetadataTableHeaderTooSmall", resourceCulture);
+                return "Metadata table header too small.";
             }
         }
 
@@ -648,7 +648,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("WinMDMissingMscorlibRef", resourceCulture);
+                return "Missing mscorlib reference in AssemblyRef table.";
             }
         }
 
@@ -661,7 +661,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnexpectedStreamEnd", resourceCulture);
+                return "Unexpected stream end.";
             }
         }
 
@@ -674,14 +674,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidMethodRva", resourceCulture);
+                return "Invalid relative virtual address (RVA): 0x{0:X8}";
             }
         }
 
 
         internal static string FormatInvalidMethodRva(object arg1)
         {
-            return string.Format(InvalidMethodRva, arg1);
+            return string.Format("Invalid relative virtual address (RVA): 0x{0:X8}", arg1);
         }
 
 
@@ -692,7 +692,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CantGetOffsetForVirtualHeapHandle", resourceCulture);
+                return "Can't get a heap offset for a virtual heap handle";
             }
         }
 
@@ -705,7 +705,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidNumberOfSections", resourceCulture);
+                return "Invalid number of sections declared in PE header.";
             }
         }
 
@@ -718,7 +718,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidSignature", resourceCulture);
+                return "Invalid signature.";
             }
         }
 
@@ -731,7 +731,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PEImageDoesNotHaveMetadata", resourceCulture);
+                return "PE image does not have metadata.";
             }
         }
 
@@ -744,7 +744,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidCodedIndex", resourceCulture);
+                return "Invalid coded index.";
             }
         }
 
@@ -757,7 +757,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidCompressedInteger", resourceCulture);
+                return "Invalid compressed integer.";
             }
         }
 
@@ -770,7 +770,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidDocumentName", resourceCulture);
+                return "Invalid document name.";
             }
         }
 
@@ -783,7 +783,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("RowIdOrHeapOffsetTooLarge", resourceCulture);
+                return "Row ID or heap offset is too large.";
             }
         }
 
@@ -796,7 +796,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("EnCMapNotSorted", resourceCulture);
+                return "EnCMap table not sorted or has missing records.";
             }
         }
 
@@ -809,7 +809,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidSerializedString", resourceCulture);
+                return "Invalid serialized string.";
             }
         }
 
@@ -822,7 +822,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("StreamTooLarge", resourceCulture);
+                return "Stream length minus starting position is too large to hold a PEImage.";
             }
         }
 
@@ -835,7 +835,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ImageTooSmallOrContainsInvalidOffsetOrCount", resourceCulture);
+                return "Image is either too small or contains an invalid byte offset or count.";
             }
         }
 
@@ -848,7 +848,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MetadataStringDecoderEncodingMustBeUtf8", resourceCulture);
+                return "The MetadataStringDecoder instance used to instantiate the Metadata reader must have a UTF-8 encoding.";
             }
         }
 
@@ -861,7 +861,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidConstantValue", resourceCulture);
+                return "Invalid constant value.";
             }
         }
 
@@ -874,14 +874,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidConstantValueOfType", resourceCulture);
+                return "Value of type '{0}' is not a constant.";
             }
         }
 
 
         internal static string FormatInvalidConstantValueOfType(object arg1)
         {
-            return string.Format(InvalidConstantValueOfType, arg1);
+            return string.Format("Value of type '{0}' is not a constant.", arg1);
         }
 
 
@@ -892,14 +892,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidImportDefinitionKind", resourceCulture);
+                return "Invalid import definition kind: {0}.";
             }
         }
 
 
         internal static string FormatInvalidImportDefinitionKind(object arg1)
         {
-            return string.Format(InvalidImportDefinitionKind, arg1);
+            return string.Format("Invalid import definition kind: {0}.", arg1);
         }
 
 
@@ -910,7 +910,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ValueTooLarge", resourceCulture);
+                return "Value is too large.";
             }
         }
 
@@ -923,7 +923,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BlobTooLarge", resourceCulture);
+                return "Blob is to large.";
             }
         }
 
@@ -936,7 +936,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidTypeSize", resourceCulture);
+                return "Invalid type size.";
             }
         }
 
@@ -949,7 +949,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("HandleBelongsToFutureGeneration", resourceCulture);
+                return "Handle belongs to a future generation";
             }
         }
 
@@ -962,14 +962,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidRowCount", resourceCulture);
+                return "Invalid row count: {0}";
             }
         }
 
 
         internal static string FormatInvalidRowCount(object arg1)
         {
-            return string.Format(InvalidRowCount, arg1);
+            return string.Format("Invalid row count: {0}", arg1);
         }
 
 
@@ -980,14 +980,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidEntryPointToken", resourceCulture);
+                return "Invalid entry point token: 0x{0:8X}";
             }
         }
 
 
         internal static string FormatInvalidEntryPointToken(object arg1)
         {
-            return string.Format(InvalidEntryPointToken, arg1);
+            return string.Format("Invalid entry point token: 0x{0:8X}", arg1);
         }
 
 
@@ -998,7 +998,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TooManySubnamespaces", resourceCulture);
+                return "There are too many subnamespaces.";
             }
         }
 
@@ -1011,7 +1011,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TooManyExceptionRegions", resourceCulture);
+                return "There are too many exception regions.";
             }
         }
 
@@ -1024,7 +1024,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SequencePointValueOutOfRange", resourceCulture);
+                return "Sequence point value is out of range.";
             }
         }
 
@@ -1037,7 +1037,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidDirectoryRVA", resourceCulture);
+                return "Invalid directory relative virtual address.";
             }
         }
 
@@ -1050,7 +1050,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidDirectorySize", resourceCulture);
+                return "Invalid directory size.";
             }
         }
 
@@ -1063,7 +1063,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidDebugDirectoryEntryCharacteristics", resourceCulture);
+                return "The value of field Characteristics in debug directory entry must be zero.";
             }
         }
 
@@ -1076,7 +1076,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnexpectedCodeViewDataSignature", resourceCulture);
+                return "Unexpected CodeView data signature value.";
             }
         }
 
@@ -1089,7 +1089,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnexpectedEmbeddedPortablePdbDataSignature", resourceCulture);
+                return "Unexpected Embedded Portable PDB data signature value.";
             }
         }
 
@@ -1102,7 +1102,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidPdbChecksumDataFormat", resourceCulture);
+                return "Invalid PDB Checksum data format.";
             }
         }
 
@@ -1115,14 +1115,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnexpectedSignatureHeader", resourceCulture);
+                return "Expected signature header for '{0}', but found '{1}' (0x{2:x2}).";
             }
         }
 
 
         internal static string FormatUnexpectedSignatureHeader(object arg1, object arg2, object arg3)
         {
-            return string.Format(UnexpectedSignatureHeader, arg1, arg2, arg3);
+            return string.Format("Expected signature header for '{0}', but found '{1}' (0x{2:x2}).", arg1, arg2, arg3);
         }
 
 
@@ -1133,14 +1133,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnexpectedSignatureHeader2", resourceCulture);
+                return "Expected signature header for '{0}' or '{1}', but found '{2}' (0x{3:x2}).";
             }
         }
 
 
         internal static string FormatUnexpectedSignatureHeader2(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(UnexpectedSignatureHeader2, arg1, arg2, arg3, arg4);
+            return string.Format("Expected signature header for '{0}' or '{1}', but found '{2}' (0x{3:x2}).", arg1, arg2, arg3, arg4);
         }
 
 
@@ -1151,7 +1151,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotTypeDefOrRefHandle", resourceCulture);
+                return "Specified handle is not a TypeDefinitionHandle or TypeReferenceHandle.";
             }
         }
 
@@ -1164,14 +1164,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnexpectedSignatureTypeCode", resourceCulture);
+                return "Unexpected SignatureTypeCode: (0x{0:x}).";
             }
         }
 
 
         internal static string FormatUnexpectedSignatureTypeCode(object arg1)
         {
-            return string.Format(UnexpectedSignatureTypeCode, arg1);
+            return string.Format("Unexpected SignatureTypeCode: (0x{0:x}).", arg1);
         }
 
 
@@ -1182,7 +1182,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SignatureTypeSequenceMustHaveAtLeastOneElement", resourceCulture);
+                return "Signature type sequence must have at least one element.";
             }
         }
 
@@ -1195,7 +1195,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotTypeDefOrRefOrSpecHandle", resourceCulture);
+                return "Specified handle is not a TypeDefinitionHandle, TypeReferenceHandle, or TypeSpecificationHandle.";
             }
         }
 
@@ -1208,14 +1208,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnexpectedDebugDirectoryType", resourceCulture);
+                return "The Debug directory was not of type {0}.";
             }
         }
 
 
         internal static string FormatUnexpectedDebugDirectoryType(object arg1)
         {
-            return string.Format(UnexpectedDebugDirectoryType, arg1);
+            return string.Format("The Debug directory was not of type {0}.", arg1);
         }
 
 
@@ -1226,14 +1226,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("HeapSizeLimitExceeded", resourceCulture);
+                return "The limit on the size of {0} heap has been exceeded.";
             }
         }
 
 
         internal static string FormatHeapSizeLimitExceeded(object arg1)
         {
-            return string.Format(HeapSizeLimitExceeded, arg1);
+            return string.Format("The limit on the size of {0} heap has been exceeded.", arg1);
         }
 
 
@@ -1244,7 +1244,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BuilderMustAligned", resourceCulture);
+                return "Builder must be aligned to 4 byte boundary.";
             }
         }
 
@@ -1257,7 +1257,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BuilderAlreadyLinked", resourceCulture);
+                return "The operation is not valid on this builder as it has been linked with another one.";
             }
         }
 
@@ -1270,14 +1270,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ReturnedBuilderSizeTooSmall", resourceCulture);
+                return "The size of the builder returned by {0}.{1} is smaller than requested.";
             }
         }
 
 
         internal static string FormatReturnedBuilderSizeTooSmall(object arg1, object arg2)
         {
-            return string.Format(ReturnedBuilderSizeTooSmall, arg1, arg2);
+            return string.Format("The size of the builder returned by {0}.{1} is smaller than requested.", arg1, arg2);
         }
 
 
@@ -1288,7 +1288,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SignatureNotVarArg", resourceCulture);
+                return "Can't add vararg parameters to non-vararg signature.";
             }
         }
 
@@ -1301,7 +1301,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LabelDoesntBelongToBuilder", resourceCulture);
+                return "Specified label doesn't belong to the current builder.";
             }
         }
 
@@ -1314,7 +1314,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ControlFlowBuilderNotAvailable", resourceCulture);
+                return "Can't emit a branch or exception region, the current encoder not created with a control flow builder.";
             }
         }
 
@@ -1327,7 +1327,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BaseReaderMustBeFullMetadataReader", resourceCulture);
+                return "Base reader must be a full metadata reader.";
             }
         }
 
@@ -1340,7 +1340,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ModuleAlreadyAdded", resourceCulture);
+                return "Module already added.";
             }
         }
 
@@ -1353,7 +1353,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AssemblyAlreadyAdded", resourceCulture);
+                return "Assembly already added.";
             }
         }
 
@@ -1366,14 +1366,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpectedListOfSize", resourceCulture);
+                return "Expected list of size {0}.";
             }
         }
 
 
         internal static string FormatExpectedListOfSize(object arg1)
         {
-            return string.Format(ExpectedListOfSize, arg1);
+            return string.Format("Expected list of size {0}.", arg1);
         }
 
 
@@ -1384,14 +1384,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpectedArrayOfSize", resourceCulture);
+                return "Expected array of size {0}.";
             }
         }
 
 
         internal static string FormatExpectedArrayOfSize(object arg1)
         {
-            return string.Format(ExpectedArrayOfSize, arg1);
+            return string.Format("Expected array of size {0}.", arg1);
         }
 
 
@@ -1402,7 +1402,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpectedNonEmptyList", resourceCulture);
+                return "Expected non-empty list.";
             }
         }
 
@@ -1415,7 +1415,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpectedNonEmptyArray", resourceCulture);
+                return "Expected non-empty array.";
             }
         }
 
@@ -1428,7 +1428,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpectedNonEmptyString", resourceCulture);
+                return "Expected non-empty string.";
             }
         }
 
@@ -1441,7 +1441,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ReadersMustBeDeltaReaders", resourceCulture);
+                return "Specified readers must be minimal delta metadata readers.";
             }
         }
 
@@ -1454,7 +1454,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SignatureProviderReturnedInvalidSignature", resourceCulture);
+                return "Signature provider returned invalid signature.";
             }
         }
 
@@ -1467,14 +1467,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnknownSectionName", resourceCulture);
+                return "Unknown section name: '{0}'.";
             }
         }
 
 
         internal static string FormatUnknownSectionName(object arg1)
         {
-            return string.Format(UnknownSectionName, arg1);
+            return string.Format("Unknown section name: '{0}'.", arg1);
         }
 
 
@@ -1485,14 +1485,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("HashTooShort", resourceCulture);
+                return "Hash must be at least {0}B long.";
             }
         }
 
 
         internal static string FormatHashTooShort(object arg1)
         {
-            return string.Format(HashTooShort, arg1);
+            return string.Format("Hash must be at least {0}B long.", arg1);
         }
 
 
@@ -1503,14 +1503,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnexpectedArrayLength", resourceCulture);
+                return "Expected array of length {0}.";
             }
         }
 
 
         internal static string FormatUnexpectedArrayLength(object arg1)
         {
-            return string.Format(UnexpectedArrayLength, arg1);
+            return string.Format("Expected array of length {0}.", arg1);
         }
 
 
@@ -1521,14 +1521,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ValueMustBeMultiple", resourceCulture);
+                return "Value must be multiple of {0}.";
             }
         }
 
 
         internal static string FormatValueMustBeMultiple(object arg1)
         {
-            return string.Format(ValueMustBeMultiple, arg1);
+            return string.Format("Value must be multiple of {0}.", arg1);
         }
 
 
@@ -1539,14 +1539,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MustNotReturnNull", resourceCulture);
+                return "{0} must not return null.";
             }
         }
 
 
         internal static string FormatMustNotReturnNull(object arg1)
         {
-            return string.Format(MustNotReturnNull, arg1);
+            return string.Format("{0} must not return null.", arg1);
         }
 
 
@@ -1557,7 +1557,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MetadataVersionTooLong", resourceCulture);
+                return "Metadata version too long.";
             }
         }
 
@@ -1570,14 +1570,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("RowCountMustBeZero", resourceCulture);
+                return "Row count must be zero for table #{0}.";
             }
         }
 
 
         internal static string FormatRowCountMustBeZero(object arg1)
         {
-            return string.Format(RowCountMustBeZero, arg1);
+            return string.Format("Row count must be zero for table #{0}.", arg1);
         }
 
 
@@ -1588,14 +1588,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("RowCountOutOfRange", resourceCulture);
+                return "Row count specified for table index {0} is out of allowed range.";
             }
         }
 
 
         internal static string FormatRowCountOutOfRange(object arg1)
         {
-            return string.Format(RowCountOutOfRange, arg1);
+            return string.Format("Row count specified for table index {0} is out of allowed range.", arg1);
         }
 
 
@@ -1606,7 +1606,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SizeMismatch", resourceCulture);
+                return "Declared size doesn't correspond to the actual size.";
             }
         }
 
@@ -1619,7 +1619,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTooBig", resourceCulture);
+                return "Data too big to fit in memory.";
             }
         }
 
@@ -1632,14 +1632,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnsupportedFormatVersion", resourceCulture);
+                return "Unsupported format version: {0}";
             }
         }
 
 
         internal static string FormatUnsupportedFormatVersion(object arg1)
         {
-            return string.Format(UnsupportedFormatVersion, arg1);
+            return string.Format("Unsupported format version: {0}", arg1);
         }
 
 
@@ -1650,14 +1650,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DistanceBetweenInstructionAndLabelTooBig", resourceCulture);
+                return "The distance between the instruction {0} (offset {1}) and the target label doesn't fit the operand size: {2}";
             }
         }
 
 
         internal static string FormatDistanceBetweenInstructionAndLabelTooBig(object arg1, object arg2, object arg3)
         {
-            return string.Format(DistanceBetweenInstructionAndLabelTooBig, arg1, arg2, arg3);
+            return string.Format("The distance between the instruction {0} (offset {1}) and the target label doesn't fit the operand size: {2}", arg1, arg2, arg3);
         }
 
 
@@ -1668,14 +1668,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LabelNotMarked", resourceCulture);
+                return "Label {0} has not been marked.";
             }
         }
 
 
         internal static string FormatLabelNotMarked(object arg1)
         {
-            return string.Format(LabelNotMarked, arg1);
+            return string.Format("Label {0} has not been marked.", arg1);
         }
 
 
@@ -1686,7 +1686,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MethodHasNoExceptionRegions", resourceCulture);
+                return "Method body was created with no exception regions.";
             }
         }
 
@@ -1699,14 +1699,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidExceptionRegionBounds", resourceCulture);
+                return "Invalid exception region bounds: start offset ({0}) is greater than end offset ({1}).";
             }
         }
 
 
         internal static string FormatInvalidExceptionRegionBounds(object arg1, object arg2)
         {
-            return string.Format(InvalidExceptionRegionBounds, arg1, arg2);
+            return string.Format("Invalid exception region bounds: start offset ({0}) is greater than end offset ({1}).", arg1, arg2);
         }
 
 
@@ -1717,14 +1717,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnexpectedValue", resourceCulture);
+                return "Unexpected value '{0}' of type '{1}'";
             }
         }
 
 
         internal static string FormatUnexpectedValue(object arg1, object arg2)
         {
-            return string.Format(UnexpectedValue, arg1, arg2);
+            return string.Format("Unexpected value '{0}' of type '{1}'", arg1, arg2);
         }
 
 
@@ -1735,14 +1735,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnexpectedValueUnknownType", resourceCulture);
+                return "Unexpected value '{0}' of unknown type.";
             }
         }
 
 
         internal static string FormatUnexpectedValueUnknownType(object arg1)
         {
-            return string.Format(UnexpectedValueUnknownType, arg1);
+            return string.Format("Unexpected value '{0}' of unknown type.", arg1);
         }
 
 
@@ -1753,7 +1753,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SwitchInstructionEncoderTooFewBranches", resourceCulture);
+                return "The SwitchInstructionEncoder.Branch method was invoked too few times.";
             }
         }
 
@@ -1766,7 +1766,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SwitchInstructionEncoderTooManyBranches", resourceCulture);
+                return "The SwitchInstructionEncoder.Branch method was invoked too many times.";
             }
         }
 
@@ -1779,7 +1779,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidTypeName", resourceCulture);
+                return "The name of the type is invalid.";
             }
         }
 
@@ -1792,14 +1792,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_MaxNodesExceeded", resourceCulture);
+                return "Maximum node count of {0} exceeded.";
             }
         }
 
 
         internal static string FormatInvalidOperation_MaxNodesExceeded(object arg1)
         {
-            return string.Format(InvalidOperation_MaxNodesExceeded, arg1);
+            return string.Format("Maximum node count of {0} exceeded.", arg1);
         }
 
 
@@ -1810,7 +1810,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_HasToBeArrayClass", resourceCulture);
+                return "Must be an array type.";
             }
         }
 
@@ -1823,7 +1823,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_NotGenericType", resourceCulture);
+                return "This operation is only valid on generic types.";
             }
         }
 
@@ -1836,7 +1836,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_NotNestedType", resourceCulture);
+                return "This operation is only valid on nested types.";
             }
         }
 
@@ -1849,7 +1849,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_NoElement", resourceCulture);
+                return "This operation is only valid on arrays, pointers and references.";
             }
         }
 
@@ -1862,7 +1862,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_NestedTypeNamespace", resourceCulture);
+                return "Cannot retrieve the namespace of a nested type.";
             }
         }
 
@@ -1875,7 +1875,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidAssemblyName", resourceCulture);
+                return "The given assembly name was invalid.";
             }
         }
 
@@ -1888,14 +1888,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_NotSimpleTypeName", resourceCulture);
+                return "'{0}' is not a simple TypeName.";
             }
         }
 
 
         internal static string FormatArg_NotSimpleTypeName(object arg1)
         {
-            return string.Format(Arg_NotSimpleTypeName, arg1);
+            return string.Format("'{0}' is not a simple TypeName.", arg1);
         }
     }
 }

@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Microsoft.Extensions.Logging", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,14 +70,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidActivityTrackingOptions", resourceCulture);
+                return "{0} is invalid ActivityTrackingOptions value.";
             }
         }
 
 
         internal static string FormatInvalidActivityTrackingOptions(object arg1)
         {
-            return string.Format(InvalidActivityTrackingOptions, arg1);
+            return string.Format("{0} is invalid ActivityTrackingOptions value.", arg1);
         }
 
 
@@ -88,7 +88,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MoreThanOneWildcard", resourceCulture);
+                return "Only one wildcard character is allowed in category name.";
             }
         }
 

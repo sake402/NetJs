@@ -16,6 +16,8 @@ using NetJs;
 [assembly: LinkerSubstitution("System.Globalization.GlobalizationMode.PredefinedCulturesOnly", "")]
 [assembly: LinkerSubstitution("System.Globalization.GlobalizationMode.Settings.Invariant", "")]
 
+[assembly: LinkerSubstitution("System.Runtime.CompilerServices.RuntimeFeature.IsDynamicCodeSupported", "false")]
+
 [assembly: LinkerSubstitution("System.Buffers.IndexOfAnyAsciiSearcher.IsVectorizationSupported", "false")]
 [assembly: Attached("System.Buffers.IndexOfAnyAsciiSearcher.IsVectorizationSupported", typeof(NonScriptableAttribute))]
 
@@ -69,7 +71,7 @@ using NetJs;
 [assembly: Attached(typeof(System.Runtime.Intrinsics.X86.Avx512F), typeof(NonScriptableAttribute))]
 [assembly: Attached(typeof(System.Runtime.Intrinsics.X86.Avx512Vbmi), typeof(NonScriptableAttribute))]
 [assembly: Attached(typeof(System.Runtime.Intrinsics.X86.Avx512Vbmi2), typeof(NonScriptableAttribute))]
-[assembly: Attached(typeof(System.Runtime.Intrinsics.X86.Avx512Bmm), typeof(NonScriptableAttribute))]
+//[assembly: Attached(typeof(System.Runtime.Intrinsics.X86.Avx512Bmm), typeof(NonScriptableAttribute))]
 [assembly: Attached(typeof(System.Runtime.Intrinsics.X86.AvxVnni), typeof(NonScriptableAttribute))]
 [assembly: Attached(typeof(System.Runtime.Intrinsics.X86.AvxVnniInt16), typeof(NonScriptableAttribute))]
 [assembly: Attached(typeof(System.Runtime.Intrinsics.X86.AvxVnniInt8), typeof(NonScriptableAttribute))]
@@ -102,8 +104,8 @@ using NetJs;
 [assembly: Attached("*System\\.Runtime\\.CompilerServices\\..+Attribute", typeof(NonScriptableAttribute))]
 [assembly: Attached("*System\\.Threading\\.Volatile\\.Volatile.+", typeof(NonScriptableAttribute))]
 [assembly: Attached("*System\\.Text\\.Ascii\\.+_Intrinsified.?", typeof(NonScriptableAttribute))]
-[assembly: Attached("*System\\.Action.+", typeof(ReflectableAttribute), false)]
-[assembly: Attached("*System\\.Func.+", typeof(ReflectableAttribute), false)]
+//[assembly: Attached("*System\\.Action.+", typeof(ReflectableAttribute), false)]
+//[assembly: Attached("*System\\.Func.+", typeof(ReflectableAttribute), false)]
 [assembly: Attached("*System\\..+Exception", typeof(ReflectableAttribute), false)]
 [assembly: Attached("*.+DebugView", typeof(NonScriptableAttribute))]
 [assembly: Attached("*System\\.Reflection\\.Emit\\.+", typeof(NonScriptableAttribute))]

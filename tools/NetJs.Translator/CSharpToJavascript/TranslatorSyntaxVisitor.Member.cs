@@ -158,54 +158,79 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             if (member != null)
             {
-                var memberMetadata = _global.GetMetadata(member);
                 if (member.IsStatic || isStaticConvention || isExtensionMember)
                 {
-                    if (thisSymbol is ITypeParameterSymbol tp)
+                    if (isExtensionMember && !member.IsStatic && Constants.CompatibleExtensionPropertyGetSetMethod)
                     {
-                        CurrentTypeWriter.Write(node, tp.Name);
-                        CurrentTypeWriter.Write(node, ".");
-                        CurrentTypeWriter.Write(node, memberMetadata?.OverloadName ?? member.Name);
+                        if (setValue != null)
+                        {
+                            var propertySet = ((IPropertySymbol)member).SetMethod!;
+                            var setMetadata = _global.GetMetadata(propertySet);
+                            CurrentTypeWriter.Write(node, setMetadata?.InvocationName ?? propertySet.Name);
+                        }
+                        else
+                        {
+                            var propertyGet = ((IPropertySymbol)member).GetMethod!;
+                            var getMetadata = _global.GetMetadata(propertyGet);
+                            CurrentTypeWriter.Write(node, getMetadata?.InvocationName ?? propertyGet.Name);
+                        }
+                        CurrentTypeWriter.Write(node, "(");
+                        if (thisExpression != null)
+                            VisitNode(thisExpression);
+                        else
+                            CurrentTypeWriter.Write(node, "this");
+                        CurrentTypeWriter.Write(node, ")");
                     }
                     else
                     {
-                        CurrentTypeWriter.Write(node, memberMetadata?.InvocationName ?? member.Name);
-                    }
-                    if (isExtensionMember)
-                    {
-                        if (setValue != null)
-                            CurrentTypeWriter.Write(node, "$set(");
-                        else
-                            CurrentTypeWriter.Write(node, "$get(");
-                        if (thisExpression != null)
-                            VisitNode(thisExpression);
-                        else
-                            CurrentTypeWriter.Write(node, "this");
-                        CurrentTypeWriter.Write(node, ")");
-                    }
-                    else if (isStaticConvention)
-                    {
-                        if (setValue != null)
+                        var memberMetadata = _global.GetMetadata(member);
+                        if (thisSymbol is ITypeParameterSymbol tp)
                         {
-                            CurrentTypeWriter.Write(node, "$set.call(");
+                            CurrentTypeWriter.Write(node, tp.Name);
+                            CurrentTypeWriter.Write(node, ".");
+                            CurrentTypeWriter.Write(node, memberMetadata?.OverloadName ?? member.Name);
                         }
                         else
-                            CurrentTypeWriter.Write(node, "$get.call(");
-                        if (thisExpression != null)
-                            VisitNode(thisExpression);
-                        else
-                            CurrentTypeWriter.Write(node, "this");
-                        if (setValue != null)
                         {
-                            CurrentTypeWriter.Write(node, ", ");
-                            VisitNode(setValue);
+                            CurrentTypeWriter.Write(node, memberMetadata?.InvocationName ?? member.Name);
                         }
-                        CurrentTypeWriter.Write(node, ")");
+                        if (isExtensionMember && !member.IsStatic)
+                        {
+                            if (setValue != null)
+                                CurrentTypeWriter.Write(node, "$set(");
+                            else
+                                CurrentTypeWriter.Write(node, "$get(");
+                            if (thisExpression != null)
+                                VisitNode(thisExpression);
+                            else
+                                CurrentTypeWriter.Write(node, "this");
+                            CurrentTypeWriter.Write(node, ")");
+                        }
+                        else if (isStaticConvention)
+                        {
+                            if (setValue != null)
+                            {
+                                CurrentTypeWriter.Write(node, "$set.call(");
+                            }
+                            else
+                                CurrentTypeWriter.Write(node, "$get.call(");
+                            if (thisExpression != null)
+                                VisitNode(thisExpression);
+                            else
+                                CurrentTypeWriter.Write(node, "this");
+                            if (setValue != null)
+                            {
+                                CurrentTypeWriter.Write(node, ", ");
+                                VisitNode(setValue);
+                            }
+                            CurrentTypeWriter.Write(node, ")");
+                        }
                     }
                     return;
                 }
                 else
                 {
+                    var memberMetadata = member.Kind != SymbolKind.DynamicType ? _global.GetMetadata(member):null;
                     memberName = memberMetadata?.InvocationName ?? memberName;
                 }
             }

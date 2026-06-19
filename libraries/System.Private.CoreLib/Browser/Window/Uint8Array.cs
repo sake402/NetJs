@@ -14,6 +14,7 @@ namespace Window
         public extern Uint8Array(ArrayBuffer buffer, int byteOffset = 0, int? length = null);
         public extern int length { get; }
         public extern ArrayBuffer buffer { get; }
+        public extern void set(Uint8Array source);
         public extern byte this[int index] { get; set; }
         public extern Uint8Array slice(int start = 0, int? end = null);
         public static extern bool isView(object arg);

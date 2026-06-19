@@ -54,27 +54,58 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitCastExpression(CastExpressionSyntax node)
         {
+            var toType = _global.GetTypeSymbol(node.Type, this);
             var parentIsEnum = node.FindClosestParent<EnumDeclarationSyntax>();
             //Don't generate cast for enum value initialization
             var type = _global.GetSymbol(node.Type, this/*, out _, out _*/);
-            if (parentIsEnum != null || node.Expression.IsKind(SyntaxKind.NullLiteralExpression) || !_global.ShouldExportType(type, this))
+            if (parentIsEnum != null ||
+                node.Expression.IsKind(SyntaxKind.NullLiteralExpression) ||
+                !_global.ShouldExportType(type, this) ||
+                SymbolEqualityComparer.Default.Equals(toType, _global.Compilation.DynamicType))
             {
                 Visit(node.Expression);
             }
             else
             {
                 var fromType = _global.TryGetTypeSymbol(node.Expression, this);
-                var toType = _global.GetTypeSymbol(node.Type, this);
 
-                //if (fromType != null &&
-                //    toType != null /*&& _global.Compilation.HasImplicitConversion(fromType, toType)*/ &&
-                //    (fromType.IsJsNativeIntegerNumeric() || fromType.TypeKind == TypeKind.Enum) &&
-                //    toType.IsJsNativeIntegerNumeric())
-                //{
-                //    //this type can just be assigned, no cast/conversion neccessary in js
-                //    Visit(node.Expression);
-                //    return;
-                //}
+                var numFromType = fromType?.TypeKind == TypeKind.Enum ? ((INamedTypeSymbol)fromType).EnumUnderlyingType : fromType;
+                if (numFromType != null &&
+                    toType != null &&
+                    (numFromType.IsIntegerNumericType()) &&
+                    toType.IsIntegerNumericType())
+                {
+                    //this type can just be assigned, no cast/conversion neccessary in js
+                    int fromRank = numFromType.GetNumericRangeRank();
+                    int toRank = toType.GetNumericRangeRank();
+                    if (numFromType.IsSignedNumericType() == toType.IsSignedNumericType())
+                    {
+                        if (toRank >= fromRank)
+                        {
+                            Visit(node.Expression);
+                            return;
+                        }
+                    }
+                    else if (toRank == fromRank &&
+                        (SymbolEqualityComparer.Default.Equals(toType, _global.SystemInt32) || SymbolEqualityComparer.Default.Equals(numFromType, _global.SystemInt32))) //same rank but differ in signess. eg int and uint
+                    {
+                        var toMask = toType.GetNumericMask();
+                        var fromMask = numFromType.GetNumericMask();
+                        bool useMask = toMask != fromMask;
+                        CurrentTypeWriter.Write(node, "(");
+                        Visit(node.Expression);
+                        if (toType.IsSignedNumericType())
+                        {
+                            CurrentTypeWriter.Write(node, " | 0)");
+                        }
+                        else
+                        {
+                            CurrentTypeWriter.Write(node, " >>> 0)");
+                        }
+                        return;
+                    }
+                }
+
                 if (TryInvokeMethodOperator(node, ExplicitOperatorName, null, node.Type, [node.Expression]))
                     return;
                 if (TryCastUsingExternalInterface(node, toType, fromType, node.Expression))

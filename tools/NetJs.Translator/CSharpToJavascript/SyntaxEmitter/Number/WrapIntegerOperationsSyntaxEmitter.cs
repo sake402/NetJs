@@ -28,6 +28,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Numbers
                                 !ImplicitConversionSyntaxEmitter.NumberImplicitlyConvertsToLong(node.Left, sm, visitor, null) &&
                                 !ImplicitConversionSyntaxEmitter.NumberImplicitlyConvertsToLong(node.Right, sm, visitor, null))
                             {
+                                bool isChecked = visitor.Global.Evaluate("checked") != null;
                                 bool leftSigned = lhsType.IsSignedNumericType();
                                 bool rightSigned = rhsType.IsSignedNumericType();
                                 //if one of the operand is actually unsigned literal, it isnt signed
@@ -45,30 +46,46 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Numbers
                                         rightSigned = false;
                                     }
                                 }
-                                var isSigned = leftSigned || rightSigned;
-                                visitor.CurrentTypeWriter.Write(node, "((");
-                                visitor.Visit(node.Left);
-                                visitor.CurrentTypeWriter.Write(node, " ");
-                                visitor.CurrentTypeWriter.Write(node, node.OperatorToken.Text);
-                                visitor.CurrentTypeWriter.Write(node, " ");
-                                visitor.Visit(node.Right);
-                                visitor.CurrentTypeWriter.Write(node, ")");
-                                if (isSigned)
+                                var isSignedResult = leftSigned || rightSigned || (!leftSigned && !rightSigned && node.IsKind(SyntaxKind.SubtractExpression));
+                                var leftRank = lhsType.GetNumericRangeRank();
+                                var rightRank = rhsType.GetNumericRangeRank();
+                                var int32Rank = visitor.Global.SystemInt32.GetNumericRangeRank();
+                                //if both precision are less than int, no math operation on them can exceed int, no need to | 0
+                                if (isSignedResult && leftRank < int32Rank && rightRank < int32Rank)
+                                    return false;
+                                if (!isChecked)
                                 {
-                                    visitor.CurrentTypeWriter.Write(node, " | 0)");
+                                    visitor.CurrentTypeWriter.Write(node, "((");
+                                    visitor.Visit(node.Left);
+                                    visitor.CurrentTypeWriter.Write(node, " ");
+                                    visitor.CurrentTypeWriter.Write(node, node.OperatorToken.Text);
+                                    visitor.CurrentTypeWriter.Write(node, " ");
+                                    visitor.Visit(node.Right);
+                                    visitor.CurrentTypeWriter.Write(node, ")");
+                                    if (isSignedResult)
+                                    {
+                                        visitor.CurrentTypeWriter.Write(node, " | 0)");
+                                    }
+                                    else
+                                    {
+                                        visitor.CurrentTypeWriter.Write(node, " >>> 0)");
+                                    }
                                 }
                                 else
                                 {
-                                    visitor.CurrentTypeWriter.Write(node, " >>> 0)");
+                                    visitor.CurrentTypeWriter.Write(node, visitor.Global.GlobalName);
+                                    visitor.CurrentTypeWriter.Write(node, ".");
+                                    visitor.CurrentTypeWriter.Write(node, Constants.IntegerChecked);
+                                    visitor.CurrentTypeWriter.Write(node, "(");
+                                    visitor.Visit(node.Left);
+                                    visitor.CurrentTypeWriter.Write(node, " ");
+                                    visitor.CurrentTypeWriter.Write(node, node.OperatorToken.Text);
+                                    visitor.CurrentTypeWriter.Write(node, " ");
+                                    visitor.Visit(node.Right);
+                                    visitor.CurrentTypeWriter.Write(node, ", ");
+                                    visitor.CurrentTypeWriter.Write(node, isSignedResult ? "1" : "0");
+                                    visitor.CurrentTypeWriter.Write(node, ")");
                                 }
-                                //visitor.CurrentTypeWriter.Write(node, visitor.Global.GlobalName);
-                                //visitor.CurrentTypeWriter.Write(node, ".$wrap(");
-                                //visitor.Visit(node.Left);
-                                //visitor.CurrentTypeWriter.Write(node, " * ");
-                                //visitor.Visit(node.Right);
-                                //visitor.CurrentTypeWriter.Write(node, ", ");
-                                //visitor.CurrentTypeWriter.Write(node, isSigned ? "1" : "0");
-                                //visitor.CurrentTypeWriter.Write(node, ")");
                                 return true;
                             }
                         }

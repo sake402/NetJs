@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Diagnostics.DiagnosticSource", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,7 +70,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ActivityIdFormatInvalid", resourceCulture);
+                return "\"Value must be a valid ActivityIdFormat value\"";
             }
         }
 
@@ -83,7 +83,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ActivityNotRunning", resourceCulture);
+                return "Trying to set an Activity that is not running";
             }
         }
 
@@ -96,7 +96,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ActivityNotStarted", resourceCulture);
+                return "\"Can not stop an Activity that was not started\"";
             }
         }
 
@@ -109,7 +109,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ActivityStartAlreadyStarted", resourceCulture);
+                return "\"Can not start an Activity that was already started\"";
             }
         }
 
@@ -122,7 +122,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ActivitySetParentAlreadyStarted", resourceCulture);
+                return "\"Can not set parent on already started Activity\"";
             }
         }
 
@@ -135,7 +135,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("EndTimeNotUtc", resourceCulture);
+                return "\"EndTime is not UTC\"";
             }
         }
 
@@ -148,7 +148,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("OperationNameInvalid", resourceCulture);
+                return "\"OperationName must not be null or empty\"";
             }
         }
 
@@ -161,7 +161,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ParentIdAlreadySet", resourceCulture);
+                return "\"ParentId is already set\"";
             }
         }
 
@@ -174,7 +174,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ParentIdInvalid", resourceCulture);
+                return "\"ParentId must not be null or empty\"";
             }
         }
 
@@ -187,7 +187,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SetFormatOnStartedActivity", resourceCulture);
+                return "\"Can not change format for an activity that was already started\"";
             }
         }
 
@@ -200,7 +200,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SetParentIdOnActivityWithParent", resourceCulture);
+                return "\"Can not set ParentId on activity which has parent\"";
             }
         }
 
@@ -213,7 +213,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("StartTimeNotUtc", resourceCulture);
+                return "\"StartTime is not UTC\"";
             }
         }
 
@@ -226,14 +226,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("KeyAlreadyExist", resourceCulture);
+                return "\"The collection already contains item with same key '{0}''\"";
             }
         }
 
 
         internal static string FormatKeyAlreadyExist(object arg1)
         {
-            return string.Format(KeyAlreadyExist, arg1);
+            return string.Format("\"The collection already contains item with same key '{0}''\"", arg1);
         }
 
 
@@ -244,7 +244,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidTraceParent", resourceCulture);
+                return "\"Invalid trace parent.\"";
             }
         }
 
@@ -257,7 +257,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnableAccessServicePointTable", resourceCulture);
+                return "Unable to access the ServicePointTable field";
             }
         }
 
@@ -270,7 +270,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnableToInitialize", resourceCulture);
+                return "Unable to initialize all required reflection objects";
             }
         }
 
@@ -283,14 +283,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnsupportedType", resourceCulture);
+                return "{0} is unsupported type for this operation. The only supported types are byte, short, int, long, float, double, and decimal.  ";
             }
         }
 
 
         internal static string FormatUnsupportedType(object arg1)
         {
-            return string.Format(UnsupportedType, arg1);
+            return string.Format("{0} is unsupported type for this operation. The only supported types are byte, short, int, long, float, double, and decimal.  ", arg1);
         }
 
 
@@ -301,7 +301,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_BufferTooSmall", resourceCulture);
+                return "Destination buffer is not long enough to copy all the items in the list.";
             }
         }
 
@@ -314,7 +314,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidInstrumentType", resourceCulture);
+                return "The instrument is of different generic type.";
             }
         }
 
@@ -327,7 +327,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidHistogramExplicitBucketBoundaries", resourceCulture);
+                return "Histogram explicit bucket boundaries must be specified in ascending order and cannot contain duplicate values.";
             }
         }
 
@@ -340,14 +340,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidHistogramScale", resourceCulture);
+                return "Invalid scale value {0}. Scale must be greater than or equal to {1} and less than or equal to {2}.";
             }
         }
 
 
         internal static string FormatInvalidHistogramScale(object arg1, object arg2, object arg3)
         {
-            return string.Format(InvalidHistogramScale, arg1, arg2, arg3);
+            return string.Format("Invalid scale value {0}. Scale must be greater than or equal to {1} and less than or equal to {2}.", arg1, arg2, arg3);
         }
 
 
@@ -358,14 +358,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidHistogramMaxBuckets", resourceCulture);
+                return "Invalid Max buckets value {0}. Max buckets must be greater than or equal to {1}.";
             }
         }
 
 
         internal static string FormatInvalidHistogramMaxBuckets(object arg1, object arg2)
         {
-            return string.Format(InvalidHistogramMaxBuckets, arg1, arg2);
+            return string.Format("Invalid Max buckets value {0}. Max buckets must be greater than or equal to {1}.", arg1, arg2);
         }
     }
 }

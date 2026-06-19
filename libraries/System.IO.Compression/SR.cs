@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.IO.Compression", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,7 +70,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_Enum", resourceCulture);
+                return "Enum value was out of legal range.";
             }
         }
 
@@ -83,7 +83,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotReadFromDeflateStream", resourceCulture);
+                return "Reading from the compression stream is not supported.";
             }
         }
 
@@ -96,7 +96,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotWriteToDeflateStream", resourceCulture);
+                return "Writing to the compression stream is not supported.";
             }
         }
 
@@ -109,7 +109,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("GenericInvalidData", resourceCulture);
+                return "Found invalid data while decoding.";
             }
         }
 
@@ -122,7 +122,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidBeginCall", resourceCulture);
+                return "Only one asynchronous reader or writer is allowed time at one time.";
             }
         }
 
@@ -135,7 +135,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidBlockLength", resourceCulture);
+                return "Block length does not match with its complement.";
             }
         }
 
@@ -148,7 +148,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidHuffmanData", resourceCulture);
+                return "Failed to construct a huffman tree using the length array. The stream might be corrupted.";
             }
         }
 
@@ -161,7 +161,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported", resourceCulture);
+                return "This operation is not supported.";
             }
         }
 
@@ -174,7 +174,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_UnreadableStream", resourceCulture);
+                return "Stream does not support reading.";
             }
         }
 
@@ -187,7 +187,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_UnwritableStream", resourceCulture);
+                return "Stream does not support writing.";
             }
         }
 
@@ -200,7 +200,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnknownBlockType", resourceCulture);
+                return "Unknown block type. Stream might be corrupted.";
             }
         }
 
@@ -213,7 +213,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnknownState", resourceCulture);
+                return "Decoder is in some unknown state. This might be caused by corrupted data.";
             }
         }
 
@@ -226,7 +226,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ZLibErrorDLLLoadError", resourceCulture);
+                return "The underlying compression routine could not be loaded correctly.";
             }
         }
 
@@ -239,7 +239,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ZLibErrorInconsistentStream", resourceCulture);
+                return "The stream state of the underlying compression routine is inconsistent.";
             }
         }
 
@@ -252,7 +252,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ZLibErrorIncorrectInitParameters", resourceCulture);
+                return "The underlying compression routine received incorrect initialization parameters.";
             }
         }
 
@@ -265,7 +265,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ZLibErrorNotEnoughMemory", resourceCulture);
+                return "The underlying compression routine could not reserve sufficient memory.";
             }
         }
 
@@ -278,28 +278,23 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ZLibErrorVersionMismatch", resourceCulture);
+                return "The version of the underlying compression routine does not match expected version.";
             }
         }
 
 
 
         /// <summary>
-        /// The underlying compression routine returned an unexpected error code: '{0}'.
+        /// The underlying compression routine returned an unexpected error code.
         /// </summary>
         internal static string ZLibErrorUnexpected
         {
             get
             {
-                return ResourceManager.GetString("ZLibErrorUnexpected", resourceCulture);
+                return "The underlying compression routine returned an unexpected error code.";
             }
         }
 
-
-        internal static string FormatZLibErrorUnexpected(object arg1)
-        {
-            return string.Format(ZLibErrorUnexpected, arg1);
-        }
 
 
         /// <summary>
@@ -309,7 +304,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CDCorrupt", resourceCulture);
+                return "Central Directory corrupt.";
             }
         }
 
@@ -322,7 +317,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CentralDirectoryInvalid", resourceCulture);
+                return "Central Directory is invalid.";
             }
         }
 
@@ -335,7 +330,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CreateInReadMode", resourceCulture);
+                return "Cannot create entries on an archive opened in read mode.";
             }
         }
 
@@ -348,7 +343,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CreateModeCapabilities", resourceCulture);
+                return "Cannot use create mode on a non-writable stream.";
             }
         }
 
@@ -361,7 +356,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CreateModeCreateEntryWhileOpen", resourceCulture);
+                return "Entries cannot be created while previously created entries are still open.";
             }
         }
 
@@ -374,7 +369,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CreateModeWriteOnceAndOneEntryAtATime", resourceCulture);
+                return "Entries in create mode may only be written to once, and only one entry may be held open at a time.";
             }
         }
 
@@ -387,7 +382,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DateTimeOutOfRange", resourceCulture);
+                return "The DateTimeOffset specified cannot be converted into a Zip file timestamp.";
             }
         }
 
@@ -400,7 +395,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DeletedEntry", resourceCulture);
+                return "Cannot modify deleted entry.";
             }
         }
 
@@ -413,7 +408,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DeleteOnlyInUpdate", resourceCulture);
+                return "Delete can only be used when the archive is in Update mode.";
             }
         }
 
@@ -426,7 +421,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DeleteOpenEntry", resourceCulture);
+                return "Cannot delete an entry currently open for writing.";
             }
         }
 
@@ -439,7 +434,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("EntriesInCreateMode", resourceCulture);
+                return "Cannot access entries in Create mode.";
             }
         }
 
@@ -452,7 +447,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("EntryNameAndCommentEncodingNotSupported", resourceCulture);
+                return "The specified encoding is not supported for entry names and comments.";
             }
         }
 
@@ -465,7 +460,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("EntryNamesTooLong", resourceCulture);
+                return "Entry names cannot require more than 2^16 bits.";
             }
         }
 
@@ -478,7 +473,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("EntryTooLarge", resourceCulture);
+                return "Entries larger than 4GB are not supported in Update mode.";
             }
         }
 
@@ -491,7 +486,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("EOCDNotFound", resourceCulture);
+                return "End of Central Directory record could not be found.";
             }
         }
 
@@ -504,7 +499,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FieldTooBigCompressedSize", resourceCulture);
+                return "Compressed Size cannot be held in an Int64.";
             }
         }
 
@@ -517,7 +512,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FieldTooBigLocalHeaderOffset", resourceCulture);
+                return "Local Header Offset cannot be held in an Int64.";
             }
         }
 
@@ -530,7 +525,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FieldTooBigNumEntries", resourceCulture);
+                return "Number of Entries cannot be held in an Int64.";
             }
         }
 
@@ -543,7 +538,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FieldTooBigOffsetToCD", resourceCulture);
+                return "Offset to Central Directory cannot be held in an Int64.";
             }
         }
 
@@ -556,7 +551,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FieldTooBigOffsetToZip64EOCD", resourceCulture);
+                return "Offset to Zip64 End Of Central Directory record cannot be held in an Int64.";
             }
         }
 
@@ -569,7 +564,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FieldTooBigUncompressedSize", resourceCulture);
+                return "Uncompressed Size cannot be held in an Int64.";
             }
         }
 
@@ -582,7 +577,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FrozenAfterWrite", resourceCulture);
+                return "Cannot modify entry in Create mode after entry has been opened for writing.";
             }
         }
 
@@ -595,7 +590,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("HiddenStreamName", resourceCulture);
+                return "A stream from ZipArchiveEntry has been disposed.";
             }
         }
 
@@ -608,7 +603,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LengthAfterWrite", resourceCulture);
+                return "Length properties are unavailable once an entry has been opened for writing.";
             }
         }
 
@@ -621,7 +616,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LocalFileHeaderCorrupt", resourceCulture);
+                return "A local file header is corrupt.";
             }
         }
 
@@ -634,7 +629,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NumEntriesWrong", resourceCulture);
+                return "Number of entries expected in End Of Central Directory does not correspond to number of entries in Central Directory.";
             }
         }
 
@@ -647,7 +642,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ReadingNotSupported", resourceCulture);
+                return "This stream from ZipArchiveEntry does not support reading.";
             }
         }
 
@@ -660,7 +655,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ReadModeCapabilities", resourceCulture);
+                return "Cannot use read mode on a non-readable stream.";
             }
         }
 
@@ -673,7 +668,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ReadOnlyArchive", resourceCulture);
+                return "Cannot modify read-only archive.";
             }
         }
 
@@ -686,7 +681,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SeekingNotSupported", resourceCulture);
+                return "This stream from ZipArchiveEntry does not support seeking.";
             }
         }
 
@@ -699,7 +694,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SetLengthRequiresSeekingAndWriting", resourceCulture);
+                return "SetLength requires a stream that supports seeking and writing.";
             }
         }
 
@@ -712,7 +707,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SplitSpanned", resourceCulture);
+                return "Split or spanned archives are not supported.";
             }
         }
 
@@ -725,7 +720,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TruncatedData", resourceCulture);
+                return "Found truncated data while decoding.";
             }
         }
 
@@ -738,7 +733,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnexpectedEndOfStream", resourceCulture);
+                return "Zip file corrupt: unexpected end of stream reached.";
             }
         }
 
@@ -751,7 +746,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnsupportedCompression", resourceCulture);
+                return "The archive entry was compressed using an unsupported compression method.";
             }
         }
 
@@ -764,14 +759,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnsupportedCompressionMethod", resourceCulture);
+                return "The archive entry was compressed using {0} and is not supported.";
             }
         }
 
 
         internal static string FormatUnsupportedCompressionMethod(object arg1)
         {
-            return string.Format(UnsupportedCompressionMethod, arg1);
+            return string.Format("The archive entry was compressed using {0} and is not supported.", arg1);
         }
 
 
@@ -782,7 +777,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UpdateModeCapabilities", resourceCulture);
+                return "Update mode requires a stream with read, write, and seek capabilities.";
             }
         }
 
@@ -795,7 +790,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UpdateModeOneStream", resourceCulture);
+                return "Entries cannot be opened multiple times in Update mode.";
             }
         }
 
@@ -808,7 +803,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("WritingNotSupported", resourceCulture);
+                return "This stream from ZipArchiveEntry does not support writing.";
             }
         }
 
@@ -821,7 +816,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Zip64EOCDNotWhereExpected", resourceCulture);
+                return "Zip 64 End of Central Directory Record not where indicated.";
             }
         }
 
@@ -834,298 +829,10 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PlatformNotSupported_Compression", resourceCulture);
+                return "System.IO.Compression is not supported on this platform.";
             }
         }
 
-
-
-        /// <summary>
-        /// Zstandard compression is not supported on this platform.
-        /// </summary>
-        internal static string PlatformNotSupported_ZstandardCompression
-        {
-            get
-            {
-                return ResourceManager.GetString("PlatformNotSupported_ZstandardCompression", resourceCulture);
-            }
-        }
-
-
-
-        /// <summary>
-        /// The compression level must be between {0} and {1}.
-        /// </summary>
-        internal static string ArgumentOutOfRange_CompressionLevel
-        {
-            get
-            {
-                return ResourceManager.GetString("ArgumentOutOfRange_CompressionLevel", resourceCulture);
-            }
-        }
-
-
-        internal static string FormatArgumentOutOfRange_CompressionLevel(object arg1, object arg2)
-        {
-            return string.Format(ArgumentOutOfRange_CompressionLevel, arg1, arg2);
-        }
-
-
-        /// <summary>
-        /// Cannot read from a stream that was opened for compression.
-        /// </summary>
-        internal static string CannotReadFromCompressionStream
-        {
-            get
-            {
-                return ResourceManager.GetString("CannotReadFromCompressionStream", resourceCulture);
-            }
-        }
-
-
-
-        /// <summary>
-        /// Cannot write to a stream that was opened for decompression.
-        /// </summary>
-        internal static string CannotWriteToDecompressionStream
-        {
-            get
-            {
-                return ResourceManager.GetString("CannotWriteToDecompressionStream", resourceCulture);
-            }
-        }
-
-
-
-        /// <summary>
-        /// The base stream is not readable.
-        /// </summary>
-        internal static string Stream_FalseCanRead
-        {
-            get
-            {
-                return ResourceManager.GetString("Stream_FalseCanRead", resourceCulture);
-            }
-        }
-
-
-
-        /// <summary>
-        /// The base stream is not writable.
-        /// </summary>
-        internal static string Stream_FalseCanWrite
-        {
-            get
-            {
-                return ResourceManager.GetString("Stream_FalseCanWrite", resourceCulture);
-            }
-        }
-
-
-
-        /// <summary>
-        /// The requested operation is not valid once compression or decompression has begun.
-        /// </summary>
-        internal static string ZstandardEncoderDecoder_InvalidState
-        {
-            get
-            {
-                return ResourceManager.GetString("ZstandardEncoderDecoder_InvalidState", resourceCulture);
-            }
-        }
-
-
-
-        /// <summary>
-        /// Found truncated data while decoding.
-        /// </summary>
-        internal static string ZstandardStream_Decompress_TruncatedData
-        {
-            get
-            {
-                return ResourceManager.GetString("ZstandardStream_Decompress_TruncatedData", resourceCulture);
-            }
-        }
-
-
-
-        /// <summary>
-        /// Data requires too much memory for decoding. Consider increasing the 'maxWindowLog' parameter.
-        /// </summary>
-        internal static string ZstandardDecoder_WindowTooLarge
-        {
-            get
-            {
-                return ResourceManager.GetString("ZstandardDecoder_WindowTooLarge", resourceCulture);
-            }
-        }
-
-
-
-        /// <summary>
-        /// The provided dictionary is not valid for decoding the current data.
-        /// </summary>
-        internal static string ZstandardDecoder_DictionaryWrong
-        {
-            get
-            {
-                return ResourceManager.GetString("ZstandardDecoder_DictionaryWrong", resourceCulture);
-            }
-        }
-
-
-
-        /// <summary>
-        /// Decoder encountered invalid data.
-        /// </summary>
-        internal static string ZstandardStream_Decompress_InvalidData
-        {
-            get
-            {
-                return ResourceManager.GetString("ZstandardStream_Decompress_InvalidData", resourceCulture);
-            }
-        }
-
-
-
-        /// <summary>
-        /// ZstandardStream.BaseStream returned more bytes than requested in Read.
-        /// </summary>
-        internal static string ZstandardStream_Decompress_InvalidStream
-        {
-            get
-            {
-                return ResourceManager.GetString("ZstandardStream_Decompress_InvalidStream", resourceCulture);
-            }
-        }
-
-
-
-        /// <summary>
-        /// Encoder encountered invalid data.
-        /// </summary>
-        internal static string ZstandardStream_Compress_InvalidData
-        {
-            get
-            {
-                return ResourceManager.GetString("ZstandardStream_Compress_InvalidData", resourceCulture);
-            }
-        }
-
-
-
-        /// <summary>
-        /// Only one pending read/write operation is supported.
-        /// </summary>
-        internal static string ZstandardStream_ConcurrentRWOperation
-        {
-            get
-            {
-                return ResourceManager.GetString("ZstandardStream_ConcurrentRWOperation", resourceCulture);
-            }
-        }
-
-
-
-        /// <summary>
-        /// Buffer cannot be empty.
-        /// </summary>
-        internal static string ZstandardDictionary_EmptyBuffer
-        {
-            get
-            {
-                return ResourceManager.GetString("ZstandardDictionary_EmptyBuffer", resourceCulture);
-            }
-        }
-
-
-
-        /// <summary>
-        /// Failed to create Zstandard compression dictionary.
-        /// </summary>
-        internal static string ZstandardDictionary_CreateCompressionFailed
-        {
-            get
-            {
-                return ResourceManager.GetString("ZstandardDictionary_CreateCompressionFailed", resourceCulture);
-            }
-        }
-
-
-
-        /// <summary>
-        /// Failed to create Zstandard decompression dictionary.
-        /// </summary>
-        internal static string ZstandardDictionary_CreateDecompressionFailed
-        {
-            get
-            {
-                return ResourceManager.GetString("ZstandardDictionary_CreateDecompressionFailed", resourceCulture);
-            }
-        }
-
-
-
-        /// <summary>
-        /// The sum of sample lengths does not match the length of the samples buffer.
-        /// </summary>
-        internal static string ZstandardDictionary_SampleLengthsMismatch
-        {
-            get
-            {
-                return ResourceManager.GetString("ZstandardDictionary_SampleLengthsMismatch", resourceCulture);
-            }
-        }
-
-
-
-        /// <summary>
-        /// At least {0} samples are required to train the dictionary.
-        /// </summary>
-        internal static string ZstandardDictionary_Train_MinimumSampleCount
-        {
-            get
-            {
-                return ResourceManager.GetString("ZstandardDictionary_Train_MinimumSampleCount", resourceCulture);
-            }
-        }
-
-
-        internal static string FormatZstandardDictionary_Train_MinimumSampleCount(object arg1)
-        {
-            return string.Format(ZstandardDictionary_Train_MinimumSampleCount, arg1);
-        }
-
-
-        /// <summary>
-        /// Sample lengths must be positive values.
-        /// </summary>
-        internal static string ZstandardDictionary_Train_InvalidSampleLength
-        {
-            get
-            {
-                return ResourceManager.GetString("ZstandardDictionary_Train_InvalidSampleLength", resourceCulture);
-            }
-        }
-
-
-
-        /// <summary>
-        /// An internal error has occurred: {0}.
-        /// </summary>
-        internal static string Zstd_InternalError
-        {
-            get
-            {
-                return ResourceManager.GetString("Zstd_InternalError", resourceCulture);
-            }
-        }
-
-
-        internal static string FormatZstd_InternalError(object arg1)
-        {
-            return string.Format(Zstd_InternalError, arg1);
-        }
 
 
         /// <summary>
@@ -1135,85 +842,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOffsetToZip64EOCD", resourceCulture);
-            }
-        }
-
-
-
-        /// <summary>
-        /// Cannot open entry for writing when archive is opened in read-only mode.
-        /// </summary>
-        internal static string CannotBeWrittenInReadMode
-        {
-            get
-            {
-                return ResourceManager.GetString("CannotBeWrittenInReadMode", resourceCulture);
-            }
-        }
-
-
-
-        /// <summary>
-        /// Cannot open entry for reading when archive is opened in create mode.
-        /// </summary>
-        internal static string CannotBeReadInCreateMode
-        {
-            get
-            {
-                return ResourceManager.GetString("CannotBeReadInCreateMode", resourceCulture);
-            }
-        }
-
-
-
-        /// <summary>
-        /// The specified FileAccess value is not valid.
-        /// </summary>
-        internal static string InvalidFileAccess
-        {
-            get
-            {
-                return ResourceManager.GetString("InvalidFileAccess", resourceCulture);
-            }
-        }
-
-
-
-        /// <summary>
-        /// An attempt was made to move the position before the beginning of the stream.
-        /// </summary>
-        internal static string IO_SeekBeforeBegin
-        {
-            get
-            {
-                return ResourceManager.GetString("IO_SeekBeforeBegin", resourceCulture);
-            }
-        }
-
-
-
-        /// <summary>
-        /// The CRC32 checksum of the extracted data does not match the expected value from the archive.
-        /// </summary>
-        internal static string CrcMismatch
-        {
-            get
-            {
-                return ResourceManager.GetString("CrcMismatch", resourceCulture);
-            }
-        }
-
-
-
-        /// <summary>
-        /// The decompressed data length does not match the expected value from the archive.
-        /// </summary>
-        internal static string UnexpectedStreamLength
-        {
-            get
-            {
-                return ResourceManager.GetString("UnexpectedStreamLength", resourceCulture);
+                return "Invalid offset to the Zip64 End of Central Directory record.";
             }
         }
 

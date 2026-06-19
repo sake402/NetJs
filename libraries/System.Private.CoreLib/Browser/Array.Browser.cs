@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using Window;
 
 namespace System
 {
@@ -33,6 +34,7 @@ namespace System
         [NetJs.InlineConst]
         public const string LowerBoundsName = "$lb";
 
+        public static extern Array from(Uint8Array arr);
         //Type ElementType
         //{
         //    get => this[ElementTypeName].As<TypePrototype>()?.Type;
@@ -365,6 +367,13 @@ namespace System
             }
         }
 
+        public static void CopyMetadata(Array arr, Array source)
+        {
+            arr[SizesName] = source[SizesName];
+            arr[ElementTypeName] = source[ElementTypeName];
+            arr[LowerBoundsName] = source[LowerBoundsName];
+        }
+
         internal static Array CreateFinal(RuntimeType type, int[] sizes, int[]? lowerBounds, NetJs.Union<object, object[]>? fill, int depth)
         {
             unchecked
@@ -397,11 +406,11 @@ namespace System
                     }
                     var prototype = type._prototype;
                     //For struct, non primitive types, make sure we create different instance for each array item
-                    var flags = type._model.As<TypeModel>().Flags;
-                    if (NetJs.Script.IsUndefined(flags) && NetJs.Script.Write<bool>("prototype.bf"))
-                    {
-                        flags = NetJs.Script.Write<TypeFlagsModel>("prototype.bf()");
-                    }
+                    var flags = prototype.Flags;
+                    //if (NetJs.Script.IsUndefined(flags) && NetJs.Script.Write<bool>("prototype.bf"))
+                    //{
+                    //    flags = NetJs.Script.Write<TypeFlagsModel>("prototype.bf()");
+                    //}
                     var defaultValue = flags.TypeHasFlag(TypeFlagsModel.IsValueType) && !flags.TypeHasFlag(TypeFlagsModel.IsPrimitive) ?
                         NetJs.Script.Undefined :
                         NetJs.Script.Write<object>($"$.{NetJs.Constants.DefaultTypeName}(prototype)");
@@ -624,11 +633,11 @@ namespace System
             var type = array[ElementTypeName].As<RuntimeType>();
             var prototype = type._prototype;
             //For struct, non primitive types, make sure we create different instance for each array item
-            var flags = type._model.As<TypeModel>().Flags;
-            if (NetJs.Script.IsUndefined(flags) && NetJs.Script.Write<bool>("prototype.bf"))
-            {
-                flags = NetJs.Script.Write<TypeFlagsModel>("prototype.bf()");
-            }
+            var flags = prototype.Flags;
+            //if (NetJs.Script.IsUndefined(flags) && NetJs.Script.Write<bool>("prototype.bf"))
+            //{
+            //    flags = NetJs.Script.Write<TypeFlagsModel>("prototype.bf()");
+            //}
             var defaultValue = flags.TypeHasFlag(TypeFlagsModel.IsValueType) && !flags.TypeHasFlag(TypeFlagsModel.IsPrimitive) ?
                 NetJs.Script.Undefined :
                 NetJs.Script.Write<object>($"$.{NetJs.Constants.DefaultTypeName}(prototype)");

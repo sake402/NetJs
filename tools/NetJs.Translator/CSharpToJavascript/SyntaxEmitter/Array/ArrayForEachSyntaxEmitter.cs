@@ -22,7 +22,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Array
                 visitor.CurrentTypeWriter.WriteLine(node, "{", true);
                 visitor.OpenClosure(node);
                 visitor.CurrentTypeWriter.Write(node, $"let ", true);
-                visitor.CurrentTypeWriter.Write(node, node.Identifier.ValueText);
+                visitor.CurrentTypeWriter.Write(node, node.Identifier.ResolveIdentifierName());
                 visitor.CurrentTypeWriter.Write(node, $" = ");
                 visitor.CurrentTypeWriter.WriteLine(node, $"{array}[{index}];");
                 if (node.Statement.IsKind(SyntaxKind.Block))
@@ -34,7 +34,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Array
                     visitor.Visit(node.Statement);
                 }
                 visitor.CurrentTypeWriter.WriteLine(node, $"{index}++;", true);
-                visitor.CloseClosure();
+                visitor.CloseClosure(node);
                 visitor.CurrentTypeWriter.WriteLine(node, "}", true);
                 return true;
             }

@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Resources.Writer", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,7 +70,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_ResourceWriterSaved", resourceCulture);
+                return "The resource writer has already been closed and cannot be edited.";
             }
         }
 
@@ -83,7 +83,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_StreamNotWritable", resourceCulture);
+                return "Stream was not writable.";
             }
         }
 
@@ -96,7 +96,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_UnseekableStream", resourceCulture);
+                return "Stream does not support seeking.";
             }
         }
 
@@ -109,7 +109,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_BinarySerializedResources", resourceCulture);
+                return "This platform does not support binary serialized resources.";
             }
         }
 
@@ -122,7 +122,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_StreamLength", resourceCulture);
+                return "Stream length must be non-negative and less than 2^31 - 1 - origin.";
             }
         }
 

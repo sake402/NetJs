@@ -31,8 +31,18 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Numbers
                     double? min = null, max = null;
                     if (minValue is IFieldSymbol minF && maxValue is IFieldSymbol maxF && minF.HasConstantValue && maxF.HasConstantValue)
                     {
-                        min = Convert.ToDouble(minF.ConstantValue);
-                        max = Convert.ToDouble(maxF.ConstantValue);
+                        if (minF.ConstantValue is char c)
+                        {
+                            min = (double)c;
+                        }
+                        else
+                            min = Convert.ToDouble(minF.ConstantValue);
+                        if (maxF.ConstantValue is char cc)
+                        {
+                            max = (double)cc;
+                        }
+                        else
+                            max = Convert.ToDouble(maxF.ConstantValue);
                     }
                     else if (toType.IsType("System.IntPtr"))
                     {
@@ -46,7 +56,13 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Numbers
                     }
                     if (min != null && max != null)
                     {
-                        var value = Convert.ToDouble(literalValue.Value);
+                        double value;
+                        if (literalValue.Value is char c)
+                        {
+                            value = (double)c;
+                        }
+                        else
+                            value = Convert.ToDouble(literalValue.Value);
                         if (value >= min && value <= max)
                         {
                             visitor.Visit(node.Expression);

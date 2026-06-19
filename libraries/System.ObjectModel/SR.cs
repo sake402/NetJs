@@ -24,8 +24,8 @@ namespace System
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal static partial class SR
     {
-        
-        private static global::System.Resources.ResourceManager resourceMan;
+
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.ObjectModel", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,7 +70,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_InvalidThreshold", resourceCulture);
+                return "The specified threshold for creating dictionary is out of range.";
             }
         }
 
@@ -83,7 +83,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_ItemNotExist", resourceCulture);
+                return "The specified item does not exist in this KeyedCollection.";
             }
         }
 
@@ -96,14 +96,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_AddingDuplicate", resourceCulture);
+                return "An item with the same key has already been added. Key: {0}";
             }
         }
 
 
         internal static string FormatArgument_AddingDuplicate(object arg1)
         {
-            return string.Format(Argument_AddingDuplicate, arg1);
+            return string.Format("An item with the same key has already been added. Key: {0}", arg1);
         }
 
 
@@ -114,7 +114,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_NonZeroLowerBound", resourceCulture);
+                return "The lower bound of target array must be zero.";
             }
         }
 
@@ -127,7 +127,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_ArrayPlusOffTooSmall", resourceCulture);
+                return "Destination array is not long enough to copy all the items in the collection. Check array index and length.";
             }
         }
 
@@ -140,7 +140,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_ReadOnlyCollection", resourceCulture);
+                return "Collection is read-only.";
             }
         }
 
@@ -153,7 +153,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ObservableCollectionReentrancyNotAllowed", resourceCulture);
+                return "Cannot change ObservableCollection during a CollectionChanged event.";
             }
         }
 
@@ -166,14 +166,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("WrongActionForCtor", resourceCulture);
+                return "Constructor supports only the '{0}' action.";
             }
         }
 
 
         internal static string FormatWrongActionForCtor(object arg1)
         {
-            return string.Format(WrongActionForCtor, arg1);
+            return string.Format("Constructor supports only the '{0}' action.", arg1);
         }
 
 
@@ -184,7 +184,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MustBeResetAddOrRemoveActionForCtor", resourceCulture);
+                return "Constructor only supports either a Reset, Add, or Remove action.";
             }
         }
 
@@ -197,7 +197,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ResetActionRequiresNullItem", resourceCulture);
+                return "Reset action must be initialized with no changed items.";
             }
         }
 
@@ -210,7 +210,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ResetActionRequiresIndexMinus1", resourceCulture);
+                return "Reset action must be initialized with index -1.";
             }
         }
 
@@ -223,7 +223,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_RankMultiDimNotSupported", resourceCulture);
+                return "Only single dimensional arrays are supported for the requested action.";
             }
         }
 
@@ -236,7 +236,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_IncompatibleArrayType", resourceCulture);
+                return "Target array type is not compatible with the type of items in the collection.";
             }
         }
 
@@ -249,14 +249,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_KeyNotFoundWithKey", resourceCulture);
+                return "The given key '{0}' was not present in the dictionary.";
             }
         }
 
 
         internal static string FormatArg_KeyNotFoundWithKey(object arg1)
         {
-            return string.Format(Arg_KeyNotFoundWithKey, arg1);
+            return string.Format("The given key '{0}' was not present in the dictionary.", arg1);
         }
     }
 }

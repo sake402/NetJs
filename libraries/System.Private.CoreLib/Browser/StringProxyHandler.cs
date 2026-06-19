@@ -1,4 +1,6 @@
-﻿namespace System
+﻿using NetJs;
+
+namespace System
 {
     [NetJs.Reflectable(false)]
     public class StringProxyHandler : IJsProxyHandler
@@ -6,6 +8,8 @@
         public StringProxyHandler(string str)
         {
             _chars = str.ToCharArray();
+            //Add a null terminator to this char, some pointer/ref usage requires this
+            _chars.Push('\0');
             reff = new Ref<char>((i) =>
             {
                 unchecked
@@ -25,7 +29,8 @@
 
         public StringProxyHandler(int length)
         {
-            _chars = new char[length];
+            //Add a null terminator to this char, some pointer/ref usage requires this
+            _chars = new char[length + 1];
             var handler = new ArrayMutationProxyHandler(_chars);
             var _proxyChars = JSProxy.Create<char[]>(handler);
             reff = new Ref<char>((i) =>
@@ -74,7 +79,7 @@
             {
                 if (strDirty || str.Length == 0)
                 {
-                    str = string.NativeFromCharCode(_chars);
+                    str = string.NativeFromCharCode(_chars, 0, _chars.Length - 1);
                     strDirty = false;
                 }
                 return str;
@@ -82,9 +87,13 @@
         }
         public object? Get(object target, string property, object receiver)
         {
-            if (property.NativeEquals("$isProxy"))
+            if (property.NativeEquals(Constants.IsProxy))
             {
                 return true.As<object>();
+            }
+            if (property.NativeEquals(Constants.ProxyType))
+            {
+                return typeof(string);
             }
             if (property.NativeEquals("_firstChar"))
             {
@@ -92,7 +101,7 @@
             }
             if (property.NativeEquals("length"))
             {
-                return _chars.Length.As<object>();
+                return (_chars.Length-1).As<object>();
             }
             if (property.NativeEquals(nameof(Reference)))
             {
@@ -100,7 +109,7 @@
             }
             if (strDirty)
             {
-                str = string.NativeFromCharCode(_chars);
+                str = string.NativeFromCharCode(_chars, 0, _chars.Length-1);
                 strDirty = false;
             }
             if (property.NativeEquals(nameof(Collect)))
@@ -123,7 +132,7 @@
             }
             if (strDirty)
             {
-                str = string.NativeFromCharCode(_chars);
+                str = string.NativeFromCharCode(_chars, 0, _chars.Length - 1);
                 strDirty = false;
             }
             str[property] = value;

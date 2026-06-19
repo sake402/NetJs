@@ -209,6 +209,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetJs.Translator", "tools\N
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetJs.Tests.Baremetal", "tests\NetJs.Tests.Baremetal\NetJs.Tests.Baremetal.csproj", "{771498F9-F276-5092-FCA2-1F8885203D42}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetJs.System.Linq.Queryable", "libraries\System.Linq.Queryable\NetJs.System.Linq.Queryable.csproj", "{2053A9BF-EDEC-37E6-7CB9-56BD6A4EA98B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -1419,6 +1421,18 @@ Global
 		{771498F9-F276-5092-FCA2-1F8885203D42}.Release|x64.Build.0 = Release|Any CPU
 		{771498F9-F276-5092-FCA2-1F8885203D42}.Release|x86.ActiveCfg = Release|Any CPU
 		{771498F9-F276-5092-FCA2-1F8885203D42}.Release|x86.Build.0 = Release|Any CPU
+		{2053A9BF-EDEC-37E6-7CB9-56BD6A4EA98B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2053A9BF-EDEC-37E6-7CB9-56BD6A4EA98B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2053A9BF-EDEC-37E6-7CB9-56BD6A4EA98B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2053A9BF-EDEC-37E6-7CB9-56BD6A4EA98B}.Debug|x64.Build.0 = Debug|Any CPU
+		{2053A9BF-EDEC-37E6-7CB9-56BD6A4EA98B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2053A9BF-EDEC-37E6-7CB9-56BD6A4EA98B}.Debug|x86.Build.0 = Debug|Any CPU
+		{2053A9BF-EDEC-37E6-7CB9-56BD6A4EA98B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2053A9BF-EDEC-37E6-7CB9-56BD6A4EA98B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2053A9BF-EDEC-37E6-7CB9-56BD6A4EA98B}.Release|x64.ActiveCfg = Release|Any CPU
+		{2053A9BF-EDEC-37E6-7CB9-56BD6A4EA98B}.Release|x64.Build.0 = Release|Any CPU
+		{2053A9BF-EDEC-37E6-7CB9-56BD6A4EA98B}.Release|x86.ActiveCfg = Release|Any CPU
+		{2053A9BF-EDEC-37E6-7CB9-56BD6A4EA98B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -1524,6 +1538,7 @@ Global
 		{CF5BA32F-C61A-8A9A-605F-4F068E643121} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{9C2014E6-6352-2083-2203-48E81EE20631} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{771498F9-F276-5092-FCA2-1F8885203D42} = {E69CF5AB-5EBB-46DC-9B2E-62B2E54395B3}
+		{2053A9BF-EDEC-37E6-7CB9-56BD6A4EA98B} = {91ADDB27-2315-4546-9DC4-3F9BA34D5F5B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B7699CE2-353B-4F90-B1DC-19A5F9AF4755}

@@ -11,7 +11,8 @@ namespace Window
         public extern DataView(ArrayBuffer buffer);
         public extern DataView(ArrayBuffer buffer, int byteOffset);
         public extern DataView(ArrayBuffer buffer, int byteOffset, int byteLength);
-
+        
+        public extern ArrayBuffer buffer { get; }
         public extern int byteOffset { get; }
         public extern int byteLength { get; }
 

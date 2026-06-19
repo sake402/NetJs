@@ -115,7 +115,14 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 if (ts.IsNullable(out var t))
                     ts = t!;
-                var operators = ts.GetMembers(_operator.ResolveOperatorMethodName(arguments.Count()), _global, false/*operator must be defined on the containing type, not inherited*/).Cast<IMethodSymbol>().ToList();
+                bool isChecked = _global.Evaluate("checked") != null;
+                List<IMethodSymbol>? operators = null;
+                if (isChecked)
+                {
+                    operators = ts.GetMembers(_operator.ResolveOperatorMethodName(arguments.Count(), true), _global, false/*operator must be defined on the containing type, not inherited*/).Cast<IMethodSymbol>().ToList();
+                }
+                if (operators == null || !operators.Any())
+                    operators = ts.GetMembers(_operator.ResolveOperatorMethodName(arguments.Count()), _global, false/*operator must be defined on the containing type, not inherited*/).Cast<IMethodSymbol>().ToList();
                 if (_operator == ExplicitOperatorName || _operator == ImplicitOperatorName)
                 {
                     operators = operators.Where(e => e.ReturnType.Equals(leftOperandType, SymbolEqualityComparer.Default) && e.Parameters.First().Type.Equals(rightOperandType, SymbolEqualityComparer.Default)).ToList();
@@ -140,7 +147,14 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     if (rts.IsNullable(out var t))
                         rts = t!;
-                    var operators = rts.GetMembers(_operator.ResolveOperatorMethodName(arguments.Count()), _global, false/*operator must be defined on the containing type, not inherited*/).Cast<IMethodSymbol>().ToList();
+                    bool isChecked = _global.Evaluate("checked") != null;
+                    List<IMethodSymbol>? operators = null;
+                    if (isChecked)
+                    {
+                        operators = rts.GetMembers(_operator.ResolveOperatorMethodName(arguments.Count(), true), _global, false/*operator must be defined on the containing type, not inherited*/).Cast<IMethodSymbol>().ToList();
+                    }
+                    if (operators == null || !operators.Any())
+                        operators = rts.GetMembers(_operator.ResolveOperatorMethodName(arguments.Count()), _global, false/*operator must be defined on the containing type, not inherited*/).Cast<IMethodSymbol>().ToList();
                     //here the arguments needs to become the lhs itself
                     var operatorMethod = GetBestOverloadMethod(rts, operators, null, arguments, null, out _);
                     //fix recursive conversion call within itself
@@ -161,7 +175,14 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     if (rts.IsNullable(out var t))
                         rts = t!;
-                    var operators = rts.GetMembers(_operator.ResolveOperatorMethodName(arguments.Count()), _global, false/*operator must be defined on the containing type, not inherited*/).Cast<IMethodSymbol>().ToList();
+                    bool isChecked = _global.Evaluate("checked") != null;
+                    List<IMethodSymbol>? operators = null;
+                    if (isChecked)
+                    {
+                        operators = rts.GetMembers(_operator.ResolveOperatorMethodName(arguments.Count(), true), _global, false/*operator must be defined on the containing type, not inherited*/).Cast<IMethodSymbol>().ToList();
+                    }
+                    if (operators == null || !operators.Any())
+                        operators = rts.GetMembers(_operator.ResolveOperatorMethodName(arguments.Count()), _global, false/*operator must be defined on the containing type, not inherited*/).Cast<IMethodSymbol>().ToList();
                     operators = operators.Where(e => e.ReturnType.Equals(leftOperandType, SymbolEqualityComparer.Default) && e.Parameters.First().Type.Equals(rightOperandType, SymbolEqualityComparer.Default)).ToList();
                     var operatorMethod = GetBestOverloadMethod(rts, operators, null, arguments, null, out _);
                     //fix recursive conversion call within itself

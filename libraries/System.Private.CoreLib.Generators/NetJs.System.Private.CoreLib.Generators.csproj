@@ -12,13 +12,16 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Private.CoreLib\gen\ProductVersionInfoGenerator.cs" />
+    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Private.CoreLib\gen\EventSourceGenerator.cs" />
+    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Private.CoreLib\gen\EventSourceGenerator.Emitter.cs" />
+    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Private.CoreLib\gen\EventSourceGenerator.Parser.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Private.CoreLib\gen\IntrinsicsInSystemPrivateCoreLibAnalyzer.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Private.CoreLib\gen\NativeRuntimeEventSourceGenerator.cs" />
     <Compile Include="$(CoreLibSharedDir)\System\Runtime\CompilerServices\IsExternalInit.cs" Link="Common\System\Runtime\CompilerServices\IsExternalInit.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="$(CommonPath)System\Collections\Generic\ValueListBuilder.cs" Link="Production\ValueListBuilder.cs" />
-    <Compile Include="$(CommonPath)System\Collections\Generic\ValueListBuilder.Pop.cs" Link="Production\ValueListBuilder.Pop.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Collections\Generic\ValueListBuilder.cs" Link="Production\ValueListBuilder.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Collections\Generic\ValueListBuilder.Pop.cs" Link="Production\ValueListBuilder.Pop.cs" />
   </ItemGroup>
   <ItemGroup>
     <!--<PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" Version="$(MicrosoftCodeAnalysisVersion_LatestVS)" />-->

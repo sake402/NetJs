@@ -1,4 +1,7 @@
-﻿namespace System
+﻿using NetJs;
+using System.Diagnostics.CodeAnalysis;
+
+namespace System
 {
     [NetJs.Reflectable(false)]
     public class ArrayWindowProxyHandler : IJsProxyHandler
@@ -17,9 +20,13 @@
             var propertyType = NetJs.Script.TypeOf(property);
             if (propertyType.NativeEquals("string"))
             {
-                if (property.NativeEquals("$isProxy"))
+                if (property.NativeEquals(Constants.IsProxy))
                 {
                     return true.As<object>();
+                }
+                if (property.NativeEquals(Constants.ProxyType))
+                {
+                    return _array.GetType();
                 }
                 if (property.NativeEquals("length"))
                 {

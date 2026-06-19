@@ -27,26 +27,51 @@ namespace System.Reflection
 
         }
 
-        [NetJs.MemberReplace(nameof(InternalInvoke))]
-        internal object InternalInvokeImpl(object? obj, IntPtr* args, out Exception? exc)
-        {
-            throw new NotImplementedException();
-        }
-
         [NetJs.MemberReplace(nameof(get_metadata_token))]
         internal static int get_metadata_tokenImpl(RuntimeConstructorInfo method)
         {
             return (int)method._model.Handle;
         }
 
+        [NetJs.MemberReplace(nameof(InternalInvoke))]
+        internal object InternalInvokeImpl(object? obj, IntPtr* args, out Exception? exc)
+        {
+            var prototype = DeclaringType.As<RuntimeType>()._prototype;
+            var dobject = prototype.New();
+            var ctorName = NetJs.Script.IsDefined(_model.OutputName) ? _model.OutputName!.NativeReplace("@", _model.Name) : _model.Name;
+            var ctor = dobject[ctorName];
+            //If calling default constructor, it may not be exported, if the type does not explicitly define it
+            if (NetJs.Script.IsDefined(ctor))
+            {
+                object[]? parameters = RuntimeHelpers.GetParametersFromPointer(args);
+                if (parameters == null && _model.As<ConstructorModel>().Parameters!.Length > 0)
+                {
+                    throw null!;
+                }
+                RuntimeHelpers.NativeFunctionDispatch(dobject, ctorName, parameters);
+                //NetJs.Script.Write("ctor.apply(dobject, parameters)");
+            }
+            else
+            {
+                if (args != null)
+                {
+                    throw null!;
+                }
+            }
+            exc = null;
+            return dobject;
+        }
+
         [NetJs.MemberReplace(nameof(Invoke) + "(BindingFlags, Binder?, object?[]?, CultureInfo?)")]
         public object InvokeImpl(BindingFlags invokeAttr, Binder? binder, object?[]? parameters, CultureInfo? culture)
         {
             var prototype = DeclaringType.As<RuntimeType>()._prototype;
-            var dobject = NetJs.Script.Write<object>("new prototype()");
+            var dobject = prototype.New();
             var outputName = _model.OutputName!.NativeReplace("@", _model.Name);
             var ctor = dobject[outputName];
-            NetJs.Script.Write("ctor.apply(dobject, parameters)");
+            //If calling default constructor, it may not be exported, if the type does not explicitly define it
+            if (NetJs.Script.IsDefined(ctor))
+                NetJs.Script.Write("ctor.apply(dobject, parameters)");
             return dobject;
         }
     }

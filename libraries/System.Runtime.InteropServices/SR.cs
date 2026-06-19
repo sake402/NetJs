@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Runtime.InteropServices", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,7 +70,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_HCCountOverflow", resourceCulture);
+                return "Handle collector count overflows or underflows.";
             }
         }
 
@@ -83,7 +83,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_NeedNonNegNumRequired", resourceCulture);
+                return "Non-negative number required.";
             }
         }
 
@@ -96,7 +96,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_InvalidThreshold", resourceCulture);
+                return "maximumThreshold cannot be less than initialThreshold.";
             }
         }
 
@@ -109,7 +109,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_NoComEventInterfaceAttribute", resourceCulture);
+                return "Event invocation for COM objects requires the declaring interface of the event to be attributed with ComEventInterfaceAttribute.";
             }
         }
 
@@ -122,14 +122,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AmbiguousMatch_MultipleEventInterfaceAttributes", resourceCulture);
+                return "More than one ComEventInterfaceAttribute found for '{0}' on the declaring interface of the event.";
             }
         }
 
 
         internal static string FormatAmbiguousMatch_MultipleEventInterfaceAttributes(object arg1)
         {
-            return string.Format(AmbiguousMatch_MultipleEventInterfaceAttributes, arg1);
+            return string.Format("More than one ComEventInterfaceAttribute found for '{0}' on the declaring interface of the event.", arg1);
         }
 
 
@@ -140,7 +140,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_NoDispIdAttribute", resourceCulture);
+                return "Event invocation for COM objects requires event to be attributed with DispIdAttribute.";
             }
         }
 
@@ -153,14 +153,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_FileExists_Name", resourceCulture);
+                return "The file '{0}' already exists.";
             }
         }
 
 
         internal static string FormatIO_FileExists_Name(object arg1)
         {
-            return string.Format(IO_FileExists_Name, arg1);
+            return string.Format("The file '{0}' already exists.", arg1);
         }
 
 
@@ -171,7 +171,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_FileNotFound", resourceCulture);
+                return "Unable to find the specified file.";
             }
         }
 
@@ -184,14 +184,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_FileNotFound_FileName", resourceCulture);
+                return "Could not find file '{0}'.";
             }
         }
 
 
         internal static string FormatIO_FileNotFound_FileName(object arg1)
         {
-            return string.Format(IO_FileNotFound_FileName, arg1);
+            return string.Format("Could not find file '{0}'.", arg1);
         }
 
 
@@ -202,7 +202,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_PathNotFound_NoPathName", resourceCulture);
+                return "Could not find a part of the path.";
             }
         }
 
@@ -215,14 +215,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_PathNotFound_Path", resourceCulture);
+                return "Could not find a part of the path '{0}'.";
             }
         }
 
 
         internal static string FormatIO_PathNotFound_Path(object arg1)
         {
-            return string.Format(IO_PathNotFound_Path, arg1);
+            return string.Format("Could not find a part of the path '{0}'.", arg1);
         }
 
 
@@ -233,7 +233,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_PathTooLong", resourceCulture);
+                return "The specified file name or path is too long, or a component of the specified path is too long.";
             }
         }
 
@@ -246,14 +246,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_SharingViolation_File", resourceCulture);
+                return "The process cannot access the file '{0}' because it is being used by another process.";
             }
         }
 
 
         internal static string FormatIO_SharingViolation_File(object arg1)
         {
-            return string.Format(IO_SharingViolation_File, arg1);
+            return string.Format("The process cannot access the file '{0}' because it is being used by another process.", arg1);
         }
 
 
@@ -264,7 +264,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_SharingViolation_NoFileName", resourceCulture);
+                return "The process cannot access the file because it is being used by another process.";
             }
         }
 
@@ -277,14 +277,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_PathTooLong_Path", resourceCulture);
+                return "The path '{0}' is too long, or a component of the specified path is too long.";
             }
         }
 
 
         internal static string FormatIO_PathTooLong_Path(object arg1)
         {
-            return string.Format(IO_PathTooLong_Path, arg1);
+            return string.Format("The path '{0}' is too long, or a component of the specified path is too long.", arg1);
         }
 
 
@@ -295,14 +295,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnauthorizedAccess_IODenied_Path", resourceCulture);
+                return "Access to the path '{0}' is denied.";
             }
         }
 
 
         internal static string FormatUnauthorizedAccess_IODenied_Path(object arg1)
         {
-            return string.Format(UnauthorizedAccess_IODenied_Path, arg1);
+            return string.Format("Access to the path '{0}' is denied.", arg1);
         }
 
 
@@ -313,7 +313,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnauthorizedAccess_IODenied_NoPathName", resourceCulture);
+                return "Access to the path is denied.";
             }
         }
 
@@ -326,7 +326,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_FileLengthTooBig", resourceCulture);
+                return "Specified file length was too large for the file system.";
             }
         }
 
@@ -339,7 +339,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ComVariantMarshaller_ManagedTypeNotSupported", resourceCulture);
+                return "Type of managed object is not supported for marshalling as ComVariant.";
             }
         }
 
@@ -352,7 +352,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ComVariantMarshaller_UnmanagedTypeNotSupported", resourceCulture);
+                return "Type of unmanaged variant is not supported for marshalling to a managed object.";
             }
         }
 

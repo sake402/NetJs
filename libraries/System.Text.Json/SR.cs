@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Text.Json", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,14 +70,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArrayDepthTooLarge", resourceCulture);
+                return "The maximum configured depth of {0} has been exceeded. Cannot read next JSON array.";
             }
         }
 
 
         internal static string FormatArrayDepthTooLarge(object arg1)
         {
-            return string.Format(ArrayDepthTooLarge, arg1);
+            return string.Format("The maximum configured depth of {0} has been exceeded. Cannot read next JSON array.", arg1);
         }
 
 
@@ -88,14 +88,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CallFlushToAvoidDataLoss", resourceCulture);
+                return "The JSON writer needs to be flushed before getting the current state. There are {0} bytes that have not been committed to the output.";
             }
         }
 
 
         internal static string FormatCallFlushToAvoidDataLoss(object arg1)
         {
-            return string.Format(CallFlushToAvoidDataLoss, arg1);
+            return string.Format("The JSON writer needs to be flushed before getting the current state. There are {0} bytes that have not been committed to the output.", arg1);
         }
 
 
@@ -106,7 +106,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotReadIncompleteUTF16", resourceCulture);
+                return "Cannot read incomplete UTF-16 JSON text as string with missing low surrogate.";
             }
         }
 
@@ -119,14 +119,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotReadInvalidUTF16", resourceCulture);
+                return "Cannot read invalid UTF-16 JSON text as string. Invalid surrogate value: '{0}'.";
             }
         }
 
 
         internal static string FormatCannotReadInvalidUTF16(object arg1)
         {
-            return string.Format(CannotReadInvalidUTF16, arg1);
+            return string.Format("Cannot read invalid UTF-16 JSON text as string. Invalid surrogate value: '{0}'.", arg1);
         }
 
 
@@ -137,14 +137,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotStartObjectArrayAfterPrimitiveOrClose", resourceCulture);
+                return "Cannot write the start of an object/array after a single JSON value or outside of an existing closed object/array. Current token type is '{0}'.";
             }
         }
 
 
         internal static string FormatCannotStartObjectArrayAfterPrimitiveOrClose(object arg1)
         {
-            return string.Format(CannotStartObjectArrayAfterPrimitiveOrClose, arg1);
+            return string.Format("Cannot write the start of an object/array after a single JSON value or outside of an existing closed object/array. Current token type is '{0}'.", arg1);
         }
 
 
@@ -155,14 +155,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotStartObjectArrayWithoutProperty", resourceCulture);
+                return "Cannot write the start of an object or array without a property name. Current token type is '{0}'.";
             }
         }
 
 
         internal static string FormatCannotStartObjectArrayWithoutProperty(object arg1)
         {
-            return string.Format(CannotStartObjectArrayWithoutProperty, arg1);
+            return string.Format("Cannot write the start of an object or array without a property name. Current token type is '{0}'.", arg1);
         }
 
 
@@ -173,7 +173,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotTranscodeInvalidUtf8", resourceCulture);
+                return "Cannot transcode invalid UTF-8 JSON text to UTF-16 string.";
             }
         }
 
@@ -186,7 +186,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotDecodeInvalidBase64", resourceCulture);
+                return "Cannot decode JSON text that is not encoded as valid Base64 to bytes.";
             }
         }
 
@@ -199,7 +199,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotTranscodeInvalidUtf16", resourceCulture);
+                return "Cannot transcode invalid UTF-16 string to UTF-8 JSON text.";
             }
         }
 
@@ -212,14 +212,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotEncodeInvalidUTF16", resourceCulture);
+                return "Cannot encode invalid UTF-16 text as JSON. Invalid surrogate value: '{0}'.";
             }
         }
 
 
         internal static string FormatCannotEncodeInvalidUTF16(object arg1)
         {
-            return string.Format(CannotEncodeInvalidUTF16, arg1);
+            return string.Format("Cannot encode invalid UTF-16 text as JSON. Invalid surrogate value: '{0}'.", arg1);
         }
 
 
@@ -230,14 +230,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotEncodeInvalidUTF8", resourceCulture);
+                return "Cannot encode invalid UTF-8 text as JSON. Invalid input: '{0}'.";
             }
         }
 
 
         internal static string FormatCannotEncodeInvalidUTF8(object arg1)
         {
-            return string.Format(CannotEncodeInvalidUTF8, arg1);
+            return string.Format("Cannot encode invalid UTF-8 text as JSON. Invalid input: '{0}'.", arg1);
         }
 
 
@@ -248,14 +248,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotWritePropertyWithinArray", resourceCulture);
+                return "Cannot write a JSON property within an array or as the first JSON token. Current token type is '{0}'.";
             }
         }
 
 
         internal static string FormatCannotWritePropertyWithinArray(object arg1)
         {
-            return string.Format(CannotWritePropertyWithinArray, arg1);
+            return string.Format("Cannot write a JSON property within an array or as the first JSON token. Current token type is '{0}'.", arg1);
         }
 
 
@@ -266,7 +266,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotWritePropertyAfterProperty", resourceCulture);
+                return "Cannot write a JSON property name following another property name. A JSON value is missing.";
             }
         }
 
@@ -279,14 +279,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotWriteValueAfterPrimitiveOrClose", resourceCulture);
+                return "Cannot write a JSON value after a single JSON value or outside of an existing closed object/array. Current token type is '{0}'.";
             }
         }
 
 
         internal static string FormatCannotWriteValueAfterPrimitiveOrClose(object arg1)
         {
-            return string.Format(CannotWriteValueAfterPrimitiveOrClose, arg1);
+            return string.Format("Cannot write a JSON value after a single JSON value or outside of an existing closed object/array. Current token type is '{0}'.", arg1);
         }
 
 
@@ -297,14 +297,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotWriteValueWithinObject", resourceCulture);
+                return "Cannot write a JSON value within an object without a property name. Current token type is '{0}'.";
             }
         }
 
 
         internal static string FormatCannotWriteValueWithinObject(object arg1)
         {
-            return string.Format(CannotWriteValueWithinObject, arg1);
+            return string.Format("Cannot write a JSON value within an object without a property name. Current token type is '{0}'.", arg1);
         }
 
 
@@ -315,14 +315,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DepthTooLarge", resourceCulture);
+                return "CurrentDepth ({0}) is equal to or larger than the maximum allowed depth of {1}. Cannot write the next JSON object or array.";
             }
         }
 
 
         internal static string FormatDepthTooLarge(object arg1, object arg2)
         {
-            return string.Format(DepthTooLarge, arg1, arg2);
+            return string.Format("CurrentDepth ({0}) is equal to or larger than the maximum allowed depth of {1}. Cannot write the next JSON object or array.", arg1, arg2);
         }
 
 
@@ -333,7 +333,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DestinationTooShort", resourceCulture);
+                return "Destination is too short.";
             }
         }
 
@@ -346,7 +346,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("EmptyJsonIsInvalid", resourceCulture);
+                return "Writing an empty JSON payload (excluding comments) is invalid.";
             }
         }
 
@@ -359,7 +359,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("EndOfCommentNotFound", resourceCulture);
+                return "Expected end of comment, but instead reached end of data.";
             }
         }
 
@@ -372,7 +372,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("EndOfStringNotFound", resourceCulture);
+                return "Expected end of string, but instead reached end of data.";
             }
         }
 
@@ -385,14 +385,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpectedEndAfterSingleJson", resourceCulture);
+                return "'{0}' is invalid after a single JSON value. Expected end of data.";
             }
         }
 
 
         internal static string FormatExpectedEndAfterSingleJson(object arg1)
         {
-            return string.Format(ExpectedEndAfterSingleJson, arg1);
+            return string.Format("'{0}' is invalid after a single JSON value. Expected end of data.", arg1);
         }
 
 
@@ -403,14 +403,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpectedEndOfDigitNotFound", resourceCulture);
+                return "'{0}' is an invalid end of a number. Expected a delimiter.";
             }
         }
 
 
         internal static string FormatExpectedEndOfDigitNotFound(object arg1)
         {
-            return string.Format(ExpectedEndOfDigitNotFound, arg1);
+            return string.Format("'{0}' is an invalid end of a number. Expected a delimiter.", arg1);
         }
 
 
@@ -421,14 +421,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpectedFalse", resourceCulture);
+                return "'{0}' is an invalid JSON literal. Expected the literal 'false'.";
             }
         }
 
 
         internal static string FormatExpectedFalse(object arg1)
         {
-            return string.Format(ExpectedFalse, arg1);
+            return string.Format("'{0}' is an invalid JSON literal. Expected the literal 'false'.", arg1);
         }
 
 
@@ -439,7 +439,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpectedJsonTokens", resourceCulture);
+                return "The input does not contain any JSON tokens. Expected the input to start with a valid JSON token, when isFinalBlock is true.";
             }
         }
 
@@ -452,7 +452,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpectedOneCompleteToken", resourceCulture);
+                return "The input does not contain any complete JSON tokens. Expected the input to have at least one valid, complete, JSON token.";
             }
         }
 
@@ -465,14 +465,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpectedNextDigitEValueNotFound", resourceCulture);
+                return "'{0}' is an invalid end of a number. Expected 'E' or 'e'.";
             }
         }
 
 
         internal static string FormatExpectedNextDigitEValueNotFound(object arg1)
         {
-            return string.Format(ExpectedNextDigitEValueNotFound, arg1);
+            return string.Format("'{0}' is an invalid end of a number. Expected 'E' or 'e'.", arg1);
         }
 
 
@@ -483,14 +483,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpectedNull", resourceCulture);
+                return "'{0}' is an invalid JSON literal. Expected the literal 'null'.";
             }
         }
 
 
         internal static string FormatExpectedNull(object arg1)
         {
-            return string.Format(ExpectedNull, arg1);
+            return string.Format("'{0}' is an invalid JSON literal. Expected the literal 'null'.", arg1);
         }
 
 
@@ -501,14 +501,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpectedSeparatorAfterPropertyNameNotFound", resourceCulture);
+                return "'{0}' is invalid after a property name. Expected a ':'.";
             }
         }
 
 
         internal static string FormatExpectedSeparatorAfterPropertyNameNotFound(object arg1)
         {
-            return string.Format(ExpectedSeparatorAfterPropertyNameNotFound, arg1);
+            return string.Format("'{0}' is invalid after a property name. Expected a ':'.", arg1);
         }
 
 
@@ -519,14 +519,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpectedStartOfPropertyNotFound", resourceCulture);
+                return "'{0}' is an invalid start of a property name. Expected a '\"'.";
             }
         }
 
 
         internal static string FormatExpectedStartOfPropertyNotFound(object arg1)
         {
-            return string.Format(ExpectedStartOfPropertyNotFound, arg1);
+            return string.Format("'{0}' is an invalid start of a property name. Expected a '\"'.", arg1);
         }
 
 
@@ -537,7 +537,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpectedStartOfPropertyOrValueNotFound", resourceCulture);
+                return "Expected start of a property name or value, but instead reached end of data.";
             }
         }
 
@@ -550,14 +550,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpectedStartOfValueNotFound", resourceCulture);
+                return "'{0}' is an invalid start of a value.";
             }
         }
 
 
         internal static string FormatExpectedStartOfValueNotFound(object arg1)
         {
-            return string.Format(ExpectedStartOfValueNotFound, arg1);
+            return string.Format("'{0}' is an invalid start of a value.", arg1);
         }
 
 
@@ -568,14 +568,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpectedTrue", resourceCulture);
+                return "'{0}' is an invalid JSON literal. Expected the literal 'true'.";
             }
         }
 
 
         internal static string FormatExpectedTrue(object arg1)
         {
-            return string.Format(ExpectedTrue, arg1);
+            return string.Format("'{0}' is an invalid JSON literal. Expected the literal 'true'.", arg1);
         }
 
 
@@ -586,7 +586,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpectedValueAfterPropertyNameNotFound", resourceCulture);
+                return "Expected a value, but instead reached end of data.";
             }
         }
 
@@ -599,7 +599,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FailedToGetLargerSpan", resourceCulture);
+                return "The 'IBufferWriter' could not provide an output buffer that is large enough to continue writing.";
             }
         }
 
@@ -612,14 +612,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FoundInvalidCharacter", resourceCulture);
+                return "'{0}' is invalid after a value. Expected either ',', '}}', or ']'.";
             }
         }
 
 
         internal static string FormatFoundInvalidCharacter(object arg1)
         {
-            return string.Format(FoundInvalidCharacter, arg1);
+            return string.Format("'{0}' is invalid after a value. Expected either ',', '}}', or ']'.", arg1);
         }
 
 
@@ -630,14 +630,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidCast", resourceCulture);
+                return "Cannot get the value of a token type '{0}' as a {1}.";
             }
         }
 
 
         internal static string FormatInvalidCast(object arg1, object arg2)
         {
-            return string.Format(InvalidCast, arg1, arg2);
+            return string.Format("Cannot get the value of a token type '{0}' as a {1}.", arg1, arg2);
         }
 
 
@@ -648,14 +648,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidCharacterAfterEscapeWithinString", resourceCulture);
+                return "'{0}' is an invalid escapable character within a JSON string. The string should be correctly escaped.";
             }
         }
 
 
         internal static string FormatInvalidCharacterAfterEscapeWithinString(object arg1)
         {
-            return string.Format(InvalidCharacterAfterEscapeWithinString, arg1);
+            return string.Format("'{0}' is an invalid escapable character within a JSON string. The string should be correctly escaped.", arg1);
         }
 
 
@@ -666,14 +666,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidCharacterWithinString", resourceCulture);
+                return "'{0}' is invalid within a JSON string. The string should be correctly escaped.";
             }
         }
 
 
         internal static string FormatInvalidCharacterWithinString(object arg1)
         {
-            return string.Format(InvalidCharacterWithinString, arg1);
+            return string.Format("'{0}' is invalid within a JSON string. The string should be correctly escaped.", arg1);
         }
 
 
@@ -684,14 +684,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnsupportedEnumIdentifier", resourceCulture);
+                return "Enum type '{0}' uses unsupported identifier '{1}'. It must not be null, empty, or containing leading or trailing whitespace. Flags enums must additionally not contain commas.";
             }
         }
 
 
         internal static string FormatUnsupportedEnumIdentifier(object arg1, object arg2)
         {
-            return string.Format(UnsupportedEnumIdentifier, arg1, arg2);
+            return string.Format("Enum type '{0}' uses unsupported identifier '{1}'. It must not be null, empty, or containing leading or trailing whitespace. Flags enums must additionally not contain commas.", arg1, arg2);
         }
 
 
@@ -702,14 +702,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidEndOfJsonNonPrimitive", resourceCulture);
+                return "'{0}' is an invalid token type for the end of the JSON payload. Expected either 'EndArray' or 'EndObject'.";
             }
         }
 
 
         internal static string FormatInvalidEndOfJsonNonPrimitive(object arg1)
         {
-            return string.Format(InvalidEndOfJsonNonPrimitive, arg1);
+            return string.Format("'{0}' is an invalid token type for the end of the JSON payload. Expected either 'EndArray' or 'EndObject'.", arg1);
         }
 
 
@@ -720,14 +720,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidHexCharacterWithinString", resourceCulture);
+                return "'{0}' is not a hex digit following '\\u' within a JSON string. The string should be correctly escaped.";
             }
         }
 
 
         internal static string FormatInvalidHexCharacterWithinString(object arg1)
         {
-            return string.Format(InvalidHexCharacterWithinString, arg1);
+            return string.Format("'{0}' is not a hex digit following '\\u' within a JSON string. The string should be correctly escaped.", arg1);
         }
 
 
@@ -738,7 +738,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("JsonDocumentDoesNotSupportComments", resourceCulture);
+                return "Comments cannot be stored in a JsonDocument, only the Skip and Disallow comment handling modes are supported.";
             }
         }
 
@@ -751,14 +751,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("JsonElementHasWrongType", resourceCulture);
+                return "The requested operation requires an element of type '{0}', but the target element has type '{1}'.";
             }
         }
 
 
         internal static string FormatJsonElementHasWrongType(object arg1, object arg2)
         {
-            return string.Format(JsonElementHasWrongType, arg1, arg2);
+            return string.Format("The requested operation requires an element of type '{0}', but the target element has type '{1}'.", arg1, arg2);
         }
 
 
@@ -769,7 +769,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("JsonElementDeepEqualsInsufficientExecutionStack", resourceCulture);
+                return "Insufficient stack to continue executing 'JsonElement.DeepEquals'. This can happen either because the 'JsonElement' values are too deep or 'DeepEquals' is being called too deep in the stack.";
             }
         }
 
@@ -782,7 +782,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("JsonNumberExponentTooLarge", resourceCulture);
+                return "The exponent value in the specified JSON number is too large.";
             }
         }
 
@@ -795,7 +795,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DefaultTypeInfoResolverImmutable", resourceCulture);
+                return "Cannot add callbacks to the 'Modifiers' property after the resolver has been used for the first time.";
             }
         }
 
@@ -808,7 +808,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TypeInfoResolverChainImmutable", resourceCulture);
+                return "The specified IJsonTypeInfoResolver chain cannot be modified.";
             }
         }
 
@@ -821,7 +821,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TypeInfoImmutable", resourceCulture);
+                return "This JsonTypeInfo instance is marked read-only or has already been used in serialization or deserialization.";
             }
         }
 
@@ -834,7 +834,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MaxDepthMustBePositive", resourceCulture);
+                return "Max depth must be positive.";
             }
         }
 
@@ -847,7 +847,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CommentHandlingMustBeValid", resourceCulture);
+                return "The JsonCommentHandling enum must be set to one of the supported values.";
             }
         }
 
@@ -860,14 +860,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MismatchedObjectArray", resourceCulture);
+                return "'{0}' is invalid without a matching open.";
             }
         }
 
 
         internal static string FormatMismatchedObjectArray(object arg1)
         {
-            return string.Format(MismatchedObjectArray, arg1);
+            return string.Format("'{0}' is invalid without a matching open.", arg1);
         }
 
 
@@ -878,14 +878,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotWriteEndAfterProperty", resourceCulture);
+                return "'{0}' is invalid following a property name.";
             }
         }
 
 
         internal static string FormatCannotWriteEndAfterProperty(object arg1)
         {
-            return string.Format(CannotWriteEndAfterProperty, arg1);
+            return string.Format("'{0}' is invalid following a property name.", arg1);
         }
 
 
@@ -896,14 +896,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ObjectDepthTooLarge", resourceCulture);
+                return "The maximum configured depth of {0} has been exceeded. Cannot read next JSON object.";
             }
         }
 
 
         internal static string FormatObjectDepthTooLarge(object arg1)
         {
-            return string.Format(ObjectDepthTooLarge, arg1);
+            return string.Format("The maximum configured depth of {0} has been exceeded. Cannot read next JSON object.", arg1);
         }
 
 
@@ -914,14 +914,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyNameTooLarge", resourceCulture);
+                return "The JSON property name of length {0} is too large and not supported.";
             }
         }
 
 
         internal static string FormatPropertyNameTooLarge(object arg1)
         {
-            return string.Format(PropertyNameTooLarge, arg1);
+            return string.Format("The JSON property name of length {0} is too large and not supported.", arg1);
         }
 
 
@@ -932,7 +932,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FormatDecimal", resourceCulture);
+                return "The JSON value is either too large or too small for a Decimal.";
             }
         }
 
@@ -945,7 +945,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FormatDouble", resourceCulture);
+                return "Either the JSON value is not in a supported format, or is out of bounds for a Double.";
             }
         }
 
@@ -958,7 +958,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FormatInt32", resourceCulture);
+                return "Either the JSON value is not in a supported format, or is out of bounds for an Int32.";
             }
         }
 
@@ -971,7 +971,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FormatInt64", resourceCulture);
+                return "Either the JSON value is not in a supported format, or is out of bounds for an Int64.";
             }
         }
 
@@ -984,7 +984,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FormatSingle", resourceCulture);
+                return "Either the JSON value is not in a supported format, or is out of bounds for a Single.";
             }
         }
 
@@ -997,7 +997,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FormatUInt32", resourceCulture);
+                return "Either the JSON value is not in a supported format, or is out of bounds for a UInt32.";
             }
         }
 
@@ -1010,7 +1010,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FormatUInt64", resourceCulture);
+                return "Either the JSON value is not in a supported format, or is out of bounds for a UInt64.";
             }
         }
 
@@ -1023,14 +1023,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("RequiredDigitNotFoundAfterDecimal", resourceCulture);
+                return "'{0}' is invalid within a number, immediately after a decimal point ('.'). Expected a digit ('0'-'9').";
             }
         }
 
 
         internal static string FormatRequiredDigitNotFoundAfterDecimal(object arg1)
         {
-            return string.Format(RequiredDigitNotFoundAfterDecimal, arg1);
+            return string.Format("'{0}' is invalid within a number, immediately after a decimal point ('.'). Expected a digit ('0'-'9').", arg1);
         }
 
 
@@ -1041,14 +1041,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("RequiredDigitNotFoundAfterSign", resourceCulture);
+                return "'{0}' is invalid within a number, immediately after a sign character ('+' or '-'). Expected a digit ('0'-'9').";
             }
         }
 
 
         internal static string FormatRequiredDigitNotFoundAfterSign(object arg1)
         {
-            return string.Format(RequiredDigitNotFoundAfterSign, arg1);
+            return string.Format("'{0}' is invalid within a number, immediately after a sign character ('+' or '-'). Expected a digit ('0'-'9').", arg1);
         }
 
 
@@ -1059,7 +1059,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("RequiredDigitNotFoundEndOfData", resourceCulture);
+                return "Expected a digit ('0'-'9'), but instead reached end of data.";
             }
         }
 
@@ -1072,7 +1072,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SpecialNumberValuesNotSupported", resourceCulture);
+                return ".NET number values such as positive and negative infinity cannot be written as valid JSON. To make it work when using 'JsonSerializer', consider specifying 'JsonNumberHandling.AllowNamedFloatingPointLiterals' (see https://learn.microsoft.com/dotnet/api/system.text.json.serialization.jsonnumberhandling).";
             }
         }
 
@@ -1085,14 +1085,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ValueTooLarge", resourceCulture);
+                return "The JSON value of length {0} is too large and not supported.";
             }
         }
 
 
         internal static string FormatValueTooLarge(object arg1)
         {
-            return string.Format(ValueTooLarge, arg1);
+            return string.Format("The JSON value of length {0} is too large and not supported.", arg1);
         }
 
 
@@ -1103,7 +1103,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ZeroDepthAtEnd", resourceCulture);
+                return "Expected depth to be zero at the end of the JSON payload. There is an open JSON object or array that should be closed.";
             }
         }
 
@@ -1116,14 +1116,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DeserializeUnableToConvertValue", resourceCulture);
+                return "The JSON value could not be converted to {0}.";
             }
         }
 
 
         internal static string FormatDeserializeUnableToConvertValue(object arg1)
         {
-            return string.Format(DeserializeUnableToConvertValue, arg1);
+            return string.Format("The JSON value could not be converted to {0}.", arg1);
         }
 
 
@@ -1134,14 +1134,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DeserializeWrongType", resourceCulture);
+                return "The specified type {0} must derive from the specific value's type {1}.";
             }
         }
 
 
         internal static string FormatDeserializeWrongType(object arg1, object arg2)
         {
-            return string.Format(DeserializeWrongType, arg1, arg2);
+            return string.Format("The specified type {0} must derive from the specific value's type {1}.", arg1, arg2);
         }
 
 
@@ -1152,7 +1152,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SerializationInvalidBufferSize", resourceCulture);
+                return "The value must be greater than zero.";
             }
         }
 
@@ -1165,14 +1165,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BufferWriterAdvancedTooFar", resourceCulture);
+                return "Cannot advance past the end of the buffer, which has a size of {0}.";
             }
         }
 
 
         internal static string FormatBufferWriterAdvancedTooFar(object arg1)
         {
-            return string.Format(BufferWriterAdvancedTooFar, arg1);
+            return string.Format("Cannot advance past the end of the buffer, which has a size of {0}.", arg1);
         }
 
 
@@ -1183,14 +1183,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidComparison", resourceCulture);
+                return "Cannot compare the value of a token type '{0}' to text.";
             }
         }
 
 
         internal static string FormatInvalidComparison(object arg1)
         {
-            return string.Format(InvalidComparison, arg1);
+            return string.Format("Cannot compare the value of a token type '{0}' to text.", arg1);
         }
 
 
@@ -1201,14 +1201,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnsupportedFormat", resourceCulture);
+                return "The JSON value is not in a supported {0} format.";
             }
         }
 
 
         internal static string FormatUnsupportedFormat(object arg1)
         {
-            return string.Format(UnsupportedFormat, arg1);
+            return string.Format("The JSON value is not in a supported {0} format.", arg1);
         }
 
 
@@ -1219,14 +1219,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpectedStartOfPropertyOrValueAfterComment", resourceCulture);
+                return "'{0}' is an invalid start of a property name or value, after a comment.";
             }
         }
 
 
         internal static string FormatExpectedStartOfPropertyOrValueAfterComment(object arg1)
         {
-            return string.Format(ExpectedStartOfPropertyOrValueAfterComment, arg1);
+            return string.Format("'{0}' is an invalid start of a property name or value, after a comment.", arg1);
         }
 
 
@@ -1237,7 +1237,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TrailingCommaNotAllowedBeforeArrayEnd", resourceCulture);
+                return "The JSON array contains a trailing comma at the end which is not supported in this mode. Change the reader options.";
             }
         }
 
@@ -1250,7 +1250,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TrailingCommaNotAllowedBeforeObjectEnd", resourceCulture);
+                return "The JSON object contains a trailing comma at the end which is not supported in this mode. Change the reader options.";
             }
         }
 
@@ -1263,7 +1263,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SerializerOptionsReadOnly", resourceCulture);
+                return "This JsonSerializerOptions instance is read-only or has already been used in serialization or deserialization.";
             }
         }
 
@@ -1276,7 +1276,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SerializerOptions_InvalidChainedResolver", resourceCulture);
+                return "Cannot insert the values of 'TypeInfoResolver' or 'TypeInfoResolverChain' to 'TypeInfoResolverChain'.";
             }
         }
 
@@ -1289,7 +1289,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("StreamNotWritable", resourceCulture);
+                return "Stream is not writable.";
             }
         }
 
@@ -1302,7 +1302,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotWriteCommentWithEmbeddedDelimiter", resourceCulture);
+                return "Cannot write a comment value which contains the end of comment delimiter.";
             }
         }
 
@@ -1315,14 +1315,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SerializerPropertyNameConflict", resourceCulture);
+                return "The JSON property name for '{0}.{1}' collides with another property.";
             }
         }
 
 
         internal static string FormatSerializerPropertyNameConflict(object arg1, object arg2)
         {
-            return string.Format(SerializerPropertyNameConflict, arg1, arg2);
+            return string.Format("The JSON property name for '{0}.{1}' collides with another property.", arg1, arg2);
         }
 
 
@@ -1333,14 +1333,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SerializerPropertyNameNull", resourceCulture);
+                return "The JSON property name for '{0}.{1}' cannot be null.";
             }
         }
 
 
         internal static string FormatSerializerPropertyNameNull(object arg1, object arg2)
         {
-            return string.Format(SerializerPropertyNameNull, arg1, arg2);
+            return string.Format("The JSON property name for '{0}.{1}' cannot be null.", arg1, arg2);
         }
 
 
@@ -1351,14 +1351,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SerializationDataExtensionPropertyInvalid", resourceCulture);
+                return "The extension data property '{0}.{1}' is invalid. It must implement 'IDictionary<string, JsonElement>' or 'IDictionary<string, object>', or be 'JsonObject'.";
             }
         }
 
 
         internal static string FormatSerializationDataExtensionPropertyInvalid(object arg1, object arg2)
         {
-            return string.Format(SerializationDataExtensionPropertyInvalid, arg1, arg2);
+            return string.Format("The extension data property '{0}.{1}' is invalid. It must implement 'IDictionary<string, JsonElement>' or 'IDictionary<string, object>', or be 'JsonObject'.", arg1, arg2);
         }
 
 
@@ -1369,14 +1369,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyTypeNotNullable", resourceCulture);
+                return "The property type '{0}' does not support null values and therefore cannot be marked as nullable.";
             }
         }
 
 
         internal static string FormatPropertyTypeNotNullable(object arg1)
         {
-            return string.Format(PropertyTypeNotNullable, arg1);
+            return string.Format("The property type '{0}' does not support null values and therefore cannot be marked as nullable.", arg1);
         }
 
 
@@ -1387,14 +1387,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SerializationDuplicateTypeAttribute", resourceCulture);
+                return "The type '{0}' cannot have more than one member that has the attribute '{1}'.";
             }
         }
 
 
         internal static string FormatSerializationDuplicateTypeAttribute(object arg1, object arg2)
         {
-            return string.Format(SerializationDuplicateTypeAttribute, arg1, arg2);
+            return string.Format("The type '{0}' cannot have more than one member that has the attribute '{1}'.", arg1, arg2);
         }
 
 
@@ -1405,14 +1405,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExtensionDataConflictsWithUnmappedMemberHandling", resourceCulture);
+                return "The type '{0}' is marked 'JsonUnmappedMemberHandling.Disallow' which conflicts with extension data property '{1}'.";
             }
         }
 
 
         internal static string FormatExtensionDataConflictsWithUnmappedMemberHandling(object arg1, object arg2)
         {
-            return string.Format(ExtensionDataConflictsWithUnmappedMemberHandling, arg1, arg2);
+            return string.Format("The type '{0}' is marked 'JsonUnmappedMemberHandling.Disallow' which conflicts with extension data property '{1}'.", arg1, arg2);
         }
 
 
@@ -1423,14 +1423,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SerializationNotSupportedType", resourceCulture);
+                return "The type '{0}' is not supported.";
             }
         }
 
 
         internal static string FormatSerializationNotSupportedType(object arg1)
         {
-            return string.Format(SerializationNotSupportedType, arg1);
+            return string.Format("The type '{0}' is not supported.", arg1);
         }
 
 
@@ -1441,14 +1441,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TypeRequiresAsyncSerialization", resourceCulture);
+                return "The type '{0}' can only be serialized using async serialization methods.";
             }
         }
 
 
         internal static string FormatTypeRequiresAsyncSerialization(object arg1)
         {
-            return string.Format(TypeRequiresAsyncSerialization, arg1);
+            return string.Format("The type '{0}' can only be serialized using async serialization methods.", arg1);
         }
 
 
@@ -1459,14 +1459,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidCharacterAtStartOfComment", resourceCulture);
+                return "'{0}' is invalid after '/' at the beginning of the comment. Expected either '/' or '*'.";
             }
         }
 
 
         internal static string FormatInvalidCharacterAtStartOfComment(object arg1)
         {
-            return string.Format(InvalidCharacterAtStartOfComment, arg1);
+            return string.Format("'{0}' is invalid after '/' at the beginning of the comment. Expected either '/' or '*'.", arg1);
         }
 
 
@@ -1477,7 +1477,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnexpectedEndOfDataWhileReadingComment", resourceCulture);
+                return "Unexpected end of data while reading a comment.";
             }
         }
 
@@ -1490,7 +1490,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotSkip", resourceCulture);
+                return "Cannot skip tokens on partial JSON. Either get the whole payload and create a Utf8JsonReader instance where isFinalBlock is true or call TrySkip.";
             }
         }
 
@@ -1503,7 +1503,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotEnoughData", resourceCulture);
+                return "There is not enough data to read through the entire JSON array or object.";
             }
         }
 
@@ -1516,7 +1516,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnexpectedEndOfLineSeparator", resourceCulture);
+                return "Found invalid line or paragraph separator character while reading a comment.";
             }
         }
 
@@ -1529,7 +1529,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("JsonSerializerDoesNotSupportComments", resourceCulture);
+                return "Comments cannot be stored when deserializing objects, only the Skip and Disallow comment handling modes are supported.";
             }
         }
 
@@ -1542,14 +1542,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DeserializeNoConstructor", resourceCulture);
+                return "Deserialization of types without a parameterless constructor, a singular parameterized constructor, or a parameterized constructor annotated with '{0}' is not supported. Type '{1}'.";
             }
         }
 
 
         internal static string FormatDeserializeNoConstructor(object arg1, object arg2)
         {
-            return string.Format(DeserializeNoConstructor, arg1, arg2);
+            return string.Format("Deserialization of types without a parameterless constructor, a singular parameterized constructor, or a parameterized constructor annotated with '{0}' is not supported. Type '{1}'.", arg1, arg2);
         }
 
 
@@ -1560,14 +1560,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DeserializeInterfaceOrAbstractType", resourceCulture);
+                return "Deserialization of interface or abstract types is not supported. Type '{0}'.";
             }
         }
 
 
         internal static string FormatDeserializeInterfaceOrAbstractType(object arg1)
         {
-            return string.Format(DeserializeInterfaceOrAbstractType, arg1);
+            return string.Format("Deserialization of interface or abstract types is not supported. Type '{0}'.", arg1);
         }
 
 
@@ -1578,14 +1578,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DeserializationMustSpecifyTypeDiscriminator", resourceCulture);
+                return "The JSON payload for polymorphic interface or abstract type '{0}' must specify a type discriminator.";
             }
         }
 
 
         internal static string FormatDeserializationMustSpecifyTypeDiscriminator(object arg1)
         {
-            return string.Format(DeserializationMustSpecifyTypeDiscriminator, arg1);
+            return string.Format("The JSON payload for polymorphic interface or abstract type '{0}' must specify a type discriminator.", arg1);
         }
 
 
@@ -1596,32 +1596,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SerializationConverterOnAttributeNotCompatible", resourceCulture);
+                return "The converter specified on '{0}' is not compatible with the type '{1}'.";
             }
         }
 
 
         internal static string FormatSerializationConverterOnAttributeNotCompatible(object arg1, object arg2)
         {
-            return string.Format(SerializationConverterOnAttributeNotCompatible, arg1, arg2);
-        }
-
-
-        /// <summary>
-        /// The open generic converter type '{1}' specified on '{0}' cannot be instantiated because the target type is not a generic type with a matching number of type parameters.
-        /// </summary>
-        internal static string SerializationConverterOnAttributeOpenGenericNotCompatible
-        {
-            get
-            {
-                return ResourceManager.GetString("SerializationConverterOnAttributeOpenGenericNotCompatible", resourceCulture);
-            }
-        }
-
-
-        internal static string FormatSerializationConverterOnAttributeOpenGenericNotCompatible(object arg1, object arg2)
-        {
-            return string.Format(SerializationConverterOnAttributeOpenGenericNotCompatible, arg1, arg2);
+            return string.Format("The converter specified on '{0}' is not compatible with the type '{1}'.", arg1, arg2);
         }
 
 
@@ -1632,14 +1614,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SerializationConverterOnAttributeInvalid", resourceCulture);
+                return "The converter specified on '{0}' does not derive from JsonConverter or have a public parameterless constructor.";
             }
         }
 
 
         internal static string FormatSerializationConverterOnAttributeInvalid(object arg1)
         {
-            return string.Format(SerializationConverterOnAttributeInvalid, arg1);
+            return string.Format("The converter specified on '{0}' does not derive from JsonConverter or have a public parameterless constructor.", arg1);
         }
 
 
@@ -1650,14 +1632,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SerializationConverterRead", resourceCulture);
+                return "The converter '{0}' read too much or not enough.";
             }
         }
 
 
         internal static string FormatSerializationConverterRead(object arg1)
         {
-            return string.Format(SerializationConverterRead, arg1);
+            return string.Format("The converter '{0}' read too much or not enough.", arg1);
         }
 
 
@@ -1668,14 +1650,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SerializationConverterNotCompatible", resourceCulture);
+                return "The converter '{0}' is not compatible with the type '{1}'.";
             }
         }
 
 
         internal static string FormatSerializationConverterNotCompatible(object arg1, object arg2)
         {
-            return string.Format(SerializationConverterNotCompatible, arg1, arg2);
+            return string.Format("The converter '{0}' is not compatible with the type '{1}'.", arg1, arg2);
         }
 
 
@@ -1686,14 +1668,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ResolverTypeNotCompatible", resourceCulture);
+                return "The IJsonTypeInfoResolver returned an incompatible JsonTypeInfo instance of type '{0}', expected type '{1}'.";
             }
         }
 
 
         internal static string FormatResolverTypeNotCompatible(object arg1, object arg2)
         {
-            return string.Format(ResolverTypeNotCompatible, arg1, arg2);
+            return string.Format("The IJsonTypeInfoResolver returned an incompatible JsonTypeInfo instance of type '{0}', expected type '{1}'.", arg1, arg2);
         }
 
 
@@ -1704,7 +1686,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ResolverTypeInfoOptionsNotCompatible", resourceCulture);
+                return "The IJsonTypeInfoResolver returned a JsonTypeInfo instance whose JsonSerializerOptions setting does not match the provided argument.";
             }
         }
 
@@ -1717,14 +1699,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SerializationConverterWrite", resourceCulture);
+                return "The converter '{0}' wrote too much or not enough.";
             }
         }
 
 
         internal static string FormatSerializationConverterWrite(object arg1)
         {
-            return string.Format(SerializationConverterWrite, arg1);
+            return string.Format("The converter '{0}' wrote too much or not enough.", arg1);
         }
 
 
@@ -1735,14 +1717,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NamingPolicyReturnNull", resourceCulture);
+                return "The naming policy '{0}' cannot return null.";
             }
         }
 
 
         internal static string FormatNamingPolicyReturnNull(object arg1)
         {
-            return string.Format(NamingPolicyReturnNull, arg1);
+            return string.Format("The naming policy '{0}' cannot return null.", arg1);
         }
 
 
@@ -1753,14 +1735,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SerializationDuplicateAttribute", resourceCulture);
+                return "The attribute '{0}' cannot exist more than once on '{1}'.";
             }
         }
 
 
         internal static string FormatSerializationDuplicateAttribute(object arg1, object arg2)
         {
-            return string.Format(SerializationDuplicateAttribute, arg1, arg2);
+            return string.Format("The attribute '{0}' cannot exist more than once on '{1}'.", arg1, arg2);
         }
 
 
@@ -1771,7 +1753,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SerializeUnableToSerialize", resourceCulture);
+                return "The object or value could not be serialized.";
             }
         }
 
@@ -1784,7 +1766,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FormatByte", resourceCulture);
+                return "Either the JSON value is not in a supported format, or is out of bounds for an unsigned byte.";
             }
         }
 
@@ -1797,7 +1779,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FormatInt16", resourceCulture);
+                return "Either the JSON value is not in a supported format, or is out of bounds for an Int16.";
             }
         }
 
@@ -1810,7 +1792,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FormatSByte", resourceCulture);
+                return "Either the JSON value is not in a supported format, or is out of bounds for a signed byte.";
             }
         }
 
@@ -1823,7 +1805,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FormatUInt16", resourceCulture);
+                return "Either the JSON value is not in a supported format, or is out of bounds for a UInt16.";
             }
         }
 
@@ -1836,14 +1818,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SerializerCycleDetected", resourceCulture);
+                return "A possible object cycle was detected. This can either be due to a cycle or if the object depth is larger than the maximum allowed depth of {0}. Consider using ReferenceHandler.Preserve on JsonSerializerOptions to support cycles.";
             }
         }
 
 
         internal static string FormatSerializerCycleDetected(object arg1)
         {
-            return string.Format(SerializerCycleDetected, arg1);
+            return string.Format("A possible object cycle was detected. This can either be due to a cycle or if the object depth is larger than the maximum allowed depth of {0}. Consider using ReferenceHandler.Preserve on JsonSerializerOptions to support cycles.", arg1);
         }
 
 
@@ -1854,14 +1836,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidLeadingZeroInNumber", resourceCulture);
+                return "Invalid leading zero before '{0}'.";
             }
         }
 
 
         internal static string FormatInvalidLeadingZeroInNumber(object arg1)
         {
-            return string.Format(InvalidLeadingZeroInNumber, arg1);
+            return string.Format("Invalid leading zero before '{0}'.", arg1);
         }
 
 
@@ -1872,14 +1854,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MetadataCannotParsePreservedObjectToImmutable", resourceCulture);
+                return "Cannot parse a JSON object containing metadata properties like '$id' or '$type' into an array or immutable collection type. Type '{0}'.";
             }
         }
 
 
         internal static string FormatMetadataCannotParsePreservedObjectToImmutable(object arg1)
         {
-            return string.Format(MetadataCannotParsePreservedObjectToImmutable, arg1);
+            return string.Format("Cannot parse a JSON object containing metadata properties like '$id' or '$type' into an array or immutable collection type. Type '{0}'.", arg1);
         }
 
 
@@ -1890,14 +1872,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MetadataDuplicateIdFound", resourceCulture);
+                return "The value of the '$id' metadata property '{0}' conflicts with an existing identifier.";
             }
         }
 
 
         internal static string FormatMetadataDuplicateIdFound(object arg1)
         {
-            return string.Format(MetadataDuplicateIdFound, arg1);
+            return string.Format("The value of the '$id' metadata property '{0}' conflicts with an existing identifier.", arg1);
         }
 
 
@@ -1908,7 +1890,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MetadataIdCannotBeCombinedWithRef", resourceCulture);
+                return "The metadata property '$id' cannot be used together with '$ref' metadata properties.";
             }
         }
 
@@ -1921,14 +1903,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MetadataInvalidReferenceToValueType", resourceCulture);
+                return "Invalid reference to value type '{0}'.";
             }
         }
 
 
         internal static string FormatMetadataInvalidReferenceToValueType(object arg1)
         {
-            return string.Format(MetadataInvalidReferenceToValueType, arg1);
+            return string.Format("Invalid reference to value type '{0}'.", arg1);
         }
 
 
@@ -1939,14 +1921,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MetadataInvalidTokenAfterValues", resourceCulture);
+                return "The '$values' metadata property must be a JSON array. Current token type is '{0}'.";
             }
         }
 
 
         internal static string FormatMetadataInvalidTokenAfterValues(object arg1)
         {
-            return string.Format(MetadataInvalidTokenAfterValues, arg1);
+            return string.Format("The '$values' metadata property must be a JSON array. Current token type is '{0}'.", arg1);
         }
 
 
@@ -1959,14 +1941,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MetadataPreservedArrayFailed", resourceCulture);
+                return "Deserialization failed for one of these reasons:\n1. {0}\n2. {1}";
             }
         }
 
 
         internal static string FormatMetadataPreservedArrayFailed(object arg1, object arg2)
         {
-            return string.Format(MetadataPreservedArrayFailed, arg1, arg2);
+            return string.Format("Deserialization failed for one of these reasons:\n1. {0}\n2. {1}", arg1, arg2);
         }
 
 
@@ -1977,14 +1959,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MetadataInvalidPropertyInArrayMetadata", resourceCulture);
+                return "A JSON object containing metadata for a nested array includes a non-metadata property '{0}'.";
             }
         }
 
 
         internal static string FormatMetadataInvalidPropertyInArrayMetadata(object arg1)
         {
-            return string.Format(MetadataInvalidPropertyInArrayMetadata, arg1);
+            return string.Format("A JSON object containing metadata for a nested array includes a non-metadata property '{0}'.", arg1);
         }
 
 
@@ -1995,7 +1977,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MetadataStandaloneValuesProperty", resourceCulture);
+                return "A '$values' metadata property must always be preceded by other metadata properties, such as '$id' or '$type'.";
             }
         }
 
@@ -2008,7 +1990,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MetadataReferenceCannotContainOtherProperties", resourceCulture);
+                return "A JSON object that contains a '$ref' metadata property must not contain any other properties.";
             }
         }
 
@@ -2021,14 +2003,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MetadataReferenceNotFound", resourceCulture);
+                return "Reference '{0}' was not found.";
             }
         }
 
 
         internal static string FormatMetadataReferenceNotFound(object arg1)
         {
-            return string.Format(MetadataReferenceNotFound, arg1);
+            return string.Format("Reference '{0}' was not found.", arg1);
         }
 
 
@@ -2039,14 +2021,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MetadataValueWasNotString", resourceCulture);
+                return "The '$id', '$ref' or '$type' metadata properties must be JSON strings. Current token type is '{0}'.";
             }
         }
 
 
         internal static string FormatMetadataValueWasNotString(object arg1)
         {
-            return string.Format(MetadataValueWasNotString, arg1);
+            return string.Format("The '$id', '$ref' or '$type' metadata properties must be JSON strings. Current token type is '{0}'.", arg1);
         }
 
 
@@ -2057,7 +2039,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MetadataInvalidPropertyWithLeadingDollarSign", resourceCulture);
+                return "Properties that start with '$' are not allowed in types that support metadata. Either replace the character or disable reference preservation and polymorphic deserialization.";
             }
         }
 
@@ -2070,7 +2052,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MetadataUnexpectedProperty", resourceCulture);
+                return "The metadata property is either not supported by the type or is not the first property in the deserialized JSON object.";
             }
         }
 
@@ -2083,14 +2065,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnmappedJsonProperty", resourceCulture);
+                return "The JSON property '{0}' could not be mapped to any .NET member contained in type '{1}'.";
             }
         }
 
 
         internal static string FormatUnmappedJsonProperty(object arg1, object arg2)
         {
-            return string.Format(UnmappedJsonProperty, arg1, arg2);
+            return string.Format("The JSON property '{0}' could not be mapped to any .NET member contained in type '{1}'.", arg1, arg2);
         }
 
 
@@ -2101,14 +2083,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DuplicateMetadataProperty", resourceCulture);
+                return "Deserialized object contains a duplicate '{0}' metadata property.";
             }
         }
 
 
         internal static string FormatDuplicateMetadataProperty(object arg1)
         {
-            return string.Format(DuplicateMetadataProperty, arg1);
+            return string.Format("Deserialized object contains a duplicate '{0}' metadata property.", arg1);
         }
 
 
@@ -2119,14 +2101,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MultipleMembersBindWithConstructorParameter", resourceCulture);
+                return "Members '{0}' and '{1}' on type '{2}' cannot both bind with parameter '{3}' in the deserialization constructor.";
             }
         }
 
 
         internal static string FormatMultipleMembersBindWithConstructorParameter(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(MultipleMembersBindWithConstructorParameter, arg1, arg2, arg3, arg4);
+            return string.Format("Members '{0}' and '{1}' on type '{2}' cannot both bind with parameter '{3}' in the deserialization constructor.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -2137,14 +2119,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ConstructorParamIncompleteBinding", resourceCulture);
+                return "Each parameter in the deserialization constructor on type '{0}' must bind to an object property or field on deserialization. Each parameter name and type must match with a property or field on the object. Fields are only considered when 'JsonSerializerOptions.IncludeFields' is enabled. The name match can be case-insensitive.";
             }
         }
 
 
         internal static string FormatConstructorParamIncompleteBinding(object arg1)
         {
-            return string.Format(ConstructorParamIncompleteBinding, arg1);
+            return string.Format("Each parameter in the deserialization constructor on type '{0}' must bind to an object property or field on deserialization. Each parameter name and type must match with a property or field on the object. Fields are only considered when 'JsonSerializerOptions.IncludeFields' is enabled. The name match can be case-insensitive.", arg1);
         }
 
 
@@ -2155,14 +2137,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ObjectWithParameterizedCtorRefMetadataNotSupported", resourceCulture);
+                return "Reference metadata is not supported when deserializing constructor parameters. See type '{0}'.";
             }
         }
 
 
         internal static string FormatObjectWithParameterizedCtorRefMetadataNotSupported(object arg1)
         {
-            return string.Format(ObjectWithParameterizedCtorRefMetadataNotSupported, arg1);
+            return string.Format("Reference metadata is not supported when deserializing constructor parameters. See type '{0}'.", arg1);
         }
 
 
@@ -2173,14 +2155,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SerializerConverterFactoryReturnsNull", resourceCulture);
+                return "The converter '{0}' cannot return a null value.";
             }
         }
 
 
         internal static string FormatSerializerConverterFactoryReturnsNull(object arg1)
         {
-            return string.Format(SerializerConverterFactoryReturnsNull, arg1);
+            return string.Format("The converter '{0}' cannot return a null value.", arg1);
         }
 
 
@@ -2191,14 +2173,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SerializationNotSupportedParentType", resourceCulture);
+                return "The unsupported member type is located on type '{0}'.";
             }
         }
 
 
         internal static string FormatSerializationNotSupportedParentType(object arg1)
         {
-            return string.Format(SerializationNotSupportedParentType, arg1);
+            return string.Format("The unsupported member type is located on type '{0}'.", arg1);
         }
 
 
@@ -2209,14 +2191,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExtensionDataCannotBindToCtorParam", resourceCulture);
+                return "The extension data property '{0}' on type '{1}' cannot bind with a parameter in the deserialization constructor.";
             }
         }
 
 
         internal static string FormatExtensionDataCannotBindToCtorParam(object arg1, object arg2)
         {
-            return string.Format(ExtensionDataCannotBindToCtorParam, arg1, arg2);
+            return string.Format("The extension data property '{0}' on type '{1}' cannot bind with a parameter in the deserialization constructor.", arg1, arg2);
         }
 
 
@@ -2227,14 +2209,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BufferMaximumSizeExceeded", resourceCulture);
+                return "Cannot allocate a buffer of size {0}.";
             }
         }
 
 
         internal static string FormatBufferMaximumSizeExceeded(object arg1)
         {
-            return string.Format(BufferMaximumSizeExceeded, arg1);
+            return string.Format("Cannot allocate a buffer of size {0}.", arg1);
         }
 
 
@@ -2245,14 +2227,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotSerializeInvalidType", resourceCulture);
+                return "The type '{0}' is invalid for serialization or deserialization because it is a pointer type, is a ref struct, or contains generic parameters that have not been replaced by specific types.";
             }
         }
 
 
         internal static string FormatCannotSerializeInvalidType(object arg1)
         {
-            return string.Format(CannotSerializeInvalidType, arg1);
+            return string.Format("The type '{0}' is invalid for serialization or deserialization because it is a pointer type, is a ref struct, or contains generic parameters that have not been replaced by specific types.", arg1);
         }
 
 
@@ -2263,14 +2245,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SerializeTypeInstanceNotSupported", resourceCulture);
+                return "Serialization and deserialization of '{0}' instances is not supported.";
             }
         }
 
 
         internal static string FormatSerializeTypeInstanceNotSupported(object arg1)
         {
-            return string.Format(SerializeTypeInstanceNotSupported, arg1);
+            return string.Format("Serialization and deserialization of '{0}' instances is not supported.", arg1);
         }
 
 
@@ -2281,14 +2263,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("JsonIncludeOnInaccessibleProperty", resourceCulture);
+                return "The property '{0}' on type '{1}' which is annotated with 'JsonIncludeAttribute' is not accesible by the source generator.";
             }
         }
 
 
         internal static string FormatJsonIncludeOnInaccessibleProperty(object arg1, object arg2)
         {
-            return string.Format(JsonIncludeOnInaccessibleProperty, arg1, arg2);
+            return string.Format("The property '{0}' on type '{1}' which is annotated with 'JsonIncludeAttribute' is not accesible by the source generator.", arg1, arg2);
         }
 
 
@@ -2299,14 +2281,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotSerializeInvalidMember", resourceCulture);
+                return "The type '{0}' of property '{1}' on type '{2}' is invalid for serialization or deserialization because it is a pointer type, is a ref struct, or contains generic parameters that have not been replaced by specific types.";
             }
         }
 
 
         internal static string FormatCannotSerializeInvalidMember(object arg1, object arg2, object arg3)
         {
-            return string.Format(CannotSerializeInvalidMember, arg1, arg2, arg3);
+            return string.Format("The type '{0}' of property '{1}' on type '{2}' is invalid for serialization or deserialization because it is a pointer type, is a ref struct, or contains generic parameters that have not been replaced by specific types.", arg1, arg2, arg3);
         }
 
 
@@ -2317,14 +2299,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotPopulateCollection", resourceCulture);
+                return "The collection type '{0}' is abstract, an interface, or is read only, and could not be instantiated and populated.";
             }
         }
 
 
         internal static string FormatCannotPopulateCollection(object arg1)
         {
-            return string.Format(CannotPopulateCollection, arg1);
+            return string.Format("The collection type '{0}' is abstract, an interface, or is read only, and could not be instantiated and populated.", arg1);
         }
 
 
@@ -2335,14 +2317,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ConstructorContainsNullParameterNames", resourceCulture);
+                return "The deserialization constructor for type '{0}' contains parameters with null names. This might happen because the parameter names have been trimmed by ILLink. Consider using the source generated serializer instead.";
             }
         }
 
 
         internal static string FormatConstructorContainsNullParameterNames(object arg1)
         {
-            return string.Format(ConstructorContainsNullParameterNames, arg1);
+            return string.Format("The deserialization constructor for type '{0}' contains parameters with null names. This might happen because the parameter names have been trimmed by ILLink. Consider using the source generated serializer instead.", arg1);
         }
 
 
@@ -2353,7 +2335,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DefaultIgnoreConditionAlreadySpecified", resourceCulture);
+                return "'IgnoreNullValues' and 'DefaultIgnoreCondition' cannot both be set to non-default values.";
             }
         }
 
@@ -2366,7 +2348,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DefaultIgnoreConditionInvalid", resourceCulture);
+                return "The value cannot be 'JsonIgnoreCondition.Always'.";
             }
         }
 
@@ -2379,14 +2361,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DictionaryKeyTypeNotSupported", resourceCulture);
+                return "The type '{0}' is not a supported dictionary key using converter of type '{1}'. Custom converters can add support for dictionary key serialization by overriding the 'ReadAsPropertyName' and 'WriteAsPropertyName' methods.";
             }
         }
 
 
         internal static string FormatDictionaryKeyTypeNotSupported(object arg1, object arg2)
         {
-            return string.Format(DictionaryKeyTypeNotSupported, arg1, arg2);
+            return string.Format("The type '{0}' is not a supported dictionary key using converter of type '{1}'. Custom converters can add support for dictionary key serialization by overriding the 'ReadAsPropertyName' and 'WriteAsPropertyName' methods.", arg1, arg2);
         }
 
 
@@ -2397,14 +2379,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IgnoreConditionOnValueTypeInvalid", resourceCulture);
+                return "The ignore condition 'JsonIgnoreCondition.WhenWritingNull' is not valid on value-type member '{0}' on type '{1}'. Consider using 'JsonIgnoreCondition.WhenWritingDefault'.";
             }
         }
 
 
         internal static string FormatIgnoreConditionOnValueTypeInvalid(object arg1, object arg2)
         {
-            return string.Format(IgnoreConditionOnValueTypeInvalid, arg1, arg2);
+            return string.Format("The ignore condition 'JsonIgnoreCondition.WhenWritingNull' is not valid on value-type member '{0}' on type '{1}'. Consider using 'JsonIgnoreCondition.WhenWritingDefault'.", arg1, arg2);
         }
 
 
@@ -2415,14 +2397,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NumberHandlingOnPropertyInvalid", resourceCulture);
+                return "'JsonNumberHandlingAttribute' is only valid on a number or a collection of numbers when applied to a property or field. See member '{0}' on type '{1}'.";
             }
         }
 
 
         internal static string FormatNumberHandlingOnPropertyInvalid(object arg1, object arg2)
         {
-            return string.Format(NumberHandlingOnPropertyInvalid, arg1, arg2);
+            return string.Format("'JsonNumberHandlingAttribute' is only valid on a number or a collection of numbers when applied to a property or field. See member '{0}' on type '{1}'.", arg1, arg2);
         }
 
 
@@ -2433,14 +2415,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ConverterCanConvertMultipleTypes", resourceCulture);
+                return "The converter '{0}' handles type '{1}' but is being asked to convert type '{2}'. Either create a separate converter for type '{2}' or change the converter's 'CanConvert' method to only return 'true' for a single type.";
             }
         }
 
 
         internal static string FormatConverterCanConvertMultipleTypes(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(ConverterCanConvertMultipleTypes, arg1, arg2, arg3, arg4);
+            return string.Format("The converter '{0}' handles type '{1}' but is being asked to convert type '{2}'. Either create a separate converter for type '{2}' or change the converter's 'CanConvert' method to only return 'true' for a single type.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -2451,14 +2433,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MetadataReferenceOfTypeCannotBeAssignedToType", resourceCulture);
+                return "The object with reference id '{0}' of type '{1}' cannot be assigned to the type '{2}'.";
             }
         }
 
 
         internal static string FormatMetadataReferenceOfTypeCannotBeAssignedToType(object arg1, object arg2, object arg3)
         {
-            return string.Format(MetadataReferenceOfTypeCannotBeAssignedToType, arg1, arg2, arg3);
+            return string.Format("The object with reference id '{0}' of type '{1}' cannot be assigned to the type '{2}'.", arg1, arg2, arg3);
         }
 
 
@@ -2469,14 +2451,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DeserializeUnableToAssignValue", resourceCulture);
+                return "Unable to cast object of type '{0}' to type '{1}'.";
             }
         }
 
 
         internal static string FormatDeserializeUnableToAssignValue(object arg1, object arg2)
         {
-            return string.Format(DeserializeUnableToAssignValue, arg1, arg2);
+            return string.Format("Unable to cast object of type '{0}' to type '{1}'.", arg1, arg2);
         }
 
 
@@ -2487,14 +2469,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DeserializeUnableToAssignNull", resourceCulture);
+                return "Unable to assign 'null' to the property or field of type '{0}'.";
             }
         }
 
 
         internal static string FormatDeserializeUnableToAssignNull(object arg1)
         {
-            return string.Format(DeserializeUnableToAssignNull, arg1);
+            return string.Format("Unable to assign 'null' to the property or field of type '{0}'.", arg1);
         }
 
 
@@ -2505,14 +2487,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SerializerConverterFactoryReturnsJsonConverterFactory", resourceCulture);
+                return "The converter '{0}' cannot return an instance of JsonConverterFactory.";
             }
         }
 
 
         internal static string FormatSerializerConverterFactoryReturnsJsonConverterFactory(object arg1)
         {
-            return string.Format(SerializerConverterFactoryReturnsJsonConverterFactory, arg1);
+            return string.Format("The converter '{0}' cannot return an instance of JsonConverterFactory.", arg1);
         }
 
 
@@ -2523,14 +2505,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SerializerConverterFactoryInvalidArgument", resourceCulture);
+                return "The type '{0}' is not supported by the current JsonConverterFactory.";
             }
         }
 
 
         internal static string FormatSerializerConverterFactoryInvalidArgument(object arg1)
         {
-            return string.Format(SerializerConverterFactoryInvalidArgument, arg1);
+            return string.Format("The type '{0}' is not supported by the current JsonConverterFactory.", arg1);
         }
 
 
@@ -2541,14 +2523,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NodeElementWrongType", resourceCulture);
+                return "The element must be of type '{0}'";
             }
         }
 
 
         internal static string FormatNodeElementWrongType(object arg1)
         {
-            return string.Format(NodeElementWrongType, arg1);
+            return string.Format("The element must be of type '{0}'", arg1);
         }
 
 
@@ -2559,7 +2541,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NodeElementCannotBeObjectOrArray", resourceCulture);
+                return "The element cannot be an object or array.";
             }
         }
 
@@ -2572,7 +2554,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NodeAlreadyHasParent", resourceCulture);
+                return "The node already has a parent.";
             }
         }
 
@@ -2585,7 +2567,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NodeCycleDetected", resourceCulture);
+                return "A node cycle was detected.";
             }
         }
 
@@ -2598,14 +2580,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NodeUnableToConvert", resourceCulture);
+                return "A value of type '{0}' cannot be converted to a '{1}'.";
             }
         }
 
 
         internal static string FormatNodeUnableToConvert(object arg1, object arg2)
         {
-            return string.Format(NodeUnableToConvert, arg1, arg2);
+            return string.Format("A value of type '{0}' cannot be converted to a '{1}'.", arg1, arg2);
         }
 
 
@@ -2616,14 +2598,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NodeUnableToConvertElement", resourceCulture);
+                return "An element of type '{0}' cannot be converted to a '{1}'.";
             }
         }
 
 
         internal static string FormatNodeUnableToConvertElement(object arg1, object arg2)
         {
-            return string.Format(NodeUnableToConvertElement, arg1, arg2);
+            return string.Format("An element of type '{0}' cannot be converted to a '{1}'.", arg1, arg2);
         }
 
 
@@ -2634,7 +2616,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NodeValueNotAllowed", resourceCulture);
+                return "A JsonNode cannot be used as a value.";
             }
         }
 
@@ -2647,14 +2629,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NodeWrongType", resourceCulture);
+                return "The node must be of type '{0}'.";
             }
         }
 
 
         internal static string FormatNodeWrongType(object arg1)
         {
-            return string.Format(NodeWrongType, arg1);
+            return string.Format("The node must be of type '{0}'.", arg1);
         }
 
 
@@ -2665,14 +2647,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NodeParentWrongType", resourceCulture);
+                return "The node must have a parent node of type '{0}'.";
             }
         }
 
 
         internal static string FormatNodeParentWrongType(object arg1)
         {
-            return string.Format(NodeParentWrongType, arg1);
+            return string.Format("The node must have a parent node of type '{0}'.", arg1);
         }
 
 
@@ -2683,14 +2665,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NodeDuplicateKey", resourceCulture);
+                return "An item with the same key has already been added. Key: {0}";
             }
         }
 
 
         internal static string FormatNodeDuplicateKey(object arg1)
         {
-            return string.Format(NodeDuplicateKey, arg1);
+            return string.Format("An item with the same key has already been added. Key: {0}", arg1);
         }
 
 
@@ -2701,7 +2683,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SerializerContextOptionsReadOnly", resourceCulture);
+                return "JsonSerializerOptions instances cannot be modified once encapsulated by a JsonSerializerContext. Such encapsulation can happen either when calling 'JsonSerializerOptions.AddContext' or when passing the options instance to a JsonSerializerContext constructor.";
             }
         }
 
@@ -2714,14 +2696,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ConverterForPropertyMustBeValid", resourceCulture);
+                return "The generic type of the converter for property '{0}.{1}' must match with the specified converter type '{2}'. The converter must not be 'null'.";
             }
         }
 
 
         internal static string FormatConverterForPropertyMustBeValid(object arg1, object arg2, object arg3)
         {
-            return string.Format(ConverterForPropertyMustBeValid, arg1, arg2, arg3);
+            return string.Format("The generic type of the converter for property '{0}.{1}' must match with the specified converter type '{2}'. The converter must not be 'null'.", arg1, arg2, arg3);
         }
 
 
@@ -2732,14 +2714,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NoMetadataForType", resourceCulture);
+                return "JsonTypeInfo metadata for type '{0}' was not provided by TypeInfoResolver of type '{1}'. If using source generation, ensure that all root types passed to the serializer have been annotated with 'JsonSerializableAttribute', along with any types that might be serialized polymorphically.";
             }
         }
 
 
         internal static string FormatNoMetadataForType(object arg1, object arg2)
         {
-            return string.Format(NoMetadataForType, arg1, arg2);
+            return string.Format("JsonTypeInfo metadata for type '{0}' was not provided by TypeInfoResolver of type '{1}'. If using source generation, ensure that all root types passed to the serializer have been annotated with 'JsonSerializableAttribute', along with any types that might be serialized polymorphically.", arg1, arg2);
         }
 
 
@@ -2750,14 +2732,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AmbiguousMetadataForType", resourceCulture);
+                return "Ambiguous matches when resolving JsonTypeInfo metadata for type '{0}': '{1}', '{2}'. Consider either explicitly providing metadata for the type or removing one of its interface implementations.";
             }
         }
 
 
         internal static string FormatAmbiguousMetadataForType(object arg1, object arg2, object arg3)
         {
-            return string.Format(AmbiguousMetadataForType, arg1, arg2, arg3);
+            return string.Format("Ambiguous matches when resolving JsonTypeInfo metadata for type '{0}': '{1}', '{2}'. Consider either explicitly providing metadata for the type or removing one of its interface implementations.", arg1, arg2, arg3);
         }
 
 
@@ -2768,7 +2750,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CollectionIsReadOnly", resourceCulture);
+                return "Collection is read-only.";
             }
         }
 
@@ -2781,7 +2763,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArrayIndexNegative", resourceCulture);
+                return "Number was less than 0.";
             }
         }
 
@@ -2794,7 +2776,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArrayTooSmall", resourceCulture);
+                return "Destination array was not long enough.";
             }
         }
 
@@ -2807,7 +2789,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NodeJsonObjectCustomConverterNotAllowedOnExtensionProperty", resourceCulture);
+                return "A custom converter for JsonObject is not allowed on an extension property.";
             }
         }
 
@@ -2820,14 +2802,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NoMetadataForTypeProperties", resourceCulture);
+                return "TypeInfoResolver '{0}' did not provide property metadata for type '{1}'.";
             }
         }
 
 
         internal static string FormatNoMetadataForTypeProperties(object arg1, object arg2)
         {
-            return string.Format(NoMetadataForTypeProperties, arg1, arg2);
+            return string.Format("TypeInfoResolver '{0}' did not provide property metadata for type '{1}'.", arg1, arg2);
         }
 
 
@@ -2838,14 +2820,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FieldCannotBeVirtual", resourceCulture);
+                return "A 'field' member cannot be 'virtual'. See arguments for the '{0}' and '{1}' parameters. ";
             }
         }
 
 
         internal static string FormatFieldCannotBeVirtual(object arg1, object arg2)
         {
-            return string.Format(FieldCannotBeVirtual, arg1, arg2);
+            return string.Format("A 'field' member cannot be 'virtual'. See arguments for the '{0}' and '{1}' parameters. ", arg1, arg2);
         }
 
 
@@ -2856,14 +2838,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MissingFSharpCoreMember", resourceCulture);
+                return "Could not locate required member '{0}' from FSharp.Core. This might happen because your application has enabled member-level trimming.";
             }
         }
 
 
         internal static string FormatMissingFSharpCoreMember(object arg1)
         {
-            return string.Format(MissingFSharpCoreMember, arg1);
+            return string.Format("Could not locate required member '{0}' from FSharp.Core. This might happen because your application has enabled member-level trimming.", arg1);
         }
 
 
@@ -2874,7 +2856,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FSharpDiscriminatedUnionsNotSupported", resourceCulture);
+                return "F# discriminated union serialization is not supported. Consider authoring a custom converter for the type.";
             }
         }
 
@@ -2887,14 +2869,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Polymorphism_BaseConverterDoesNotSupportMetadata", resourceCulture);
+                return "The converter for polymorphic type '{0}' does not support metadata writes or reads.";
             }
         }
 
 
         internal static string FormatPolymorphism_BaseConverterDoesNotSupportMetadata(object arg1)
         {
-            return string.Format(Polymorphism_BaseConverterDoesNotSupportMetadata, arg1);
+            return string.Format("The converter for polymorphic type '{0}' does not support metadata writes or reads.", arg1);
         }
 
 
@@ -2905,14 +2887,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Polymorphism_DerivedConverterDoesNotSupportMetadata", resourceCulture);
+                return "The converter for derived type '{0}' does not support metadata writes or reads.";
             }
         }
 
 
         internal static string FormatPolymorphism_DerivedConverterDoesNotSupportMetadata(object arg1)
         {
-            return string.Format(Polymorphism_DerivedConverterDoesNotSupportMetadata, arg1);
+            return string.Format("The converter for derived type '{0}' does not support metadata writes or reads.", arg1);
         }
 
 
@@ -2923,14 +2905,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Polymorphism_TypeDoesNotSupportPolymorphism", resourceCulture);
+                return "Specified type '{0}' does not support polymorphism. Polymorphic types cannot be structs, sealed types, generic types or System.Object.";
             }
         }
 
 
         internal static string FormatPolymorphism_TypeDoesNotSupportPolymorphism(object arg1)
         {
-            return string.Format(Polymorphism_TypeDoesNotSupportPolymorphism, arg1);
+            return string.Format("Specified type '{0}' does not support polymorphism. Polymorphic types cannot be structs, sealed types, generic types or System.Object.", arg1);
         }
 
 
@@ -2941,14 +2923,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Polymorphism_DerivedTypeIsNotSupported", resourceCulture);
+                return "Specified type '{0}' is not a supported derived type for the polymorphic type '{1}'. Derived types must be assignable to the base type, must not be generic and cannot be abstract classes or interfaces unless 'JsonUnknownDerivedTypeHandling.FallBackToNearestAncestor' is specified.";
             }
         }
 
 
         internal static string FormatPolymorphism_DerivedTypeIsNotSupported(object arg1, object arg2)
         {
-            return string.Format(Polymorphism_DerivedTypeIsNotSupported, arg1, arg2);
+            return string.Format("Specified type '{0}' is not a supported derived type for the polymorphic type '{1}'. Derived types must be assignable to the base type, must not be generic and cannot be abstract classes or interfaces unless 'JsonUnknownDerivedTypeHandling.FallBackToNearestAncestor' is specified.", arg1, arg2);
         }
 
 
@@ -2959,14 +2941,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Polymorphism_DerivedTypeIsAlreadySpecified", resourceCulture);
+                return "The polymorphic type '{0}' has already specified derived type '{1}'.";
             }
         }
 
 
         internal static string FormatPolymorphism_DerivedTypeIsAlreadySpecified(object arg1, object arg2)
         {
-            return string.Format(Polymorphism_DerivedTypeIsAlreadySpecified, arg1, arg2);
+            return string.Format("The polymorphic type '{0}' has already specified derived type '{1}'.", arg1, arg2);
         }
 
 
@@ -2977,14 +2959,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Polymorphism_TypeDicriminatorIdIsAlreadySpecified", resourceCulture);
+                return "The polymorphic type '{0}' has already specified a type discriminator '{1}'.";
             }
         }
 
 
         internal static string FormatPolymorphism_TypeDicriminatorIdIsAlreadySpecified(object arg1, object arg2)
         {
-            return string.Format(Polymorphism_TypeDicriminatorIdIsAlreadySpecified, arg1, arg2);
+            return string.Format("The polymorphic type '{0}' has already specified a type discriminator '{1}'.", arg1, arg2);
         }
 
 
@@ -2995,7 +2977,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Polymorphism_InvalidCustomTypeDiscriminatorPropertyName", resourceCulture);
+                return "The metadata property names '$id', '$ref', and '$values' are reserved and cannot be used as custom type discriminator property names.";
             }
         }
 
@@ -3008,14 +2990,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Polymorphism_PropertyConflictsWithMetadataPropertyName", resourceCulture);
+                return "The type '{0}' contains property '{1}' that conflicts with an existing metadata property name. Consider either renaming it or ignoring it with JsonIgnoreAttribute.";
             }
         }
 
 
         internal static string FormatPolymorphism_PropertyConflictsWithMetadataPropertyName(object arg1, object arg2)
         {
-            return string.Format(Polymorphism_PropertyConflictsWithMetadataPropertyName, arg1, arg2);
+            return string.Format("The type '{0}' contains property '{1}' that conflicts with an existing metadata property name. Consider either renaming it or ignoring it with JsonIgnoreAttribute.", arg1, arg2);
         }
 
 
@@ -3026,14 +3008,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Polymorphism_ConfigurationDoesNotSpecifyDerivedTypes", resourceCulture);
+                return "Polymorphic configuration for type '{0}' should specify at least one derived type.";
             }
         }
 
 
         internal static string FormatPolymorphism_ConfigurationDoesNotSpecifyDerivedTypes(object arg1)
         {
-            return string.Format(Polymorphism_ConfigurationDoesNotSpecifyDerivedTypes, arg1);
+            return string.Format("Polymorphic configuration for type '{0}' should specify at least one derived type.", arg1);
         }
 
 
@@ -3044,14 +3026,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Polymorphism_UnrecognizedTypeDiscriminator", resourceCulture);
+                return "Read unrecognized type discriminator id '{0}'.";
             }
         }
 
 
         internal static string FormatPolymorphism_UnrecognizedTypeDiscriminator(object arg1)
         {
-            return string.Format(Polymorphism_UnrecognizedTypeDiscriminator, arg1);
+            return string.Format("Read unrecognized type discriminator id '{0}'.", arg1);
         }
 
 
@@ -3062,14 +3044,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Polymorphism_RuntimeTypeNotSupported", resourceCulture);
+                return "Runtime type '{0}' is not supported by polymorphic type '{1}'.";
             }
         }
 
 
         internal static string FormatPolymorphism_RuntimeTypeNotSupported(object arg1, object arg2)
         {
-            return string.Format(Polymorphism_RuntimeTypeNotSupported, arg1, arg2);
+            return string.Format("Runtime type '{0}' is not supported by polymorphic type '{1}'.", arg1, arg2);
         }
 
 
@@ -3080,14 +3062,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Polymorphism_RuntimeTypeDiamondAmbiguity", resourceCulture);
+                return "Runtime type '{0}' has a diamond ambiguity between derived types '{1}' and '{2}' of polymorphic type '{3}'. Consider either removing one of the derived types or removing the 'JsonUnknownDerivedTypeHandling.FallBackToNearestAncestor' setting.";
             }
         }
 
 
         internal static string FormatPolymorphism_RuntimeTypeDiamondAmbiguity(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(Polymorphism_RuntimeTypeDiamondAmbiguity, arg1, arg2, arg3, arg4);
+            return string.Format("Runtime type '{0}' has a diamond ambiguity between derived types '{1}' and '{2}' of polymorphic type '{3}'. Consider either removing one of the derived types or removing the 'JsonUnknownDerivedTypeHandling.FallBackToNearestAncestor' setting.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -3098,14 +3080,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidJsonTypeInfoOperationForKind", resourceCulture);
+                return "Invalid JsonTypeInfo operation for JsonTypeInfoKind '{0}'.";
             }
         }
 
 
         internal static string FormatInvalidJsonTypeInfoOperationForKind(object arg1)
         {
-            return string.Format(InvalidJsonTypeInfoOperationForKind, arg1);
+            return string.Format("Invalid JsonTypeInfo operation for JsonTypeInfoKind '{0}'.", arg1);
         }
 
 
@@ -3116,14 +3098,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("OnDeserializingCallbacksNotSupported", resourceCulture);
+                return "The type '{0}' does not support setting OnDeserializing callbacks.";
             }
         }
 
 
         internal static string FormatOnDeserializingCallbacksNotSupported(object arg1)
         {
-            return string.Format(OnDeserializingCallbacksNotSupported, arg1);
+            return string.Format("The type '{0}' does not support setting OnDeserializing callbacks.", arg1);
         }
 
 
@@ -3134,14 +3116,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CreateObjectConverterNotCompatible", resourceCulture);
+                return "The converter for type '{0}' does not support setting 'CreateObject' delegates.";
             }
         }
 
 
         internal static string FormatCreateObjectConverterNotCompatible(object arg1)
         {
-            return string.Format(CreateObjectConverterNotCompatible, arg1);
+            return string.Format("The converter for type '{0}' does not support setting 'CreateObject' delegates.", arg1);
         }
 
 
@@ -3152,14 +3134,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("JsonPropertyInfoBoundToDifferentParent", resourceCulture);
+                return "JsonPropertyInfo with name '{0}' for type '{1}' is already bound to different JsonTypeInfo.";
             }
         }
 
 
         internal static string FormatJsonPropertyInfoBoundToDifferentParent(object arg1, object arg2)
         {
-            return string.Format(JsonPropertyInfoBoundToDifferentParent, arg1, arg2);
+            return string.Format("JsonPropertyInfo with name '{0}' for type '{1}' is already bound to different JsonTypeInfo.", arg1, arg2);
         }
 
 
@@ -3170,7 +3152,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("JsonSerializerOptionsNoTypeInfoResolverSpecified", resourceCulture);
+                return "JsonSerializerOptions instance must specify a TypeInfoResolver setting before being marked as read-only.";
             }
         }
 
@@ -3183,7 +3165,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("JsonSerializerIsReflectionDisabled", resourceCulture);
+                return "Reflection-based serialization has been disabled for this application. Either use the source generator APIs or explicitly configure the 'JsonSerializerOptions.TypeInfoResolver' property.";
             }
         }
 
@@ -3196,7 +3178,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("JsonPolymorphismOptionsAssociatedWithDifferentJsonTypeInfo", resourceCulture);
+                return "Parameter already associated with a different JsonTypeInfo instance.";
             }
         }
 
@@ -3209,14 +3191,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("JsonPropertyRequiredAndNotDeserializable", resourceCulture);
+                return "JsonPropertyInfo '{0}' defined in type '{1}' is marked required but does not specify a setter.";
             }
         }
 
 
         internal static string FormatJsonPropertyRequiredAndNotDeserializable(object arg1, object arg2)
         {
-            return string.Format(JsonPropertyRequiredAndNotDeserializable, arg1, arg2);
+            return string.Format("JsonPropertyInfo '{0}' defined in type '{1}' is marked required but does not specify a setter.", arg1, arg2);
         }
 
 
@@ -3227,14 +3209,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("JsonPropertyRequiredAndExtensionData", resourceCulture);
+                return "JsonPropertyInfo '{0}' defined in type '{1}' is marked both as required and as an extension data property. This combination is not supported.";
             }
         }
 
 
         internal static string FormatJsonPropertyRequiredAndExtensionData(object arg1, object arg2)
         {
-            return string.Format(JsonPropertyRequiredAndExtensionData, arg1, arg2);
+            return string.Format("JsonPropertyInfo '{0}' defined in type '{1}' is marked both as required and as an extension data property. This combination is not supported.", arg1, arg2);
         }
 
 
@@ -3245,14 +3227,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("JsonRequiredPropertiesMissing", resourceCulture);
+                return "JSON deserialization for type '{0}' was missing required properties including: {1}.";
             }
         }
 
 
         internal static string FormatJsonRequiredPropertiesMissing(object arg1, object arg2)
         {
-            return string.Format(JsonRequiredPropertiesMissing, arg1, arg2);
+            return string.Format("JSON deserialization for type '{0}' was missing required properties including: {1}.", arg1, arg2);
         }
 
 
@@ -3263,14 +3245,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ObjectCreationHandlingPopulateNotSupportedByConverter", resourceCulture);
+                return "Property '{0}' on type '{1}' is marked with JsonObjectCreationHandling.Populate but it doesn't support populating. This can be either because the property type is immutable or it could use a custom converter.";
             }
         }
 
 
         internal static string FormatObjectCreationHandlingPopulateNotSupportedByConverter(object arg1, object arg2)
         {
-            return string.Format(ObjectCreationHandlingPopulateNotSupportedByConverter, arg1, arg2);
+            return string.Format("Property '{0}' on type '{1}' is marked with JsonObjectCreationHandling.Populate but it doesn't support populating. This can be either because the property type is immutable or it could use a custom converter.", arg1, arg2);
         }
 
 
@@ -3281,14 +3263,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ObjectCreationHandlingPropertyMustHaveAGetter", resourceCulture);
+                return "Property '{0}' on type '{1}' is marked with JsonObjectCreationHandling.Populate but it doesn't have a getter.";
             }
         }
 
 
         internal static string FormatObjectCreationHandlingPropertyMustHaveAGetter(object arg1, object arg2)
         {
-            return string.Format(ObjectCreationHandlingPropertyMustHaveAGetter, arg1, arg2);
+            return string.Format("Property '{0}' on type '{1}' is marked with JsonObjectCreationHandling.Populate but it doesn't have a getter.", arg1, arg2);
         }
 
 
@@ -3299,14 +3281,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ObjectCreationHandlingPropertyValueTypeMustHaveASetter", resourceCulture);
+                return "Property '{0}' on type '{1}' is marked with JsonObjectCreationHandling.Populate but is a value type that doesn't have a setter.";
             }
         }
 
 
         internal static string FormatObjectCreationHandlingPropertyValueTypeMustHaveASetter(object arg1, object arg2)
         {
-            return string.Format(ObjectCreationHandlingPropertyValueTypeMustHaveASetter, arg1, arg2);
+            return string.Format("Property '{0}' on type '{1}' is marked with JsonObjectCreationHandling.Populate but is a value type that doesn't have a setter.", arg1, arg2);
         }
 
 
@@ -3317,14 +3299,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ObjectCreationHandlingPropertyCannotAllowPolymorphicDeserialization", resourceCulture);
+                return "Property '{0}' on type '{1}' is marked with JsonObjectCreationHandling.Populate but its type allows polymorphic deserialization.";
             }
         }
 
 
         internal static string FormatObjectCreationHandlingPropertyCannotAllowPolymorphicDeserialization(object arg1, object arg2)
         {
-            return string.Format(ObjectCreationHandlingPropertyCannotAllowPolymorphicDeserialization, arg1, arg2);
+            return string.Format("Property '{0}' on type '{1}' is marked with JsonObjectCreationHandling.Populate but its type allows polymorphic deserialization.", arg1, arg2);
         }
 
 
@@ -3335,14 +3317,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ObjectCreationHandlingPropertyCannotAllowReadOnlyMember", resourceCulture);
+                return "Property '{0}' on type '{1}' is marked with JsonObjectCreationHandling.Populate but it is a read-only member and JsonSerializerOptions has IgnoreReadOnlyProperties or IgnoreReadOnlyFields set.";
             }
         }
 
 
         internal static string FormatObjectCreationHandlingPropertyCannotAllowReadOnlyMember(object arg1, object arg2)
         {
-            return string.Format(ObjectCreationHandlingPropertyCannotAllowReadOnlyMember, arg1, arg2);
+            return string.Format("Property '{0}' on type '{1}' is marked with JsonObjectCreationHandling.Populate but it is a read-only member and JsonSerializerOptions has IgnoreReadOnlyProperties or IgnoreReadOnlyFields set.", arg1, arg2);
         }
 
 
@@ -3353,7 +3335,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ObjectCreationHandlingPropertyCannotAllowReferenceHandling", resourceCulture);
+                return "JsonObjectCreationHandling.Populate is incompatible with reference handling.";
             }
         }
 
@@ -3366,7 +3348,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ObjectCreationHandlingPropertyDoesNotSupportParameterizedConstructors", resourceCulture);
+                return "JsonObjectCreationHandling.Populate is currently not supported in types with parameterized constructors.";
             }
         }
 
@@ -3379,7 +3361,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FormatInt128", resourceCulture);
+                return "Either the JSON value is not in a supported format, or is out of bounds for an Int128.";
             }
         }
 
@@ -3392,7 +3374,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FormatUInt128", resourceCulture);
+                return "Either the JSON value is not in a supported format, or is out of bounds for an UInt128.";
             }
         }
 
@@ -3405,7 +3387,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FormatHalf", resourceCulture);
+                return "Either the JSON value is not in a supported format, or is out of bounds for a Half.";
             }
         }
 
@@ -3418,7 +3400,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidIndentCharacter", resourceCulture);
+                return "Supported indentation characters are space and horizontal tab.";
             }
         }
 
@@ -3431,14 +3413,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidIndentSize", resourceCulture);
+                return "Indentation size must be between {0} and {1}.";
             }
         }
 
 
         internal static string FormatInvalidIndentSize(object arg1, object arg2)
         {
-            return string.Format(InvalidIndentSize, arg1, arg2);
+            return string.Format("Indentation size must be between {0} and {1}.", arg1, arg2);
         }
 
 
@@ -3449,7 +3431,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PipeWriterCanceled", resourceCulture);
+                return "PipeWriter.FlushAsync was canceled.";
             }
         }
 
@@ -3462,14 +3444,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PipeWriter_DoesNotImplementUnflushedBytes", resourceCulture);
+                return "The PipeWriter '{0}' does not implement PipeWriter.UnflushedBytes.";
             }
         }
 
 
         internal static string FormatPipeWriter_DoesNotImplementUnflushedBytes(object arg1)
         {
-            return string.Format(PipeWriter_DoesNotImplementUnflushedBytes, arg1);
+            return string.Format("The PipeWriter '{0}' does not implement PipeWriter.UnflushedBytes.", arg1);
         }
 
 
@@ -3480,7 +3462,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidNewLine", resourceCulture);
+                return "New line can be only \"\\n\" or \"\\r\\n\".";
             }
         }
 
@@ -3493,14 +3475,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyGetterDisallowNull", resourceCulture);
+                return "The property or field '{0}' on type '{1}' doesn't allow getting null values. Consider updating its nullability annotation.";
             }
         }
 
 
         internal static string FormatPropertyGetterDisallowNull(object arg1, object arg2)
         {
-            return string.Format(PropertyGetterDisallowNull, arg1, arg2);
+            return string.Format("The property or field '{0}' on type '{1}' doesn't allow getting null values. Consider updating its nullability annotation.", arg1, arg2);
         }
 
 
@@ -3511,14 +3493,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertySetterDisallowNull", resourceCulture);
+                return "The property or field '{0}' on type '{1}' doesn't allow setting null values. Consider updating its nullability annotation.";
             }
         }
 
 
         internal static string FormatPropertySetterDisallowNull(object arg1, object arg2)
         {
-            return string.Format(PropertySetterDisallowNull, arg1, arg2);
+            return string.Format("The property or field '{0}' on type '{1}' doesn't allow setting null values. Consider updating its nullability annotation.", arg1, arg2);
         }
 
 
@@ -3529,14 +3511,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ConstructorParameterDisallowNull", resourceCulture);
+                return "The constructor parameter '{0}' on type '{1}' doesn't allow null values. Consider updating its nullability annotation.";
             }
         }
 
 
         internal static string FormatConstructorParameterDisallowNull(object arg1, object arg2)
         {
-            return string.Format(ConstructorParameterDisallowNull, arg1, arg2);
+            return string.Format("The constructor parameter '{0}' on type '{1}' doesn't allow null values. Consider updating its nullability annotation.", arg1, arg2);
         }
 
 
@@ -3547,7 +3529,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("JsonSchemaExporter_ReferenceHandlerPreserve_NotSupported", resourceCulture);
+                return "JSON schema generation is not supported for contracts using ReferenceHandler.Preserve.";
             }
         }
 
@@ -3560,7 +3542,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("JsonSchemaExporter_DepthTooLarge", resourceCulture);
+                return "The depth of the generated JSON schema exceeds the JsonSerializerOptions.MaxDepth setting.";
             }
         }
 
@@ -3573,14 +3555,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_WrongType", resourceCulture);
+                return "The value '{0}' is not of type '{1}' and cannot be used in this generic collection.";
             }
         }
 
 
         internal static string FormatArg_WrongType(object arg1, object arg2)
         {
-            return string.Format(Arg_WrongType, arg1, arg2);
+            return string.Format("The value '{0}' is not of type '{1}' and cannot be used in this generic collection.", arg1, arg2);
         }
 
 
@@ -3591,7 +3573,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_ArrayPlusOffTooSmall", resourceCulture);
+                return "Destination array is not long enough to copy all the items in the collection. Check array index and length.";
             }
         }
 
@@ -3604,7 +3586,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_RankMultiDimNotSupported", resourceCulture);
+                return "Only single dimensional arrays are supported for the requested action.";
             }
         }
 
@@ -3617,7 +3599,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_NonZeroLowerBound", resourceCulture);
+                return "The lower bound of target array must be zero.";
             }
         }
 
@@ -3630,7 +3612,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_IncompatibleArrayType", resourceCulture);
+                return "Target array type is not compatible with the type of items in the collection.";
             }
         }
 
@@ -3643,14 +3625,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_KeyNotFoundWithKey", resourceCulture);
+                return "The given key '{0}' was not present in the dictionary.";
             }
         }
 
 
         internal static string FormatArg_KeyNotFoundWithKey(object arg1)
         {
-            return string.Format(Arg_KeyNotFoundWithKey, arg1);
+            return string.Format("The given key '{0}' was not present in the dictionary.", arg1);
         }
 
 
@@ -3661,14 +3643,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_AddingDuplicate", resourceCulture);
+                return "An item with the same key has already been added. Key: {0}";
             }
         }
 
 
         internal static string FormatArgument_AddingDuplicate(object arg1)
         {
-            return string.Format(Argument_AddingDuplicate, arg1);
+            return string.Format("An item with the same key has already been added. Key: {0}", arg1);
         }
 
 
@@ -3679,7 +3661,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_ConcurrentOperationsNotSupported", resourceCulture);
+                return "Operations that change non-concurrent collections must have exclusive access. A concurrent update was performed on this collection and corrupted its state. The collection's state is no longer correct.";
             }
         }
 
@@ -3692,7 +3674,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_EnumFailedVersion", resourceCulture);
+                return "Collection was modified after the enumerator was instantiated.";
             }
         }
 
@@ -3705,14 +3687,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_Generic_MustBeNonNegative", resourceCulture);
+                return "{0} ('{1}') must be a non-negative value.";
             }
         }
 
 
         internal static string FormatArgumentOutOfRange_Generic_MustBeNonNegative(object arg1, object arg2)
         {
-            return string.Format(ArgumentOutOfRange_Generic_MustBeNonNegative, arg1, arg2);
+            return string.Format("{0} ('{1}') must be a non-negative value.", arg1, arg2);
         }
 
 
@@ -3723,14 +3705,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_Generic_MustBeGreaterOrEqual", resourceCulture);
+                return "{0} ('{1}') must be greater than or equal to '{2}'.";
             }
         }
 
 
         internal static string FormatArgumentOutOfRange_Generic_MustBeGreaterOrEqual(object arg1, object arg2, object arg3)
         {
-            return string.Format(ArgumentOutOfRange_Generic_MustBeGreaterOrEqual, arg1, arg2, arg3);
+            return string.Format("{0} ('{1}') must be greater than or equal to '{2}'.", arg1, arg2, arg3);
         }
 
 
@@ -3741,14 +3723,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_Generic_MustBeLessOrEqual", resourceCulture);
+                return "{0} ('{1}') must be less than or equal to '{2}'.";
             }
         }
 
 
         internal static string FormatArgumentOutOfRange_Generic_MustBeLessOrEqual(object arg1, object arg2, object arg3)
         {
-            return string.Format(ArgumentOutOfRange_Generic_MustBeLessOrEqual, arg1, arg2, arg3);
+            return string.Format("{0} ('{1}') must be less than or equal to '{2}'.", arg1, arg2, arg3);
         }
 
 
@@ -3759,7 +3741,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_HTCapacityOverflow", resourceCulture);
+                return "Hashtable's capacity overflowed and went negative. Check load factor, capacity and the current size of the table.";
             }
         }
 
@@ -3772,7 +3754,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidOffLen", resourceCulture);
+                return "Offset and length were out of bounds for the array or count is greater than the number of elements from index to the end of the source collection.";
             }
         }
 
@@ -3785,7 +3767,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotWriteWithinString", resourceCulture);
+                return "Writing a JSON property or value before writing the final string value segment is not supported.";
             }
         }
 
@@ -3798,7 +3780,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_MustBeRune", resourceCulture);
+                return "Object must be of type Rune.";
             }
         }
 
@@ -3811,7 +3793,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_IndexMustBeLess", resourceCulture);
+                return "Index was out of range. Must be non-negative and less than the size of the collection.";
             }
         }
 
@@ -3824,7 +3806,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_DestinationTooShort", resourceCulture);
+                return "Destination is too short.";
             }
         }
 
@@ -3837,7 +3819,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_CannotExtractScalar", resourceCulture);
+                return "Cannot extract a Unicode scalar value from the specified index in the input.";
             }
         }
 
@@ -3850,14 +3832,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotMixEncodings", resourceCulture);
+                return "Mixing UTF encodings in a single multi-segment JSON string is not supported. The previous segment's encoding was '{0}' and the current segment's encoding is '{1}'.";
             }
         }
 
 
         internal static string FormatCannotMixEncodings(object arg1, object arg2)
         {
-            return string.Format(CannotMixEncodings, arg1, arg2);
+            return string.Format("Mixing UTF encodings in a single multi-segment JSON string is not supported. The previous segment's encoding was '{0}' and the current segment's encoding is '{1}'.", arg1, arg2);
         }
 
 
@@ -3868,14 +3850,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DuplicatePropertiesNotAllowed_JsonPropertyInfo", resourceCulture);
+                return "Duplicate property '{0}' encountered during deserialization of type '{1}'.";
             }
         }
 
 
         internal static string FormatDuplicatePropertiesNotAllowed_JsonPropertyInfo(object arg1, object arg2)
         {
-            return string.Format(DuplicatePropertiesNotAllowed_JsonPropertyInfo, arg1, arg2);
+            return string.Format("Duplicate property '{0}' encountered during deserialization of type '{1}'.", arg1, arg2);
         }
 
 
@@ -3886,14 +3868,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DuplicatePropertiesNotAllowed_NameSpan", resourceCulture);
+                return "Duplicate property '{0}' encountered during deserialization.";
             }
         }
 
 
         internal static string FormatDuplicatePropertiesNotAllowed_NameSpan(object arg1)
         {
-            return string.Format(DuplicatePropertiesNotAllowed_NameSpan, arg1);
+            return string.Format("Duplicate property '{0}' encountered during deserialization.", arg1);
         }
 
 
@@ -3904,7 +3886,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DuplicatePropertiesNotAllowed", resourceCulture);
+                return "Duplicate properties not allowed during deserialization.";
             }
         }
 
@@ -3917,7 +3899,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PipeReaderCanceled", resourceCulture);
+                return "PipeReader.ReadAsync was canceled.";
             }
         }
 

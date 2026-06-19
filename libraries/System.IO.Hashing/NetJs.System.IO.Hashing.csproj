@@ -14,15 +14,10 @@ System.IO.Hashing.Crc32
 System.IO.Hashing.XxHash32</PackageDescription>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Hashing\src\System\IO\Hashing\Adler32.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Hashing\src\System\IO\Hashing\Crc32.cs" />
-    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Hashing\src\System\IO\Hashing\Crc32ParameterSet.cs" />
-    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Hashing\src\System\IO\Hashing\Crc32ParameterSet.Table.cs" />
-    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Hashing\src\System\IO\Hashing\Crc32ParameterSet.WellKnown.cs" />
+    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Hashing\src\System\IO\Hashing\Crc32.Table.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Hashing\src\System\IO\Hashing\Crc64.cs" />
-    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Hashing\src\System\IO\Hashing\Crc64ParameterSet.cs" />
-    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Hashing\src\System\IO\Hashing\Crc64ParameterSet.Table.cs" />
-    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Hashing\src\System\IO\Hashing\Crc64ParameterSet.WellKnown.cs" />
+    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Hashing\src\System\IO\Hashing\Crc64.Table.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Hashing\src\System\IO\Hashing\NonCryptographicHashAlgorithm.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Hashing\src\System\IO\Hashing\XxHash128.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Hashing\src\System\IO\Hashing\XxHash3.cs" />
@@ -33,9 +28,9 @@ System.IO.Hashing.XxHash32</PackageDescription>
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Hashing\src\System\IO\Hashing\XxHashShared.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'">
-    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Hashing\src\System\IO\Hashing\Crc32ParameterSet.Vectorized.cs" />
-    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Hashing\src\System\IO\Hashing\Crc64ParameterSet.Vectorized.cs" />
-    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Hashing\src\System\IO\Hashing\CrcPolynomialHelper.cs" />
+    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Hashing\src\System\IO\Hashing\Crc32.Arm.cs" />
+    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Hashing\src\System\IO\Hashing\Crc32.Vectorized.cs" />
+    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Hashing\src\System\IO\Hashing\Crc64.Vectorized.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Hashing\src\System\IO\Hashing\VectorHelper.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Hashing\src\System\ThrowHelper.cs" />
   </ItemGroup>

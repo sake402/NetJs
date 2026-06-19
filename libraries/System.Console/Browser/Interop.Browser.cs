@@ -33,10 +33,10 @@ internal static partial class Interop
             return -1;
         }
 
-        internal static unsafe partial int WriteToNonblocking(SafeHandle fd, byte* buffer, int bufferSize)
-        {
-            return -1;
-        }
+        //internal static unsafe partial int WriteToNonblocking(SafeHandle fd, byte* buffer, int bufferSize)
+        //{
+        //    return -1;
+        //}
 
         internal static partial Error ConvertErrorPlatformToPal(int platformErrno)
         {
@@ -52,6 +52,7 @@ internal static partial class Interop
         {
             return null;
         }
+
     }
 }
 

@@ -129,28 +129,66 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Ref
                                 return false;
                             }
                         }
-                        if (node.Parent.IsKind(SyntaxKind.Argument))
+                        ArgumentSyntax? arg = null;
+                        node.Parent?.VisitParentHierachy((node, depth) =>
+                        {
+                            if (node.IsKind(SyntaxKind.Argument))
+                            {
+                                arg = (ArgumentSyntax)node;
+                                return false;
+                            }
+                            if (node.IsKind(SyntaxKind.SuppressNullableWarningExpression))
+                                return true;
+                            return false;
+                        });
+                        if (arg != null)
                         {
                             IArgumentOperation? operation = null;
-                            foreach(var sm in visitor.SemanticModels)
+                            foreach (var sm in visitor.SemanticModels)
                             {
                                 if (node.SyntaxTree == sm.SyntaxTree)
                                 {
-                                    operation = sm.GetOperation(node.Parent) as IArgumentOperation;
+                                    operation = sm.GetOperation(arg) as IArgumentOperation;
                                     break;
                                 }
                             }
-                            if (operation?.Parameter!= null)
+                            if (operation?.Parameter != null)
                             {
                                 var parameterRefKind = operation?.Parameter.GetRefKind();
                                 if (parameterRefKind != null && parameterRefKind != RefKind.None) //Passing a ref to a ref argument, no dereference
                                     return false;
                             }
-                            if (((ArgumentSyntax)node.Parent).RefKindKeyword.ValueText.Length > 0)
+                            if (arg.RefKindKeyword.ValueText.Length > 0)
                             {
                                 return false;
                             }
                         }
+                        //if (node.Parent.IsKind(SyntaxKind.Argument) || (node.Parent.IsKind(SyntaxKind.SuppressNullableWarningExpression) && node.Parent.Parent.IsKind(SyntaxKind.Argument)))
+                        //{
+                        //    IArgumentOperation? operation = null;
+                        //    foreach (var sm in visitor.SemanticModels)
+                        //    {
+                        //        if (node.SyntaxTree == sm.SyntaxTree)
+                        //        {
+                        //            operation = sm.GetOperation(node.Parent) as IArgumentOperation ?? sm.GetOperation(node.Parent.Parent!) as IArgumentOperation;
+                        //            break;
+                        //        }
+                        //    }
+                        //    if (operation?.Parameter != null)
+                        //    {
+                        //        var parameterRefKind = operation?.Parameter.GetRefKind();
+                        //        if (parameterRefKind != null && parameterRefKind != RefKind.None) //Passing a ref to a ref argument, no dereference
+                        //            return false;
+                        //    }
+                        //    if (node.Parent.IsKind(SyntaxKind.Argument) && ((ArgumentSyntax)node.Parent).RefKindKeyword.ValueText.Length > 0)
+                        //    {
+                        //        return false;
+                        //    }
+                        //    if (node.Parent.IsKind(SyntaxKind.SuppressNullableWarningExpression) && ((ArgumentSyntax)node.Parent.Parent!).RefKindKeyword.ValueText.Length > 0)
+                        //    {
+                        //        return false;
+                        //    }
+                        //}
                         if (node.Parent.IsKind(SyntaxKind.AddressOfExpression))
                         {
                             return false;

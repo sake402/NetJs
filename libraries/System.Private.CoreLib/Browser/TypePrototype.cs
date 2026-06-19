@@ -9,14 +9,18 @@ namespace System
     [External]
     public class TypePrototype
     {
-        [Name(Constants.AssemblyRegistryName)]
+        [Name(Constants.PrototypeAssemblyName)]
         public Assembly? Assembly { get; set; }
         [Name("name")]
         public string Name { get; }
-        [Name(Constants.ObjectTypeName)]
+        [Name("prototype")]
+        public TypePrototype? Prototype { get; }
+        [Name(Constants.PrototypeTypeName)]
         public Type? Type { get; set; }
         //[Name("$model")]
         //public TypeModel? Model { get; set; }
+        [Name("$"+ NetJs.Constants.PrototypeMetadata)]
+        internal TypeModel? MetadataBackingField { get; set; }
         [Name(NetJs.Constants.PrototypeMetadata)]
         public TypeModel? Metadata { get; }
         [Name("$args")]
@@ -26,19 +30,39 @@ namespace System
         [Name("$parent")]
         public TypePrototype? Parent { get; set; }
         [Name(Constants.PrototypeFullName)]
-        public string FullName { get; set; } = default!;
+        public string FullName { get; }
+        [Name(Constants.PrototypeKind)]
+        public TypeKindModel Kind { get; }
+        [Name(Constants.PrototypeInterfaces)]
+        public TypePrototype[]? Interfaces { get; }
+        //[Name(Constants.PrototypeBaseTypeHandle)]
+        //public ulong BaseTypeHandle { get; }
+        [Name(Constants.PrototypeTypeFlags)]
+        public TypeFlagsModel Flags { get; }
+        [Name(Constants.PrototypeKnownType)]
+        public KnownTypeHandle KnownType { get; }
+        [Name(Constants.PrototypeStructSize)]
+        public int Size { get; }
+        [Name(Constants.PrototypeGenericArgumentCount)]
+        public int GenericArguments { get; }
+        [Name(Constants.PrototypeTypeHandle)]
+        public ulong TypeHandle { get; set; } = default!;
+        [Name(Constants.PrototypeMetadataFullName)]
+        public string MetadataFullName { get; set; } = default!;
         [Name(Constants.IsTypeName)]
         public extern bool Is(object value);
         [Name(Constants.StaticInitializerName)]
         public extern bool StaticInitializeMembers();
         [Name(Constants.StaticConstructorName)]
         public extern bool StaticConstructor();
-        [Template("new {this}()." + Constants.DefaultConstructorName + "()")]
+        [Template("new {this}()")]
         public extern object CallDefaultConstructor();
         [Name("constructor")]
         public extern object NativeConstructor();
-        [Template("new {this}()." + Constants.DefaultConstructorName + "()")]
+        [Template("new {this}()")]
         public extern object New();
+        [Template("new {this}()." + Constants.DefaultConstructorName + "()")]
+        public extern object NewWithDefaultConstructor();
     }
 
     [External]
@@ -50,7 +74,31 @@ namespace System
         public extern TypePrototype UnderlyingType { get; }
     }
     [NetJs.NativeDelegate]
-    public delegate TypePrototype TypePrototypeProvider(object self, TypePrototype[]? genericArgs, TypePrototype? baseType);
+    public delegate TypePrototype TypePrototypeProvider(object self/*, TypePrototype[]? genericArgs, TypePrototype? baseType*/);
     [NetJs.NativeDelegate]
-    public delegate TypePrototype ParameterlessTypePrototypeProvider(object self);
+    public delegate TypePrototype GenericTypePrototypeProvider([Spread] params TypePrototype[]? genericArgs);
+    //[NetJs.NativeDelegate]
+    //public delegate TypePrototype ParameterlessTypePrototypeProvider(object self);
+
+    [Boot]
+    [OutputOrder(int.MinValue)]
+    [Reflectable(false)]
+    public static class TypePrototypeExtension
+    {
+        /// <summary>
+        /// Identifies the class T1 .. T32 used as generic type
+        /// </summary>
+        /// <param name="t"></param>
+        /// <returns></returns>
+        public static bool IsGenericParameter(this TypePrototype t)
+        {
+            if (NetJs.Script.IsUndefinedOrNull(t))
+                return true;
+            var typeHandle = t.TypeHandle.As<uint>().GetTypeHandle();
+            return typeHandle >= (int)KnownTypeHandle.GenericType1Placeholder && typeHandle <= (int)KnownTypeHandle.GenericTypeMaxPlaceholder;
+            //if (t.Metadata.Handle.Type)
+            //TODO: use the typehandle instead of name
+            return t.FullName.NativeEquals("") && t.Name.NativeStartsWith("$T");
+        }
+    }
 }

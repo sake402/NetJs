@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Microsoft.Extensions.Options", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,14 +70,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Error_CannotActivateAbstractOrInterface", resourceCulture);
+                return "Cannot create instance of type '{0}' because it is either abstract or an interface.";
             }
         }
 
 
         internal static string FormatError_CannotActivateAbstractOrInterface(object arg1)
         {
-            return string.Format(Error_CannotActivateAbstractOrInterface, arg1);
+            return string.Format("Cannot create instance of type '{0}' because it is either abstract or an interface.", arg1);
         }
 
 
@@ -88,14 +88,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Error_FailedBinding", resourceCulture);
+                return "Failed to convert '{0}' to type '{1}'.";
             }
         }
 
 
         internal static string FormatError_FailedBinding(object arg1, object arg2)
         {
-            return string.Format(Error_FailedBinding, arg1, arg2);
+            return string.Format("Failed to convert '{0}' to type '{1}'.", arg1, arg2);
         }
 
 
@@ -106,14 +106,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Error_FailedToActivate", resourceCulture);
+                return "Failed to create instance of type '{0}'.";
             }
         }
 
 
         internal static string FormatError_FailedToActivate(object arg1)
         {
-            return string.Format(Error_FailedToActivate, arg1);
+            return string.Format("Failed to create instance of type '{0}'.", arg1);
         }
 
 
@@ -124,14 +124,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Error_MissingParameterlessConstructor", resourceCulture);
+                return "Cannot create instance of type '{0}' because it is missing a public parameterless constructor.";
             }
         }
 
 
         internal static string FormatError_MissingParameterlessConstructor(object arg1)
         {
-            return string.Format(Error_MissingParameterlessConstructor, arg1);
+            return string.Format("Cannot create instance of type '{0}' because it is missing a public parameterless constructor.", arg1);
         }
 
 
@@ -142,7 +142,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Error_NoConfigurationServices", resourceCulture);
+                return "No IConfigureOptions<>, IPostConfigureOptions<>, or IValidateOptions<> implementations were found.";
             }
         }
 
@@ -155,7 +155,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Error_NoConfigurationServicesAndAction", resourceCulture);
+                return "No IConfigureOptions<>, IPostConfigureOptions<>, or IValidateOptions<> implementations were found, did you mean to call Configure<> or PostConfigure<>?";
             }
         }
 

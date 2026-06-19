@@ -72,6 +72,9 @@ Whenever we sync our forked dotnet runtime and aspnetcore with official repo, we
 		</ItemGroup>
 	</Project>
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.IO.MemoryMappedFiles\src\System.IO.MemoryMappedFiles.csproj">
+		<PropertyGroup>
+			<DefineConstants>$(DefineConstants);MEMORY_MAPPED_FILES</DefineConstants>
+		</PropertyGroup>
 		<ItemGroup>
 			<Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interops\Interop.Errors.cs"  Link="Browser\Interop\Interop.Errors.cs" />
 			<Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interops\Interop.FTruncate.cs" Link="Browser\Interop\Interop.FTruncate.cs" />
@@ -87,8 +90,6 @@ Whenever we sync our forked dotnet runtime and aspnetcore with official repo, we
 			<Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interops\Interop.MSync.cs"  Link="Browser\Interop\Interop.MSync.cs"  />
 			<Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interops\Interop.ShmOpen.cs"  Link="Browser\Interop\Interop.ShmOpen.cs"  />
 			<Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interops\Interop.Fcntl.cs"  Link="Browser\Interop\Interop.Fcntl.cs"  />
-	  
-			<Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.Stat.cs"  Link="Browser\Interop\Interop.StatNative.cs"  />
 		</ItemGroup>
 	</Project>
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.IO.Hashing\src\System.IO.Hashing.csproj"  Remove="//ItemGroup/PackageReference@Include=System.Memory|System.Buffers">
@@ -111,6 +112,8 @@ Whenever we sync our forked dotnet runtime and aspnetcore with official repo, we
 	</Project>-->
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Linq\src\System.Linq.csproj">
 	</Project>
+	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Linq.Queryable\src\System.Linq.Queryable.csproj">
+	</Project>
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Linq.Expressions\src\System.Linq.Expressions.csproj">
 	</Project>
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.ComponentModel\src\System.ComponentModel.csproj">
@@ -122,6 +125,12 @@ Whenever we sync our forked dotnet runtime and aspnetcore with official repo, we
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.ComponentModel.TypeConverter\src\System.ComponentModel.TypeConverter.csproj">
 	</Project>
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Console\src\System.Console.csproj">
+		<PropertyGroup>
+			<DefineConstants>$(DefineConstants);CONSOLE</DefineConstants>
+		</PropertyGroup>
+		<ItemGroup>
+			<Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interops\Interop.Dup.cs"  Link="Browser\Interop\Interop.Dup.cs" />
+		</ItemGroup>
 	</Project>
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Diagnostics.StackTrace\src\System.Diagnostics.StackTrace.csproj">
 	</Project>

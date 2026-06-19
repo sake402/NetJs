@@ -125,17 +125,19 @@ namespace NetJs.Translator.CSharpToJavascript
             var rightPatternSymbol = (node.Parent.IsKind(SyntaxKind.NotPattern) || node.Parent.IsKind(SyntaxKind.IsPatternExpression)) && !node.Expression.IsKind(SyntaxKind.NullLiteralExpression) ?
                 _global.GetSymbol(node.Expression, this) :
                 null;
+            var rightPatternType = rightPatternSymbol != null ? _global.GetTypeSymbol(rightPatternSymbol) : null;
             if (leftPatternType != null &&
                 leftPatternType.Kind == SymbolKind.NamedType &&
                 SymbolEqualityComparer.Default.Equals(leftPatternType, _global.SystemObject) &&
-                rightPatternSymbol != null)
+                rightPatternSymbol != null &&
+                rightPatternType != null)
             {
                 var var_i = ++CurrentTypeWriter.CurrentClosure.NameManglingSeed;
                 CurrentTypeWriter.InsertAbove(node, $"let $t{var_i};", true);
                 CurrentTypeWriter.Write(node, $"({(node.Parent.IsKind(SyntaxKind.NotPattern) ? "!" : "")}{_global.GlobalName}.{Constants.IsTypeName}(");
                 WritePatternExpressionFilter(node);
                 CurrentTypeWriter.Write(node, $", ");
-                CurrentTypeWriter.Write(node, rightPatternSymbol.ComputeOutputTypeName(_global));
+                CurrentTypeWriter.Write(node, rightPatternType.ComputeOutputTypeName(_global));
                 CurrentTypeWriter.Write(node, $", {{ set {Constants.RefValueName}(v){{ $t{var_i} = v }} }}");
                 CurrentTypeWriter.Write(node, $") && $t{var_i} === ");
                 Visit(node.Expression);
@@ -177,7 +179,7 @@ namespace NetJs.Translator.CSharpToJavascript
             if (patternExpressionWrittenAlready == 0)
                 WritePatternExpressionFilter(node);
             CurrentTypeWriter.Write(node, " ");
-            CurrentTypeWriter.Write(node, node.OperatorToken.ValueText);
+            CurrentTypeWriter.Write(node, node.OperatorToken.ResolveIdentifierName());
             CurrentTypeWriter.Write(node, " ");
             Visit(node.Expression);
             //base.VisitRelationalPattern(node);
@@ -189,7 +191,7 @@ namespace NetJs.Translator.CSharpToJavascript
             //WritePatternExpressionFilter(node);
             Visit(node.Left);
             CurrentTypeWriter.Write(node, ")");
-            switch (node.OperatorToken.ValueText)
+            switch (node.OperatorToken.ResolveIdentifierName())
             {
                 case "or":
                     CurrentTypeWriter.Write(node, " || ");
@@ -198,7 +200,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     CurrentTypeWriter.Write(node, " && ");
                     break;
                 default:
-                    CurrentTypeWriter.Write(node, $" {node.OperatorToken.ValueText} ");
+                    CurrentTypeWriter.Write(node, $" {node.OperatorToken.ResolveIdentifierName()} ");
                     break;
             }
             CurrentTypeWriter.Write(node, "(");
@@ -276,8 +278,8 @@ namespace NetJs.Translator.CSharpToJavascript
                         if (p.NameColon != null)
                         {
                             var id = p.NameColon.Name;
-                            var property = (IPropertySymbol)_global.GetSymbol(id, this);
-                            WriteMemberAccess(p, new CodeNode(() => { }), property.ContainingType, id.Identifier.ValueText, null);
+                            var member = _global.GetSymbol(id, this);
+                            WriteMemberAccess(p, new CodeNode(() => { }), member.ContainingType, id.Identifier.ResolveIdentifierName(), null);
                         }
                         else if (p.ExpressionColon != null)
                         {
@@ -490,9 +492,9 @@ namespace NetJs.Translator.CSharpToJavascript
                     var slice = (SlicePatternSyntax)pattern;
                     if (patternType != null && patternType.IsArray(out var elementType) && slice.Pattern is VarPatternSyntax varPattern)
                     {
-                        CurrentTypeWriter.InsertAbove(node, $"let {((SingleVariableDesignationSyntax)varPattern.Designation).Identifier.ValueText};", true);
+                        CurrentTypeWriter.InsertAbove(node, $"let {((SingleVariableDesignationSyntax)varPattern.Designation).Identifier.ResolveIdentifierName()};", true);
                         CurrentTypeWriter.Write(node, " && ");
-                        CurrentTypeWriter.Write(node, $"({((SingleVariableDesignationSyntax)varPattern.Designation).Identifier.ValueText} = ");
+                        CurrentTypeWriter.Write(node, $"({((SingleVariableDesignationSyntax)varPattern.Designation).Identifier.ResolveIdentifierName()} = ");
                         WriteCreateSubArray(node, elementType, new CodeNode(() => WritePatternExpressionFilter(node, dereferenceListPattern: false)), new CodeNode(() =>
                         {
                             WriteCreateRange(node, new CodeNode(() =>
@@ -540,8 +542,8 @@ namespace NetJs.Translator.CSharpToJavascript
                 CurrentTypeWriter.Write(node, "(");
                 hasOpeningBracket = true;
 
-                CurrentTypeWriter.InsertInCurrentClosure(node, $"let {sv.Identifier.ValueText};", true);
-                CurrentTypeWriter.Write(node, $"{sv.Identifier.ValueText} = ");
+                CurrentTypeWriter.InsertInCurrentClosure(node, $"let {sv.Identifier.ResolveIdentifierName()};", true);
+                CurrentTypeWriter.Write(node, $"{sv.Identifier.ResolveIdentifierName()} = ");
                 WritePatternExpressionFilter(node);
                 CurrentTypeWriter.Write(node, ", ");
             }
@@ -582,7 +584,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitVarPattern(VarPatternSyntax node)
         {
-            var varName = ((SingleVariableDesignationSyntax)node.Designation).Identifier.ValueText;
+            var varName = ((SingleVariableDesignationSyntax)node.Designation).Identifier.ResolveIdentifierName();
             CurrentTypeWriter.InsertAbove(node, $"let {varName};", true);
             CurrentTypeWriter.Write(node, $"{(node.Parent.IsKind(SyntaxKind.NotPattern) ? "!" : "")}({varName} = ");
             WritePatternExpressionFilter(node);
@@ -615,7 +617,8 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
                 if (svd != null)
                 {
-                    CurrentTypeWriter.InsertInCurrentClosure(node, $"let {svd.Identifier.ValueText};", true);
+                    //CurrentTypeWriter.InsertInCurrentClosure(node, $"let {svd.Identifier.ResolveIdentifierName()};", true);
+                    CurrentTypeWriter.InsertAbove(node, $"let {svd.Identifier.ResolveIdentifierName()};", true);
                     //CurrentTypeWriter.Write(node, "(");
                     //CurrentTypeWriter.Write(node, svd.Identifier.ValueText);
                     //CurrentTypeWriter.Write(node, $" = ");
@@ -636,7 +639,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 if (svd != null)
                 {
                     CurrentTypeWriter.Write(node, $", ");
-                    CurrentTypeWriter.Write(node, $"{{ set {Constants.RefValueName}(v){{ {svd.Identifier.ValueText} = v; }} }}");
+                    CurrentTypeWriter.Write(node, $"{{ set {Constants.RefValueName}(v){{ {svd.Identifier.ResolveIdentifierName()} = v; }} }}");
                 }
                 CurrentTypeWriter.Write(node, $")");
                 //if (svd != null)
@@ -648,11 +651,11 @@ namespace NetJs.Translator.CSharpToJavascript
                     var localSymbol = _global.TryGetSymbol(svd, this/*, out _, out _*/);
                     if (localSymbol != null)
                     {
-                        CurrentClosure.DefineIdentifierType(svd.Identifier.ValueText, CodeSymbol.From(localSymbol));
+                        CurrentClosure.DefineIdentifierType(svd.Identifier.ResolveIdentifierName(), CodeSymbol.From(localSymbol));
                     }
                     else
                     {
-                        CurrentClosure.DefineIdentifierType(svd.Identifier.ValueText, CodeSymbol.From(declarationPattern.Type, SymbolKind.Local));
+                        CurrentClosure.DefineIdentifierType(svd.Identifier.ResolveIdentifierName(), CodeSymbol.From(declarationPattern.Type, SymbolKind.Local));
                         //Writer.Write(node, $", {svd.Identifier.ValueText} = {id}");
                     }
                 }

@@ -1,6 +1,7 @@
 ﻿using NetJs;
 using System.Runtime.CompilerServices;
 using System.Runtime.Versioning;
+using Window;
 
 namespace System
 {
@@ -35,7 +36,9 @@ namespace System
         [NetJs.Convention(NetJs.Notation.CamelCase)]
         public virtual extern bool PropertyIsEnumerable(object v);
         [NetJs.Template("{this}.constructor")]
-        public extern TypePrototype GetPrototype();
+        public extern TypePrototype GetClassPrototype();
+        [NetJs.Template("{value}.constructor")]
+        public static extern TypePrototype GetClassPrototypeOf(object value);
 
         [NetJs.Convention(NetJs.Notation.CamelCase)]
         [NetJs.Template("{obj}.hasOwnProperty({name})")]
@@ -49,18 +52,36 @@ namespace System
         [NetJs.Convention(NetJs.Notation.CamelCase)]
         [NetJs.Template("{T}.prototype")]
         public static extern TypePrototype GetPrototype<T>();
-        [NetJs.Convention(NetJs.Notation.CamelCase)]
         [NetJs.Template("Object.getPrototypeOf({value})")]
         public static extern TypePrototype GetPrototypeOf(object value);
-
+        [NetJs.Template("Object.setPrototypeOf({prototype}, {value})")]
+        public static extern TypePrototype SetPrototypeOf(TypePrototype prototype, object value);
+        [NetJs.Convention(NetJs.Notation.CamelCase)]
+        [NetJs.Template("Object.getOwnPropertyDescriptor({value}, {key})")]
+        public static extern PropertyDescriptor GetOwnPropertyDescriptor(object value, string key);
+        [NetJs.Convention(NetJs.Notation.CamelCase)]
+        [NetJs.Template("Object.getOwnPropertyDescriptors({value})")]
+        public static extern PropertyDescriptor[] GetOwnPropertyDescriptors(object value);
         [NetJs.Convention(NetJs.Notation.CamelCase)]
         [NetJs.Template("Object.defineProperty({value}, {name}, {descriptor})")]
         public static extern TypePrototype DefineProperty(object value, string name, PropertyDescriptor descriptor);
+        [NetJs.Convention(NetJs.Notation.CamelCase)]
+        [NetJs.Template("Object.defineProperties({value}, {descriptors})")]
+        public static extern TypePrototype DefineProperties(object value, PropertyDescriptor[] descriptors);
+        [NetJs.Convention(NetJs.Notation.CamelCase)]
+        [NetJs.Template("Object.create({prototype})")]
+        public static extern object Create(TypePrototype prototype);
 
 
         [NetJs.Template("{global.}$clone({this:!super})")]
         [NetJs.MemberReplace(nameof(MemberwiseClone))]
         protected extern object IntrisicMemberwiseClone();
+
+        public static extern TypePrototype? Prototype
+        {
+            [NetJs.Template("Object.prototype")]
+            get;
+        }
 
         /////String is a reference type. But we box it anyway like every other js primitive type,
         ////because we want to be able to access the methods exposed by String class on it, especially the interface methods.
@@ -80,6 +101,11 @@ namespace System
             var value = this;
             if (value == null)
                 throw new NullReferenceException();
+            var isProxy = this[NetJs.Constants.IsProxy].As<bool>();
+            if (isProxy == true)
+            {
+                return this[NetJs.Constants.ProxyType].As<Type>();
+            }
             if (Array<object>.Is(value) || NetJs.Script.IsArray(value))
             {
                 return Array.GetArrayType(value.As<Array>());
@@ -151,14 +177,14 @@ namespace System
             return RuntimeHelpers.GetHashCode(this);
         }
 
-        [NetJs.Reflectable(false)]
-        const bool FieldLayoutByByte = false;
+        //[NetJs.Reflectable(false)]
+        //const bool FieldLayoutByByte = false;
 
         #region ObjectFieldAccess
 
         [NetJs.Name(NetJs.Constants.StructFieldsLayoutName)]
         [NetJs.Reflectable(false)]
-        internal object[] _fields = NetJs.Script.NewArray<object>();
+        internal Union<object[], DataView> _fields;
         //public extern object? this[int offset]
         //{
         //    [dotnetJs.External]
@@ -166,329 +192,429 @@ namespace System
         //    [dotnetJs.External]
         //    set;
         //}
-        byte GetByte(int offset)
-        {
-            unchecked
-            {
-                return _fields[offset].As<byte>();
-            }
-        }
 
-        void SetByte(int offset, byte value)
-        {
-            unchecked
-            {
-                _fields[offset] = value.As<object>();
-            }
-        }
+        //byte GetByte(int offset)
+        //{
+        //    unchecked
+        //    {
+        //        return _fields[offset].As<byte>();
+        //    }
+        //}
 
-        sbyte GetSByte(int offset)
-        {
-            unchecked
-            {
-                return _fields[offset].As<sbyte>();
-            }
-        }
-        void SetSByte(int offset, sbyte value)
-        {
-            unchecked
-            {
-                _fields[offset] = value.As<object>();
-            }
-        }
+        //void SetByte(int offset, byte value)
+        //{
+        //    unchecked
+        //    {
+        //        _fields[offset] = value.As<object>();
+        //    }
+        //}
 
-        ushort GetUShort(int offset)
-        {
-            unchecked
-            {
-                if (FieldLayoutByByte)
-                    return (_fields[offset].As<int>() | (_fields[offset + 1].As<int>() << 8)).As<ushort>();
-                else
-                    return _fields[offset].As<ushort>();
-            }
-        }
+        //sbyte GetSByte(int offset)
+        //{
+        //    unchecked
+        //    {
+        //        return _fields[offset].As<sbyte>();
+        //    }
+        //}
+        //void SetSByte(int offset, sbyte value)
+        //{
+        //    unchecked
+        //    {
+        //        _fields[offset] = value.As<object>();
+        //    }
+        //}
 
-        void SetUShort(int offset, ushort value)
-        {
-            unchecked
-            {
-                if (FieldLayoutByByte)
-                {
-                    _fields[offset] = (value & 0xFF).As<object>();
-                    _fields[offset + 1] = ((value >> 8) & 0xFF).As<object>();
-                }
-                else
-                {
-                    _fields[offset] = value.As<object>();
-                }
-            }
-        }
+        //ushort GetUShort(int offset)
+        //{
+        //    unchecked
+        //    {
+        //        if (FieldLayoutByByte)
+        //            return (_fields[offset].As<int>() | (_fields[offset + 1].As<int>() << 8)).As<ushort>();
+        //        else
+        //            return _fields[offset].As<ushort>();
+        //    }
+        //}
 
-
-        short GetShort(int offset)
-        {
-            unchecked
-            {
-                if (FieldLayoutByByte)
-                    return (_fields[offset].As<int>() | (_fields[offset + 1].As<int>() << 8)).As<short>();
-                else
-                    return _fields[offset].As<short>();
-            }
-        }
-        void SetShort(int offset, short value)
-        {
-            unchecked
-            {
-                if (FieldLayoutByByte)
-                {
-                    _fields[offset] = (value & 0xFF).As<object>();
-                    _fields[offset + 1] = ((value >> 8) & 0xFF).As<object>();
-                }
-                else
-                {
-                    _fields[offset] = value.As<object>();
-                }
-            }
-        }
+        //void SetUShort(int offset, ushort value)
+        //{
+        //    unchecked
+        //    {
+        //        if (FieldLayoutByByte)
+        //        {
+        //            _fields[offset] = (value & 0xFF).As<object>();
+        //            _fields[offset + 1] = ((value >> 8) & 0xFF).As<object>();
+        //        }
+        //        else
+        //        {
+        //            _fields[offset] = value.As<object>();
+        //        }
+        //    }
+        //}
 
 
-        uint GetUInt(int offset)
-        {
-            unchecked
-            {
-                if (FieldLayoutByByte)
-                {
-                    return (
-                    _fields[offset].As<uint>() |
-                    (_fields[offset + 1].As<uint>() << 8) |
-                    (_fields[offset + 2].As<uint>() << 16) |
-                    (_fields[offset + 3].As<uint>() << 24)
-                    ).As<uint>();
-                }
-                else
-                {
-                    return _fields[offset].As<uint>();
-                }
-            }
-        }
+        //short GetShort(int offset)
+        //{
+        //    unchecked
+        //    {
+        //        if (FieldLayoutByByte)
+        //            return (_fields[offset].As<int>() | (_fields[offset + 1].As<int>() << 8)).As<short>();
+        //        else
+        //            return _fields[offset].As<short>();
+        //    }
+        //}
+        //void SetShort(int offset, short value)
+        //{
+        //    unchecked
+        //    {
+        //        if (FieldLayoutByByte)
+        //        {
+        //            _fields[offset] = (value & 0xFF).As<object>();
+        //            _fields[offset + 1] = ((value >> 8) & 0xFF).As<object>();
+        //        }
+        //        else
+        //        {
+        //            _fields[offset] = value.As<object>();
+        //        }
+        //    }
+        //}
 
-        void SetUInt(int offset, uint value)
-        {
-            unchecked
-            {
-                if (FieldLayoutByByte)
-                {
-                    _fields[offset] = (value & 0xFF).As<object>();
-                    _fields[offset + 1] = ((value >> 8) & 0xFF).As<object>();
-                    _fields[offset + 1] = ((value >> 16) & 0xFF).As<object>();
-                    _fields[offset + 1] = ((value >> 24) & 0xFF).As<object>();
-                }
-                else
-                {
-                    _fields[offset] = value.As<object>();
-                }
-            }
-        }
 
-        int GetInt(int offset)
-        {
-            unchecked
-            {
-                if (FieldLayoutByByte)
-                {
-                    return (
-                    _fields[offset].As<int>() |
-                    (_fields[offset + 1].As<int>() << 8) |
-                    (_fields[offset + 2].As<int>() << 16) |
-                    (_fields[offset + 3].As<int>() << 24)
-                    ).As<int>();
-                }
-                else
-                {
-                    return _fields[offset].As<int>();
-                }
-            }
-        }
+        //uint GetUInt(int offset)
+        //{
+        //    unchecked
+        //    {
+        //        if (FieldLayoutByByte)
+        //        {
+        //            return (
+        //            _fields[offset].As<uint>() |
+        //            (_fields[offset + 1].As<uint>() << 8) |
+        //            (_fields[offset + 2].As<uint>() << 16) |
+        //            (_fields[offset + 3].As<uint>() << 24)
+        //            ).As<uint>();
+        //        }
+        //        else
+        //        {
+        //            return _fields[offset].As<uint>();
+        //        }
+        //    }
+        //}
 
-        void SetInt(int offset, int value)
-        {
-            unchecked
-            {
-                if (FieldLayoutByByte)
-                {
-                    _fields[offset] = (value & 0xFF).As<object>();
-                    _fields[offset + 1] = ((value >> 8) & 0xFF).As<object>();
-                    _fields[offset + 2] = ((value >> 16) & 0xFF).As<object>();
-                    _fields[offset + 3] = ((value >> 24) & 0xFF).As<object>();
-                }
-                else
-                {
-                    _fields[offset] = value.As<object>();
-                }
-            }
-        }
+        //void SetUInt(int offset, uint value)
+        //{
+        //    unchecked
+        //    {
+        //        if (FieldLayoutByByte)
+        //        {
+        //            _fields[offset] = (value & 0xFF).As<object>();
+        //            _fields[offset + 1] = ((value >> 8) & 0xFF).As<object>();
+        //            _fields[offset + 1] = ((value >> 16) & 0xFF).As<object>();
+        //            _fields[offset + 1] = ((value >> 24) & 0xFF).As<object>();
+        //        }
+        //        else
+        //        {
+        //            _fields[offset] = value.As<object>();
+        //        }
+        //    }
+        //}
 
-        ulong GetULong(int offset)
-        {
-            unchecked
-            {
-                if (FieldLayoutByByte)
-                {
-                    return (
-                    _fields[offset].As<ulong>() |
-                    (_fields[offset + 1].As<ulong>() << 8) |
-                    (_fields[offset + 2].As<ulong>() << 16) |
-                    (_fields[offset + 3].As<ulong>() << 24) |
-                    (_fields[offset + 4].As<ulong>() << 32) |
-                    (_fields[offset + 5].As<ulong>() << 40) |
-                    (_fields[offset + 6].As<ulong>() << 48) |
-                    (_fields[offset + 7].As<ulong>() << 56)
-                    ).As<ulong>();
-                }
-                else
-                {
-                    return _fields[offset].As<ulong>();
-                }
-            }
-        }
+        //int GetInt(int offset)
+        //{
+        //    unchecked
+        //    {
+        //        if (FieldLayoutByByte)
+        //        {
+        //            return (
+        //            _fields[offset].As<int>() |
+        //            (_fields[offset + 1].As<int>() << 8) |
+        //            (_fields[offset + 2].As<int>() << 16) |
+        //            (_fields[offset + 3].As<int>() << 24)
+        //            ).As<int>();
+        //        }
+        //        else
+        //        {
+        //            return _fields[offset].As<int>();
+        //        }
+        //    }
+        //}
 
-        void SetULong(int offset, ulong value)
-        {
-            unchecked
-            {
-                if (FieldLayoutByByte)
-                {
-                    _fields[offset] = (value & 0xFF).As<object>();
-                    _fields[offset + 1] = ((value >> 8) & 0xFF).As<object>();
-                    _fields[offset + 2] = ((value >> 16) & 0xFF).As<object>();
-                    _fields[offset + 3] = ((value >> 24) & 0xFF).As<object>();
-                    _fields[offset + 4] = ((value >> 32) & 0xFF).As<object>();
-                    _fields[offset + 5] = ((value >> 40) & 0xFF).As<object>();
-                    _fields[offset + 6] = ((value >> 48) & 0xFF).As<object>();
-                    _fields[offset + 7] = ((value >> 56) & 0xFF).As<object>();
-                }
-                else
-                {
-                    _fields[offset] = value.As<object>();
-                }
-            }
-        }
+        //void SetInt(int offset, int value)
+        //{
+        //    unchecked
+        //    {
+        //        if (FieldLayoutByByte)
+        //        {
+        //            _fields[offset] = (value & 0xFF).As<object>();
+        //            _fields[offset + 1] = ((value >> 8) & 0xFF).As<object>();
+        //            _fields[offset + 2] = ((value >> 16) & 0xFF).As<object>();
+        //            _fields[offset + 3] = ((value >> 24) & 0xFF).As<object>();
+        //        }
+        //        else
+        //        {
+        //            _fields[offset] = value.As<object>();
+        //        }
+        //    }
+        //}
 
-        long GetLong(int offset)
-        {
-            unchecked
-            {
-                if (FieldLayoutByByte)
-                {
-                    return (
-                    _fields[offset].As<long>() |
-                    (_fields[offset + 1].As<long>() << 8) |
-                    (_fields[offset + 2].As<long>() << 16) |
-                    (_fields[offset + 3].As<long>() << 24) |
-                    (_fields[offset + 4].As<long>() << 32) |
-                    (_fields[offset + 5].As<long>() << 40) |
-                    (_fields[offset + 6].As<long>() << 48) |
-                    (_fields[offset + 7].As<long>() << 56)
-                    ).As<long>();
-                }
-                else
-                {
-                    return _fields[offset].As<long>();
-                }
-            }
-        }
+        //ulong GetULong(int offset)
+        //{
+        //    unchecked
+        //    {
+        //        if (FieldLayoutByByte)
+        //        {
+        //            return (
+        //            _fields[offset].As<ulong>() |
+        //            (_fields[offset + 1].As<ulong>() << 8) |
+        //            (_fields[offset + 2].As<ulong>() << 16) |
+        //            (_fields[offset + 3].As<ulong>() << 24) |
+        //            (_fields[offset + 4].As<ulong>() << 32) |
+        //            (_fields[offset + 5].As<ulong>() << 40) |
+        //            (_fields[offset + 6].As<ulong>() << 48) |
+        //            (_fields[offset + 7].As<ulong>() << 56)
+        //            ).As<ulong>();
+        //        }
+        //        else
+        //        {
+        //            return _fields[offset].As<ulong>();
+        //        }
+        //    }
+        //}
 
-        void SetLong(int offset, ulong value)
-        {
-            unchecked
-            {
-                if (FieldLayoutByByte)
-                {
-                    _fields[offset] = (value & 0xFF).As<object>();
-                    _fields[offset + 1] = ((value >> 8) & 0xFF).As<object>();
-                    _fields[offset + 2] = ((value >> 16) & 0xFF).As<object>();
-                    _fields[offset + 3] = ((value >> 24) & 0xFF).As<object>();
-                    _fields[offset + 4] = ((value >> 32) & 0xFF).As<object>();
-                    _fields[offset + 5] = ((value >> 40) & 0xFF).As<object>();
-                    _fields[offset + 6] = ((value >> 48) & 0xFF).As<object>();
-                    _fields[offset + 7] = ((value >> 56) & 0xFF).As<object>();
-                }
-                else
-                {
-                    _fields[offset] = value.As<object>();
-                }
-            }
-        }
+        //void SetULong(int offset, ulong value)
+        //{
+        //    unchecked
+        //    {
+        //        if (FieldLayoutByByte)
+        //        {
+        //            _fields[offset] = (value & 0xFF).As<object>();
+        //            _fields[offset + 1] = ((value >> 8) & 0xFF).As<object>();
+        //            _fields[offset + 2] = ((value >> 16) & 0xFF).As<object>();
+        //            _fields[offset + 3] = ((value >> 24) & 0xFF).As<object>();
+        //            _fields[offset + 4] = ((value >> 32) & 0xFF).As<object>();
+        //            _fields[offset + 5] = ((value >> 40) & 0xFF).As<object>();
+        //            _fields[offset + 6] = ((value >> 48) & 0xFF).As<object>();
+        //            _fields[offset + 7] = ((value >> 56) & 0xFF).As<object>();
+        //        }
+        //        else
+        //        {
+        //            _fields[offset] = value.As<object>();
+        //        }
+        //    }
+        //}
+
+        //long GetLong(int offset)
+        //{
+        //    unchecked
+        //    {
+        //        if (FieldLayoutByByte)
+        //        {
+        //            return (
+        //            _fields[offset].As<long>() |
+        //            (_fields[offset + 1].As<long>() << 8) |
+        //            (_fields[offset + 2].As<long>() << 16) |
+        //            (_fields[offset + 3].As<long>() << 24) |
+        //            (_fields[offset + 4].As<long>() << 32) |
+        //            (_fields[offset + 5].As<long>() << 40) |
+        //            (_fields[offset + 6].As<long>() << 48) |
+        //            (_fields[offset + 7].As<long>() << 56)
+        //            ).As<long>();
+        //        }
+        //        else
+        //        {
+        //            return _fields[offset].As<long>();
+        //        }
+        //    }
+        //}
+
+        //void SetLong(int offset, ulong value)
+        //{
+        //    unchecked
+        //    {
+        //        if (FieldLayoutByByte)
+        //        {
+        //            _fields[offset] = (value & 0xFF).As<object>();
+        //            _fields[offset + 1] = ((value >> 8) & 0xFF).As<object>();
+        //            _fields[offset + 2] = ((value >> 16) & 0xFF).As<object>();
+        //            _fields[offset + 3] = ((value >> 24) & 0xFF).As<object>();
+        //            _fields[offset + 4] = ((value >> 32) & 0xFF).As<object>();
+        //            _fields[offset + 5] = ((value >> 40) & 0xFF).As<object>();
+        //            _fields[offset + 6] = ((value >> 48) & 0xFF).As<object>();
+        //            _fields[offset + 7] = ((value >> 56) & 0xFF).As<object>();
+        //        }
+        //        else
+        //        {
+        //            _fields[offset] = value.As<object>();
+        //        }
+        //    }
+        //}
+
+        //A struct whose member is only numeric type, safe to use DataView for its backing fields
+        [NetJs.Name("$pureStruct")]
+        public bool IsPureStruct => Object.GetClassPrototypeOf(this).Flags.TypeHasFlag(TypeFlagsModel.IsPureStruct);
+        public object[] fieldsAsArray => (_fields ??= NetJs.Script.NewArray<object>()).As<object[]>();
+        public DataView fieldsAsDataView => (_fields ??= new DataView(new ArrayBuffer(GetClassPrototype().Size))).As<DataView>();
+
+        public Array fieldsToObjectArray => IsPureStruct ? Array.from(new Uint8Array(fieldsAsDataView.buffer)) : fieldsAsArray;
 
         [NetJs.Name("$offsetObjects")]
         internal SimpleDictionary<object>? offsetObjects;
-        object GetField(int offset, Union<int, TypePrototype> size)
+
+        [NetJs.Name(NetJs.Constants.ObjectGetField)]
+        internal object GetField(int offset, NetJs.Union<int, TypePrototype> size)
         {
-            unchecked
+            if (IsPureStruct)
             {
-                bool isNumber = NetJs.Script.TypeOf(size).NativeEquals("number");
-                if (!isNumber) //Object of inline array type laid within this object
+                var prototype = size.As<TypePrototype>();
+                var knownType = prototype.KnownType;
+                var realSize = prototype.Size;
+                object InnerStruct()
                 {
                     offsetObjects ??= new();
                     var mobject = offsetObjects[offset];
                     if (NetJs.Script.IsUndefinedOrNull(mobject))
                     {
-                        var realSize = size.As<TypePrototype>().Metadata!.Size ?? 0;
-                        mobject = size.As<TypePrototype>().New();
-                        var fields = JSProxy.Create<object[]>(new ArrayWindowProxyHandler(_fields, offset, realSize));
-                        mobject._fields = fields;
+                        mobject = prototype.NewWithDefaultConstructor();
+                        var ownDataView = new DataView(fieldsAsDataView.buffer, offset, realSize);
+                        mobject._fields = ownDataView;
                         offsetObjects[offset] = mobject;
                     }
                     return mobject;
                 }
-                else if (size.As<int>() > 1) //Array type laid inside this object
+                var value = knownType switch
                 {
-                    offsetObjects ??= new();
-                    var arrayProxy = offsetObjects[offset];
-                    if (NetJs.Script.IsUndefinedOrNull(arrayProxy))
-                    {
-                        arrayProxy = JSProxy.Create<object[]>(new ArrayWindowProxyHandler(_fields, offset, size.As<int>()));
-                        offsetObjects[offset] = arrayProxy;
-                    }
-                    return arrayProxy;
-                }
-                else
-                {
-                    return _fields[offset];
-                }
+                    KnownTypeHandle.SystemSByte => fieldsAsDataView.getInt8(offset).As<object>(),
+                    KnownTypeHandle.SystemByte => fieldsAsDataView.getUint8(offset).As<object>(),
+                    KnownTypeHandle.SystemInt16 => fieldsAsDataView.getInt16(offset, true).As<object>(),
+                    KnownTypeHandle.SystemUInt16 or KnownTypeHandle.SystemChar => fieldsAsDataView.getUint16(offset, true).As<object>(),
+                    KnownTypeHandle.SystemInt32 or KnownTypeHandle.SystemIntPtr => fieldsAsDataView.getInt32(offset, true).As<object>(),
+                    KnownTypeHandle.SystemUint32 or KnownTypeHandle.SystemUintPtr => fieldsAsDataView.getUint32(offset, true).As<object>(),
+                    KnownTypeHandle.SystemInt64 => fieldsAsDataView.getBigInt64(offset, true).As<object>(),
+                    KnownTypeHandle.SystemUint64 => fieldsAsDataView.getBigUint64(offset, true).As<object>(),
+                    KnownTypeHandle.SystemSingle => fieldsAsDataView.getFloat32(offset, true).As<object>(),
+                    KnownTypeHandle.SystemDouble => fieldsAsDataView.getFloat64(offset, true).As<object>(),
+                    _ => InnerStruct()
+                };
+                return value;
             }
-        }
-        void SetField(int offset, Union<int, TypePrototype> size, object value)
-        {
             unchecked
             {
                 bool isNumber = NetJs.Script.TypeOf(size).NativeEquals("number");
                 if (!isNumber)
                 {
-                    var realSize = size.As<TypePrototype>().Metadata!.Size ?? 0;
-                    if (_fields.Length < offset)
-                        NetJs.Script.Write("this.$fields.length = offset");
-                    var sourceFields = value._fields;
-                    if (sourceFields.As<object>()["$isProxy"].As<bool>() == true)
+                    if (size.As<TypePrototype>().Flags.TypeHasFlag(TypeFlagsModel.IsValueType)) //struct in struct, collapse the fields into this fields
                     {
-                        throw null;
+                        offsetObjects ??= new();
+                        var mobject = offsetObjects[offset];
+                        if (NetJs.Script.IsUndefinedOrNull(mobject))
+                        {
+                            var realSize = size.As<TypePrototype>().Size;
+                            mobject = size.As<TypePrototype>().NewWithDefaultConstructor();
+                            var fields = JSProxy.Create<object[]>(new ArrayWindowProxyHandler(fieldsAsArray, offset, realSize));
+                            mobject._fields = fields;
+                            offsetObjects[offset] = mobject;
+                        }
+                        return mobject;
                     }
-                    //if (sourceFields.Length != realSize)
-                    //{
-                    //    throw null;
-                    //}
-                    _fields.Splice(offset, 0, sourceFields);
                 }
-                else if (size.As<int>() > 1)
+                bool isInlineArray = (size.As<uint>() & 0x80000000) != 0;
+                if (isInlineArray) //Array type laid inside this object
                 {
-                    if (_fields.Length < offset)
+                    size = (size.As<uint>() & 0x7FFFFFFF.As<uint>()).As<int>();
+                    offsetObjects ??= new();
+                    var arrayProxy = offsetObjects[offset];
+                    if (NetJs.Script.IsUndefinedOrNull(arrayProxy))
+                    {
+                        arrayProxy = JSProxy.Create<object[]>(new ArrayWindowProxyHandler(fieldsAsArray, offset, size.As<int>()));
+                        offsetObjects[offset] = arrayProxy;
+                    }
+                    return arrayProxy;
+                }
+                return fieldsAsArray[offset];
+            }
+        }
+        [NetJs.Name(NetJs.Constants.ObjectSetField)]
+        internal void SetField(int offset, NetJs.Union<int, TypePrototype> size, object value)
+        {
+            if (IsPureStruct)
+            {
+                var prototype = size.As<TypePrototype>();
+                var knownType = prototype.KnownType;
+                var realSize = prototype.Size;
+                switch (knownType)
+                {
+                    case KnownTypeHandle.SystemByte:
+                        fieldsAsDataView.setUint8(offset, value.As<byte>());
+                        break;
+                    case KnownTypeHandle.SystemSByte:
+                        fieldsAsDataView.setInt8(offset, value.As<sbyte>());
+                        break;
+                    case KnownTypeHandle.SystemChar:
+                    case KnownTypeHandle.SystemUInt16:
+                        fieldsAsDataView.setUint16(offset, value.As<ushort>(), true);
+                        break;
+                    case KnownTypeHandle.SystemInt16:
+                        fieldsAsDataView.setInt16(offset, value.As<short>(), true);
+                        break;
+                    case KnownTypeHandle.SystemUint32:
+                    case KnownTypeHandle.SystemUintPtr:
+                        fieldsAsDataView.setUint32(offset, value.As<uint>(), true);
+                        break;
+                    case KnownTypeHandle.SystemInt32:
+                    case KnownTypeHandle.SystemIntPtr:
+                        fieldsAsDataView.setInt32(offset, value.As<int>(), true);
+                        break;
+                    case KnownTypeHandle.SystemUint64:
+                        fieldsAsDataView.setBigUint64(offset, value.As<ulong>(), true);
+                        break;
+                    case KnownTypeHandle.SystemInt64:
+                        fieldsAsDataView.setBigInt64(offset, value.As<long>(), true);
+                        break;
+                    case KnownTypeHandle.SystemSingle:
+                        fieldsAsDataView.setFloat32(offset, value.As<float>(), true);
+                        break;
+                    case KnownTypeHandle.SystemDouble:
+                        fieldsAsDataView.setFloat64(offset, value.As<double>(), true);
+                        break;
+                    default:
+                        var srcBytes = new Uint8Array(value.fieldsAsDataView.buffer, 0, realSize);
+                        var destBytes = new Uint8Array(fieldsAsDataView.buffer, offset, realSize);
+                        destBytes.set(srcBytes);
+                        break;
+                }
+                return;
+            }
+            unchecked
+            {
+                bool isNumber = NetJs.Script.TypeOf(size).NativeEquals("number");
+                if (!isNumber)
+                {
+                    if (size.As<TypePrototype>().Flags.TypeHasFlag(TypeFlagsModel.IsValueType)) //struct in struct, collapse the fields into this fields
+                    {
+                        var realSize = size.As<TypePrototype>().Size;
+                        if (fieldsAsArray.Length < offset)
+                            NetJs.Script.Write("this.$fields.length = offset");
+                        var sourceFields = value._fields;
+                        if (sourceFields.As<object>()["$isProxy"].As<bool>() == true)
+                        {
+                            throw null;
+                        }
+                        //if (sourceFields.Length != realSize)
+                        //{
+                        //    throw null;
+                        //}
+                        fieldsAsArray.Splice(offset, 0, sourceFields);
+                        return;
+                    }
+                }
+                bool isInlineArray = (size.As<uint>() & 0x80000000) != 0;
+                if (isInlineArray)
+                {
+                    size = (size.As<uint>() & 0x7FFFFFFF.As<uint>()).As<int>();
+                    if (fieldsAsArray.Length < offset)
                         NetJs.Script.Write("this.$fields.length = offset");
-                    _fields.Splice(offset, size.As<int>(), value.As<object[]>());
+                    fieldsAsArray.Splice(offset, size.As<int>(), value.As<object[]>());
+                    return;
                 }
-                else
-                {
-                    _fields[offset] = value;
-                }
+                fieldsAsArray[offset] = value;
             }
         }
 

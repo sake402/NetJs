@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace NetJs.Translator.CSharpToJavascript
 {
@@ -30,9 +31,10 @@ namespace NetJs.Translator.CSharpToJavascript
             return symbol!;
         }
 
-        public void CloseClosure()
+        public void CloseClosure(CSharpSyntaxNode node)
         {
             var closure = closures.Pop();
+            Debug.Assert(node == closure.Syntax);
             closure.Dispose();
         }
 

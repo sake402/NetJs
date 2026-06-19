@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Microsoft.Extensions.DependencyInjection", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,14 +70,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AmbiguousConstructorException", resourceCulture);
+                return "Unable to activate type '{0}'. The following constructors are ambiguous:";
             }
         }
 
 
         internal static string FormatAmbiguousConstructorException(object arg1)
         {
-            return string.Format(AmbiguousConstructorException, arg1);
+            return string.Format("Unable to activate type '{0}'. The following constructors are ambiguous:", arg1);
         }
 
 
@@ -88,14 +88,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotResolveService", resourceCulture);
+                return "Unable to resolve service for type '{0}' while attempting to activate '{1}'.";
             }
         }
 
 
         internal static string FormatCannotResolveService(object arg1, object arg2)
         {
-            return string.Format(CannotResolveService, arg1, arg2);
+            return string.Format("Unable to resolve service for type '{0}' while attempting to activate '{1}'.", arg1, arg2);
         }
 
 
@@ -106,14 +106,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CircularDependencyException", resourceCulture);
+                return "A circular dependency was detected for the service of type '{0}'.";
             }
         }
 
 
         internal static string FormatCircularDependencyException(object arg1)
         {
-            return string.Format(CircularDependencyException, arg1);
+            return string.Format("A circular dependency was detected for the service of type '{0}'.", arg1);
         }
 
 
@@ -124,14 +124,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnableToActivateTypeException", resourceCulture);
+                return "No constructor for type '{0}' can be instantiated using services from the service container and default values.";
             }
         }
 
 
         internal static string FormatUnableToActivateTypeException(object arg1)
         {
-            return string.Format(UnableToActivateTypeException, arg1);
+            return string.Format("No constructor for type '{0}' can be instantiated using services from the service container and default values.", arg1);
         }
 
 
@@ -142,14 +142,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("OpenGenericServiceRequiresOpenGenericImplementation", resourceCulture);
+                return "Open generic service type '{0}' requires registering an open generic implementation type.";
             }
         }
 
 
         internal static string FormatOpenGenericServiceRequiresOpenGenericImplementation(object arg1)
         {
-            return string.Format(OpenGenericServiceRequiresOpenGenericImplementation, arg1);
+            return string.Format("Open generic service type '{0}' requires registering an open generic implementation type.", arg1);
         }
 
 
@@ -160,14 +160,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArityOfOpenGenericServiceNotEqualArityOfOpenGenericImplementation", resourceCulture);
+                return "Arity of open generic service type '{0}' does not equal arity of open generic implementation type '{1}'.";
             }
         }
 
 
         internal static string FormatArityOfOpenGenericServiceNotEqualArityOfOpenGenericImplementation(object arg1, object arg2)
         {
-            return string.Format(ArityOfOpenGenericServiceNotEqualArityOfOpenGenericImplementation, arg1, arg2);
+            return string.Format("Arity of open generic service type '{0}' does not equal arity of open generic implementation type '{1}'.", arg1, arg2);
         }
 
 
@@ -178,14 +178,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TypeCannotBeActivated", resourceCulture);
+                return "Cannot instantiate implementation type '{0}' for service type '{1}'.";
             }
         }
 
 
         internal static string FormatTypeCannotBeActivated(object arg1, object arg2)
         {
-            return string.Format(TypeCannotBeActivated, arg1, arg2);
+            return string.Format("Cannot instantiate implementation type '{0}' for service type '{1}'.", arg1, arg2);
         }
 
 
@@ -196,14 +196,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NoConstructorMatch", resourceCulture);
+                return "A suitable constructor for type '{0}' could not be located. Ensure the type is concrete and services are registered for all parameters of a public constructor.";
             }
         }
 
 
         internal static string FormatNoConstructorMatch(object arg1)
         {
-            return string.Format(NoConstructorMatch, arg1);
+            return string.Format("A suitable constructor for type '{0}' could not be located. Ensure the type is concrete and services are registered for all parameters of a public constructor.", arg1);
         }
 
 
@@ -214,14 +214,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ScopedInSingletonException", resourceCulture);
+                return "Cannot consume {2} service '{0}' from {3} '{1}'.";
             }
         }
 
 
         internal static string FormatScopedInSingletonException(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(ScopedInSingletonException, arg1, arg2, arg3, arg4);
+            return string.Format("Cannot consume {2} service '{0}' from {3} '{1}'.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -232,14 +232,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ScopedResolvedFromRootException", resourceCulture);
+                return "Cannot resolve '{0}' from root provider because it requires {2} service '{1}'.";
             }
         }
 
 
         internal static string FormatScopedResolvedFromRootException(object arg1, object arg2, object arg3)
         {
-            return string.Format(ScopedResolvedFromRootException, arg1, arg2, arg3);
+            return string.Format("Cannot resolve '{0}' from root provider because it requires {2} service '{1}'.", arg1, arg2, arg3);
         }
 
 
@@ -250,14 +250,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DirectScopedResolvedFromRootException", resourceCulture);
+                return "Cannot resolve {1} service '{0}' from root provider.";
             }
         }
 
 
         internal static string FormatDirectScopedResolvedFromRootException(object arg1, object arg2)
         {
-            return string.Format(DirectScopedResolvedFromRootException, arg1, arg2);
+            return string.Format("Cannot resolve {1} service '{0}' from root provider.", arg1, arg2);
         }
 
 
@@ -268,14 +268,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ConstantCantBeConvertedToServiceType", resourceCulture);
+                return "Constant value of type '{0}' can't be converted to service type '{1}'";
             }
         }
 
 
         internal static string FormatConstantCantBeConvertedToServiceType(object arg1, object arg2)
         {
-            return string.Format(ConstantCantBeConvertedToServiceType, arg1, arg2);
+            return string.Format("Constant value of type '{0}' can't be converted to service type '{1}'", arg1, arg2);
         }
 
 
@@ -286,14 +286,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ImplementationTypeCantBeConvertedToServiceType", resourceCulture);
+                return "Implementation type '{0}' can't be converted to service type '{1}'";
             }
         }
 
 
         internal static string FormatImplementationTypeCantBeConvertedToServiceType(object arg1, object arg2)
         {
-            return string.Format(ImplementationTypeCantBeConvertedToServiceType, arg1, arg2);
+            return string.Format("Implementation type '{0}' can't be converted to service type '{1}'", arg1, arg2);
         }
 
 
@@ -304,14 +304,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AsyncDisposableServiceDispose", resourceCulture);
+                return "'{0}' type only implements IAsyncDisposable. Use DisposeAsync to dispose the container.";
             }
         }
 
 
         internal static string FormatAsyncDisposableServiceDispose(object arg1)
         {
-            return string.Format(AsyncDisposableServiceDispose, arg1);
+            return string.Format("'{0}' type only implements IAsyncDisposable. Use DisposeAsync to dispose the container.", arg1);
         }
 
 
@@ -322,7 +322,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("GetCaptureDisposableNotSupported", resourceCulture);
+                return "GetCaptureDisposable call is supported only for main scope";
             }
         }
 
@@ -335,7 +335,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidServiceDescriptor", resourceCulture);
+                return "Invalid service descriptor";
             }
         }
 
@@ -348,7 +348,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ServiceDescriptorNotExist", resourceCulture);
+                return "Requested service descriptor doesn't exist.";
             }
         }
 
@@ -361,14 +361,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CallSiteTypeNotSupported", resourceCulture);
+                return "Call site type {0} is not supported";
             }
         }
 
 
         internal static string FormatCallSiteTypeNotSupported(object arg1)
         {
-            return string.Format(CallSiteTypeNotSupported, arg1);
+            return string.Format("Call site type {0} is not supported", arg1);
         }
 
 
@@ -379,14 +379,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TrimmingAnnotationsDoNotMatch", resourceCulture);
+                return "Generic implementation type '{0}' has a DynamicallyAccessedMembers attribute applied to a generic argument type, but the service type '{1}' doesn't have a matching DynamicallyAccessedMembers attribute on its generic argument type.";
             }
         }
 
 
         internal static string FormatTrimmingAnnotationsDoNotMatch(object arg1, object arg2)
         {
-            return string.Format(TrimmingAnnotationsDoNotMatch, arg1, arg2);
+            return string.Format("Generic implementation type '{0}' has a DynamicallyAccessedMembers attribute applied to a generic argument type, but the service type '{1}' doesn't have a matching DynamicallyAccessedMembers attribute on its generic argument type.", arg1, arg2);
         }
 
 
@@ -397,14 +397,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TrimmingAnnotationsDoNotMatch_NewConstraint", resourceCulture);
+                return "Generic implementation type '{0}' has a DefaultConstructorConstraint ('new()' constraint), but the generic service type '{1}' doesn't.";
             }
         }
 
 
         internal static string FormatTrimmingAnnotationsDoNotMatch_NewConstraint(object arg1, object arg2)
         {
-            return string.Format(TrimmingAnnotationsDoNotMatch_NewConstraint, arg1, arg2);
+            return string.Format("Generic implementation type '{0}' has a DefaultConstructorConstraint ('new()' constraint), but the generic service type '{1}' doesn't.", arg1, arg2);
         }
 
 
@@ -415,14 +415,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AotCannotCreateEnumerableValueType", resourceCulture);
+                return "Unable to create an Enumerable service of type '{0}' because it is a ValueType. Native code to support creating Enumerable services might not be available with native AOT.";
             }
         }
 
 
         internal static string FormatAotCannotCreateEnumerableValueType(object arg1)
         {
-            return string.Format(AotCannotCreateEnumerableValueType, arg1);
+            return string.Format("Unable to create an Enumerable service of type '{0}' because it is a ValueType. Native code to support creating Enumerable services might not be available with native AOT.", arg1);
         }
 
 
@@ -433,14 +433,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AotCannotCreateGenericValueType", resourceCulture);
+                return "Unable to create a generic service for type '{0}' because '{1}' is a ValueType. Native code to support creating generic services might not be available with native AOT.";
             }
         }
 
 
         internal static string FormatAotCannotCreateGenericValueType(object arg1, object arg2)
         {
-            return string.Format(AotCannotCreateGenericValueType, arg1, arg2);
+            return string.Format("Unable to create a generic service for type '{0}' because '{1}' is a ValueType. Native code to support creating generic services might not be available with native AOT.", arg1, arg2);
         }
 
 
@@ -451,14 +451,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NoServiceRegistered", resourceCulture);
+                return "No service for type '{0}' has been registered.";
             }
         }
 
 
         internal static string FormatNoServiceRegistered(object arg1)
         {
-            return string.Format(NoServiceRegistered, arg1);
+            return string.Format("No service for type '{0}' has been registered.", arg1);
         }
 
 
@@ -469,28 +469,23 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidServiceKeyType", resourceCulture);
+                return "The type of the key used for lookup doesn't match the type in the constructor parameter with the ServiceKey attribute.";
             }
         }
 
 
 
         /// <summary>
-        /// KeyedService.AnyKey cannot be used to resolve a single service via {0} or {1}.
+        /// KeyedService.AnyKey cannot be used to resolve a single service.
         /// </summary>
         internal static string KeyedServiceAnyKeyUsedToResolveService
         {
             get
             {
-                return ResourceManager.GetString("KeyedServiceAnyKeyUsedToResolveService", resourceCulture);
+                return "KeyedService.AnyKey cannot be used to resolve a single service.";
             }
         }
 
-
-        internal static string FormatKeyedServiceAnyKeyUsedToResolveService(object arg1, object arg2)
-        {
-            return string.Format(KeyedServiceAnyKeyUsedToResolveService, arg1, arg2);
-        }
 
 
         /// <summary>
@@ -500,14 +495,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NoKeyedServiceRegistered", resourceCulture);
+                return "No keyed service for type '{0}' using key type '{1}' has been registered.";
             }
         }
 
 
         internal static string FormatNoKeyedServiceRegistered(object arg1, object arg2)
         {
-            return string.Format(NoKeyedServiceRegistered, arg1, arg2);
+            return string.Format("No keyed service for type '{0}' using key type '{1}' has been registered.", arg1, arg2);
         }
     }
 }

@@ -181,21 +181,24 @@ else if (args.Length > 0 && args[0] == "watch")
                 var context = contexts[project];
                 if (context.LastProcessed == DateTime.MinValue || DateTime.Now - context.LastProcessed > TimeSpan.FromSeconds(5))
                 {
-                    try
+                    "Building".Profile(() =>
                     {
-                        var wProject = new ProjectWrapper(project);
-                        Translator.Build(wProject, new ProjectBinOutputProvider(wProject));
-                    }
-                    catch (Exception e)
-                    {
-                        while (e != null)
+                        try
                         {
-                            Console.WriteLine(e.GetType().FullName);
-                            Console.WriteLine(e.Message);
-                            Console.WriteLine(e.StackTrace);
-                            e = e.InnerException!;
+                            var wProject = new ProjectWrapper(project);
+                            Translator.Build(wProject, new ProjectBinOutputProvider(wProject));
                         }
-                    }
+                        catch (Exception e)
+                        {
+                            while (e != null)
+                            {
+                                Console.WriteLine(e.GetType().FullName);
+                                Console.WriteLine(e.Message);
+                                Console.WriteLine(e.StackTrace);
+                                e = e.InnerException!;
+                            }
+                        }
+                    });
                     Console.WriteLine("\r\nWaiting for changes...");
                     context.LastProcessed = DateTime.Now;
                 }

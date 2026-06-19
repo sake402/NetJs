@@ -21,7 +21,7 @@ namespace System.Reflection
         [NetJs.MemberReplace]
         internal static int get_MetadataToken(Module module)
         {
-            return (int)module.As<RuntimeModule>().assembly.As<RuntimeAssembly_Partial>()._model.Handle;
+            return module.As<RuntimeModule>().assembly.As<RuntimeAssembly_Partial>()._model.Handle.As<int>();
         }
 
         [NetJs.MemberReplace]
@@ -34,7 +34,7 @@ namespace System.Reflection
         [NetJs.MemberReplace]
         internal static Type[] InternalGetTypes(IntPtr module)
         {
-            return AppDomain.GetAssembly((uint)module)?.GetTypes() ?? [];
+            return AppDomain.GetAssembly(module.As<uint>())?.GetTypes() ?? [];
         }
 
         [NetJs.MemberReplace]

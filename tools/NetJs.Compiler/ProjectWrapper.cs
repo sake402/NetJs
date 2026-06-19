@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Project = Microsoft.Build.Evaluation.Project;
+using NuGet.Packaging;
 
 namespace NetJs.Compiler
 {
@@ -40,6 +41,18 @@ namespace NetJs.Compiler
         {
             return project.AllEvaluatedProperties.Last(e => e.Name == "OutputPath").EvaluatedValue;
         }
+        public string GetConfiguration()
+        {
+            return project.AllEvaluatedProperties.Last(e => e.Name == "Configuration").EvaluatedValue;
+        }
+        public string GetPlatform()
+        {
+            return project.AllEvaluatedProperties.Last(e => e.Name == "Platform").EvaluatedValue;
+        }
+        public string GetTargetFramework()
+        {
+            return project.AllEvaluatedProperties.Last(e => e.Name == "TargetFramework").EvaluatedValue;
+        }
         public OutputMode GetOutputMode()
         {
             var v = project.AllEvaluatedProperties.LastOrDefault(e => e.Name == "OutputMode")?.EvaluatedValue;
@@ -73,6 +86,13 @@ namespace NetJs.Compiler
                     sourceFiles.Add(Path.Join(project.DirectoryPath, projectItem.EvaluatedInclude));
             }
 
+            //Check for source generated files
+            var sourceGenOutputPath = $"{project.DirectoryPath}/obj/{GetPlatform()}/{GetConfiguration()}/{GetTargetFramework()}/generated";
+            if (Directory.Exists(sourceGenOutputPath))
+            {
+                var csFiles = Directory.EnumerateFiles(sourceGenOutputPath, "*.cs", SearchOption.AllDirectories);
+                sourceFiles.AddRange(csFiles);
+            }
             return sourceFiles;
         }
 
@@ -88,6 +108,19 @@ namespace NetJs.Compiler
                     sourceFiles.Add(projectItem.EvaluatedInclude);
                 else
                     sourceFiles.Add(Path.Join(project.DirectoryPath, projectItem.EvaluatedInclude));
+            }
+            foreach (var projectItem in project.AllEvaluatedItems.Where(i => i.ItemType == "None"))
+            {
+                if (projectItem.EvaluatedInclude.Contains(".NETCoreApp,"))
+                    continue;
+                var extension = Path.GetExtension(projectItem.EvaluatedInclude);
+                if (extension == ".js" || extension == ".css" || extension == ".html")
+                {
+                    if (projectItem.EvaluatedInclude.Contains(':')) //check if it has volume label already
+                        sourceFiles.Add(projectItem.EvaluatedInclude);
+                    else
+                        sourceFiles.Add(Path.Join(project.DirectoryPath, projectItem.EvaluatedInclude));
+                }
             }
 
             return sourceFiles;

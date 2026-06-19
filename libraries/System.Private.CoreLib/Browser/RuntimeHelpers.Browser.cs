@@ -1,9 +1,11 @@
 ﻿using NetJs;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using Window;
 
 namespace System.Runtime.CompilerServices
 {
@@ -113,22 +115,31 @@ namespace System.Runtime.CompilerServices
             throw null!;
         }
 
-        public static Ref<T> CreateObjectReference<T>([NativeDelegate] Func<T> getValue, [NativeDelegate] Action<T>? setValue)
+        public static Ref<T> CreateObjectReference<T>(NativeFunction<T> getValue, NativeAction<T>? setValue, int? _byteOffset = null)
         {
-            //int? a = 1;
-            //var s = Global.IfNotNull(a, aa=>aa.ToString());
-            //return new RefOrPointer<T?>((i) => getValue(), (v, i) => Global.IfNotNull(setValue, t => t.Invoke(v)));
             Ref<T> rref = default!;
             rref = new Ref<T>((i) => rref!._object = getValue(), (v, i) =>
             {
                 if (setValue != null)
                     setValue(v);
             });
-            //variable being referenced may be uninitialized, make sure _object is not undefined
-            rref._object = getValue() ?? default(T);
+            rref._byteOffset = _byteOffset??0;
+            //It is a common pattern to create a variable on the stack uninitialized and then pass the ref of such(via out or ref) to a method to provide the value
+            //By default in js the variable are undefined.
+            //If however the ref type is struct, it is possible the method being called try to access the properties of the uninitialized object on stack
+            //Make sure the ref variable is initialized to default here
+            //TODO: We probably should make the transpiler initialize an uinit variable on stack always to their default
+            var varValue = getValue();
+            if (NetJs.Script.IsUndefined(varValue))
+            {
+                varValue = default(T);
+                if (setValue != null)
+                    setValue(varValue!); //make sure it is initialized
+            }
+            rref._object = varValue;
             return rref;
         }
-        
+
         public static Ref<T?> CreateArrayReference<T>(T[] array, int? index = null, bool _checked = false)
         {
             Ref<T?> refs;
@@ -235,6 +246,14 @@ namespace System.Runtime.CompilerServices
         //{
         //    return NetJs.Script.Write<int>("$.$getHashCode(o)");
         //}
+
+        [NetJs.MemberReplace(nameof(GetRawData))]
+        internal static ref byte GetRawDataImpl(this object obj)
+        {
+            ref byte result = ref NetJs.Script.Ref<byte>(CreateObjectReference<byte>(() => obj.As<byte>(), (v) => { }));
+            return ref result;
+        }
+
 
         [NetJs.MemberReplace(nameof(GetObjectValue))]
         public static object? GetObjectValueImpl(object? obj)
@@ -401,13 +420,17 @@ namespace System.Runtime.CompilerServices
             return TryGetHashCode(o);
         }
 
-        [NetJs.Template("{handle}._ptr.$v")]
+        [NetJs.Template("{handle}")]
+        //[NetJs.Template("{handle}._ptr?.$v")]
         internal static extern RuntimeAssembly QCallAssemblyHandleToRuntimeType(this QCallAssembly handle);
-        [NetJs.Template("{handle}._ptr.$v")]
+        [NetJs.Template("{handle}")]
+        //[NetJs.Template("{handle}._ptr.$v")]
         internal static extern RuntimeModule QCallModuleHandleToRuntimeType(this QCallModule handle);
-        [NetJs.Template("{handle}._ptr.$v")]
+        [NetJs.Template("{handle}")]
+        //[NetJs.Template("{handle}._ptr.$v")]
         internal static extern RuntimeType QCallTypeHandleToRuntimeType(this QCallTypeHandle handle);
-        [NetJs.Template("{handle}._ptr")]
+        [NetJs.Template("{handle}.$v")]
+        //[NetJs.Template("{handle}._ptr")]
         internal static extern ref T GetObjectHandleOnStack<T>(this ObjectHandleOnStack handle);
 
         [NetJs.MemberReplace(nameof(IsReferenceOrContainsReferences) + "<>")]
@@ -427,6 +450,134 @@ namespace System.Runtime.CompilerServices
             if (Array.Is(obj))
                 return true;
             return false;
+        }
+
+        internal static unsafe object[]? GetParametersFromPointer(IntPtr* args)
+        {
+            object[]? parameters = null;
+            if (args != null)
+            {
+                var reff = NetJs.Script.Write<RefOrPointer<object>>(nameof(args));
+                var paramContainer = reff?._object;
+                if (NetJs.Script.IsDefined(paramContainer))
+                {
+                    if (reff!.Type.As<RuntimeType>()._prototype.Flags.TypeHasFlag(TypeFlagsModel.IsInlineArray))
+                    {
+                        parameters = [];
+                        unchecked
+                        {
+                            for (int i = 0; i < paramContainer!.fieldsAsArray.Length; i++)
+                            {
+                                var param = paramContainer!.fieldsAsArray[i];
+                                if (param.Is(typeof(ByReference)))
+                                {
+                                    param = param[nameof(ByReference.Value)]![NetJs.Constants.RefValueName];
+                                }
+                                parameters.Push(param);
+                            }
+                        }
+                    }
+                }
+            }
+            return parameters;
+        }
+
+        internal static object NativeFunctionDispatch(object targetOrPrototype, string methodName, params object?[]? parameters)
+        {
+            var method = targetOrPrototype[methodName];
+            return NetJs.Script.Write<object>("method.apply(targetOrPrototype, parameters)");
+        }
+
+        internal static object NativeFunctionDispatch(object targetOrPrototype, MemberModel member, params object?[]? parameters)
+        {
+            var methodName = NetJs.Script.IsDefined(member.OutputName) ? member.OutputName!.NativeReplace("@", member.Name) : member.Name;
+            return NativeFunctionDispatch(targetOrPrototype, methodName, parameters);
+        }
+
+        public static byte[] StructToByteArray(object _object)
+        {
+            if (_object.IsPureStruct)
+            {
+                return Array.from(new Uint8Array(_object.fieldsAsDataView.buffer)).As<byte[]>();
+            }
+            var jsArray = _object.fieldsAsArray;
+            var fields = _object.GetType().As<RuntimeType>()._prototype.Metadata!.Fields!;
+            //all fields are byte type, no need to rearrange
+            if (fields.Every(f => f.FieldType.As<int>() == (int)KnownTypeHandle.SystemByte || f.FieldType.As<int>() == (int)KnownTypeHandle.SystemSByte))
+            {
+                return jsArray.As<byte[]>();
+            }
+            byte[] bytes = [];
+            RecursiveStructToByteArray(_object, bytes);
+            return bytes;
+        }
+
+        static void RecursiveStructToByteArray(object _object, byte[] bytes)
+        {
+            var jsArray = _object.fieldsAsArray;
+            var fields = _object.GetType().As<RuntimeType>()._prototype.Metadata!.Fields!;
+            int currentByteOffset = 0;
+            for (int i = 0; i < fields.Length; i++)
+            {
+                var fieldType = AppDomain.GetType(fields[i].FieldType.As<uint>()).As<RuntimeType?>() ?? throw null!;
+                var fieldOffset = fields[i].Offset;
+                var fieldSize = fieldType._prototype.Size;
+                var value = jsArray[fieldOffset ?? currentByteOffset];
+                switch (fieldType._prototype.KnownType)
+                {
+                    case KnownTypeHandle.SystemByte:
+                    case KnownTypeHandle.SystemSByte:
+                        Debug.Assert(fieldSize == 1);
+                        bytes.Push(value);
+                        break;
+                    case KnownTypeHandle.SystemChar:
+                    case KnownTypeHandle.SystemInt16:
+                    case KnownTypeHandle.SystemUInt16:
+                        Debug.Assert(fieldSize == 2);
+                        bytes.Push(value.As<short>() & 0xFF);
+                        bytes.Push((value.As<short>() >> 8) & 0xFF);
+                        break;
+                    case KnownTypeHandle.SystemInt32:
+                    case KnownTypeHandle.SystemUint32:
+                    case KnownTypeHandle.SystemIntPtr:
+                    case KnownTypeHandle.SystemUintPtr:
+                        Debug.Assert(fieldSize == 4);
+                        bytes.Push(value.As<uint>() & 0xFF);
+                        bytes.Push((value.As<uint>() >> 8) & 0xFF);
+                        bytes.Push((value.As<uint>() >> 16) & 0xFF);
+                        bytes.Push((value.As<uint>() >> 24) & 0xFF);
+                        break;
+                    case KnownTypeHandle.SystemInt64:
+                    case KnownTypeHandle.SystemUint64:
+                        Debug.Assert(fieldSize == 8);
+                        bytes.Push((int)(value.As<ulong>() & 0xFF));
+                        bytes.Push((int)((value.As<ulong>() >> 8) & 0xFF));
+                        bytes.Push((int)((value.As<ulong>() >> 16) & 0xFF));
+                        bytes.Push((int)((value.As<ulong>() >> 24) & 0xFF));
+                        bytes.Push((int)((value.As<ulong>() >> 32) & 0xFF));
+                        bytes.Push((int)((value.As<ulong>() >> 40) & 0xFF));
+                        bytes.Push((int)((value.As<ulong>() >> 48) & 0xFF));
+                        bytes.Push((int)((value.As<ulong>() >> 56) & 0xFF));
+                        break;
+                    default:
+                        if (fieldType._prototype.Flags.TypeHasFlag(TypeFlagsModel.IsValueType))
+                        {
+                            RecursiveStructToByteArray(value, bytes);
+                        }
+                        else //reference type, simply safe the js reference itself and skip 4(being our pointer size)
+                        {
+                            bytes.Push(value);
+                            bytes.Push(value);
+                            bytes.Push(value);
+                            bytes.Push(value);
+                        }
+                        break;
+                }
+                if (NetJs.Script.IsDefined(fieldOffset))
+                    currentByteOffset = fieldOffset.As<int>();
+                else
+                    currentByteOffset += fieldSize;
+            }
         }
     }
 }

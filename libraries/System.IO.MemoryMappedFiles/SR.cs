@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.IO.MemoryMappedFiles", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,7 +70,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_FileNotFound", resourceCulture);
+                return "Unable to find the specified file.";
             }
         }
 
@@ -83,14 +83,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_FileNotFound_FileName", resourceCulture);
+                return "Could not find file '{0}'.";
             }
         }
 
 
         internal static string FormatIO_FileNotFound_FileName(object arg1)
         {
-            return string.Format(IO_FileNotFound_FileName, arg1);
+            return string.Format("Could not find file '{0}'.", arg1);
         }
 
 
@@ -101,14 +101,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_AlreadyExists_Name", resourceCulture);
+                return "Cannot create '{0}' because a file or directory with the same name already exists.";
             }
         }
 
 
         internal static string FormatIO_AlreadyExists_Name(object arg1)
         {
-            return string.Format(IO_AlreadyExists_Name, arg1);
+            return string.Format("Cannot create '{0}' because a file or directory with the same name already exists.", arg1);
         }
 
 
@@ -119,14 +119,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_FileExists_Name", resourceCulture);
+                return "The file '{0}' already exists.";
             }
         }
 
 
         internal static string FormatIO_FileExists_Name(object arg1)
         {
-            return string.Format(IO_FileExists_Name, arg1);
+            return string.Format("The file '{0}' already exists.", arg1);
         }
 
 
@@ -137,14 +137,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_SharingViolation_File", resourceCulture);
+                return "The process cannot access the file '{0}' because it is being used by another process.";
             }
         }
 
 
         internal static string FormatIO_SharingViolation_File(object arg1)
         {
-            return string.Format(IO_SharingViolation_File, arg1);
+            return string.Format("The process cannot access the file '{0}' because it is being used by another process.", arg1);
         }
 
 
@@ -155,7 +155,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_SharingViolation_NoFileName", resourceCulture);
+                return "The process cannot access the file because it is being used by another process.";
             }
         }
 
@@ -168,14 +168,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_PathNotFound_Path", resourceCulture);
+                return "Could not find a part of the path '{0}'.";
             }
         }
 
 
         internal static string FormatIO_PathNotFound_Path(object arg1)
         {
-            return string.Format(IO_PathNotFound_Path, arg1);
+            return string.Format("Could not find a part of the path '{0}'.", arg1);
         }
 
 
@@ -186,7 +186,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_PathNotFound_NoPathName", resourceCulture);
+                return "Could not find a part of the path.";
             }
         }
 
@@ -199,7 +199,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_PathTooLong", resourceCulture);
+                return "The specified file name or path is too long, or a component of the specified path is too long.";
             }
         }
 
@@ -212,14 +212,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnauthorizedAccess_IODenied_Path", resourceCulture);
+                return "Access to the path '{0}' is denied.";
             }
         }
 
 
         internal static string FormatUnauthorizedAccess_IODenied_Path(object arg1)
         {
-            return string.Format(UnauthorizedAccess_IODenied_Path, arg1);
+            return string.Format("Access to the path '{0}' is denied.", arg1);
         }
 
 
@@ -230,7 +230,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnauthorizedAccess_IODenied_NoPathName", resourceCulture);
+                return "Access to the path is denied.";
             }
         }
 
@@ -243,7 +243,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_MapNameEmptyString", resourceCulture);
+                return "Map name cannot be an empty string.";
             }
         }
 
@@ -256,7 +256,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_EmptyFile", resourceCulture);
+                return "A positive capacity must be specified for a Memory Mapped File backed by an empty file.";
             }
         }
 
@@ -269,7 +269,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_NewMMFWriteAccessNotAllowed", resourceCulture);
+                return "MemoryMappedFileAccess.Write is not permitted when creating new memory mapped files. Use MemoryMappedFileAccess.ReadWrite instead.";
             }
         }
 
@@ -282,7 +282,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_ReadAccessWithLargeCapacity", resourceCulture);
+                return "When specifying MemoryMappedFileAccess.Read access, the capacity must not be larger than the file size.";
             }
         }
 
@@ -295,7 +295,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_NewMMFAppendModeNotAllowed", resourceCulture);
+                return "FileMode.Append is not permitted when creating new memory mapped files. Instead, use MemoryMappedFileView to ensure write-only access within a specified region.";
             }
         }
 
@@ -308,7 +308,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_NewMMFTruncateModeNotAllowed", resourceCulture);
+                return "FileMode.Truncate is not permitted when creating new memory mapped files.";
             }
         }
 
@@ -321,7 +321,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_CapacityLargerThanLogicalAddressSpaceNotAllowed", resourceCulture);
+                return "The capacity cannot be greater than the size of the system's logical address space.";
             }
         }
 
@@ -334,7 +334,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_FileLengthTooBig", resourceCulture);
+                return "Specified file length was too large for the file system.";
             }
         }
 
@@ -347,7 +347,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_PositiveOrDefaultCapacityRequired", resourceCulture);
+                return "The capacity must be greater than or equal to 0. 0 represents the size of the file being mapped.";
             }
         }
 
@@ -360,7 +360,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_PositiveOrDefaultSizeRequired", resourceCulture);
+                return "The size must be greater than or equal to 0. If 0 is specified, the view extends from the specified offset to the end of the file mapping.";
             }
         }
 
@@ -373,7 +373,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_CapacityGEFileSizeRequired", resourceCulture);
+                return "The capacity may not be smaller than the file size.";
             }
         }
 
@@ -386,7 +386,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_NotEnoughMemory", resourceCulture);
+                return "Not enough memory to map view.";
             }
         }
 
@@ -399,7 +399,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_CantCreateFileMapping", resourceCulture);
+                return "Cannot create file mapping.";
             }
         }
 
@@ -412,7 +412,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_MMViewStreamsFixedLength", resourceCulture);
+                return "MemoryMappedViewStreams are fixed length.";
             }
         }
 
@@ -425,7 +425,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_UnreadableStream", resourceCulture);
+                return "Stream does not support reading.";
             }
         }
 
@@ -438,7 +438,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_UnwritableStream", resourceCulture);
+                return "Stream does not support writing.";
             }
         }
 
@@ -451,7 +451,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ObjectDisposed_ViewAccessorClosed", resourceCulture);
+                return "Cannot access a closed accessor.";
             }
         }
 
@@ -464,7 +464,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ObjectDisposed_StreamIsClosed", resourceCulture);
+                return "Cannot access a closed Stream.";
             }
         }
 
@@ -477,7 +477,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PlatformNotSupported_NamedMaps", resourceCulture);
+                return "Named maps are not supported.";
             }
         }
 
@@ -490,14 +490,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_PathTooLong_Path", resourceCulture);
+                return "The path '{0}' is too long, or a component of the specified path is too long.";
             }
         }
 
 
         internal static string FormatIO_PathTooLong_Path(object arg1)
         {
-            return string.Format(IO_PathTooLong_Path, arg1);
+            return string.Format("The path '{0}' is too long, or a component of the specified path is too long.", arg1);
         }
 
 
@@ -508,7 +508,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PlatformNotSupported_MemoryMappedFiles", resourceCulture);
+                return "System.IO.MemoryMappedFiles is not supported on this platform.";
             }
         }
 

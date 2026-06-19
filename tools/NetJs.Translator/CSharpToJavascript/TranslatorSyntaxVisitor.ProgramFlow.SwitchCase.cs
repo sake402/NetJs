@@ -21,7 +21,7 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             if (svd != null)
             {
-                CurrentTypeWriter.InsertInCurrentClosure(node, $"let {svd.Identifier.ValueText};", true);
+                CurrentTypeWriter.InsertInCurrentClosure(node, $"let {svd.Identifier.ResolveIdentifierName()};", true);
                 //CurrentTypeWriter.Write(node, "(");
                 //CurrentTypeWriter.Write(node, svd.Identifier.ValueText);
                 //CurrentTypeWriter.Write(node, $" = ");
@@ -32,7 +32,7 @@ namespace NetJs.Translator.CSharpToJavascript
             CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.IsTypeName}(");
             if (svd != null)
             {
-                CurrentTypeWriter.Write(node, svd.Identifier.ValueText);
+                CurrentTypeWriter.Write(node, svd.Identifier.ResolveIdentifierName());
             }
             else
             {
@@ -42,7 +42,7 @@ namespace NetJs.Translator.CSharpToJavascript
             Visit(node.Type);
             if (svd != null)
             {
-                CurrentTypeWriter.Write(node, $", {{ set $v(v){{ {svd.Identifier.ValueText} = v; }} }}");
+                CurrentTypeWriter.Write(node, $", {{ set $v(v){{ {svd.Identifier.ResolveIdentifierName()} = v; }} }}");
             }
             CurrentTypeWriter.Write(node, $")");
             if (svd != null)
@@ -286,7 +286,7 @@ namespace NetJs.Translator.CSharpToJavascript
             switchClosure.Tags.Add(SwitchExpressionVariableName, $"$switch{i}");
             if (!isSimpleSwitchCase)
             {
-                CurrentTypeWriter.WriteLine(node, $"//switch ({node.Expression.ToString().Escape()})", true);
+                CurrentTypeWriter.WriteLine(node, $"//switch ({node.Expression.ToString().EscapeString()})", true);
             }
             CurrentTypeWriter.Write(node, $"let $switch{i} = ", true);
             Visit(node.Expression);
@@ -315,7 +315,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
             }
             VisitChildren(node.Sections);
-            CloseClosure();
+            CloseClosure(node);
             //base.VisitSwitchStatement(node);
             if (isSimpleSwitchCase)
             {
@@ -348,7 +348,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     }
                     foreach (var label in node.Labels)
                     {
-                        CurrentTypeWriter.WriteLine(node, $"//{label.ToString().Escape()}", true);
+                        CurrentTypeWriter.WriteLine(node, $"//{label.ToString().EscapeString()}", true);
                     }
                     CurrentTypeWriter.Write(node, "if (", true);
                 }
@@ -408,7 +408,7 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 if (!isSimpleSwitch)
                     CurrentTypeWriter.WriteLine(node, "}", true);
-                CloseClosure();
+                CloseClosure(node);
             }
             if (!isSimpleSwitch)
             {
@@ -416,8 +416,8 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     if (node.Labels.Any(l => l.IsKind(SyntaxKind.CasePatternSwitchLabel)))
                     {
-                        CloseClosure();
                         CurrentTypeWriter.WriteLine(node, "}", true);
+                        CloseClosure(node);
                     }
                 }
             }

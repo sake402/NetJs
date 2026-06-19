@@ -19,7 +19,6 @@
     <Compile Include="$(CoreLibSharedDir)System\Collections\ObjectModel\CollectionHelpers.cs" Link="Common\System\Collections\ObjectModel\CollectionHelpers.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Collections\src\System\Collections\Generic\LinkedList.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Collections\src\System\Collections\Generic\OrderedDictionary.cs" />
-    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Collections\src\System\Collections\Generic\OrderedDictionaryDebugView.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Collections\src\System\Collections\Generic\PriorityQueue.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Collections\src\System\Collections\Generic\PriorityQueueDebugView.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Collections\src\System\Collections\Generic\SortedDictionary.cs" />

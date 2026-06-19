@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Security.Claims", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,7 +70,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentException_StringComparisonCultureAware", resourceCulture);
+                return "The StringComparison must be one of Ordinal, OrdinalIgnoreCase, InvariantCulture, InvariantCultureIgnoreCase.";
             }
         }
 
@@ -83,14 +83,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_ClaimCannotBeRemoved", resourceCulture);
+                return "The Claim '{0}' was not able to be removed.  It is either not part of this Identity or it is a Claim that is owned by the Principal that contains this Identity. For example, the Principal will own the Claim when creating a GenericPrincipal with roles. The roles will be exposed through the Identity that is passed in the constructor, but not actually owned by the Identity.  Similar logic exists for a RolePrincipal.";
             }
         }
 
 
         internal static string FormatInvalidOperation_ClaimCannotBeRemoved(object arg1)
         {
-            return string.Format(InvalidOperation_ClaimCannotBeRemoved, arg1);
+            return string.Format("The Claim '{0}' was not able to be removed.  It is either not part of this Identity or it is a Claim that is owned by the Principal that contains this Identity. For example, the Principal will own the Claim when creating a GenericPrincipal with roles. The roles will be exposed through the Identity that is passed in the constructor, but not actually owned by the Identity.  Similar logic exists for a RolePrincipal.", arg1);
         }
 
 
@@ -101,7 +101,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperationException_ActorGraphCircular", resourceCulture);
+                return "An Actor must not create a circular reference between itself (or one of its child Actors) and one of its parents.";
             }
         }
 
@@ -114,7 +114,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PlatformNotSupported_Serialization", resourceCulture);
+                return "This instance contains state that cannot be serialized and deserialized on this platform.";
             }
         }
 

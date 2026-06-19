@@ -24,8 +24,8 @@ namespace System
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal static partial class SR
     {
-        
-        private static global::System.Resources.ResourceManager resourceMan;
+
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Collections.Immutable", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,14 +70,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_KeyNotFoundWithKey", resourceCulture);
+                return "The given key '{0}' was not present in the dictionary.";
             }
         }
 
 
         internal static string FormatArg_KeyNotFoundWithKey(object arg1)
         {
-            return string.Format(Arg_KeyNotFoundWithKey, arg1);
+            return string.Format("The given key '{0}' was not present in the dictionary.", arg1);
         }
 
 
@@ -88,7 +88,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArrayInitializedStateNotEqual", resourceCulture);
+                return "Object is not an array with the same initialization state as the array to compare it to.";
             }
         }
 
@@ -101,7 +101,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArrayLengthsNotEqual", resourceCulture);
+                return "Object is not an array with the same number of elements as the array to compare it to.";
             }
         }
 
@@ -114,7 +114,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotFindOldValue", resourceCulture);
+                return "Cannot find the old value";
             }
         }
 
@@ -127,7 +127,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CapacityMustBeGreaterThanOrEqualToCount", resourceCulture);
+                return "Capacity was less than the current Count of elements.";
             }
         }
 
@@ -140,7 +140,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CapacityMustEqualCountOnMove", resourceCulture);
+                return "MoveToImmutable can only be performed when Count equals Capacity.";
             }
         }
 
@@ -153,7 +153,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CollectionModifiedDuringEnumeration", resourceCulture);
+                return "Collection was modified; enumeration operation may not execute.";
             }
         }
 
@@ -166,14 +166,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DuplicateKey", resourceCulture);
+                return "An element with the same key but a different value already exists. Key: '{0}'";
             }
         }
 
 
         internal static string FormatDuplicateKey(object arg1)
         {
-            return string.Format(DuplicateKey, arg1);
+            return string.Format("An element with the same key but a different value already exists. Key: '{0}'", arg1);
         }
 
 
@@ -184,7 +184,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidEmptyOperation", resourceCulture);
+                return "This operation does not apply to an empty instance.";
             }
         }
 
@@ -197,7 +197,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperationOnDefaultArray", resourceCulture);
+                return "This operation cannot be performed on a default instance of ImmutableArray<T>.  Consider initializing the array, or checking the ImmutableArray<T>.IsDefault property.";
             }
         }
 
@@ -210,7 +210,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_HTCapacityOverflow", resourceCulture);
+                return "Hashtable's capacity overflowed and went negative. Check load factor, capacity and the current size of the table.";
             }
         }
 
@@ -223,7 +223,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_RankMultiDimNotSupported", resourceCulture);
+                return "Only single dimensional arrays are supported for the requested action.";
             }
         }
 
@@ -236,7 +236,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_NonZeroLowerBound", resourceCulture);
+                return "The lower bound of target array must be zero.";
             }
         }
 
@@ -249,7 +249,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_ArrayPlusOffTooSmall", resourceCulture);
+                return "Destination array is not long enough to copy all the items in the collection. Check array index and length.";
             }
         }
 
@@ -262,7 +262,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_IncompatibleArrayType", resourceCulture);
+                return "Target array type is not compatible with the type of items in the collection.";
             }
         }
 
@@ -275,7 +275,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_NeedNonNegNum", resourceCulture);
+                return "Non-negative number required.";
             }
         }
 
@@ -288,7 +288,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_IncompatibleComparer", resourceCulture);
+                return "The collection, in conjunction with its comparer, does not support the specified alternate key type.";
             }
         }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace System.Reflection
@@ -31,7 +32,7 @@ namespace System.Reflection
         [NetJs.MemberReplace(nameof(GetMethodFromHandleInternalType_native))]
         private static MethodBase GetMethodFromHandleInternalType_nativeImpl(IntPtr method_handle, IntPtr type_handle, bool genericCheck)
         {
-            var member = AppDomain.GetMember( (uint)method_handle );
+            var member = AppDomain.GetMember((uint)method_handle);
             return (MethodBase)member!;
         }
 
@@ -57,7 +58,18 @@ namespace System.Reflection
         [NetJs.MemberReplace(nameof(InternalInvoke))]
         internal object? InternalInvokeImpl(object? obj, IntPtr* args, out Exception? exc)
         {
-            throw new NotImplementedException();
+            var prototype = DeclaringType.As<RuntimeType>()._prototype;
+            object[]? parameters = RuntimeHelpers.GetParametersFromPointer(args);
+            if (parameters == null && _model.As<MethodModel>().Parameters!.Length > 0)
+            {
+                throw null!;
+            }
+            exc = null;
+            return RuntimeHelpers.NativeFunctionDispatch(_model.Flags.TypeHasFlag(MemberFlagsModel.IsStatic) ? prototype : obj!, _model, parameters);
+            //var methodName = NetJs.Script.IsDefined(_model.OutputName) ? _model.OutputName!.NativeReplace("@", _model.Name) : _model.Name;
+            //var method = (obj ?? prototype)[methodName];
+            //exc = null;
+            //return NetJs.Script.Write<object>("method.apply(obj, parameters)");
         }
 
         [NetJs.MemberReplace(nameof(GetPInvoke))]

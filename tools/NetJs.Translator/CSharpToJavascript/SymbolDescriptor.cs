@@ -4,6 +4,10 @@
     {
         public string Signature { get; set; } = default!;
         public ulong? Handle { get; set; }
+        public override string ToString()
+        {
+            return Signature;
+        }
     }
 
     public struct SymbolDescriptor

@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.ComponentModel.TypeConverter", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,14 +70,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Array", resourceCulture);
+                return "{0} Array";
             }
         }
 
 
         internal static string FormatArray(object arg1)
         {
-            return string.Format(Array, arg1);
+            return string.Format("{0} Array", arg1);
         }
 
 
@@ -88,7 +88,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Collection", resourceCulture);
+                return "(Collection)";
             }
         }
 
@@ -101,14 +101,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ConvertFromException", resourceCulture);
+                return "{0} cannot convert from {1}.";
             }
         }
 
 
         internal static string FormatConvertFromException(object arg1, object arg2)
         {
-            return string.Format(ConvertFromException, arg1, arg2);
+            return string.Format("{0} cannot convert from {1}.", arg1, arg2);
         }
 
 
@@ -119,14 +119,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ConvertInvalidPrimitive", resourceCulture);
+                return "{0} is not a valid value for {1}.";
             }
         }
 
 
         internal static string FormatConvertInvalidPrimitive(object arg1, object arg2)
         {
-            return string.Format(ConvertInvalidPrimitive, arg1, arg2);
+            return string.Format("{0} is not a valid value for {1}.", arg1, arg2);
         }
 
 
@@ -137,14 +137,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ConvertToException", resourceCulture);
+                return "'{0}' is unable to convert '{1}' to '{2}'.";
             }
         }
 
 
         internal static string FormatConvertToException(object arg1, object arg2, object arg3)
         {
-            return string.Format(ConvertToException, arg1, arg2, arg3);
+            return string.Format("'{0}' is unable to convert '{1}' to '{2}'.", arg1, arg2, arg3);
         }
 
 
@@ -155,14 +155,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("EnumConverterInvalidValue", resourceCulture);
+                return "The value '{0}' is not a valid value for the enum '{1}'.";
             }
         }
 
 
         internal static string FormatEnumConverterInvalidValue(object arg1, object arg2)
         {
-            return string.Format(EnumConverterInvalidValue, arg1, arg2);
+            return string.Format("The value '{0}' is not a valid value for the enum '{1}'.", arg1, arg2);
         }
 
 
@@ -173,7 +173,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("EnumInvalidValue", resourceCulture);
+                return "Type provided must be an Enum.";
             }
         }
 
@@ -186,14 +186,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ErrorInvalidEventHandler", resourceCulture);
+                return "Invalid event handler for the {0} event.";
             }
         }
 
 
         internal static string FormatErrorInvalidEventHandler(object arg1)
         {
-            return string.Format(ErrorInvalidEventHandler, arg1);
+            return string.Format("Invalid event handler for the {0} event.", arg1);
         }
 
 
@@ -204,14 +204,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ErrorInvalidEventType", resourceCulture);
+                return "Invalid type for the {0} event.";
             }
         }
 
 
         internal static string FormatErrorInvalidEventType(object arg1)
         {
-            return string.Format(ErrorInvalidEventType, arg1);
+            return string.Format("Invalid type for the {0} event.", arg1);
         }
 
 
@@ -222,14 +222,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ErrorInvalidPropertyType", resourceCulture);
+                return "Invalid type for the {0} property";
             }
         }
 
 
         internal static string FormatErrorInvalidPropertyType(object arg1)
         {
-            return string.Format(ErrorInvalidPropertyType, arg1);
+            return string.Format("Invalid type for the {0} property", arg1);
         }
 
 
@@ -240,14 +240,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ErrorMissingEventAccessors", resourceCulture);
+                return "Accessor methods for the {0} event are missing.";
             }
         }
 
 
         internal static string FormatErrorMissingEventAccessors(object arg1)
         {
-            return string.Format(ErrorMissingEventAccessors, arg1);
+            return string.Format("Accessor methods for the {0} event are missing.", arg1);
         }
 
 
@@ -258,14 +258,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ErrorMissingPropertyAccessors", resourceCulture);
+                return "Accessor methods for the {0} property are missing.";
             }
         }
 
 
         internal static string FormatErrorMissingPropertyAccessors(object arg1)
         {
-            return string.Format(ErrorMissingPropertyAccessors, arg1);
+            return string.Format("Accessor methods for the {0} property are missing.", arg1);
         }
 
 
@@ -276,7 +276,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidMemberName", resourceCulture);
+                return "Invalid member name";
             }
         }
 
@@ -289,7 +289,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("none", resourceCulture);
+                return "(none)";
             }
         }
 
@@ -302,7 +302,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Null", resourceCulture);
+                return "(null)";
             }
         }
 
@@ -315,7 +315,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NullableConverterBadCtorArg", resourceCulture);
+                return "The specified type is not a nullable type.";
             }
         }
 
@@ -328,7 +328,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("RuntimeInstanceNotAllowed", resourceCulture);
+                return "Runtime instantiation of this attribute is not allowed.";
             }
         }
 
@@ -341,7 +341,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Text", resourceCulture);
+                return "(Text)";
             }
         }
 
@@ -354,7 +354,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TypeDescriptorAlreadyAssociated", resourceCulture);
+                return "The primary and secondary objects are already associated with each other.";
             }
         }
 
@@ -367,7 +367,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TypeDescriptorArgsCountMismatch", resourceCulture);
+                return "The number of elements in the Type and Object arrays must match.";
             }
         }
 
@@ -380,14 +380,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TypeDescriptorProviderError", resourceCulture);
+                return "The type description provider {0} has returned null from {1} which is illegal.";
             }
         }
 
 
         internal static string FormatTypeDescriptorProviderError(object arg1, object arg2)
         {
-            return string.Format(TypeDescriptorProviderError, arg1, arg2);
+            return string.Format("The type description provider {0} has returned null from {1} which is illegal.", arg1, arg2);
         }
 
 
@@ -398,14 +398,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TypeDescriptorExpectedElementType", resourceCulture);
+                return "Expected types in the collection to be of type {0}.";
             }
         }
 
 
         internal static string FormatTypeDescriptorExpectedElementType(object arg1)
         {
-            return string.Format(TypeDescriptorExpectedElementType, arg1);
+            return string.Format("Expected types in the collection to be of type {0}.", arg1);
         }
 
 
@@ -416,7 +416,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TypeDescriptorSameAssociation", resourceCulture);
+                return "Cannot create an association when the primary and secondary objects are the same.";
             }
         }
 
@@ -429,14 +429,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidColor", resourceCulture);
+                return "Color '{0}' is not valid.";
             }
         }
 
 
         internal static string FormatInvalidColor(object arg1)
         {
-            return string.Format(InvalidColor, arg1);
+            return string.Format("Color '{0}' is not valid.", arg1);
         }
 
 
@@ -447,14 +447,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TextParseFailedFormat", resourceCulture);
+                return "Text \"{0}\" cannot be parsed. The expected text format is \"{1}\".";
             }
         }
 
 
         internal static string FormatTextParseFailedFormat(object arg1, object arg2)
         {
-            return string.Format(TextParseFailedFormat, arg1, arg2);
+            return string.Format("Text \"{0}\" cannot be parsed. The expected text format is \"{1}\".", arg1, arg2);
         }
 
 
@@ -465,7 +465,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyValueInvalidEntry", resourceCulture);
+                return "IDictionary parameter contains at least one entry that is not valid. Ensure all values are consistent with the object's properties.";
             }
         }
 
@@ -478,14 +478,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidParameter", resourceCulture);
+                return "Invalid value '{1}' for parameter '{0}'.";
             }
         }
 
 
         internal static string FormatInvalidParameter(object arg1, object arg2)
         {
-            return string.Format(InvalidParameter, arg1, arg2);
+            return string.Format("Invalid value '{1}' for parameter '{0}'.", arg1, arg2);
         }
 
 
@@ -496,7 +496,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TimerAutoReset", resourceCulture);
+                return "Indicates whether the timer will be restarted when it is enabled.";
             }
         }
 
@@ -509,7 +509,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TimerEnabled", resourceCulture);
+                return "Indicates whether the timer is enabled to fire events at a defined interval.";
             }
         }
 
@@ -522,7 +522,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TimerInterval", resourceCulture);
+                return "The number of milliseconds between timer events.";
             }
         }
 
@@ -535,7 +535,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TimerIntervalElapsed", resourceCulture);
+                return "Occurs when the Interval has elapsed.";
             }
         }
 
@@ -548,14 +548,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TimerInvalidInterval", resourceCulture);
+                return "'{0}' is not a valid value for 'Interval'. 'Interval' must be greater than {1}.";
             }
         }
 
 
         internal static string FormatTimerInvalidInterval(object arg1, object arg2)
         {
-            return string.Format(TimerInvalidInterval, arg1, arg2);
+            return string.Format("'{0}' is not a valid value for 'Interval'. 'Interval' must be greater than {1}.", arg1, arg2);
         }
 
 
@@ -566,7 +566,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TimerSynchronizingObject", resourceCulture);
+                return "The object used to marshal the event handler calls issued when an interval has elapsed.";
             }
         }
 
@@ -579,14 +579,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ToolboxItemAttributeFailedGetType", resourceCulture);
+                return "Failed to create ToolboxItem of type: {0}";
             }
         }
 
 
         internal static string FormatToolboxItemAttributeFailedGetType(object arg1)
         {
-            return string.Format(ToolboxItemAttributeFailedGetType, arg1);
+            return string.Format("Failed to create ToolboxItem of type: {0}", arg1);
         }
 
 
@@ -597,7 +597,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyTabAttributeBadPropertyTabScope", resourceCulture);
+                return "Scope must be PropertyTabScope.Document or PropertyTabScope.Component";
             }
         }
 
@@ -610,14 +610,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyTabAttributeTypeLoadException", resourceCulture);
+                return "Couldn't find type {0}";
             }
         }
 
 
         internal static string FormatPropertyTabAttributeTypeLoadException(object arg1)
         {
-            return string.Format(PropertyTabAttributeTypeLoadException, arg1);
+            return string.Format("Couldn't find type {0}", arg1);
         }
 
 
@@ -628,7 +628,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyTabAttributeArrayLengthMismatch", resourceCulture);
+                return "tabClasses must have the same number of items as tabScopes";
             }
         }
 
@@ -641,7 +641,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyTabAttributeParamsBothNull", resourceCulture);
+                return "An array of tab type names or tab types must be specified";
             }
         }
 
@@ -654,7 +654,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ComObjectDescriptorsNotSupported", resourceCulture);
+                return "COM object type descriptor functionality has been disabled in the app configuration and is not supported.";
             }
         }
 
@@ -667,7 +667,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CultureInfoConverterDefaultCultureString", resourceCulture);
+                return "(Default)";
             }
         }
 
@@ -680,14 +680,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CultureInfoConverterInvalidCulture", resourceCulture);
+                return "The {0} culture cannot be converted to a CultureInfo object on this computer.";
             }
         }
 
 
         internal static string FormatCultureInfoConverterInvalidCulture(object arg1)
         {
-            return string.Format(CultureInfoConverterInvalidCulture, arg1);
+            return string.Format("The {0} culture cannot be converted to a CultureInfo object on this computer.", arg1);
         }
 
 
@@ -698,7 +698,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IDesignerHostNotSupported", resourceCulture);
+                return "Designer support has been disabled in the app configuration and is not supported.";
             }
         }
 
@@ -711,14 +711,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ErrorInvalidServiceInstance", resourceCulture);
+                return "The service instance must derive from or implement {0}.";
             }
         }
 
 
         internal static string FormatErrorInvalidServiceInstance(object arg1)
         {
-            return string.Format(ErrorInvalidServiceInstance, arg1);
+            return string.Format("The service instance must derive from or implement {0}.", arg1);
         }
 
 
@@ -729,14 +729,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ErrorServiceExists", resourceCulture);
+                return "The service {0} already exists in the service container.";
             }
         }
 
 
         internal static string FormatErrorServiceExists(object arg1)
         {
-            return string.Format(ErrorServiceExists, arg1);
+            return string.Format("The service {0} already exists in the service container.", arg1);
         }
 
 
@@ -747,14 +747,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidArgumentValue", resourceCulture);
+                return "Value of '{0}' cannot be empty.";
             }
         }
 
 
         internal static string FormatInvalidArgumentValue(object arg1)
         {
-            return string.Format(InvalidArgumentValue, arg1);
+            return string.Format("Value of '{0}' cannot be empty.", arg1);
         }
 
 
@@ -765,14 +765,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidNullArgument", resourceCulture);
+                return "Null is not a valid value for {0}.";
             }
         }
 
 
         internal static string FormatInvalidNullArgument(object arg1)
         {
-            return string.Format(InvalidNullArgument, arg1);
+            return string.Format("Null is not a valid value for {0}.", arg1);
         }
 
 
@@ -783,14 +783,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DuplicateComponentName", resourceCulture);
+                return "Duplicate component name '{0}'. Component names must be unique and case-insensitive.";
             }
         }
 
 
         internal static string FormatDuplicateComponentName(object arg1)
         {
-            return string.Format(DuplicateComponentName, arg1);
+            return string.Format("Duplicate component name '{0}'. Component names must be unique and case-insensitive.", arg1);
         }
 
 
@@ -801,7 +801,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MaskedTextProviderPasswordAndPromptCharError", resourceCulture);
+                return "The PasswordChar and PromptChar values cannot be the same.";
             }
         }
 
@@ -814,7 +814,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MaskedTextProviderInvalidCharError", resourceCulture);
+                return "The specified character value is not allowed for this property.";
             }
         }
 
@@ -827,7 +827,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MaskedTextProviderMaskInvalidChar", resourceCulture);
+                return "The specified mask contains invalid characters.";
             }
         }
 
@@ -840,7 +840,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InstanceDescriptorCannotBeStatic", resourceCulture);
+                return "Parameter cannot be static.";
             }
         }
 
@@ -853,7 +853,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InstanceDescriptorMustBeStatic", resourceCulture);
+                return "Parameter must be static.";
             }
         }
 
@@ -866,7 +866,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InstanceDescriptorMustBeReadable", resourceCulture);
+                return "Parameter must be readable.";
             }
         }
 
@@ -879,7 +879,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InstanceDescriptorLengthMismatch", resourceCulture);
+                return "Length mismatch.";
             }
         }
 
@@ -892,14 +892,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MetaExtenderName", resourceCulture);
+                return "{0} on {1}";
             }
         }
 
 
         internal static string FormatMetaExtenderName(object arg1, object arg2)
         {
-            return string.Format(MetaExtenderName, arg1, arg2);
+            return string.Format("{0} on {1}", arg1, arg2);
         }
 
 
@@ -910,7 +910,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CantModifyListSortDescriptionCollection", resourceCulture);
+                return "Once a ListSortDescriptionCollection has been created it can't be modified.";
             }
         }
 
@@ -923,14 +923,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LicExceptionTypeOnly", resourceCulture);
+                return "A valid license cannot be granted for the type {0}. Contact the manufacturer of the component for more information.";
             }
         }
 
 
         internal static string FormatLicExceptionTypeOnly(object arg1)
         {
-            return string.Format(LicExceptionTypeOnly, arg1);
+            return string.Format("A valid license cannot be granted for the type {0}. Contact the manufacturer of the component for more information.", arg1);
         }
 
 
@@ -941,14 +941,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LicExceptionTypeAndInstance", resourceCulture);
+                return "An instance of type '{1}' was being created, and a valid license could not be granted for the type '{0}'. Please,  contact the manufacturer of the component for more information.";
             }
         }
 
 
         internal static string FormatLicExceptionTypeAndInstance(object arg1, object arg2)
         {
-            return string.Format(LicExceptionTypeAndInstance, arg1, arg2);
+            return string.Format("An instance of type '{1}' was being created, and a valid license could not be granted for the type '{0}'. Please,  contact the manufacturer of the component for more information.", arg1, arg2);
         }
 
 
@@ -959,7 +959,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LicMgrContextCannotBeChanged", resourceCulture);
+                return "The CurrentContext property of the LicenseManager is currently locked and cannot be changed.";
             }
         }
 
@@ -972,7 +972,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LicMgrAlreadyLocked", resourceCulture);
+                return "The CurrentContext property of the LicenseManager is already locked by another user.";
             }
         }
 
@@ -985,7 +985,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LicMgrDifferentUser", resourceCulture);
+                return "The CurrentContext property of the LicenseManager can only be unlocked with the same contextUser.";
             }
         }
 
@@ -998,7 +998,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CollectionConverterText", resourceCulture);
+                return "(Collection)";
             }
         }
 
@@ -1011,7 +1011,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InstanceCreationEditorDefaultText", resourceCulture);
+                return "(New...)";
             }
         }
 
@@ -1024,14 +1024,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ErrorPropertyAccessorException", resourceCulture);
+                return "Property accessor '{0}' on object '{1}' threw the following exception:'{2}'";
             }
         }
 
 
         internal static string FormatErrorPropertyAccessorException(object arg1, object arg2, object arg3)
         {
-            return string.Format(ErrorPropertyAccessorException, arg1, arg2, arg3);
+            return string.Format("Property accessor '{0}' on object '{1}' threw the following exception:'{2}'", arg1, arg2, arg3);
         }
 
 
@@ -1042,7 +1042,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CHECKOUTCanceled", resourceCulture);
+                return "The checkout was canceled by the user.";
             }
         }
 
@@ -1055,7 +1055,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("toStringNone", resourceCulture);
+                return "(none)";
             }
         }
 
@@ -1068,14 +1068,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MemberRelationshipService_RelationshipNotSupported", resourceCulture);
+                return "Relationships between {0}.{1} and {2}.{3} are not supported.";
             }
         }
 
 
         internal static string FormatMemberRelationshipService_RelationshipNotSupported(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(MemberRelationshipService_RelationshipNotSupported, arg1, arg2, arg3, arg4);
+            return string.Format("Relationships between {0}.{1} and {2}.{3} are not supported.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -1086,7 +1086,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BinaryFormatterMessage", resourceCulture);
+                return "BinaryFormatter serialization is obsolete and should not be used. See https://aka.ms/binaryformatter for more information.";
             }
         }
 
@@ -1099,14 +1099,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TypeIsNotRegistered", resourceCulture);
+                return "The type {0} is not registered. Call 'TypeDescriptor.RegisterType()' to register the type.";
             }
         }
 
 
         internal static string FormatTypeIsNotRegistered(object arg1)
         {
-            return string.Format(TypeIsNotRegistered, arg1);
+            return string.Format("The type {0} is not registered. Call 'TypeDescriptor.RegisterType()' to register the type.", arg1);
         }
 
 
@@ -1117,14 +1117,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CustomTypeProviderNotImplemented", resourceCulture);
+                return "Custom type providers must implement member {0}.";
             }
         }
 
 
         internal static string FormatCustomTypeProviderNotImplemented(object arg1)
         {
-            return string.Format(CustomTypeProviderNotImplemented, arg1);
+            return string.Format("Custom type providers must implement member {0}.", arg1);
         }
     }
 }

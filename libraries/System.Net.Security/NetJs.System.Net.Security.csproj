@@ -26,13 +26,13 @@
     <DefineConstants Condition="'$(UseAndroidCrypto)' == 'true' or '$(UseAppleCrypto)' == 'true'">$(DefineConstants);SYSNETSECURITY_NO_OPENSSL</DefineConstants>
     <GenAPIExcludeApiList>ReferenceAssemblyExclusions.txt</GenAPIExcludeApiList>
   </PropertyGroup>
+  <!--<Import Project="$(CommonPath)System\Security\Cryptography\Asn1Reader\System.Security.Cryptography.Asn1Reader.Shared.projitems" Condition="'$(TargetPlatformIdentifier)' != '' and '$(TargetPlatformIdentifier)' != 'windows'" />-->
   <ItemGroup>
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Net.Security\src\System\Security\Authentication\ExtendedProtection\ExtendedProtectionPolicy.cs" />-->
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Net.Security\src\System\Security\Authentication\ExtendedProtection\ServiceNameCollection.cs" />-->
     <!--<Compile Include="$(CommonPath)System\Obsoletions.cs" Link="Common\System\Obsoletions.cs" />-->
     <!--<Compile Include="$(CommonPath)System\Net\UriScheme.cs" Link="Common\System\Net\UriScheme.cs" />-->
-    <!--<Compile Include="$(CommonPath)System\LocalAppContextSwitches.Common.cs" Link="Common\System\LocalAppContextSwitches.Common.cs" />-->
-    <!--<Compile Include="$(CommonPath)System\Net\LocalAppContextSwitches.Net.cs" Link="Common\System\Net\LocalAppContextSwitches.Net.cs" />-->
+    <!--<Compile Include="$(CommonPath)System\AppContextSwitchHelper.cs" Link="Common\System\AppContextSwitchHelper.cs" />-->
   </ItemGroup>
   <ItemGroup Condition="'$(TargetPlatformIdentifier)' != ''">
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Net.Security\src\System\Net\CertificateValidationPal.cs" />-->
@@ -51,7 +51,6 @@
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Net.Security\src\System\Net\Security\ProtectionLevel.cs" />-->
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Net.Security\src\System\Net\Security\SslApplicationProtocol.cs" />-->
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Net.Security\src\System\Net\Security\SslAuthenticationOptions.cs" />-->
-    <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Net.Security\src\System\Net\Security\LocalAppContextSwitches.cs" />-->
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Net.Security\src\System\Net\Security\SslCertificateTrust.cs" />-->
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Net.Security\src\System\Net\Security\SslClientAuthenticationOptions.cs" />-->
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Net.Security\src\System\Net\Security\SslClientHelloInfo.cs" />-->

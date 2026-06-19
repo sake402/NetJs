@@ -131,7 +131,7 @@ namespace NetJs.Translator.CSharpToJavascript
             CurrentTypeWriter.WriteLine(node, "{", true);
             if (variable is SyntaxToken identifierName2)
             {
-                CurrentTypeWriter.WriteLine(node, $"var {identifierName2.ValueText} = {enumarableName}.{enumeratorCurrentInvocationName}{((enumeratorCurrent?.GetRefKind() ?? RefKind.None) != RefKind.None ? $".{Constants.RefValueName}" : "")};", true);
+                CurrentTypeWriter.WriteLine(node, $"var {identifierName2.ResolveIdentifierName()} = {enumarableName}.{enumeratorCurrentInvocationName}{((enumeratorCurrent?.GetRefKind() ?? RefKind.None) != RefKind.None ? $".{Constants.RefValueName}" : "")};", true);
             }
             else if (variable is TupleExpressionSyntax tp)
             {
@@ -153,7 +153,7 @@ namespace NetJs.Translator.CSharpToJavascript
             Visit(node.Statement);
             //if (!node.Statement.IsKind(SyntaxKind.Block))
             CurrentTypeWriter.WriteLine(node, "}", true);
-            CloseClosure();
+            CloseClosure(node);
         }
 
         public override void VisitForEachStatement(ForEachStatementSyntax node)
@@ -213,7 +213,7 @@ namespace NetJs.Translator.CSharpToJavascript
             Visit(node.Statement);
             if (!node.Statement.IsKind(SyntaxKind.Block))
                 CurrentTypeWriter.WriteLine(node, "}", true);
-            CloseClosure();
+            CloseClosure(node);
         }
 
     }

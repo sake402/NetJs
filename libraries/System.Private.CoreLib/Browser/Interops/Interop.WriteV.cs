@@ -7,9 +7,9 @@ internal static partial class Interop
 {
     internal static partial class Sys
     {
-        internal static unsafe partial long WriteV(SafeHandle fd, IOVector* vectors, int vectorCount)
-        {
-            return -1;
-        }
+        //internal static unsafe partial long WriteV(SafeHandle fd, IOVector* vectors, int vectorCount)
+        //{
+        //    return -1;
+        //}
     }
 }

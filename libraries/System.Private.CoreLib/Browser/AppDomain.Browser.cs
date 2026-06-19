@@ -11,21 +11,68 @@ namespace System
     public sealed partial class AppDomain
     {
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+        internal static SimpleDictionary<Union<TypePrototype, TypePrototypeProvider>> GlobalPrototypeRegistry;
+
+
         internal static SimpleDictionary<AssemblyModel> GlobalMetadataRegistry;
         internal static SimpleDictionary<RuntimeAssembly> GlobalAssemblyRegistry;
-        internal static SimpleDictionary<Union<TypePrototype, TypePrototypeProvider>> GlobalPrototypeRegistry;
         internal static SimpleDictionary<RuntimeType> GlobalTypeRegistry;
         internal static TypePrototype[] GenericTypes;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
-        [Name(Constants.AppDomainInitialize)]
-        static void Initialize()
+        [Name("$initd")]
+        static void EnsureInitDataStructure()
         {
-            GlobalMetadataRegistry = new SimpleDictionary<AssemblyModel>();
-            GlobalAssemblyRegistry = new SimpleDictionary<RuntimeAssembly>();
-            GlobalTypeRegistry = new SimpleDictionary<RuntimeType>();
-            //GlobalPrototypeRegistry = Script.Write<SimpleDictionary<TypePrototypeRegistrar>>("window.dotnetJs");
-            GlobalPrototypeRegistry = Script.Write<SimpleDictionary<Union<TypePrototype, TypePrototypeProvider>>>($"window.{Constants.ProjectName}");
+            if (NetJs.Script.IsUndefinedOrNull(GlobalMetadataRegistry))
+            {
+                GlobalMetadataRegistry = new SimpleDictionary<AssemblyModel>();
+                GlobalAssemblyRegistry = new SimpleDictionary<RuntimeAssembly>();
+                GlobalTypeRegistry = new SimpleDictionary<RuntimeType>();
+                //GlobalPrototypeRegistry = Script.Write<SimpleDictionary<TypePrototypeRegistrar>>("window.dotnetJs");
+                GlobalPrototypeRegistry = Script.Write<SimpleDictionary<Union<TypePrototype, TypePrototypeProvider>>>($"window.{Constants.ProjectName}");
+            }
+        }
+        [Name(Constants.AppDomainInitialize)]
+        static void Initialize(RuntimeAssembly coreAssembly)
+        {
+            EnsureInitDataStructure();
+            //Create the runtime type for all boot types found in GlobalPrototypeRegistry
+            TypePrototype[] bootTypes = GlobalPrototypeRegistry["$bts"].As<TypePrototype[]>();
+            RuntimeType[] retryBootTypes = [];
+            for (int i = 0; i < bootTypes.Length; i++)
+            {
+                unchecked
+                {
+                    var prototype = bootTypes[i];
+                    //var metadata = prototype.Metadata ?? new TypeModel() { Handle = 0.As<ulong>() };
+                    var runtimeType = RuntimeType.Create(coreAssembly, prototype, prototype.MetadataFullName, null);
+                    //these are boot types, some of the required dependency may not be available yet when initializing the type
+                    //We will retry the failed ones when the coreAssembly build is complete
+                    try
+                    {
+                        runtimeType.Complete();
+                    }
+                    catch
+                    {
+                        retryBootTypes.Push(runtimeType);
+                    }
+                }
+            }
+            if (retryBootTypes.Length > 0)
+            {
+                coreAssembly.As<RuntimeAssembly_Partial>().onCompleted.Push(() =>
+                {
+                    for (int i = 0; i < retryBootTypes.Length; i++)
+                    {
+                        unchecked
+                        {
+                            var runtimeType = retryBootTypes[i];
+                            runtimeType.Complete();
+                        }
+                    }
+                });
+            }
+            NetJs.Script.Delete(GlobalPrototypeRegistry, "$bts");
             //Script.Write($"{Constants.GlobalName}.typesReady = true");
             GenericTypes = Script.CreateArrayFromValues(
                 Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T1"),
@@ -61,30 +108,49 @@ namespace System
                 Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T31"),
                 Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T32"));
 
-            Script.Write($"{Constants.GlobalName}.{Constants.AssemblyRegistryName} = this.{Constants.AssemblyRegistryName}");
-            Script.Write($"{Constants.GlobalName}.{Constants.AssemblyMetadataRegistryName} = this.{Constants.AssemblyMetadataRegistryName}");
-            Script.Write($"{Constants.GlobalName}.castPtr2Address = {Constants.GlobalName}.$spc.{nameof(InteropUtility)}.{nameof(InteropUtility.castPtr2Address)}");
-            Script.Write($"{Constants.GlobalName}.castAddress2Ptr = {Constants.GlobalName}.$spc.{nameof(InteropUtility)}.{nameof(InteropUtility.castAddress2Ptr)}");
-            Script.Write($"{Constants.GlobalName}.virtualAddressOffset = {Constants.GlobalName}.$spc.{nameof(InteropUtility)}.{nameof(InteropUtility.virtualAddressOffset)}");
+            //Script.Write($"{Constants.GlobalName}.{Constants.AssemblyRegistryName} = this.{Constants.AssemblyRegistryName}");
+            //Script.Write($"{Constants.GlobalName}.{Constants.AssemblyMetadataRegistryName} = this.{Constants.AssemblyMetadataRegistryName}");
+            //Redirect subsequent BootDefine($bt) to DefineType($cls), lest we end up with an inner whose runtime type that is not initialized
+            NativeFunction<string, TypePrototype, TypePrototype?, NativeAction<TypePrototype>?, NetJs.Union<TypePrototype, TypePrototypeProvider>> redirectBootType = (name, prototype, parent, typePrototypeSink) =>
+            {
+                bool isGenericType = NetJs.Script.TypeOf(prototype).NativeEquals("function") && NetJs.Script.Write<int>("prototype.length") != 0;
+                if (isGenericType) //generic type
+                {
+                    var provider = prototype.As<TypePrototypeProvider>();
+                    return coreAssembly.As<RuntimeAssembly_Partial>().DefineType(name, provider, TypeFlagsModel.IsNested, parent, typePrototypeSink);
+                }
+                //if (prototype.Flags.TypeHasFlag(TypeFlagsModel.IsGenericType))
+                //return coreAssembly.As<RuntimeAssembly_Partial>().DefineG(name, (t) => prototype, prototype.Flags, parent, typePrototypeSink);
+                //else
+                return coreAssembly.As<RuntimeAssembly_Partial>().DefineType(name, (t) => prototype, prototype.Flags, parent, typePrototypeSink);
+            };
+            Script.Write($"{Constants.GlobalName}.{Constants.AssemblyBootClassName} = {nameof(redirectBootType)}");
+
+            Script.Write($"{Constants.GlobalName}.castPtr2Address = {Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.{nameof(InteropUtility)}.{nameof(InteropUtility.castPtr2Address)}");
+            Script.Write($"{Constants.GlobalName}.castAddress2Ptr = {Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.{nameof(InteropUtility)}.{nameof(InteropUtility.castAddress2Ptr)}");
+            Script.Write($"{Constants.GlobalName}.virtualAddressOffset = {Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.{nameof(InteropUtility)}.{nameof(InteropUtility.virtualAddressOffset)}");
+            Script.Write($"{Constants.GlobalName}.{Constants.IntegerChecked} = {Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.{nameof(InteropUtility)}.{nameof(InteropUtility.IntegerChecked)}");
             //Script.Write($"$.{Constants.AssemblyStubName} = $.System.AppDomain.{Constants.AssemblyStubName}");
         }
-        
-        [Name(Constants.AssemblyMetadataRegistryName)]
-        public static void ReflectionData(string assemblyName, AssemblyModel assemblyMetadata)
-        {
-            GlobalMetadataRegistry[assemblyMetadata.Handle.As<uint>().GetAssemblyHandle()] = assemblyMetadata;
-            GlobalMetadataRegistry[assemblyName] = assemblyMetadata;
-        }
+
+        //[Name(Constants.AssemblyMetadataRegistryName)]
+        //public static void ReflectionData(string assemblyName, AssemblyModel assemblyMetadata)
+        //{
+        //    GlobalMetadataRegistry[assemblyMetadata.Handle.As<uint>().GetAssemblyHandle()] = assemblyMetadata;
+        //    GlobalMetadataRegistry[assemblyName] = assemblyMetadata;
+        //}
 
         [Name(Constants.AssemblyRegistryName)]
-        internal static void CreateAssembly(string assemblyName, Action<RuntimeAssembly> action)
+        internal static void CreateAssembly(string assemblyName, AssemblyModel assemblyMetadata, NativeAction<RuntimeAssembly> action)
         {
+            EnsureInitDataStructure();
+            GlobalMetadataRegistry[assemblyMetadata.Handle.As<uint>().GetAssemblyHandle()] = assemblyMetadata;
+            GlobalMetadataRegistry[assemblyName] = assemblyMetadata;
             var assembly = GlobalAssemblyRegistry[assemblyName];
             if (Script.IsUndefinedOrNull(assembly))
             {
-                var metadata = GlobalMetadataRegistry[assemblyName];
-                assembly = new RuntimeAssembly_Partial(metadata, assemblyName).As<RuntimeAssembly>();
-                GlobalAssemblyRegistry[metadata.Handle.As<uint>().GetAssemblyHandle()] = assembly;
+                assembly = new RuntimeAssembly_Partial(assemblyMetadata, assemblyName).As<RuntimeAssembly>();
+                GlobalAssemblyRegistry[assemblyMetadata.Handle.As<uint>().GetAssemblyHandle()] = assembly;
                 GlobalAssemblyRegistry[assemblyName] = assembly;
                 //precreate all types in this assembly as a stub
                 //if (Script.IsDefined(metadata.Types))
@@ -97,7 +163,7 @@ namespace System
                 //    }
                 //}
             }
-            NetJs.Script.Write("action(assembly)");
+            action(assembly);
             assembly.As<RuntimeAssembly_Partial>().Complete();
         }
 

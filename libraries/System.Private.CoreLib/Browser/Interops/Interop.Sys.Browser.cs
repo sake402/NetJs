@@ -34,11 +34,6 @@ internal static partial class Interop
             return -1;
         }
 
-        internal static partial int Rename([MarshalUsing(typeof(SpanOfCharAsUtf8StringMarshaller))] ReadOnlySpan<char> oldPath, [MarshalUsing(typeof(SpanOfCharAsUtf8StringMarshaller))] ReadOnlySpan<char> newPath)
-        {
-            return -1;
-        }
-
         internal static partial int RmDir(string path)
         {
             return -1;

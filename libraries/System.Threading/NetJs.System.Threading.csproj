@@ -8,7 +8,8 @@
     <IsPartialFacadeAssembly>true</IsPartialFacadeAssembly>
     <ContractTypesPartiallyMoved>true</ContractTypesPartiallyMoved>
     <UseCompilerGeneratedDocXmlFile>false</UseCompilerGeneratedDocXmlFile>
-    <DefineConstants Condition="'$(WasmEnableThreads)' == 'true'">$(DefineConstants);FEATURE_WASM_MANAGED_THREADS</DefineConstants>
+    <FeatureWasmManagedThreads Condition="'$(WasmEnableThreads)' == 'true'">true</FeatureWasmManagedThreads>
+    <DefineConstants Condition="'$(FeatureWasmManagedThreads)' == 'true'">$(DefineConstants);FEATURE_WASM_MANAGED_THREADS</DefineConstants>
     <StrongNameKeyId>Microsoft</StrongNameKeyId>
   </PropertyGroup>
   <ItemGroup>

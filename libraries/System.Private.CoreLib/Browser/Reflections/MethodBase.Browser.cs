@@ -2,6 +2,10 @@
 using System.Collections.Generic;
 using System.Text;
 
+
+namespace System.Reflection
+{
+}
 namespace System.Reflection
 {
     [NetJs.Boot]

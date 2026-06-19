@@ -19,7 +19,7 @@ namespace System.Threading
         {
             return 0;
         }
-
+        
         [NetJs.MemberReplace(nameof(InitInternal))]
         private static void InitInternalImpl(Thread thread)
         {
@@ -92,11 +92,10 @@ namespace System.Threading
             throw new PlatformNotSupportedException();
         }
 
-        [NetJs.MemberReplace(nameof(CurrentThreadIsFinalizerThread))]
-        internal static bool CurrentThreadIsFinalizerThreadImpl()
-        {
-            return false;
-        }
-
+        //[NetJs.MemberReplace(nameof(CurrentThreadIsFinalizerThread))]
+        //internal static bool CurrentThreadIsFinalizerThreadImpl()
+        //{
+        //    return false;
+        //}
     }
 }

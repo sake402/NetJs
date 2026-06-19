@@ -13,21 +13,21 @@ internal static partial class Interop
     internal static partial class Normaliz
     {
 
-        internal static partial int IdnToAscii(
+        internal static unsafe partial int IdnToAscii(
                                         uint dwFlags,
-                                        ReadOnlySpan<char> lpUnicodeCharStr,
+                                        char* lpUnicodeCharStr,
                                         int cchUnicodeChar,
-                                        Span<char> lpASCIICharStr,
+                                        char* lpASCIICharStr,
                                         int cchASCIIChar)
         {
             return -1;
         }
 
-        internal static partial int IdnToUnicode(
+        internal static unsafe partial int IdnToUnicode(
                                         uint dwFlags,
-                                        ReadOnlySpan<char> lpASCIICharStr,
+                                        char* lpASCIICharStr,
                                         int cchASCIIChar,
-                                        Span<char> lpUnicodeCharStr,
+                                        char* lpUnicodeCharStr,
                                         int cchUnicodeChar)
         {
             return -1;

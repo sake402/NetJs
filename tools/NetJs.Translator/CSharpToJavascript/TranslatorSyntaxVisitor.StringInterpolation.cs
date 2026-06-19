@@ -71,7 +71,7 @@ namespace NetJs.Translator.CSharpToJavascript
                         e.Parameters[0].Type.Equals(_global.SystemString, SymbolEqualityComparer.Default));
             WriteMemberName(node, handler, appendLiteralStringMethod);
             CurrentTypeWriter.Write(node, $"(\"");
-            CurrentTypeWriter.Write(node, node.TextToken.ValueText.Escape());
+            CurrentTypeWriter.Write(node, node.TextToken.ValueText.EscapeString());
             CurrentTypeWriter.WriteLine(node, $"\");");
         }
 
@@ -85,7 +85,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     if (token is InterpolatedStringTextSyntax str)
                     {
-                        CurrentTypeWriter.Write(node, str/*.ToFullString()*/.TextToken.ValueText.Escape());
+                        CurrentTypeWriter.Write(node, str/*.ToFullString()*/.TextToken.ValueText.EscapeString());
                     }
                     else if (token is InterpolationSyntax format)
                     {

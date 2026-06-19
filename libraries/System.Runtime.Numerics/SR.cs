@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Runtime.Numerics", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,7 +70,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_HexStyleNotSupported", resourceCulture);
+                return "The number style AllowHexSpecifier is not supported on floating point data types.";
             }
         }
 
@@ -83,7 +83,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_BadFormatSpecifier", resourceCulture);
+                return "Format specifier was invalid.";
             }
         }
 
@@ -96,7 +96,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidNumberStyles", resourceCulture);
+                return "An undefined NumberStyles value is being used.";
             }
         }
 
@@ -109,7 +109,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidHexStyle", resourceCulture);
+                return "With the AllowHexSpecifier bit set in the enum bit field, the only other valid bits that can be combined into the enum value must be a subset of those in HexNumber.";
             }
         }
 
@@ -122,14 +122,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_MinMaxValue", resourceCulture);
+                return "'{0}' cannot be greater than {1}.";
             }
         }
 
 
         internal static string FormatArgument_MinMaxValue(object arg1, object arg2)
         {
-            return string.Format(Argument_MinMaxValue, arg1, arg2);
+            return string.Format("'{0}' cannot be greater than {1}.", arg1, arg2);
         }
 
 
@@ -140,7 +140,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_MustBeBigInt", resourceCulture);
+                return "The parameter must be a BigInteger.";
             }
         }
 
@@ -153,7 +153,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_NeedNonNegNum", resourceCulture);
+                return "Non-negative number required.";
             }
         }
 
@@ -166,7 +166,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Format_TooLarge", resourceCulture);
+                return "The value is too large to be represented by this format specifier.";
             }
         }
 
@@ -179,7 +179,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Overflow_BigIntInfinity", resourceCulture);
+                return "BigInteger cannot represent infinity.";
             }
         }
 
@@ -192,7 +192,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Overflow_NotANumber", resourceCulture);
+                return "The value is not a number.";
             }
         }
 
@@ -205,7 +205,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Overflow_ParseBigInteger", resourceCulture);
+                return "The value could not be parsed.";
             }
         }
 
@@ -218,7 +218,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Overflow_Int32", resourceCulture);
+                return "Value was either too large or too small for an Int32.";
             }
         }
 
@@ -231,7 +231,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Overflow_Int64", resourceCulture);
+                return "Value was either too large or too small for an Int64.";
             }
         }
 
@@ -244,7 +244,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Overflow_Int128", resourceCulture);
+                return "Value was either too large or too small for an Int128.";
             }
         }
 
@@ -257,7 +257,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Overflow_UInt32", resourceCulture);
+                return "Value was either too large or too small for a UInt32.";
             }
         }
 
@@ -270,7 +270,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Overflow_UInt64", resourceCulture);
+                return "Value was either too large or too small for a UInt64.";
             }
         }
 
@@ -283,7 +283,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Overflow_UInt128", resourceCulture);
+                return "Value was either too large or too small for a UInt128.";
             }
         }
 
@@ -296,7 +296,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Overflow_Decimal", resourceCulture);
+                return "Value was either too large or too small for a Decimal.";
             }
         }
 
@@ -309,7 +309,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Overflow_Negative_Unsigned", resourceCulture);
+                return "Negative values do not have an unsigned representation.";
             }
         }
 

@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Collections", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,7 +70,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_NonZeroLowerBound", resourceCulture);
+                return "The lower bound of target array must be zero.";
             }
         }
 
@@ -83,14 +83,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_WrongType", resourceCulture);
+                return "The value '{0}' is not of type '{1}' and cannot be used in this generic collection.";
             }
         }
 
 
         internal static string FormatArg_WrongType(object arg1, object arg2)
         {
-            return string.Format(Arg_WrongType, arg1, arg2);
+            return string.Format("The value '{0}' is not of type '{1}' and cannot be used in this generic collection.", arg1, arg2);
         }
 
 
@@ -101,7 +101,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_ArrayPlusOffTooSmall", resourceCulture);
+                return "Destination array is not long enough to copy all the items in the collection. Check array index and length.";
             }
         }
 
@@ -114,7 +114,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_SmallCapacity", resourceCulture);
+                return "capacity was less than the current size.";
             }
         }
 
@@ -127,7 +127,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidOffLen", resourceCulture);
+                return "Offset and length were out of bounds for the array or count is greater than the number of elements from index to the end of the source collection.";
             }
         }
 
@@ -140,14 +140,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_AddingDuplicate", resourceCulture);
+                return "An item with the same key has already been added. Key: {0}";
             }
         }
 
 
         internal static string FormatArgument_AddingDuplicate(object arg1)
         {
-            return string.Format(Argument_AddingDuplicate, arg1);
+            return string.Format("An item with the same key has already been added. Key: {0}", arg1);
         }
 
 
@@ -158,7 +158,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_ConcurrentOperationsNotSupported", resourceCulture);
+                return "Operations that change non-concurrent collections must have exclusive access. A concurrent update was performed on this collection and corrupted its state. The collection's state is no longer correct.";
             }
         }
 
@@ -171,7 +171,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_EmptyQueue", resourceCulture);
+                return "Queue empty.";
             }
         }
 
@@ -184,7 +184,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_EnumOpCantHappen", resourceCulture);
+                return "Enumeration has either not started or has already finished.";
             }
         }
 
@@ -197,7 +197,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_EnumFailedVersion", resourceCulture);
+                return "Collection was modified after the enumerator was instantiated.";
             }
         }
 
@@ -210,7 +210,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_EmptyStack", resourceCulture);
+                return "Stack empty.";
             }
         }
 
@@ -223,7 +223,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_EnumNotStarted", resourceCulture);
+                return "Enumeration has not started. Call MoveNext.";
             }
         }
 
@@ -236,7 +236,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_EnumEnded", resourceCulture);
+                return "Enumeration already finished.";
             }
         }
 
@@ -249,7 +249,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_KeyCollectionSet", resourceCulture);
+                return "Mutating a key collection derived from a dictionary is not allowed.";
             }
         }
 
@@ -262,7 +262,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_ValueCollectionSet", resourceCulture);
+                return "Mutating a value collection derived from a dictionary is not allowed.";
             }
         }
 
@@ -275,7 +275,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_HTCapacityOverflow", resourceCulture);
+                return "Hashtable's capacity overflowed and went negative. Check load factor, capacity and the current size of the table.";
             }
         }
 
@@ -288,7 +288,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_InsufficientSpace", resourceCulture);
+                return "Insufficient space in the target location to copy the information.";
             }
         }
 
@@ -301,7 +301,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_RankMultiDimNotSupported", resourceCulture);
+                return "Only single dimensional arrays are supported for the requested action.";
             }
         }
 
@@ -314,7 +314,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_IncompatibleArrayType", resourceCulture);
+                return "Target array type is not compatible with the type of items in the collection.";
             }
         }
 
@@ -327,7 +327,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_BiggerThanCollection", resourceCulture);
+                return "Must be less than or equal to the size of the collection.";
             }
         }
 
@@ -340,7 +340,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_IndexMustBeLess", resourceCulture);
+                return "Index was out of range. Must be non-negative and less than the size of the collection.";
             }
         }
 
@@ -353,7 +353,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_IndexMustBeLessOrEqual", resourceCulture);
+                return "Index was out of range. Must be non-negative and less than or equal to the size of the collection.";
             }
         }
 
@@ -366,7 +366,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExternalLinkedListNode", resourceCulture);
+                return "The LinkedList node does not belong to current LinkedList.";
             }
         }
 
@@ -379,7 +379,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LinkedListEmpty", resourceCulture);
+                return "The LinkedList is empty.";
             }
         }
 
@@ -392,7 +392,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LinkedListNodeIsAttached", resourceCulture);
+                return "The LinkedList node already belongs to a LinkedList.";
             }
         }
 
@@ -405,7 +405,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_SortedListNestedWrite", resourceCulture);
+                return "This operation is not supported on SortedList nested types because they require modifying the original SortedList.";
             }
         }
 
@@ -418,7 +418,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SortedSet_LowerValueGreaterThanUpperValue", resourceCulture);
+                return "Must be less than or equal to upperValue.";
             }
         }
 
@@ -431,7 +431,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_InvalidOnDeser", resourceCulture);
+                return "OnDeserialization method was called while the object was not being deserialized.";
             }
         }
 
@@ -444,7 +444,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_MismatchedCount", resourceCulture);
+                return "The serialized Count information doesn't match the number of items.";
             }
         }
 
@@ -457,7 +457,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_MissingKeys", resourceCulture);
+                return "The keys for this dictionary are missing.";
             }
         }
 
@@ -470,7 +470,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_MissingValues", resourceCulture);
+                return "The values for this dictionary are missing.";
             }
         }
 
@@ -483,14 +483,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_KeyNotFoundWithKey", resourceCulture);
+                return "The given key '{0}' was not present in the dictionary.";
             }
         }
 
 
         internal static string FormatArg_KeyNotFoundWithKey(object arg1)
         {
-            return string.Format(Arg_KeyNotFoundWithKey, arg1);
+            return string.Format("The given key '{0}' was not present in the dictionary.", arg1);
         }
     }
 }

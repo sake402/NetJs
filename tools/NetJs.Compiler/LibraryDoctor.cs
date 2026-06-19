@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.XPath;
+using NetJs.Translator;
 
 namespace NetJs.Compiler
 {
@@ -47,9 +48,9 @@ namespace NetJs.Compiler
             //var MsBuildThisFileDirectory = $"$(DotnetRuntimeRoot)src/mono/System.Private.CoreLib/";
         }
 
-        void GenerateStaticResource(XElement doc, string projectName, string projectFolderPath, string newProjectDirectory)
+        public static void GenerateStaticResource(XElement? doc, string projectName, string sourceProjectDirectory, string newProjectDirectory, string? outputResourceFileName = null)
         {
-            var resx = Directory.EnumerateFiles(projectFolderPath, "*.resx", SearchOption.AllDirectories)
+            var resx = Directory.EnumerateFiles(sourceProjectDirectory, "*.resx", SearchOption.AllDirectories)
                 .OrderBy(o => o.EndsWith("Strings.resx") ? 1 : int.MaxValue)
                 .GroupBy(srPath =>
             {
@@ -133,7 +134,7 @@ namespace NetJs.Compiler
     internal static partial class {className}
     {{
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -145,12 +146,12 @@ namespace NetJs.Compiler
         {{
             get
             {{
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {{
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager(""{projectName}"", typeof({className}).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }}
-                return resourceMan;
+                return s_resourceManager;
             }}
         }}
 
@@ -174,7 +175,7 @@ namespace NetJs.Compiler
     }}
 {(hasNamespace ? $"}}" : "")}
 ";
-                var sroutPath = Path.Join(newProjectDirectory, $"{className}.cs");
+                var sroutPath = Path.Join(newProjectDirectory, $"{outputResourceFileName ?? className}.cs");
                 File.WriteAllText(sroutPath, SRTemplate);
                 //var itemGroup = new XElement("ItemGroup");
                 //var content = new XElement("Content");
@@ -197,6 +198,158 @@ namespace NetJs.Compiler
                 doc.Add(itemGroup);
             }
         }
+
+        public static void GenerateStaticResourceInlined(XElement? doc, string projectName, string sourceProjectDirectory, string newProjectDirectory, string? outputResourceFileName = null)
+        {
+            var resx = Directory.EnumerateFiles(sourceProjectDirectory, "*.resx", SearchOption.AllDirectories)
+                .OrderBy(o => o.EndsWith("Strings.resx") ? 1 : int.MaxValue)
+                .GroupBy(srPath =>
+                {
+                    var className = "SR";
+                    if (Path.GetFileNameWithoutExtension(srPath) != "Strings")
+                    {
+                        className = Path.GetFileNameWithoutExtension(srPath);
+                    }
+                    return className;
+                });
+            foreach (var srPath in resx)
+            //var srPath = Path.Join(projectFolderPath, "Resources", "Strings.resx");
+            //if (File.Exists(srPath))
+            {
+                var className = srPath.Key;
+                var keyValues = srPath.SelectMany(s =>
+                {
+                    var srxml = File.ReadAllText(s);
+                    var srdoc = XElement.Parse(srxml);
+                    var keyValues = srdoc.Elements("data")
+                    .Where(r => r.Attribute("name") is not null && r.Element("value") is not null);
+                    return keyValues;
+                }).DistinctBy(e => e.Attribute("name")!.Value)
+                .ToDictionary(e => e.Attribute("name")!.Value, e => e.Element("value")!.Value)
+                .Select(kv =>
+                {
+                    int countParams = 0;
+                    for (int i = 0; i < kv.Value.Length; i++)
+                    {
+                        if (kv.Value[i] == '{')
+                        {
+                            if (kv.Value[i + 1] != '{')
+                                countParams++;
+                            else
+                                i++;
+                        }
+                    }
+                    return @$"
+        /// <summary>
+{string.Join("\r\n", kv.Value.Trim().Split(['\n']).Select(e => $"        /// {e}"))}
+        /// </summary>
+        internal static string {kv.Key}
+        {{
+            get
+            {{
+                return ""{kv.Value.EscapeString()}"";
+            }}
+        }}
+" + (countParams > 0 ? @$"
+
+        internal static string Format{kv.Key}({string.Join(", ", Enumerable.Range(1, countParams).Select(c => $"object arg{c}"))})
+        {{
+            return string.Format(""{kv.Value.EscapeString()}"", {string.Join(", ", Enumerable.Range(1, countParams).Select(c => $"arg{c}"))});
+        }}" : "");
+                });
+                var hasNamespace = className == "SR";
+                var SRTemplate = $@"
+//------------------------------------------------------------------------------
+// <auto-generated>
+//     This code was generated by a tool.
+//     Runtime Version:4.0.30319.42000
+//
+//     Changes to this file may cause incorrect behavior and will be lost if
+//     the code is regenerated.
+// </auto-generated>
+//------------------------------------------------------------------------------
+
+{(hasNamespace ? $"namespace {(className == "SR" ? "System" : projectName)}" : "")}
+{(hasNamespace ? $"{{" : "")}
+
+    /// <summary>
+    ///   A strongly-typed resource class, for looking up localized strings, etc.
+    /// </summary>
+    // This class was auto-generated by the StronglyTypedResourceBuilder
+    // class via a tool like ResGen or Visual Studio.
+    // To add or remove a member, edit your .ResX file then rerun ResGen
+    // with the /str option, or rebuild your VS project.
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute(""System.Resources.Tools.StronglyTypedResourceBuilder"", ""17.0.0.0"")]
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+    [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
+    internal static partial class {className}
+    {{
+
+        private static global::System.Resources.ResourceManager s_resourceManager;
+
+        private static global::System.Globalization.CultureInfo resourceCulture;
+
+        /// <summary>
+        ///   Returns the cached ResourceManager instance used by this class.
+        /// </summary>
+        [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
+        internal static global::System.Resources.ResourceManager ResourceManager
+        {{
+            get
+            {{
+                if (object.ReferenceEquals(s_resourceManager, null))
+                {{
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager(""{projectName}"", typeof({className}).Assembly);
+                    s_resourceManager = temp;
+                }}
+                return s_resourceManager;
+            }}
+        }}
+
+        /// <summary>
+        ///   Overrides the current thread's CurrentUICulture property for all
+        ///   resource lookups using this strongly typed resource class.
+        /// </summary>
+        [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
+        internal static global::System.Globalization.CultureInfo Culture
+        {{
+            get
+            {{
+                return resourceCulture;
+            }}
+            set
+            {{
+                resourceCulture = value;
+            }}
+        }}
+        {string.Join("\r\n\r\n", keyValues)}
+    }}
+{(hasNamespace ? $"}}" : "")}
+";
+                var sroutPath = Path.Join(newProjectDirectory, $"{outputResourceFileName ?? className}.cs");
+                File.WriteAllText(sroutPath, SRTemplate);
+                //var itemGroup = new XElement("ItemGroup");
+                //var content = new XElement("Content");
+                //content.Add(new XAttribute("Include", $"{projectFolderPathAsVariable}\\Resources\\Strings.resx"));
+                //content.Add(new XElement("GenerateSource", "true"));
+                //content.Add(new XElement("ClassName", "System.SR"));
+                //content.Add(new XElement("Generator", "ResXFileCodeGenerator"));
+                ////content.Add(new XElement("LastGenOutput", "SR.cs"));
+                //itemGroup.Add(content);
+                //doc.Add(itemGroup);
+            }
+            if (doc != null && resx.Any(e => e.Key == "SR"))
+            {
+                //Add reference to partial SR class
+                //<Compile Include="$(DotnetRuntimeRoot)src/libraries/Common/src/System/SR.cs"></Compile>
+                var itemGroup = new XElement("ItemGroup");
+                var content = new XElement("Compile");
+                content.Add(new XAttribute("Include", $"$(DotnetRuntimeRoot)src/libraries/Common/src/System/SR.cs"));
+                itemGroup.Add(content);
+                doc.Add(itemGroup);
+            }
+        }
+
         //public async Task<string> Doctor(string originalCsProjectFilePath,
         //    Dictionary<string, string> addPropertyGroups,
         //    Dictionary<string, List<string>> addCompilations,
@@ -771,7 +924,8 @@ namespace NetJs.Compiler
             }
             else
             {
-                GenerateStaticResource(destinationDocument, projectName, projectFolderPath, newProjectDirectory);
+                //GenerateStaticResource(destinationDocument, projectName, projectFolderPath, newProjectDirectory);
+                GenerateStaticResourceInlined(destinationDocument, projectName, projectFolderPath, newProjectDirectory);
             }
             var doctored = destinationDocument.ToString();
             var outPath = Path.Join(newProjectDirectory, $"NetJs.{projectFileName}");

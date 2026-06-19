@@ -15,8 +15,10 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.Intrinsics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -1484,7 +1486,8 @@ namespace NetJs.Tests
                 for (int i = 0; i < count; i++) yield return start + i;
             }
             Debug.Assert(Range(5, 3).ToArray() is [5, 6, 7], "iterator local function");
-
+            
+#if NET11_0_OR_GREATER
             if (RuntimeFeature.IsMultithreadingSupported)
             {
                 // Local async function
@@ -1498,6 +1501,7 @@ namespace NetJs.Tests
                 int asyncResult = task.GetAwaiter().GetResult();
                 Debug.Assert(asyncResult == 70, "async local function");
             }
+#endif
             // Local function using out param
             bool TryParsePositive(string s, out int result)
             {
@@ -1524,6 +1528,7 @@ namespace NetJs.Tests
     {
         public static void Run()
         {
+#if NET11_0_OR_GREATER
             if (RuntimeFeature.IsMultithreadingSupported)
             {
                 // Basic async/await
@@ -1576,6 +1581,7 @@ namespace NetJs.Tests
                 int r6 = ConfiguredAsync().GetAwaiter().GetResult();
                 Debug.Assert(r6 == 1, "ConfigureAwait(false)");
             }
+#endif
         }
 
         private static async Task<int> BasicAsync()
@@ -1786,6 +1792,7 @@ namespace NetJs.Tests
             catch (AppException e) when (e.Code == 500) { customCaught = true; }
             Debug.Assert(customCaught, "custom exception with property");
 
+#if NET11_0_OR_GREATER
             if (RuntimeFeature.IsMultithreadingSupported)
             {
                 // AggregateException
@@ -1805,6 +1812,7 @@ namespace NetJs.Tests
                 }
                 Debug.Assert(aggCaught, "AggregateException from Task.WaitAll");
             }
+#endif
 
             // Nested try/catch
             int n = 0;
@@ -2198,7 +2206,7 @@ namespace NetJs.Tests
             yield return local; // 20
             yield return 30;
         }
-        
+
         // \e escape sequence (C# 13+)
         private static readonly string Esc = "\e[0m"; // ESC character + reset
 
@@ -2412,7 +2420,7 @@ namespace NetJs.Tests
                     return true;
                 }
             }
-            
+
             public int NextPrime
             {
                 get

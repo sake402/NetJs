@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Collections.Specialized", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,14 +70,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_AddingDuplicate", resourceCulture);
+                return "An item with the same key has already been added. Key: {0}";
             }
         }
 
 
         internal static string FormatArgument_AddingDuplicate(object arg1)
         {
-            return string.Format(Argument_AddingDuplicate, arg1);
+            return string.Format("An item with the same key has already been added. Key: {0}", arg1);
         }
 
 
@@ -88,7 +88,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_EnumFailedVersion", resourceCulture);
+                return "Collection was modified after the enumerator was instantiated.";
             }
         }
 
@@ -101,7 +101,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_EnumOpCantHappen", resourceCulture);
+                return "Enumeration has either not started or has already finished.";
             }
         }
 
@@ -114,7 +114,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_MultiRank", resourceCulture);
+                return "Multi dimension array is not supported on this operation.";
             }
         }
 
@@ -127,7 +127,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_InsufficientSpace", resourceCulture);
+                return "Insufficient space in the target location to copy the information.";
             }
         }
 
@@ -140,7 +140,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CollectionReadOnly", resourceCulture);
+                return "Collection is read-only.";
             }
         }
 
@@ -153,7 +153,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BitVectorFull", resourceCulture);
+                return "Bit vector is full.";
             }
         }
 
@@ -166,7 +166,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("OrderedDictionary_ReadOnly", resourceCulture);
+                return "The OrderedDictionary is read-only and cannot be modified.";
             }
         }
 
@@ -179,7 +179,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_ImplementIComparable", resourceCulture);
+                return "At least one object must implement IComparable.";
             }
         }
 
@@ -192,7 +192,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("OrderedDictionary_SerializationMismatch", resourceCulture);
+                return "There was an error deserializing the OrderedDictionary.  The ArrayList does not contain DictionaryEntries.";
             }
         }
 
@@ -205,7 +205,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_InvalidOnDeser", resourceCulture);
+                return "OnDeserialization method was called while the object was not being deserialized.";
             }
         }
 
@@ -218,7 +218,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_KeyCollectionSet", resourceCulture);
+                return "Mutating a key collection derived from a dictionary is not allowed.";
             }
         }
 
@@ -231,7 +231,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_ValueCollectionSet", resourceCulture);
+                return "Mutating a value collection derived from a dictionary is not allowed.";
             }
         }
 

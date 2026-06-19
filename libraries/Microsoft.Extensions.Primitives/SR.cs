@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Microsoft.Extensions.Primitives", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,7 +70,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidOffsetLength", resourceCulture);
+                return "Offset and length are out of bounds for the string or length is greater than the number of characters from index to the end of the string.";
             }
         }
 
@@ -83,7 +83,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidOffsetLengthStringSegment", resourceCulture);
+                return "Offset and length are out of bounds for this StringSegment or length is greater than the number of characters to the end of this StringSegment.";
             }
         }
 
@@ -96,7 +96,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Capacity_CannotChangeAfterWriteStarted", resourceCulture);
+                return "Cannot change capacity after write started.";
             }
         }
 
@@ -109,14 +109,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Capacity_NotEnough", resourceCulture);
+                return "Not enough capacity to write '{0}' characters, only '{1}' left.";
             }
         }
 
 
         internal static string FormatCapacity_NotEnough(object arg1, object arg2)
         {
-            return string.Format(Capacity_NotEnough, arg1, arg2);
+            return string.Format("Not enough capacity to write '{0}' characters, only '{1}' left.", arg1, arg2);
         }
 
 
@@ -127,14 +127,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Capacity_NotUsedEntirely", resourceCulture);
+                return "Entire reserved capacity was not used. Capacity: '{0}', written '{1}'.";
             }
         }
 
 
         internal static string FormatCapacity_NotUsedEntirely(object arg1, object arg2)
         {
-            return string.Format(Capacity_NotUsedEntirely, arg1, arg2);
+            return string.Format("Entire reserved capacity was not used. Capacity: '{0}', written '{1}'.", arg1, arg2);
         }
     }
 }

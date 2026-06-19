@@ -18,7 +18,6 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
             _disabled.Add(node);
             return new DelegateDispose(() => _disabled.Remove(node));
         }
-        Stack<CSharpSyntaxNode> _processing = new Stack<CSharpSyntaxNode>();
         public override bool TryEmit(CSharpSyntaxNode node, TranslatorSyntaxVisitor visitor)
         {
             if (_disabled.Contains(node))

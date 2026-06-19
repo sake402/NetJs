@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Microsoft.Extensions.DependencyInjection.Abstractions", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,14 +70,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AmbiguousConstructorMatch", resourceCulture);
+                return "Multiple constructors accepting all given argument types have been found in type '{0}'. There should only be one applicable constructor.";
             }
         }
 
 
         internal static string FormatAmbiguousConstructorMatch(object arg1)
         {
-            return string.Format(AmbiguousConstructorMatch, arg1);
+            return string.Format("Multiple constructors accepting all given argument types have been found in type '{0}'. There should only be one applicable constructor.", arg1);
         }
 
 
@@ -88,14 +88,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotResolveService", resourceCulture);
+                return "Unable to resolve service for type '{0}' while attempting to activate '{1}'.";
             }
         }
 
 
         internal static string FormatCannotResolveService(object arg1, object arg2)
         {
-            return string.Format(CannotResolveService, arg1, arg2);
+            return string.Format("Unable to resolve service for type '{0}' while attempting to activate '{1}'.", arg1, arg2);
         }
 
 
@@ -106,14 +106,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NoConstructorMatch", resourceCulture);
+                return "A suitable constructor for type '{0}' could not be located. Ensure the type is concrete and services are registered for all parameters of a public constructor.";
             }
         }
 
 
         internal static string FormatNoConstructorMatch(object arg1)
         {
-            return string.Format(NoConstructorMatch, arg1);
+            return string.Format("A suitable constructor for type '{0}' could not be located. Ensure the type is concrete and services are registered for all parameters of a public constructor.", arg1);
         }
 
 
@@ -124,14 +124,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NoServiceRegistered", resourceCulture);
+                return "No service for type '{0}' has been registered.";
             }
         }
 
 
         internal static string FormatNoServiceRegistered(object arg1)
         {
-            return string.Format(NoServiceRegistered, arg1);
+            return string.Format("No service for type '{0}' has been registered.", arg1);
         }
 
 
@@ -142,7 +142,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ServiceCollectionReadOnly", resourceCulture);
+                return "The service collection cannot be modified because it is read-only.";
             }
         }
 
@@ -155,14 +155,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TryAddIndistinguishableTypeToEnumerable", resourceCulture);
+                return "Implementation type cannot be '{0}' because it is indistinguishable from other services registered for '{1}'.";
             }
         }
 
 
         internal static string FormatTryAddIndistinguishableTypeToEnumerable(object arg1, object arg2)
         {
-            return string.Format(TryAddIndistinguishableTypeToEnumerable, arg1, arg2);
+            return string.Format("Implementation type cannot be '{0}' because it is indistinguishable from other services registered for '{1}'.", arg1, arg2);
         }
 
 
@@ -173,14 +173,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MultipleCtorsMarkedWithAttribute", resourceCulture);
+                return "Multiple constructors were marked with {0}.";
             }
         }
 
 
         internal static string FormatMultipleCtorsMarkedWithAttribute(object arg1)
         {
-            return string.Format(MultipleCtorsMarkedWithAttribute, arg1);
+            return string.Format("Multiple constructors were marked with {0}.", arg1);
         }
 
 
@@ -191,14 +191,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MarkedCtorMissingArgumentTypes", resourceCulture);
+                return "Constructor marked with {0} does not accept all given argument types.";
             }
         }
 
 
         internal static string FormatMarkedCtorMissingArgumentTypes(object arg1)
         {
-            return string.Format(MarkedCtorMissingArgumentTypes, arg1);
+            return string.Format("Constructor marked with {0} does not accept all given argument types.", arg1);
         }
 
 
@@ -209,7 +209,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotCreateAbstractClasses", resourceCulture);
+                return "Instances of abstract classes cannot be created.";
             }
         }
 
@@ -222,14 +222,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MultipleCtorsFoundWithBestLength", resourceCulture);
+                return "Multiple constructors for type '{0}' were found with length {1}.";
             }
         }
 
 
         internal static string FormatMultipleCtorsFoundWithBestLength(object arg1, object arg2)
         {
-            return string.Format(MultipleCtorsFoundWithBestLength, arg1, arg2);
+            return string.Format("Multiple constructors for type '{0}' were found with length {1}.", arg1, arg2);
         }
 
 
@@ -240,14 +240,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnableToResolveService", resourceCulture);
+                return "Unable to resolve service for type '{0}' while attempting to activate '{1}'.";
             }
         }
 
 
         internal static string FormatUnableToResolveService(object arg1, object arg2)
         {
-            return string.Format(UnableToResolveService, arg1, arg2);
+            return string.Format("Unable to resolve service for type '{0}' while attempting to activate '{1}'.", arg1, arg2);
         }
 
 
@@ -258,14 +258,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CtorNotLocated", resourceCulture);
+                return "A suitable constructor for type '{0}' could not be located. Ensure the type is concrete and all parameters of a public constructor are either registered as services or passed as arguments. Also ensure no extraneous arguments are provided.";
             }
         }
 
 
         internal static string FormatCtorNotLocated(object arg1)
         {
-            return string.Format(CtorNotLocated, arg1);
+            return string.Format("A suitable constructor for type '{0}' could not be located. Ensure the type is concrete and all parameters of a public constructor are either registered as services or passed as arguments. Also ensure no extraneous arguments are provided.", arg1);
         }
 
 
@@ -276,14 +276,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MultipleCtorsFound", resourceCulture);
+                return "Multiple constructors accepting all given argument types have been found in type '{0}'. There should only be one applicable constructor.";
             }
         }
 
 
         internal static string FormatMultipleCtorsFound(object arg1)
         {
-            return string.Format(MultipleCtorsFound, arg1);
+            return string.Format("Multiple constructors accepting all given argument types have been found in type '{0}'. There should only be one applicable constructor.", arg1);
         }
 
 
@@ -294,7 +294,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("KeyedServicesNotSupported", resourceCulture);
+                return "This service provider doesn't support keyed services.";
             }
         }
 
@@ -307,7 +307,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NonKeyedDescriptorMisuse", resourceCulture);
+                return "This service descriptor is not keyed.";
             }
         }
 

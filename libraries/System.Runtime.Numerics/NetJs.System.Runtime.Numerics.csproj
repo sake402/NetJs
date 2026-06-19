@@ -17,7 +17,6 @@
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Runtime.Numerics\src\System\Numerics\BigIntegerCalculator.GcdInv.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Runtime.Numerics\src\System\Numerics\BigIntegerCalculator.PowMod.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Runtime.Numerics\src\System\Numerics\BigIntegerCalculator.SquMul.cs" />
-    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Runtime.Numerics\src\System\Numerics\BigIntegerCalculator.ShiftRot.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Runtime.Numerics\src\System\Numerics\BigIntegerCalculator.Utils.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Runtime.Numerics\src\System\Numerics\BigInteger.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Runtime.Numerics\src\System\Number.BigInteger.cs" />
@@ -28,8 +27,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="$(CoreLibSharedDir)System\Buffers\Text\FormattingHelpers.CountDigits.cs" Link="CoreLib\System\Buffers\Text\FormattingHelpers.CountDigits.cs" />
-    <Compile Include="$(CommonPath)System\Collections\Generic\ValueListBuilder.cs" Link="CoreLib\System\Collections\Generic\ValueListBuilder.cs" />
-    <Compile Include="$(CommonPath)System\Text\ValueStringBuilder_1.cs" Link="CoreLib\System\Text\ValueStringBuilder_1.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Collections\Generic\ValueListBuilder.cs" Link="CoreLib\System\Collections\Generic\ValueListBuilder.cs" />
+    <Compile Include="$(CommonPath)System\Text\ValueStringBuilder.cs" Link="CoreLib\System\Text\ValueStringBuilder.cs" />
     <Compile Include="$(CommonPath)System\Number.Formatting.Common.cs" Link="Common\System\Number.Formatting.Common.cs" />
     <Compile Include="$(CommonPath)System\Number.NumberBuffer.cs" Link="Common\System\Number.NumberBuffer.cs" />
     <Compile Include="$(CommonPath)System\Number.Parsing.Common.cs" Link="Common\System\Number.Parsing.Common.cs" />

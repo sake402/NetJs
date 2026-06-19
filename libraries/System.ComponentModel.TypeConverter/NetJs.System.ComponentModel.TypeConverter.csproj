@@ -18,7 +18,6 @@
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.ComponentModel.TypeConverter\src\System\ComponentModel\ByteConverter.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.ComponentModel.TypeConverter\src\System\ComponentModel\CharConverter.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.ComponentModel.TypeConverter\src\System\ComponentModel\CollectionConverter.cs" />
-    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.ComponentModel.TypeConverter\src\System\ComponentModel\CollectibleKeyConcurrentHashtable.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.ComponentModel.TypeConverter\src\System\ComponentModel\DateOnlyConverter.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.ComponentModel.TypeConverter\src\System\ComponentModel\DateTimeConverter.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.ComponentModel.TypeConverter\src\System\ComponentModel\DateTimeOffsetConverter.cs" />
@@ -48,7 +47,6 @@
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.ComponentModel.TypeConverter\src\System\ComponentModel\UInt64Converter.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.ComponentModel.TypeConverter\src\System\ComponentModel\UriTypeConverter.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.ComponentModel.TypeConverter\src\System\ComponentModel\VersionConverter.cs" />
-    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.ComponentModel.TypeConverter\src\System\ComponentModel\CollectibleKeyHashtable.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.ComponentModel.TypeConverter\src\System\Timers\ElapsedEventArgs.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.ComponentModel.TypeConverter\src\System\Timers\ElapsedEventHandler.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.ComponentModel.TypeConverter\src\System\Timers\Timer.cs">
@@ -259,7 +257,6 @@
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Linq\NetJs.System.Linq.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Memory\NetJs.System.Memory.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Net.Security\NetJs.System.Net.Security.csproj" />
-    <ProjectReference Include="$(NewLibrariesProjectRoot)System.Numerics.Vectors\NetJs.System.Numerics.Vectors.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.ObjectModel\NetJs.System.ObjectModel.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Resources.Writer\NetJs.System.Resources.Writer.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Runtime\NetJs.System.Runtime.csproj" />

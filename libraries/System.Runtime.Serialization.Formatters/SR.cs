@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Runtime.Serialization.Formatters", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,7 +70,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_HTCapacityOverflow", resourceCulture);
+                return "Hashtable's capacity overflowed and went negative. Check load factor, capacity and the current size of the table.";
             }
         }
 
@@ -83,14 +83,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_NonSerType", resourceCulture);
+                return "Type '{0}' in Assembly '{1}' is not marked as serializable.";
             }
         }
 
 
         internal static string FormatSerialization_NonSerType(object arg1, object arg2)
         {
-            return string.Format(Serialization_NonSerType, arg1, arg2);
+            return string.Format("Type '{0}' in Assembly '{1}' is not marked as serializable.", arg1, arg2);
         }
 
 
@@ -101,7 +101,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_DataLengthDifferent", resourceCulture);
+                return "Parameters 'members' and 'data' must have the same length.";
             }
         }
 
@@ -114,14 +114,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentNull_NullMember", resourceCulture);
+                return "Member at position {0} was null.";
             }
         }
 
 
         internal static string FormatArgumentNull_NullMember(object arg1)
         {
-            return string.Format(ArgumentNull_NullMember, arg1);
+            return string.Format("Member at position {0} was null.", arg1);
         }
 
 
@@ -132,7 +132,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_UnknownMemberInfo", resourceCulture);
+                return "Only FieldInfo, PropertyInfo, and SerializationMemberInfo are recognized.";
             }
         }
 
@@ -145,7 +145,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_NoID", resourceCulture);
+                return "Object has never been assigned an objectID.";
             }
         }
 
@@ -158,7 +158,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_TooManyElements", resourceCulture);
+                return "The internal array cannot expand to greater than Int32.MaxValue elements.";
             }
         }
 
@@ -171,7 +171,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidFieldInfo", resourceCulture);
+                return "The FieldInfo object is not valid.";
             }
         }
 
@@ -184,14 +184,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_NeverSeen", resourceCulture);
+                return "A fixup is registered to the object with ID {0}, but the object does not appear in the graph.";
             }
         }
 
 
         internal static string FormatSerialization_NeverSeen(object arg1)
         {
-            return string.Format(Serialization_NeverSeen, arg1);
+            return string.Format("A fixup is registered to the object with ID {0}, but the object does not appear in the graph.", arg1);
         }
 
 
@@ -202,14 +202,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_IORIncomplete", resourceCulture);
+                return "The object with ID {0} implements the IObjectReference interface for which all dependencies cannot be resolved. The likely cause is two instances of IObjectReference that have a mutual dependency on each other.";
             }
         }
 
 
         internal static string FormatSerialization_IORIncomplete(object arg1)
         {
-            return string.Format(Serialization_IORIncomplete, arg1);
+            return string.Format("The object with ID {0} implements the IObjectReference interface for which all dependencies cannot be resolved. The likely cause is two instances of IObjectReference that have a mutual dependency on each other.", arg1);
         }
 
 
@@ -220,14 +220,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_ObjectNotSupplied", resourceCulture);
+                return "The object with ID {0} was referenced in a fixup but does not exist.";
             }
         }
 
 
         internal static string FormatSerialization_ObjectNotSupplied(object arg1)
         {
-            return string.Format(Serialization_ObjectNotSupplied, arg1);
+            return string.Format("The object with ID {0} was referenced in a fixup but does not exist.", arg1);
         }
 
 
@@ -238,14 +238,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_NotCyclicallyReferenceableSurrogate", resourceCulture);
+                return "{0}.SetObjectData returns a value that is neither null nor equal to the first parameter. Such Surrogates cannot be part of cyclical reference.";
             }
         }
 
 
         internal static string FormatSerialization_NotCyclicallyReferenceableSurrogate(object arg1)
         {
-            return string.Format(Serialization_NotCyclicallyReferenceableSurrogate, arg1);
+            return string.Format("{0}.SetObjectData returns a value that is neither null nor equal to the first parameter. Such Surrogates cannot be part of cyclical reference.", arg1);
         }
 
 
@@ -256,7 +256,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_TooManyReferences", resourceCulture);
+                return "The implementation of the IObjectReference interface returns too many nested references to other objects that implement IObjectReference.";
             }
         }
 
@@ -269,14 +269,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_MissingObject", resourceCulture);
+                return "The object with ID {0} was referenced in a fixup but has not been registered.";
             }
         }
 
 
         internal static string FormatSerialization_MissingObject(object arg1)
         {
-            return string.Format(Serialization_MissingObject, arg1);
+            return string.Format("The object with ID {0} was referenced in a fixup but has not been registered.", arg1);
         }
 
 
@@ -287,7 +287,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_InvalidFixupDiscovered", resourceCulture);
+                return "A fixup on an object implementing ISerializable or having a surrogate was discovered for an object which does not have a SerializationInfo available.";
             }
         }
 
@@ -300,14 +300,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_TypeLoadFailure", resourceCulture);
+                return "Unable to load type {0} required for deserialization.";
             }
         }
 
 
         internal static string FormatSerialization_TypeLoadFailure(object arg1)
         {
-            return string.Format(Serialization_TypeLoadFailure, arg1);
+            return string.Format("Unable to load type {0} required for deserialization.", arg1);
         }
 
 
@@ -318,7 +318,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_ValueTypeFixup", resourceCulture);
+                return "ValueType fixup on Arrays is not implemented.";
             }
         }
 
@@ -331,7 +331,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_PartialValueTypeFixup", resourceCulture);
+                return "Fixing up a partially available ValueType chain is not implemented.";
             }
         }
 
@@ -344,7 +344,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_UnableToFixup", resourceCulture);
+                return "Cannot perform fixup.";
             }
         }
 
@@ -357,7 +357,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_ObjectID", resourceCulture);
+                return "objectID cannot be less than or equal to zero.";
             }
         }
 
@@ -370,7 +370,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_RegisterTwice", resourceCulture);
+                return "An object cannot be registered twice.";
             }
         }
 
@@ -383,7 +383,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_NotISer", resourceCulture);
+                return "The given object does not implement the ISerializable interface.";
             }
         }
 
@@ -396,14 +396,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_ConstructorNotFound", resourceCulture);
+                return "The constructor to deserialize an object of type '{0}' was not found.";
             }
         }
 
 
         internal static string FormatSerialization_ConstructorNotFound(object arg1)
         {
-            return string.Format(Serialization_ConstructorNotFound, arg1);
+            return string.Format("The constructor to deserialize an object of type '{0}' was not found.", arg1);
         }
 
 
@@ -414,7 +414,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_IncorrectNumberOfFixups", resourceCulture);
+                return "The ObjectManager found an invalid number of fixups. This usually indicates a problem in the Formatter.";
             }
         }
 
@@ -427,7 +427,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_InvalidFixupType", resourceCulture);
+                return "A member fixup was registered for an object which implements ISerializable or has a surrogate. In this situation, a delayed fixup must be used.";
             }
         }
 
@@ -440,7 +440,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_IdTooSmall", resourceCulture);
+                return "Object IDs must be greater than zero.";
             }
         }
 
@@ -453,7 +453,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_ParentChildIdentical", resourceCulture);
+                return "The ID of the containing object cannot be the same as the object ID.";
             }
         }
 
@@ -466,14 +466,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_InvalidType", resourceCulture);
+                return "Only system-provided types can be passed to the GetUninitializedObject method. '{0}' is not a valid instance of a type.";
             }
         }
 
 
         internal static string FormatSerialization_InvalidType(object arg1)
         {
-            return string.Format(Serialization_InvalidType, arg1);
+            return string.Format("Only system-provided types can be passed to the GetUninitializedObject method. '{0}' is not a valid instance of a type.", arg1);
         }
 
 
@@ -484,7 +484,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_MustSupplyParent", resourceCulture);
+                return "When supplying the ID of a containing object, the FieldInfo that identifies the current field within that object must also be supplied.";
             }
         }
 
@@ -497,7 +497,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_MemberAndArray", resourceCulture);
+                return "Cannot supply both a MemberInfo and an Array to indicate the parent of a value type.";
             }
         }
 
@@ -510,7 +510,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_CorruptedStream", resourceCulture);
+                return "Invalid BinaryFormatter stream.";
             }
         }
 
@@ -523,7 +523,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_Stream", resourceCulture);
+                return "Attempting to deserialize an empty stream.";
             }
         }
 
@@ -536,14 +536,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_BinaryHeader", resourceCulture);
+                return "Binary stream '{0}' does not contain a valid BinaryHeader. Possible causes are invalid stream or object version change between serialization and deserialization.";
             }
         }
 
 
         internal static string FormatSerialization_BinaryHeader(object arg1)
         {
-            return string.Format(Serialization_BinaryHeader, arg1);
+            return string.Format("Binary stream '{0}' does not contain a valid BinaryHeader. Possible causes are invalid stream or object version change between serialization and deserialization.", arg1);
         }
 
 
@@ -554,7 +554,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_TypeExpected", resourceCulture);
+                return "Invalid expected type.";
             }
         }
 
@@ -567,7 +567,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_StreamEnd", resourceCulture);
+                return "End of Stream encountered before parsing was completed.";
             }
         }
 
@@ -580,14 +580,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_CrossAppDomainError", resourceCulture);
+                return "Cross-AppDomain BinaryFormatter error; expected '{0}' but received '{1}'.";
             }
         }
 
 
         internal static string FormatSerialization_CrossAppDomainError(object arg1, object arg2)
         {
-            return string.Format(Serialization_CrossAppDomainError, arg1, arg2);
+            return string.Format("Cross-AppDomain BinaryFormatter error; expected '{0}' but received '{1}'.", arg1, arg2);
         }
 
 
@@ -598,14 +598,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_Map", resourceCulture);
+                return "No map for object '{0}'.";
             }
         }
 
 
         internal static string FormatSerialization_Map(object arg1)
         {
-            return string.Format(Serialization_Map, arg1);
+            return string.Format("No map for object '{0}'.", arg1);
         }
 
 
@@ -616,14 +616,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_Assembly", resourceCulture);
+                return "No assembly information is available for object on the wire, '{0}'.";
             }
         }
 
 
         internal static string FormatSerialization_Assembly(object arg1)
         {
-            return string.Format(Serialization_Assembly, arg1);
+            return string.Format("No assembly information is available for object on the wire, '{0}'.", arg1);
         }
 
 
@@ -634,14 +634,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_ObjectTypeEnum", resourceCulture);
+                return "Invalid ObjectTypeEnum {0}.";
             }
         }
 
 
         internal static string FormatSerialization_ObjectTypeEnum(object arg1)
         {
-            return string.Format(Serialization_ObjectTypeEnum, arg1);
+            return string.Format("Invalid ObjectTypeEnum {0}.", arg1);
         }
 
 
@@ -652,14 +652,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_AssemblyId", resourceCulture);
+                return "No assembly ID for object type '{0}'.";
             }
         }
 
 
         internal static string FormatSerialization_AssemblyId(object arg1)
         {
-            return string.Format(Serialization_AssemblyId, arg1);
+            return string.Format("No assembly ID for object type '{0}'.", arg1);
         }
 
 
@@ -670,14 +670,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_ArrayType", resourceCulture);
+                return "Invalid array type '{0}'.";
             }
         }
 
 
         internal static string FormatSerialization_ArrayType(object arg1)
         {
-            return string.Format(Serialization_ArrayType, arg1);
+            return string.Format("Invalid array type '{0}'.", arg1);
         }
 
 
@@ -688,14 +688,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_TypeCode", resourceCulture);
+                return "Invalid type code in stream '{0}'.";
             }
         }
 
 
         internal static string FormatSerialization_TypeCode(object arg1)
         {
-            return string.Format(Serialization_TypeCode, arg1);
+            return string.Format("Invalid type code in stream '{0}'.", arg1);
         }
 
 
@@ -706,14 +706,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_TypeWrite", resourceCulture);
+                return "Invalid write type request '{0}'.";
             }
         }
 
 
         internal static string FormatSerialization_TypeWrite(object arg1)
         {
-            return string.Format(Serialization_TypeWrite, arg1);
+            return string.Format("Invalid write type request '{0}'.", arg1);
         }
 
 
@@ -724,14 +724,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_TypeRead", resourceCulture);
+                return "Invalid read type request '{0}'.";
             }
         }
 
 
         internal static string FormatSerialization_TypeRead(object arg1)
         {
-            return string.Format(Serialization_TypeRead, arg1);
+            return string.Format("Invalid read type request '{0}'.", arg1);
         }
 
 
@@ -742,14 +742,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_AssemblyNotFound", resourceCulture);
+                return "Unable to find assembly '{0}'.";
             }
         }
 
 
         internal static string FormatSerialization_AssemblyNotFound(object arg1)
         {
-            return string.Format(Serialization_AssemblyNotFound, arg1);
+            return string.Format("Unable to find assembly '{0}'.", arg1);
         }
 
 
@@ -760,14 +760,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_InvalidFormat", resourceCulture);
+                return "The input stream is not a valid binary format. The starting contents (in bytes) are: {0} ...";
             }
         }
 
 
         internal static string FormatSerialization_InvalidFormat(object arg1)
         {
-            return string.Format(Serialization_InvalidFormat, arg1);
+            return string.Format("The input stream is not a valid binary format. The starting contents (in bytes) are: {0} ...", arg1);
         }
 
 
@@ -778,7 +778,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_TopObject", resourceCulture);
+                return "No top object.";
             }
         }
 
@@ -791,14 +791,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_XMLElement", resourceCulture);
+                return "Invalid element '{0}'.";
             }
         }
 
 
         internal static string FormatSerialization_XMLElement(object arg1)
         {
-            return string.Format(Serialization_XMLElement, arg1);
+            return string.Format("Invalid element '{0}'.", arg1);
         }
 
 
@@ -809,14 +809,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_TopObjectInstantiate", resourceCulture);
+                return "Top object cannot be instantiated for element '{0}'.";
             }
         }
 
 
         internal static string FormatSerialization_TopObjectInstantiate(object arg1)
         {
-            return string.Format(Serialization_TopObjectInstantiate, arg1);
+            return string.Format("Top object cannot be instantiated for element '{0}'.", arg1);
         }
 
 
@@ -827,7 +827,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_ArrayTypeObject", resourceCulture);
+                return "Array element type is Object, 'dt' attribute is null.";
             }
         }
 
@@ -840,14 +840,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_TypeMissing", resourceCulture);
+                return "Type is missing for member of type Object '{0}'.";
             }
         }
 
 
         internal static string FormatSerialization_TypeMissing(object arg1)
         {
-            return string.Format(Serialization_TypeMissing, arg1);
+            return string.Format("Type is missing for member of type Object '{0}'.", arg1);
         }
 
 
@@ -858,14 +858,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_ObjNoID", resourceCulture);
+                return "Object {0} has never been assigned an objectID.";
             }
         }
 
 
         internal static string FormatSerialization_ObjNoID(object arg1)
         {
-            return string.Format(Serialization_ObjNoID, arg1);
+            return string.Format("Object {0} has never been assigned an objectID.", arg1);
         }
 
 
@@ -876,14 +876,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_SerMemberInfo", resourceCulture);
+                return "MemberInfo type {0} cannot be serialized.";
             }
         }
 
 
         internal static string FormatSerialization_SerMemberInfo(object arg1)
         {
-            return string.Format(Serialization_SerMemberInfo, arg1);
+            return string.Format("MemberInfo type {0} cannot be serialized.", arg1);
         }
 
 
@@ -894,7 +894,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_MustSupplyContainer", resourceCulture);
+                return "When supplying a FieldInfo for fixing up a nested type, a valid ID for that containing object must also be supplied.";
             }
         }
 
@@ -907,14 +907,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_ParseError", resourceCulture);
+                return "Parse error. Current element is not compatible with the next element, {0}.";
             }
         }
 
 
         internal static string FormatSerialization_ParseError(object arg1)
         {
-            return string.Format(Serialization_ParseError, arg1);
+            return string.Format("Parse error. Current element is not compatible with the next element, {0}.", arg1);
         }
 
 
@@ -925,7 +925,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_ISerializableMemberInfo", resourceCulture);
+                return "MemberInfo requested for ISerializable type.";
             }
         }
 
@@ -938,14 +938,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_MemberInfo", resourceCulture);
+                return "MemberInfo cannot be obtained for ISerialized Object '{0}'.";
             }
         }
 
 
         internal static string FormatSerialization_MemberInfo(object arg1)
         {
-            return string.Format(Serialization_MemberInfo, arg1);
+            return string.Format("MemberInfo cannot be obtained for ISerialized Object '{0}'.", arg1);
         }
 
 
@@ -956,14 +956,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_ISerializableTypes", resourceCulture);
+                return "Types not available for ISerializable object '{0}'.";
             }
         }
 
 
         internal static string FormatSerialization_ISerializableTypes(object arg1)
         {
-            return string.Format(Serialization_ISerializableTypes, arg1);
+            return string.Format("Types not available for ISerializable object '{0}'.", arg1);
         }
 
 
@@ -974,14 +974,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_MissingMember", resourceCulture);
+                return "Member '{0}' in class '{1}' is not present in the serialized stream and is not marked with {2}.";
             }
         }
 
 
         internal static string FormatSerialization_MissingMember(object arg1, object arg2, object arg3)
         {
-            return string.Format(Serialization_MissingMember, arg1, arg2, arg3);
+            return string.Format("Member '{0}' in class '{1}' is not present in the serialized stream and is not marked with {2}.", arg1, arg2, arg3);
         }
 
 
@@ -992,14 +992,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_NoMemberInfo", resourceCulture);
+                return "No MemberInfo for Object {0}.";
             }
         }
 
 
         internal static string FormatSerialization_NoMemberInfo(object arg1)
         {
-            return string.Format(Serialization_NoMemberInfo, arg1);
+            return string.Format("No MemberInfo for Object {0}.", arg1);
         }
 
 
@@ -1010,7 +1010,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_SurrogateCycleInArgument", resourceCulture);
+                return "Selector contained a cycle.";
             }
         }
 
@@ -1023,7 +1023,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Serialization_SurrogateCycle", resourceCulture);
+                return "Adding selector will introduce a cycle.";
             }
         }
 
@@ -1036,7 +1036,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_EOF_ReadBeyondEOF", resourceCulture);
+                return "Unable to read beyond the end of the stream.";
             }
         }
 
@@ -1049,7 +1049,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BinaryFormatter_SerializationDisallowed", resourceCulture);
+                return "BinaryFormatter serialization and deserialization are disabled within this application. See https://aka.ms/binaryformatter for more information.";
             }
         }
 
@@ -1062,7 +1062,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BinaryFormatter_SerializationNotSupportedOnThisPlatform", resourceCulture);
+                return "BinaryFormatter serialization and deserialization are not supported on this platform. See https://aka.ms/binaryformatter for more information.";
             }
         }
 
@@ -1075,7 +1075,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BinaryFormatter_Removed", resourceCulture);
+                return "BinaryFormatter serialization and deserialization have been removed. See https://aka.ms/binaryformatter for more information.";
             }
         }
 

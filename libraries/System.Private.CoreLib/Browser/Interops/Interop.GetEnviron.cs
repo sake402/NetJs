@@ -6,12 +6,12 @@ internal static partial class Interop
 {
     internal static unsafe partial class Sys
     {
-        internal static unsafe partial byte** GetEnviron()
+        internal static unsafe partial IntPtr GetEnviron()
         {
-            return null;
+            return IntPtr.Zero;
         }
 
-        internal static unsafe partial void FreeEnviron(byte** environ)
+        internal static unsafe partial void FreeEnviron(IntPtr environ)
         {
         }
 

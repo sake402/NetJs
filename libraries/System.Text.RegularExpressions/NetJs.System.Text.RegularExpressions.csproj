@@ -36,7 +36,6 @@
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Text.RegularExpressions\src\System\Text\RegularExpressions\RegexCaseEquivalences.Data.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Text.RegularExpressions\src\System\Text\RegularExpressions\RegexCaseEquivalences.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Text.RegularExpressions\src\System\Text\RegularExpressions\RegexCharClass.cs" />
-    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Text.RegularExpressions\src\System\Text\RegularExpressions\RegexCharClass.Tables.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Text.RegularExpressions\src\System\Text\RegularExpressions\RegexCompilationInfo.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Text.RegularExpressions\src\System\Text\RegularExpressions\RegexFindOptimizations.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Text.RegularExpressions\src\System\Text\RegularExpressions\GeneratedRegexAttribute.cs" />
@@ -102,8 +101,8 @@
     <Compile Include="$(CommonPath)System\HexConverter.cs" Link="Common\System\HexConverter.cs" />
     <Compile Include="$(CommonPath)System\Obsoletions.cs" Link="Common\System\Obsoletions.cs" />
     <Compile Include="$(CommonPath)System\Text\ValueStringBuilder.cs" Link="Common\System\Text\ValueStringBuilder.cs" />
-    <Compile Include="$(CommonPath)System\Collections\Generic\ValueListBuilder.cs" Link="Common\System\Collections\Generic\ValueListBuilder.cs" />
-    <Compile Include="$(CommonPath)System\Collections\Generic\ValueListBuilder.Pop.cs" Link="Common\System\Collections\Generic\ValueListBuilder.Pop.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Collections\Generic\ValueListBuilder.cs" Link="Common\System\Collections\Generic\ValueListBuilder.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Collections\Generic\ValueListBuilder.Pop.cs" Link="Common\System\Collections\Generic\ValueListBuilder.Pop.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Collections\NetJs.System.Collections.csproj" />

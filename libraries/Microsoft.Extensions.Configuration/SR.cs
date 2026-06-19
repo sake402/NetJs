@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Microsoft.Extensions.Configuration", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,7 +70,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Error_NoSources", resourceCulture);
+                return "A configuration source is not registered. Please register one before setting a value.";
             }
         }
 
@@ -83,14 +83,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidNullArgument", resourceCulture);
+                return "Null is not a valid value for '{0}'.";
             }
         }
 
 
         internal static string FormatInvalidNullArgument(object arg1)
         {
-            return string.Format(InvalidNullArgument, arg1);
+            return string.Format("Null is not a valid value for '{0}'.", arg1);
         }
 
 
@@ -101,7 +101,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("StreamConfigurationProvidersAlreadyLoaded", resourceCulture);
+                return "StreamConfigurationProviders cannot be loaded more than once.";
             }
         }
 
@@ -114,7 +114,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("StreamConfigurationSourceStreamCannotBeNull", resourceCulture);
+                return "Source.Stream cannot be null.";
             }
         }
 

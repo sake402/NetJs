@@ -60,6 +60,8 @@ namespace NetJs
         public static extern bool IsUndefined(object? value);
         [Template("!{value}")]
         public static extern bool IsUndefinedOrNull(object? value);
+        [Template("{key} in {value}")]
+        public static extern bool KeyIn(string key, object value);
         //public static bool IsDefined(object? value, bool noNull = false)
         //{
         //    return StrictNotEqual(TypeOf(value), "undefined") && (noNull ? value != null : true);
@@ -85,6 +87,8 @@ namespace NetJs
         public static extern uint UnsignedLeftShift(int value, int shift);
         [Template("((({value}) << {shift}) >>> 0)")]
         public static extern uint UnsignedLeftShift(uint value, int shift);
+        [Template("arguments")]
+        public static extern object[] Arguments();
         [Template("arguments[{index}]")]
         public static extern T Argument<T>(int index);
         [Template("Array.isArray({obj})")]

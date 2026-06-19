@@ -10,7 +10,7 @@ namespace System.Threading
         private static unsafe void MainThreadScheduleTimerImpl(void* callback, int shortestDueTimeMs)
         {
             var call = *(Action*)callback;
-            Global.SetTimeout(call, shortestDueTimeMs);
+            Global.SetTimeout(() => call(), shortestDueTimeMs);
         }
     }
 }

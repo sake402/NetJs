@@ -13,25 +13,29 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Pointer
             {
                 if (elementAccess.ArgumentList.Arguments.Count == 1)
                 {
-                    var type = visitor.Global.GetTypeSymbol(elementAccess.Expression, visitor);
-                    if (type.IsPointer(out _))
+                    var symbol = visitor.Global.GetSymbol(elementAccess.Expression, visitor);
+                    if (!visitor.Global.IsFixedSizeField(symbol, out _, out _))
                     {
-                        var argType = visitor.Global.GetTypeSymbol(elementAccess.ArgumentList.Arguments[0], visitor);
-                        visitor.Visit(elementAccess.Expression);
-                        visitor.CurrentTypeWriter.Write(node, ".SetAt(");
-                        visitor.Visit(node.Right);
-                        visitor.CurrentTypeWriter.Write(node, ", ");
-                        if (argType.IsLongNumericType())
+                        var type = visitor.Global.GetTypeSymbol(symbol);
+                        if (type.IsPointer(out _))
                         {
-                            visitor.CurrentTypeWriter.Write(node, "Number(");
-                        }
-                        visitor.Visit(elementAccess.ArgumentList.Arguments[0]);
-                        if (argType.IsLongNumericType())
-                        {
+                            var argType = visitor.Global.GetTypeSymbol(elementAccess.ArgumentList.Arguments[0], visitor);
+                            visitor.Visit(elementAccess.Expression);
+                            visitor.CurrentTypeWriter.Write(node, ".SetAt(");
+                            visitor.Visit(node.Right);
+                            visitor.CurrentTypeWriter.Write(node, ", ");
+                            if (argType.IsLongNumericType())
+                            {
+                                visitor.CurrentTypeWriter.Write(node, "Number(");
+                            }
+                            visitor.Visit(elementAccess.ArgumentList.Arguments[0]);
+                            if (argType.IsLongNumericType())
+                            {
+                                visitor.CurrentTypeWriter.Write(node, ")");
+                            }
                             visitor.CurrentTypeWriter.Write(node, ")");
+                            return true;
                         }
-                        visitor.CurrentTypeWriter.Write(node, ")");
-                        return true;
                     }
                 }
             }

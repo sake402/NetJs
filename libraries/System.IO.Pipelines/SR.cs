@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.IO.Pipelines", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,7 +70,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AdvanceToInvalidCursor", resourceCulture);
+                return "The PipeReader has already advanced past the provided position.";
             }
         }
 
@@ -83,7 +83,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_NeedPosNum", resourceCulture);
+                return "Positive number required.";
             }
         }
 
@@ -96,7 +96,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ConcurrentOperationsNotSupported", resourceCulture);
+                return "Concurrent reads or writes are not supported.";
             }
         }
 
@@ -109,7 +109,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FlushCanceledOnPipeWriter", resourceCulture);
+                return "Flush was canceled on underlying PipeWriter.";
             }
         }
 
@@ -122,7 +122,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("GetResultBeforeCompleted", resourceCulture);
+                return "Can't GetResult unless awaiter is completed.";
             }
         }
 
@@ -135,7 +135,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidExaminedOrConsumedPosition", resourceCulture);
+                return "The examined position must be greater than or equal to the consumed position.";
             }
         }
 
@@ -148,7 +148,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidExaminedPosition", resourceCulture);
+                return "The examined position cannot be less than the previously examined position.";
             }
         }
 
@@ -161,7 +161,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidZeroByteRead", resourceCulture);
+                return "The PipeReader returned 0 bytes when the ReadResult was not completed or canceled.";
             }
         }
 
@@ -174,7 +174,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ObjectDisposed_StreamClosed", resourceCulture);
+                return "Cannot access a closed stream.";
             }
         }
 
@@ -187,7 +187,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NoReadingOperationToComplete", resourceCulture);
+                return "No reading operation to complete.";
             }
         }
 
@@ -200,7 +200,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_UnreadableStream", resourceCulture);
+                return "Stream does not support reading.";
             }
         }
 
@@ -213,7 +213,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_UnwritableStream", resourceCulture);
+                return "Stream does not support writing.";
             }
         }
 
@@ -226,7 +226,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ReadCanceledOnPipeReader", resourceCulture);
+                return "Read was canceled on underlying PipeReader.";
             }
         }
 
@@ -239,7 +239,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ReaderAndWriterHasToBeCompleted", resourceCulture);
+                return "Both reader and writer has to be completed to be able to reset the pipe.";
             }
         }
 
@@ -252,7 +252,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ReadingAfterCompleted", resourceCulture);
+                return "Reading is not allowed after reader was completed.";
             }
         }
 
@@ -265,7 +265,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ReadingIsInProgress", resourceCulture);
+                return "Reading is already in progress.";
             }
         }
 
@@ -278,7 +278,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("WritingAfterCompleted", resourceCulture);
+                return "Writing is not allowed after writer was completed.";
             }
         }
 
@@ -291,7 +291,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnflushedBytesNotSupported", resourceCulture);
+                return "UnflushedBytes is not supported.";
             }
         }
 

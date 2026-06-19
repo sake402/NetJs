@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Diagnostics.TraceSource", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,14 +70,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AttributeNotSupported", resourceCulture);
+                return "'{0}' is not a valid attribute for type '{1}'.";
             }
         }
 
 
         internal static string FormatAttributeNotSupported(object arg1, object arg2)
         {
-            return string.Format(AttributeNotSupported, arg1, arg2);
+            return string.Format("'{0}' is not a valid attribute for type '{1}'.", arg1, arg2);
         }
 
 
@@ -88,14 +88,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExceptionOccurred", resourceCulture);
+                return "An exception occurred while writing to the log file {0}: {1}.";
             }
         }
 
 
         internal static string FormatExceptionOccurred(object arg1, object arg2)
         {
-            return string.Format(ExceptionOccurred, arg1, arg2);
+            return string.Format("An exception occurred while writing to the log file {0}: {1}.", arg1, arg2);
         }
 
 
@@ -106,7 +106,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MustAddListener", resourceCulture);
+                return "Only TraceListeners can be added to a TraceListenerCollection.";
             }
         }
 
@@ -119,7 +119,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceListenerFail", resourceCulture);
+                return "Fail:";
             }
         }
 
@@ -132,7 +132,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceListenerIndentSize", resourceCulture);
+                return "The IndentSize property must be non-negative.";
             }
         }
 
@@ -145,7 +145,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DebugAssertBanner", resourceCulture);
+                return "---- DEBUG ASSERTION FAILED ----";
             }
         }
 
@@ -158,7 +158,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DebugAssertShortMessage", resourceCulture);
+                return "---- Assert Short Message ----";
             }
         }
 
@@ -171,7 +171,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DebugAssertLongMessage", resourceCulture);
+                return "---- Assert Long Message ----";
             }
         }
 
@@ -184,14 +184,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceSwitchLevelTooLow", resourceCulture);
+                return "Attempted to set {0} to a value that is too low.  Setting level to TraceLevel.Off";
             }
         }
 
 
         internal static string FormatTraceSwitchLevelTooLow(object arg1)
         {
-            return string.Format(TraceSwitchLevelTooLow, arg1);
+            return string.Format("Attempted to set {0} to a value that is too low.  Setting level to TraceLevel.Off", arg1);
         }
 
 
@@ -202,7 +202,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceSwitchInvalidLevel", resourceCulture);
+                return "The Level must be set to a value in the enumeration TraceLevel.";
             }
         }
 
@@ -215,14 +215,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TraceSwitchLevelTooHigh", resourceCulture);
+                return "Attempted to set {0} to a value that is too high.  Setting level to TraceLevel.Verbose";
             }
         }
 
 
         internal static string FormatTraceSwitchLevelTooHigh(object arg1)
         {
-            return string.Format(TraceSwitchLevelTooHigh, arg1);
+            return string.Format("Attempted to set {0} to a value that is too high.  Setting level to TraceLevel.Verbose", arg1);
         }
     }
 }

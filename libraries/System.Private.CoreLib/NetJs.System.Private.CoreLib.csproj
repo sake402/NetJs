@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <!--<EnableDefaultItems>false</EnableDefaultItems>-->
     <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
@@ -31,7 +31,7 @@
     <!-- These prevent the default MsBuild targets from referencing System.dll and mscorlib.dll -->
     <ExcludeMscorlibFacade>true</ExcludeMscorlibFacade>
     <RuntimeMetadataVersion>v4.0.30319</RuntimeMetadataVersion>
-    <NoWarn>$(NoWarn),0419,0649,1591</NoWarn> 
+    <NoWarn>$(NoWarn),0419,0649,1591</NoWarn>
     <Nullable>enable</Nullable>
 
     <!-- Ignore all previous constants since SPCL is sensitive to what is defined and the Sdk adds some by default -->
@@ -110,9 +110,10 @@
     <DefineConstants>$(DefineConstants);MONO_FEATURE_SRE</DefineConstants>
 
     <FeatureMono>true</FeatureMono>
-    <FeatureMultithreading Condition="('$(TargetsBrowser)' != 'true' and '$(TargetsWasi)' != 'true') or '$(WasmEnableThreads)' == 'true'">true</FeatureMultithreading>
-    <FeaturePortableTimer Condition="('$(TargetsBrowser)' != 'true' and '$(TargetsWasi)' != 'true') or '$(FeatureMultithreading)' == 'true'">true</FeaturePortableTimer>
-    <FeaturePortableThreadPool Condition="('$(TargetsBrowser)' != 'true' and '$(TargetsWasi)' != 'true') or '$(FeatureMultithreading)' == 'true'">true</FeaturePortableThreadPool>
+    <FeatureWasmManagedThreads Condition="('$(TargetsBrowser)' == 'true' or '$(TargetsWasi)' == 'true') and '$(WasmEnableThreads)' == 'true'">true</FeatureWasmManagedThreads>
+    <FeatureSingleThread Condition="('$(TargetsBrowser)' == 'true' or '$(TargetsWasi)' == 'true') and '$(WasmEnableThreads)' != 'true'">true</FeatureSingleThread>
+    <FeaturePortableTimer Condition="('$(TargetsBrowser)' != 'true' and '$(TargetsWasi)' != 'true') or '$(FeatureWasmManagedThreads)' == 'true'">true</FeaturePortableTimer>
+    <FeaturePortableThreadPool Condition="('$(TargetsBrowser)' != 'true' and '$(TargetsWasi)' != 'true') or '$(FeatureWasmManagedThreads)' == 'true'">true</FeaturePortableThreadPool>
     <FeaturePerfTracing Condition="('$(TargetsWasi)' != 'true')">false</FeaturePerfTracing>
     <FeatureObjCMarshal Condition="'$(TargetsOSX)' == 'true' or '$(TargetsMacCatalyst)' == 'true' or '$(TargetsiOS)' == 'true' or '$(TargetstvOS)' == 'true'">true</FeatureObjCMarshal>
   </PropertyGroup>
@@ -120,6 +121,8 @@
   <PropertyGroup>
     <DefineConstants Condition="'$(FeaturePerfTracing)' == 'true'">$(DefineConstants);FEATURE_PERFTRACING</DefineConstants>
     <DefineConstants Condition="'$(FeatureObjCMarshal)' == 'true'">$(DefineConstants);FEATURE_OBJCMARSHAL</DefineConstants>
+    <DefineConstants Condition="'$(FeatureWasmManagedThreads)' == 'true'">$(DefineConstants);FEATURE_WASM_MANAGED_THREADS</DefineConstants>
+    <DefineConstants Condition="'$(FeatureSingleThread)' == 'true'">$(DefineConstants);FEATURE_SINGLE_THREADED</DefineConstants>
   </PropertyGroup>
 
   <!-- ILLinker settings -->
@@ -136,6 +139,7 @@
 
     <ILLinkSubstitutionsXmls Include="$(ILLinkDirectory)ILLink.Substitutions.$(Platform).xml" Condition="Exists('$(ILLinkDirectory)ILLink.Substitutions.$(Platform).xml')" />
     <ILLinkSubstitutionsXmls Include="$(ILLinkDirectory)ILLink.Substitutions.iOS.xml" Condition="'$(TargetsiOS)' == 'true' or '$(TargetstvOS)' == 'true'" />
+    <ILLinkSubstitutionsXmls Include="$(ILLinkDirectory)ILLink.Substitutions.wasm.singlethread.xml" Condition="'$(Platform)' == 'wasm' and '$(FeatureWasmManagedThreads)' != 'true'" />
     <ILLinkSubstitutionsXmls Include="$(ILLinkDirectory)ILLink.Substitutions.Intrinsics.x86.xml" />
     <ILLinkSubstitutionsXmls Include="$(ILLinkDirectory)ILLink.Substitutions.Intrinsics.Vectors.xml" />
 
@@ -244,10 +248,11 @@
       <Compile Include="$(BclSourcesRoot)\System\Runtime\InteropServices\MarshalAsAttribute.Mono.cs" />
       <Compile Include="$(BclSourcesRoot)\System\Runtime\InteropServices\NativeLibrary.Mono.cs" />
       <Compile Include="$(BclSourcesRoot)\System\Runtime\InteropServices\SafeHandle.Mono.cs" />
-      <Compile Include="$(BclSourcesRoot)\System\Runtime\InteropServices\ObjectiveCMarshal.Mono.cs" Condition="'$(FeatureObjCMarshal)' == 'true'" />
+      <Compile Include="$(BclSourcesRoot)\System\Runtime\InteropServices\ObjectiveCMarshal.Mono.cs"
+               Condition="'$(FeatureObjCMarshal)' == 'true'"/>
+      <Compile Include="$(BclSourcesRoot)\System\Runtime\Intrinsics\X86\X86Base.Mono.cs" />
       <Compile Include="$(BclSourcesRoot)\System\Runtime\Loader\AssemblyLoadContext.Mono.cs" />
       <Compile Include="$(BclSourcesRoot)\System\Threading\Interlocked.Mono.cs" />
-      <Compile Include="$(BclSourcesRoot)\System\Threading\ManagedThreadId.Mono.cs" />
       <Compile Include="$(BclSourcesRoot)\System\Threading\Monitor.Mono.cs" />
       <Compile Include="$(BclSourcesRoot)\System\Threading\ObjectHeader.Mono.cs" />
       <Compile Include="$(BclSourcesRoot)\System\Threading\Thread.Mono.cs" />
@@ -257,6 +262,9 @@
       <Compile Include="$(CommonPath)System\Experimentals.cs">
         <Link>CommonSystem\Experimentals.cs</Link>
       </Compile>
+  </ItemGroup>
+  <ItemGroup Condition="('$(TargetsUnix)' == 'true' or '$(TargetsBrowser)' == 'true' or '$(TargetsWasi)' == 'true') and '$(FeaturePortableThreadPool)' == 'true'">
+      <Compile Include="$(BclSourcesRoot)\System\Threading\LowLevelLifoSemaphore.Unix.Mono.cs" />
   </ItemGroup>
   <ItemGroup>
       <Compile Include="$(BclSourcesRoot)\Mono\HotReload.cs" />
@@ -268,10 +276,10 @@
 
   <!-- Enable unsupported browser warnings -->
   <ItemGroup Condition="'$(TargetsBrowser)' == 'true' or '$(TargetsAnyOS)' == 'true'">
-    <SupportedPlatform Include="browser" />
+    <SupportedPlatform Include="browser"/>
   </ItemGroup>
   <ItemGroup Condition="'$(TargetsWasi)' == 'true' or '$(TargetsAnyOS)' == 'true'">
-    <SupportedPlatform Include="wasi" />
+    <SupportedPlatform Include="wasi"/>
   </ItemGroup>
 
   <!--<Import Project="$(LibrariesProjectRoot)\System.Private.CoreLib\src\System.Private.CoreLib.Shared.projitems" Label="Shared" />-->
@@ -292,8 +300,7 @@
     <IsApplePlatform Condition="'$(TargetsOSX)' == 'true' or '$(IsiOSLike)' == 'true'">true</IsApplePlatform>
     <IsMobileLike Condition="'$(TargetsBrowser)' == 'true' or '$(TargetsWasi)' == 'true' or '$(IsiOSLike)' == 'true' or '$(TargetsAndroid)' == 'true'">true</IsMobileLike>
     <SupportsArmIntrinsics Condition="'$(Platform)' == 'arm64'">true</SupportsArmIntrinsics>
-    <SupportsWasmIntrinsics Condition="'$(Platform)' == 'wasm' and '$(FeatureMono)' == 'true'">true</SupportsWasmIntrinsics>
-    <SupportsWasmIntrinsics Condition="'$(SupportsWasmIntrinsics)' == ''">false</SupportsWasmIntrinsics>
+    <SupportsWasmIntrinsics Condition="'$(Platform)' == 'wasm'">true</SupportsWasmIntrinsics>
     <SupportsX86Intrinsics Condition="'$(Platform)' == 'x64' or '$(Platform)' == 'x86'">true</SupportsX86Intrinsics>
     <SupportsX86Intrinsics Condition="'$(Platform)' == 'x86' and '$(FeatureMono)' == 'true'">false</SupportsX86Intrinsics>
     <NotSupportedOnMono Condition="'$(FeatureMono)' == 'true'">.PlatformNotSupported</NotSupportedOnMono>
@@ -302,8 +309,6 @@
     <Is64Bit Condition="'$(Platform)' == 'arm64' or '$(Platform)' == 'x64' or '$(Platform)' == 's390x' or '$(Platform)' == 'loongarch64' or '$(Platform)' == 'ppc64le' or '$(Platform)' == 'riscv64'">true</Is64Bit>
     <UseMinimalGlobalizationData Condition="'$(TargetsBrowser)' == 'true' or '$(TargetsWasi)' == 'true'">true</UseMinimalGlobalizationData>
     <EnableLibraryImportGenerator>true</EnableLibraryImportGenerator>
-    <FeatureCrossProcessMutex Condition="'$(IsMobileLike)' != 'true'">true</FeatureCrossProcessMutex>
-    <FeatureMultithreading Condition="('$(TargetsBrowser)' != 'true' and '$(TargetsWasi)' != 'true') or '$(WasmEnableThreads)' == 'true'">true</FeatureMultithreading>
   </PropertyGroup>
   <PropertyGroup>
     <DefineConstants Condition="'$(IsBigEndian)' == 'true'">$(DefineConstants);BIGENDIAN</DefineConstants>
@@ -325,15 +330,9 @@
     <DefineConstants Condition="'$(TargetsLinux)' == 'true'">$(DefineConstants);TARGET_LINUX</DefineConstants>
     <DefineConstants Condition="'$(TargetsFreeBSD)' == 'true'">$(DefineConstants);TARGET_FREEBSD</DefineConstants>
     <DefineConstants Condition="'$(TargetsNetBSD)' == 'true'">$(DefineConstants);TARGET_NETBSD</DefineConstants>
-    <DefineConstants Condition="'$(TargetsOpenBSD)' == 'true'">$(DefineConstants);TARGET_OPENBSD</DefineConstants>
     <DefineConstants Condition="'$(Targetsillumos)' == 'true'">$(DefineConstants);TARGET_ILLUMOS</DefineConstants>
     <DefineConstants Condition="'$(TargetsSolaris)' == 'true'">$(DefineConstants);TARGET_SOLARIS</DefineConstants>
     <DefineConstants Condition="'$(TargetsHaiku)' == 'true'">$(DefineConstants);TARGET_HAIKU</DefineConstants>
-  </PropertyGroup>
-  <PropertyGroup>
-    <DefineConstants Condition="'$(FeatureCrossProcessMutex)' == 'true'">$(DefineConstants);FEATURE_CROSS_PROCESS_MUTEX</DefineConstants>
-    <DefineConstants Condition="'$(FeatureMultithreading)' == 'true'">$(DefineConstants);FEATURE_MULTITHREADING</DefineConstants>
-    <DefineConstants Condition="'$(WasmEnableThreads)' == 'true'">$(DefineConstants);FEATURE_WASM_MANAGED_THREADS</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <ApiCompatSuppressionFile Include="$(PrivateCoreLibSharedProjectDirectory)CompatibilitySuppressions.xml" />
@@ -469,7 +468,6 @@
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Collections\BitArray.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Collections\Comparer.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Collections\CompatibleComparer.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Collections\Concurrent\ConcurrentDictionary.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Collections\Concurrent\ConcurrentQueue.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Collections\Concurrent\ConcurrentQueueSegment.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Collections\Concurrent\IProducerConsumerCollection.cs" />
@@ -510,6 +508,7 @@
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Collections\Generic\RandomizedStringEqualityComparer.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Collections\Generic\ReferenceEqualityComparer.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Collections\Generic\NonRandomizedStringEqualityComparer.cs" />
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Collections\Generic\ValueListBuilder.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Collections\HashHelpers.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Collections\HashHelpers.SerializationInfoTable.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Collections\Hashtable.cs" />
@@ -537,6 +536,7 @@
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Configuration\Assemblies\AssemblyHashAlgorithm.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Configuration\Assemblies\AssemblyVersionCompatibility.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Context.cs" />
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Convert.Base64.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Convert.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\CoreLib.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\CurrentSystemTimeZone.cs" />
@@ -565,7 +565,6 @@
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Diagnostics\CodeAnalysis\UnscopedRefAttribute.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Diagnostics\CodeAnalysis\RequiresAssemblyFilesAttribute.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Diagnostics\CodeAnalysis\RequiresDynamicCodeAttribute.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Diagnostics\CodeAnalysis\RequiresUnsafeAttribute.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Diagnostics\CodeAnalysis\RequiresUnreferencedCodeAttribute.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Diagnostics\CodeAnalysis\SetsRequiredMembersAttribute.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Diagnostics\CodeAnalysis\StringSyntaxAttribute.cs" />
@@ -765,6 +764,7 @@
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\SearchValues\Strings\StringSearchValuesAhoCorasick.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\SearchValues\Strings\StringSearchValuesRabinKarp.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\IndexOutOfRangeException.cs" />
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\InlineArrays.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\InsufficientExecutionStackException.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\InsufficientMemoryException.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Int16.cs" />
@@ -796,7 +796,6 @@
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\IO\FileShare.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\IO\FileStream.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\IO\FileStreamOptions.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\IO\FileHandleType.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\IO\FileSystem.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\IO\FileSystemInfo.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\IO\HandleInheritability.cs" />
@@ -884,12 +883,7 @@
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Number.Grisu3.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Number.NumberToFloatingPointBits.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Number.Parsing.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Numerics\BFloat16.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Numerics\BitOperations.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Numerics\Colors\Argb.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Numerics\Colors\Argb.T.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Numerics\Colors\Rgba.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Numerics\Colors\Rgba.T.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Numerics\Matrix3x2.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Numerics\Matrix3x2.Impl.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Numerics\Matrix4x4.cs" />
@@ -1064,11 +1058,9 @@
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Reflection\SignatureByRefType.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Reflection\SignatureCallingConvention.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Reflection\SignatureConstructedGenericType.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Reflection\SignatureFunctionPointerType.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Reflection\SignatureGenericMethodParameterType.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Reflection\SignatureGenericParameterType.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Reflection\SignatureHasElementType.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Reflection\SignatureModifiedType.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Reflection\SignaturePointerType.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Reflection\SignatureType.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Reflection\SignatureTypeExtensions.cs" />
@@ -1105,8 +1097,6 @@
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\BypassReadyToRunAttribute.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\CompilerServices\AccessedThroughPropertyAttribute.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\CompilerServices\AsyncHelpers.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\CompilerServices\AsyncHelpers.Browser.cs" Condition="'$(TargetsBrowser)' == 'true'" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\CompilerServices\AsyncHelpers.NonBrowser.cs" Condition="'$(TargetsBrowser)' != 'true'" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\CompilerServices\AsyncIteratorMethodBuilder.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\CompilerServices\AsyncIteratorStateMachineAttribute.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\CompilerServices\AsyncMethodBuilderAttribute.cs" />
@@ -1126,7 +1116,6 @@
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\CompilerServices\CallingConventions.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\CompilerServices\CollectionBuilderAttribute.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\CompilerServices\CompExactlyDependsOnAttribute.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\CompilerServices\CompHasFallbackAttribute.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\CompilerServices\CompilationRelaxations.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\CompilerServices\CompilationRelaxationsAttribute.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\CompilerServices\CompilerFeatureRequiredAttribute.cs" />
@@ -1173,7 +1162,6 @@
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\CompilerServices\IteratorStateMachineAttribute.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\CompilerServices\ITuple.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\CompilerServices\LoadHint.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\CompilerServices\MemorySafetyRulesAttribute.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\CompilerServices\MethodCodeType.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\CompilerServices\MethodImplAttribute.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\CompilerServices\MethodImplOptions.cs" />
@@ -1279,8 +1267,6 @@
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\InteropServices\DllImportAttribute.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\InteropServices\DllImportSearchPath.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\InteropServices\ErrorWrapper.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\InteropServices\ExtendedLayoutAttribute.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\InteropServices\ExtendedLayoutKind.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\InteropServices\ExternalException.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\InteropServices\FieldOffsetAttribute.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\InteropServices\GCHandle.cs" />
@@ -1505,12 +1491,10 @@
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Text\Latin1Utility.Helpers.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Text\NormalizationForm.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Text\Rune.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Text\RunePosition.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Text\SpanLineEnumerator.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Text\SpanRuneEnumerator.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Text\StringBuilder.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Text\StringBuilder.Debug.cs" Condition="'$(Configuration)' == 'Debug'" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Text\StringBuilderRuneEnumerator.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Text\StringRuneEnumerator.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Text\TranscodingStream.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Text\TrimType.cs" />
@@ -1540,8 +1524,8 @@
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\CancellationTokenRegistration.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\CancellationTokenSource.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\CompressedStack.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\Condition.cs" Condition="'$(FeatureMono)' != 'true'" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\StackCrawlMark.cs" />
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\DeferredDisposableLifetime.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\EventResetMode.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\EventWaitHandle.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\ExecutionContext.cs" />
@@ -1552,6 +1536,7 @@
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\LazyInitializer.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\LazyThreadSafetyMode.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\Lock.cs" />
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\Lock.NonNativeAot.cs" Condition="'$(FeatureNativeAot)' != 'true'" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\LockRecursionException.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\LowLevelLock.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\LowLevelSpinWaiter.cs" />
@@ -1577,8 +1562,8 @@
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\Tasks\CachedCompletedInt32Task.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\Tasks\ConcurrentExclusiveSchedulerPair.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\Tasks\ConfigureAwaitOptions.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\Tasks\Task_T.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\Tasks\TaskFactory_T.cs" />
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\Tasks\Future.cs" />
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\Tasks\FutureFactory.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\Tasks\LoggingExtensions.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\Tasks\Sources\IValueTaskSource.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\Tasks\Sources\ManualResetValueTaskSourceCore.cs" />
@@ -1621,6 +1606,9 @@
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\WaitHandle.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\WaitHandleCannotBeOpenedException.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\WaitHandleExtensions.cs" />
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\Win32ThreadPoolNativeOverlapped.cs" />
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\Win32ThreadPoolNativeOverlapped.ExecutionContextCallbackArgs.cs" />
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\Win32ThreadPoolNativeOverlapped.OverlappedData.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\ThreadStaticAttribute.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\ThrowHelper.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\TimeOnly.cs" />
@@ -1629,7 +1617,6 @@
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\TimeZone.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\TimeZoneInfo.AdjustmentRule.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\TimeZoneInfo.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\TimeZoneInfo.Cache.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\TimeZoneInfo.FullGlobalizationData.cs" Condition="'$(UseMinimalGlobalizationData)' != 'true'" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\TimeZoneInfo.StringSerializer.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\TimeZoneInfo.TransitionTime.cs" />
@@ -1661,11 +1648,8 @@
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\WeakReference.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\WeakReference.T.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\ComAwareWeakReference.cs" />
-    <Compile Include="$(CommonPath)Interop\Browser\Interop.Locale.CoreCLR.cs" Condition="'$(TargetsBrowser)' == 'true' and '$(RuntimeFlavor)' == 'CoreCLR'">
-      <Link>Common\Interop\Browser\Interop.Locale.CoreCLR.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)Interop\Browser\Interop.Locale.Mono.cs" Condition="'$(TargetsBrowser)' == 'true' and '$(RuntimeFlavor)' == 'Mono'">
-      <Link>Common\Interop\Browser\Interop.Locale.Mono.cs</Link>
+    <Compile Include="$(CommonPath)Interop\Browser\Interop.Locale.cs" Condition="'$(TargetsBrowser)' == 'true'">
+      <Link>Common\Interop\Browser\Interop.Locale.cs</Link>
     </Compile>
     <Compile Include="$(CommonPath)Interop\Interop.Calendar.cs">
       <Link>Common\Interop\Interop.Calendar.cs</Link>
@@ -1755,9 +1739,6 @@
     <Compile Include="$(CommonPath)System\HexConverter.cs">
       <Link>Common\System\HexConverter.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)System\NullableBool.cs">
-      <Link>Common\System\NullableBool.cs</Link>
-    </Compile>
     <Compile Include="$(CommonPath)System\HResults.cs">
       <Link>Common\System\HResults.cs</Link>
     </Compile>
@@ -1799,9 +1780,6 @@
     </Compile>
     <Compile Include="$(CommonPath)System\Collections\Generic\BitHelper.cs">
       <Link>Common\System\Collections\Generic\BitHelper.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)System\Collections\Generic\ValueListBuilder.cs">
-      <Link>Common\System\Collections\Generic\ValueListBuilder.cs</Link>
     </Compile>
     <Compile Include="$(CommonPath)System\IO\PathInternal.cs">
       <Link>Common\System\IO\PathInternal.cs</Link>
@@ -1881,19 +1859,17 @@
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Diagnostics\Tracing\EventPipe.cs" Condition="'$(FeaturePerfTracing)' == 'true'" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Diagnostics\Tracing\EventPipe.Internal.cs" Condition="'$(FeaturePerfTracing)' == 'true' and '$(FeatureMono)' != 'true'" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Diagnostics\Tracing\EventPipeEventDispatcher.cs" Condition="'$(FeaturePerfTracing)' == 'true'" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Diagnostics\Tracing\EventPipeEventDispatcher.Threads.cs" Condition="'$(FeaturePerfTracing)' == 'true' and '$(FeatureMultithreading)' == 'true'" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Diagnostics\Tracing\EventPipeEventDispatcher.Wasm.cs" Condition="'$(FeaturePerfTracing)' == 'true' and '$(FeatureMultithreading)' != 'true'" />
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Diagnostics\Tracing\EventPipeEventDispatcher.Threads.cs" Condition="'$(FeaturePerfTracing)' == 'true' and (('$(TargetsWasi)' != 'true' and '$(TargetsBrowser)' != 'true') or '$(FeatureWasmManagedThreads)' == 'true')" />
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Diagnostics\Tracing\EventPipeEventDispatcher.Wasm.cs" Condition="'$(FeaturePerfTracing)' == 'true' and (('$(TargetsWasi)' == 'true' or '$(TargetsBrowser)' == 'true') and '$(FeatureWasmManagedThreads)' != 'true')" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Diagnostics\Tracing\EventPipeEventProvider.cs" Condition="'$(FeaturePerfTracing)' == 'true'" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Diagnostics\Tracing\EventPipeMetadataGenerator.cs" Condition="'$(FeaturePerfTracing)' == 'true'" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Diagnostics\Tracing\EventPipePayloadDecoder.cs" Condition="'$(FeaturePerfTracing)' == 'true'" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Diagnostics\Tracing\EventProvider.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Diagnostics\Tracing\EventListener.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Diagnostics\Tracing\EventSource.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Diagnostics\Tracing\EventSourceException.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Diagnostics\Tracing\FrameworkEventSource.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Diagnostics\Tracing\IncrementingEventCounter.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Diagnostics\Tracing\IncrementingPollingCounter.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Diagnostics\Tracing\ManifestBuilder.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Diagnostics\Tracing\NativeRuntimeEventSource.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Diagnostics\Tracing\NativeRuntimeEventSource.Exceptions.NativeSinks.cs" Condition="'$(FeaturePerfTracing)' == 'true'" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Diagnostics\Tracing\NativeRuntimeEventSource.Exceptions.NativeSinks.Internal.cs" Condition="'$(FeaturePerfTracing)' == 'true' and '$(FeatureNativeAot)' == 'true'" />
@@ -2063,17 +2039,11 @@
     <Compile Include="$(CommonPath)\Interop\Windows\Kernel32\Interop.CancelSynchronousIo.cs">
       <Link>Interop\Windows\Kernel32\Interop.CancelSynchronousIo.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.CloseHandle.cs">
-      <Link>Common\Interop\Windows\Kernel32\Interop.CloseHandle.cs</Link>
-    </Compile>
     <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.CompletionPort.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.CompletionPort.cs</Link>
     </Compile>
     <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.ConditionVariable.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.ConditionVariable.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.Constants.cs">
-      <Link>Common\Interop\Windows\Kernel32\Interop.Constants.cs</Link>
     </Compile>
     <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.CopyFile.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.CopyFile.cs</Link>
@@ -2086,24 +2056,6 @@
     </Compile>
     <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.CreateFile.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.CreateFile.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.PipeOptions.cs">
-      <Link>Common\Interop\Windows\Kernel32\Interop.PipeOptions.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.CreatePipe_SafeFileHandle.cs">
-      <Link>Common\Interop\Windows\Kernel32\Interop.CreatePipe_SafeFileHandle.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.CreateNamedPipe_SafeFileHandle.cs">
-      <Link>Common\Interop\Windows\Kernel32\Interop.CreateNamedPipe_SafeFileHandle.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.EventWaitHandle.cs">
-      <Link>Common\Interop\Windows\Kernel32\Interop.EventWaitHandle.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.Mutex.cs">
-      <Link>Common\Interop\Windows\Kernel32\Interop.Mutex.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.Semaphore.cs">
-      <Link>Common\Interop\Windows\Kernel32\Interop.Semaphore.cs</Link>
     </Compile>
     <Compile Include="$(CommonPath)\Interop\Windows\Kernel32\Interop.Timer.cs">
       <Link>Interop\Windows\Kernel32\Interop.Timer.cs</Link>
@@ -2138,9 +2090,6 @@
     <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.CreateFile_IntPtr.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.CreateFile_IntPtr.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.CreateHardLink.cs">
-      <Link>Common\Interop\Windows\Kernel32\Interop.CreateHardLink.cs</Link>
-    </Compile>
     <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.CreateSymbolicLink.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.CreateSymbolicLink.cs</Link>
     </Compile>
@@ -2150,9 +2099,6 @@
     <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.DeviceIoControl.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.DeviceIoControl.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\Kernel32\Interop.DynamicLoad.cs">
-      <Link>Common\Interop\Windows\Kernel32\Interop.DynamicLoad.cs</Link>
-    </Compile>
     <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.ExpandEnvironmentStrings.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.ExpandEnvironmentStrings.cs</Link>
     </Compile>
@@ -2161,9 +2107,6 @@
     </Compile>
     <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.FILE_ALLOCATION_INFO.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.FILE_ALLOCATION_INFO.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.FILE_ATTRIBUTE_TAG_INFO.cs">
-      <Link>Common\Interop\Windows\Kernel32\Interop.FILE_ATTRIBUTE_TAG_INFO.cs</Link>
     </Compile>
     <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.FILE_END_OF_FILE_INFO.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.FILE_END_OF_FILE_INFO.cs</Link>
@@ -2197,9 +2140,6 @@
     </Compile>
     <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.FlushFileBuffers.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.FlushFileBuffers.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.FormatMessage.cs">
-      <Link>Common\Interop\Windows\Kernel32\Interop.FormatMessage.cs</Link>
     </Compile>
     <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.FreeLibrary.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.FreeLibrary.cs</Link>
@@ -2251,9 +2191,6 @@
     </Compile>
     <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.GetFileType_SafeHandle.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.GetFileType_SafeHandle.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.GetNamedPipeInfo.cs">
-      <Link>Common\Interop\Windows\Kernel32\Interop.GetNamedPipeInfo.cs</Link>
     </Compile>
     <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.GetFinalPathNameByHandle.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.GetFinalPathNameByHandle.cs</Link>
@@ -2570,12 +2507,6 @@
     <Compile Include="$(CommonPath)System\IO\PathInternal.Windows.cs">
       <Link>Common\System\IO\PathInternal.Windows.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)System\IO\Win32Marshal.cs">
-      <Link>Common\System\IO\Win32Marshal.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)System\Memory\FixedBufferExtensions.cs">
-      <Link>Common\System\Memory\FixedBufferExtensions.cs</Link>
-    </Compile>
     <Compile Include="$(CommonPath)System\Threading\AsyncOverSyncWithIoCancellation.cs">
       <Link>Common\System\Threading\AsyncOverSyncWithIoCancellation.cs</Link>
     </Compile>
@@ -2584,7 +2515,6 @@
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)Microsoft\Win32\SafeHandles\SafeFileHandle.Windows.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)Microsoft\Win32\SafeHandles\SafeFileHandle.OverlappedValueTaskSource.Windows.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)Microsoft\Win32\SafeHandles\SafeFindHandle.Windows.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)Microsoft\Win32\SafeHandles\SafeWaitHandle.Windows.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)Microsoft\Win32\SafeHandles\SafeRegistryHandle.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)Microsoft\Win32\SafeHandles\SafeThreadPoolIOHandle.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\AppDomain.Windows.cs" />
@@ -2618,29 +2548,20 @@
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\Loader\LibraryNameVariation.Windows.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\MemoryFailPoint.Windows.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\InteropServices\Marshal.Windows.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\InteropServices\NativeLibrary.Windows.cs" Condition="'$(FeatureMono)' != 'true'" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\InteropServices\NativeMemory.Windows.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\InteropServices\PosixSignalRegistration.Windows.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\InteropServices\RuntimeInformation.Windows.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\InteropServices\StandardOleMarshalObject.Windows.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Security\SecureString.Windows.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\DeferredDisposableLifetime.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\EventWaitHandle.Windows.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\LowLevelMonitor.Windows.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\Mutex.Windows.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\PreAllocatedOverlapped.WindowsThreadPool.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\RegisteredWaitHandle.WindowsThreadPool.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\Semaphore.Windows.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\Thread.Windows.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\ThreadPool.Windows.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\ThreadPoolBoundHandle.WindowsThreadPool.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\ThreadPoolBoundHandleOverlapped.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\TimerQueue.Windows.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\TimerQueue.WindowsThreadPool.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\WaitHandle.Windows.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\Win32ThreadPoolNativeOverlapped.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\Win32ThreadPoolNativeOverlapped.ExecutionContextCallbackArgs.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\Win32ThreadPoolNativeOverlapped.OverlappedData.cs" />
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\ThreadPool.Windows.cs" />
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\ThreadPoolBoundHandle.WindowsThreadPool.cs" />
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\PreAllocatedOverlapped.WindowsThreadPool.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\WindowsThreadPool.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\TimeZoneInfo.Win32.cs" />
   </ItemGroup>
@@ -2660,6 +2581,16 @@
   </ItemGroup>
   <!-- CoreCLR uses PAL layer that emulates Windows API on Unix. This is bridge for that PAL layer. See issue dotnet/runtime/#31721. -->
   <ItemGroup Condition="'$(TargetsWindows)' == 'true' or '$(FeatureCoreCLR)'=='true'">
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)Microsoft\Win32\SafeHandles\SafeWaitHandle.Windows.cs" />
+    <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.CloseHandle.cs">
+      <Link>Common\Interop\Windows\Kernel32\Interop.CloseHandle.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.Constants.cs">
+      <Link>Common\Interop\Windows\Kernel32\Interop.Constants.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.EventWaitHandle.cs">
+      <Link>Common\Interop\Windows\Kernel32\Interop.EventWaitHandle.cs</Link>
+    </Compile>
     <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.GetEnvironmentVariable.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.GetEnvironmentVariable.cs</Link>
     </Compile>
@@ -2669,10 +2600,27 @@
     <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.FreeEnvironmentStrings.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.FreeEnvironmentStrings.cs</Link>
     </Compile>
+    <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.FormatMessage.cs">
+      <Link>Common\Interop\Windows\Kernel32\Interop.FormatMessage.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.Mutex.cs">
+      <Link>Common\Interop\Windows\Kernel32\Interop.Mutex.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.Semaphore.cs">
+      <Link>Common\Interop\Windows\Kernel32\Interop.Semaphore.cs</Link>
+    </Compile>
     <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.SetEnvironmentVariable.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.SetEnvironmentVariable.cs</Link>
     </Compile>
+    <Compile Include="$(CommonPath)System\IO\Win32Marshal.cs">
+      <Link>Common\System\IO\Win32Marshal.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)System\Memory\FixedBufferExtensions.cs">
+      <Link>Common\System\Memory\FixedBufferExtensions.cs</Link>
+    </Compile>
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Environment.Variables.Windows.cs" />
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\Semaphore.Windows.cs" />
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\EventWaitHandle.Windows.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetsUnix)' == 'true' or '$(TargetsBrowser)' == 'true' or '$(TargetsWasi)' == 'true'">
     <Compile Include="$(CommonPath)Interop\Unix\Interop.Errors.cs">
@@ -2702,9 +2650,6 @@
     <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.Close.cs">
       <Link>Common\Interop\Unix\System.Native\Interop.Close.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.Fcntl.cs">
-      <Link>Common\Interop\Unix\System.Native\Interop.Fcntl.cs</Link>
-    </Compile>
     <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.CopyFile.cs">
       <Link>Common\Interop\Unix\System.Native\Interop.CopyFile.cs</Link>
     </Compile>
@@ -2714,8 +2659,8 @@
     <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.ErrNo.cs">
       <Link>Common\Interop\Unix\System.Native\Interop.ErrNo.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.FileSystemSupportsLocking.cs">
-      <Link>Common\Interop\Unix\System.Native\Interop.FileSystemSupportsLocking.cs</Link>
+    <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.UnixFileSystemTypes.cs">
+      <Link>Common\Interop\Unix\System.Native\Interop.UnixFileSystemTypes.cs</Link>
     </Compile>
     <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.FLock.cs">
       <Link>Common\Interop\Unix\System.Native\Interop.FLock.cs</Link>
@@ -2728,9 +2673,6 @@
     </Compile>
     <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.GetCpuUtilization.cs">
       <Link>Common\Interop\Unix\System.Native\Interop.GetCpuUtilization.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.Pipe.cs">
-      <Link>Common\Interop\Unix\System.Native\Interop.Pipe.cs</Link>
     </Compile>
     <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.GetCwd.cs">
       <Link>Common\Interop\Unix\System.Native\Interop.GetCwd.cs</Link>
@@ -2807,12 +2749,6 @@
     <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.MksTemps.cs">
       <Link>Common\Interop\Unix\System.Native\Interop.MksTemps.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.MMap.cs">
-      <Link>Common\Interop\Unix\System.Native\Interop.MMap.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.MUnmap.cs">
-      <Link>Common\Interop\Unix\System.Native\Interop.MUnmap.cs</Link>
-    </Compile>
     <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.MountPoints.cs">
       <Link>Common\Interop\Unix\System.Native\Interop.MountPoints.cs</Link>
     </Compile>
@@ -2836,9 +2772,6 @@
     <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.PRead.cs">
       <Link>Common\Interop\Unix\System.Native\Interop.PRead.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.ReadV.cs">
-      <Link>Common\Interop\Unix\System.Native\Interop.ReadV.cs</Link>
-    </Compile>
     <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.PReadV.cs">
       <Link>Common\Interop\Unix\System.Native\Interop.PReadV.cs</Link>
     </Compile>
@@ -2850,9 +2783,6 @@
     </Compile>
     <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.Read.cs">
       <Link>Common\Interop\Unix\System.Native\Interop.Read.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.WriteV.cs">
-      <Link>Common\Interop\Unix\System.Native\Interop.WriteV.cs</Link>
     </Compile>
     <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.ReadDir.cs">
       <Link>Common\Interop\Unix\System.Native\Interop.ReadDir.cs</Link>
@@ -2896,8 +2826,8 @@
     <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.Write.cs">
       <Link>Common\Interop\Unix\System.Native\Interop.Write.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)System\Runtime\InteropServices\SpanOfCharAsUtf8StringMarshaller.cs">
-      <Link>Common\System\Runtime\InteropServices\SpanOfCharAsUtf8StringMarshaller.cs</Link>
+    <Compile Include="$(CommonPath)System\Text\ValueUtf8Converter.cs">
+      <Link>Common\System\Text\ValueUtf8Converter.cs</Link>
     </Compile>
     <Compile Include="$(CommonPath)System\IO\PathInternal.Unix.cs">
       <Link>Common\System\IO\PathInternal.Unix.cs</Link>
@@ -2955,7 +2885,6 @@
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\Loader\LibraryNameVariation.Unix.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\MemoryFailPoint.Unix.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\InteropServices\Marshal.Unix.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\InteropServices\NativeLibrary.Unix.cs" Condition="'$(FeatureMono)' != 'true'" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\InteropServices\NativeMemory.Unix.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\InteropServices\RuntimeInformation.Unix.cs" Condition="'$(TargetsBrowser)' != 'true' and '$(TargetsWasi)' != 'true'" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\InteropServices\StandardOleMarshalObject.Unix.cs" />
@@ -2979,15 +2908,12 @@
     <Compile Include="$(CommonPath)\Interop\Unix\System.Native\Interop.GetPid.cs">
       <Link>Common\Interop\Unix\System.Native\Interop.GetPid.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Interop\Unix\System.Native\Interop.GetSid.cs">
-      <Link>Common\Interop\Unix\System.Native\Interop.GetSid.cs</Link>
-    </Compile>
     <Compile Include="$(CommonPath)Interop\FreeBSD\Interop.Process.GetProcInfo.cs" Condition="'$(TargetsFreeBSD)' == 'true'" Link="Common\Interop\FreeBSD\Interop.Process.GetProcInfo.cs" />
     <Compile Include="$(CommonPath)Interop\BSD\System.Native\Interop.Sysctl.cs" Condition="'$(TargetsFreeBSD)' == 'true'" Link="Common\Interop\BSD\System.Native\Interop.Sysctl.cs" />
     <Compile Include="$(CommonPath)Interop\Linux\procfs\Interop.ProcFsStat.TryReadStatusFile.cs" Condition="'$(TargetsLinux)' == 'true'" Link="Common\Interop\Linux\Interop.ProcFsStat.TryReadStatusFile.cs" />
     <Compile Include="$(CommonPath)System\IO\StringParser.cs" Condition="'$(TargetsLinux)' == 'true'" Link="Common\System\IO\StringParser.cs" />
     <Compile Include="$(CommonPath)Interop\OSX\Interop.libproc.GetProcessInfoById.cs" Condition="'$(TargetsOSX)' == 'true' or '$(TargetsMacCatalyst)' == 'true'" Link="Common\Interop\OSX\Interop.libproc.GetProcessInfoById.cs" />
-    <Compile Include="$(CommonPath)Interop\SunOS\procfs\Interop.ProcFs.GetProcessInfoById.cs" Condition="'$(Targetsillumos)' == 'true' or '$(TargetsSolaris)' == 'true'" Link="Common\Interop\SunOS\Interop.ProcFs.GetProcessInfoById.cs" />
+    <Compile Include="$(CommonPath)Interop\SunOS\procfs\Interop.ProcFsStat.TryReadProcessStatusInfo.cs" Condition="'$(Targetsillumos)' == 'true' or '$(TargetsSolaris)' == 'true'" Link="Common\Interop\SunOS\Interop.ProcFsStat.TryReadProcessStatusInfo.cs" />
     <Compile Include="$(CommonPath)Interop\Linux\os-release\Interop.OSReleaseFile.cs" Condition="'$(TargetsBrowser)' != 'true' and '$(TargetsWasi)' != 'true'" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Environment.Unix.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Environment.FreeBSD.cs" Condition="'$(TargetsFreeBSD)' == 'true'" />
@@ -3045,7 +2971,6 @@
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\Intrinsics\X86\Avx2$(NotSupportedOnMono).cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\Intrinsics\X86\Avx10v1$(NotSupportedOnMono).cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\Intrinsics\X86\Avx10v2$(NotSupportedOnMono).cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\Intrinsics\X86\Avx512Bmm$(NotSupportedOnMono).cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\Intrinsics\X86\AvxVnniInt8$(NotSupportedOnMono).cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\Intrinsics\X86\AvxVnniInt16$(NotSupportedOnMono).cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\Intrinsics\X86\Avx512BW$(NotSupportedOnMono).cs" />
@@ -3082,7 +3007,6 @@
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\Intrinsics\X86\Avx512F.PlatformNotSupported.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\Intrinsics\X86\Avx10v1.PlatformNotSupported.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\Intrinsics\X86\Avx10v2.PlatformNotSupported.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\Intrinsics\X86\Avx512Bmm.PlatformNotSupported.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\Intrinsics\X86\AvxVnniInt8.PlatformNotSupported.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\Intrinsics\X86\AvxVnniInt16.PlatformNotSupported.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\Intrinsics\X86\Avx512Vbmi.PlatformNotSupported.cs" />
@@ -3140,7 +3064,7 @@
   <ItemGroup Condition="'$(FeaturePortableThreadPool)' == 'true'">
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\CompleteWaitThreadPoolWorkItem.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\ThreadPool.Portable.Windows.cs" Condition="'$(TargetsWindows)' == 'true'" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\ThreadPool.Unix.cs" Condition="'$(TargetsWindows)' != 'true'" />
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\ThreadPool.Unix.cs" Condition="'$(TargetsUnix)' == 'true' or '$(TargetsBrowser)' == 'true' or '$(TargetsWasi)' == 'true'" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\PortableThreadPool.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\PortableThreadPool.Blocking.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\PortableThreadPool.GateThread.cs" />
@@ -3151,34 +3075,36 @@
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\PortableThreadPool.WaitThread.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\PortableThreadPool.WorkerThread.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\PortableThreadPool.WorkerTracking.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\PortableThreadPool.Unix.cs" Condition="'$(TargetsWindows)' != 'true' and '$(TargetsBrowser)' != 'true'" />
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\PortableThreadPool.Unix.cs" Condition="'$(TargetsUnix)' == 'true' or ('$(TargetsBrowser)' == 'true' and '$(FeatureWasmManagedThreads)' != 'true') or '$(TargetsWasi)' == 'true'" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\PortableThreadPool.Windows.cs" Condition="'$(TargetsWindows)' == 'true'" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\LowLevelLifoSemaphore.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\LowLevelLifoSemaphore.Windows.cs" Condition="'$(TargetsWindows)' == 'true'" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\LowLevelLifoSemaphore.Unix.cs" Condition="'$(TargetsWindows)' != 'true'" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\PreAllocatedOverlapped.Portable.cs" Condition="'$(TargetsWindows)' == 'true'" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\PreAllocatedOverlapped.Windows.cs" Condition="'$(TargetsWindows)' == 'true'" />
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\PreAllocatedOverlapped.Unix.cs" Condition="'$(TargetsUnix)' == 'true' or ('$(TargetsBrowser)' == 'true' and '$(FeatureWasmManagedThreads)' == 'true')" />
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\PreAllocatedOverlapped.Portable.cs" Condition="('$(TargetsBrowser)' != 'true' and '$(TargetsWasi)' != 'true') or '$(FeatureWasmManagedThreads)' == 'true'" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\RegisteredWaitHandle.Windows.cs" Condition="'$(TargetsWindows)' == 'true'" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\RegisteredWaitHandle.Unix.cs" Condition="'$(TargetsWindows)' != 'true'" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\RegisteredWaitHandle.Portable.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\ThreadPoolBoundHandle.Portable.cs" Condition="'$(TargetsWindows)' == 'true'" />
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\ThreadPoolBoundHandle.Portable.cs" />
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\ThreadPoolBoundHandle.Unix.cs" Condition="'$(TargetsWindows)' != 'true'" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\ThreadPoolBoundHandle.Windows.cs" Condition="'$(TargetsWindows)' == 'true'" />
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\ThreadPoolBoundHandleOverlapped.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\ThreadPoolCallbackWrapper.cs" Condition="'$(FeatureNativeAot)' != 'true'" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\Backoff.cs" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetsWindows)' != 'true'">
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\PreAllocatedOverlapped.PlatformNotSupported.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\ThreadPoolBoundHandle.PlatformNotSupported.cs" />
+  <ItemGroup Condition="('$(TargetsBrowser)' == 'true' or '$(TargetsWasi)' == 'true') and '$(FeatureWasmManagedThreads)' != 'true'">
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\PreAllocatedOverlapped.Browser.cs" />
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\ThreadPoolBoundHandle.Browser.cs" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetsBrowser)' == 'true' and '$(FeatureMultithreading)' != 'true'">
+  <ItemGroup Condition="'$(TargetsBrowser)' == 'true' and '$(FeatureWasmManagedThreads)' != 'true'">
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\ThreadPool.Browser.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\TimerQueue.Browser.cs" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetsWasi)' == 'true' and '$(FeatureMultithreading)' != 'true'">
+  <ItemGroup Condition="'$(TargetsWasi)' == 'true' and '$(FeatureWasmManagedThreads)' != 'true'">
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\ThreadPool.Wasi.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\TimerQueue.Wasi.cs" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetsBrowser)' == 'true' and '$(FeatureMultithreading)' == 'true'">
+  <ItemGroup Condition="'$(TargetsBrowser)' == 'true' and '$(FeatureWasmManagedThreads)' == 'true'">
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\ThreadPoolBoundHandle.Browser.Threads.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\PortableThreadPool.Browser.Threads.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\ThreadPool.Browser.Threads.cs" />
   </ItemGroup>
@@ -3193,7 +3119,7 @@
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\InteropServices\ObjectiveC\ObjectiveCMarshal.PlatformNotSupported.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Runtime\InteropServices\ObjectiveC\ObjectiveCTrackedTypeAttribute.cs" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetsUnix)' == 'true' or '$(TargetsBrowser)' == 'true' or '$(TargetsWasi)' == 'true'">
+  <ItemGroup Condition="'$(FeatureCoreCLR)' != 'true' and ('$(TargetsUnix)' == 'true' or '$(TargetsBrowser)' == 'true' or '$(TargetsWasi)' == 'true')">
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)Microsoft\Win32\SafeHandles\SafeWaitHandle.Unix.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\EventWaitHandle.Unix.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\Mutex.Unix.cs" />
@@ -3204,17 +3130,12 @@
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\WaitSubsystem.Unix.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\WaitSubsystem.WaitableObject.Unix.cs" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetsUnix)' == 'true' and '$(FeatureCrossProcessMutex)' == 'true'">
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\IO\SharedMemoryManager.Unix.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\NamedMutex.Unix.cs" />
-    <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.LowLevelCrossProcessMutex.cs">
-      <Link>Common\Interop\Unix\System.Native\Interop.LowLevelCrossProcessMutex.cs</Link>
-    </Compile>
+  <ItemGroup Condition="'$(FeatureCoreCLR)' != 'true' and '$(TargetsWindows)' == 'true'">
+    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Threading\WaitHandle.Windows.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\IParsable.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\ISpanParsable.cs" />
-    <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Numerics\DivisionRounding.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Numerics\IAdditionOperators.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Numerics\IAdditiveIdentity.cs" />
     <Compile Include="$(PrivateCoreLibSharedProjectDirectory)System\Numerics\IBinaryFloatingPointIeee754.cs" />
@@ -3257,9 +3178,8 @@
   </ItemGroup>
 <!--</Project>-->
 
-
   <ItemGroup>
-    <!--<ProjectReference Include="$(LibrariesProjectRoot)\System.Private.CoreLib\gen\System.Private.CoreLib.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />-->
+    <ProjectReference Include="$(LibrariesProjectRoot)\System.Private.CoreLib\gen\System.Private.CoreLib.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <CompilerVisibleProperty Include="InformationalVersion" />
   </ItemGroup>
 
@@ -3272,10 +3192,5 @@
   <!-- Setup eventing file generation -->
   <ItemGroup Condition="'$(FeaturePerfTracing)' == 'true'">
     <AdditionalFiles Include="$(CoreClrProjectRoot)vm/ClrEtwAll.man" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="wwwroot\NetJs.Boot.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
 </Project>

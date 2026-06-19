@@ -24,8 +24,8 @@ namespace System
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal static partial class SR
     {
-        
-        private static global::System.Resources.ResourceManager resourceMan;
+
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Threading", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,7 +70,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CountdownEvent_Increment_AlreadyZero", resourceCulture);
+                return "The event is already signaled and cannot be incremented.";
             }
         }
 
@@ -83,7 +83,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CountdownEvent_Increment_AlreadyMax", resourceCulture);
+                return "The increment operation would cause the CurrentCount to overflow.";
             }
         }
 
@@ -96,7 +96,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CountdownEvent_Decrement_BelowZero", resourceCulture);
+                return "Invalid attempt made to decrement the event's count below zero.";
             }
         }
 
@@ -109,7 +109,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Common_OperationCanceled", resourceCulture);
+                return "The operation was canceled.";
             }
         }
 
@@ -122,7 +122,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Barrier_SignalAndWait_InvalidOperation_ZeroTotal", resourceCulture);
+                return "The barrier has no registered participants.";
             }
         }
 
@@ -135,7 +135,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Barrier_SignalAndWait_ArgumentOutOfRange", resourceCulture);
+                return "The specified timeout must represent a value between -1 and Int32.MaxValue, inclusive.";
             }
         }
 
@@ -148,7 +148,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Barrier_RemoveParticipants_InvalidOperation", resourceCulture);
+                return "The participantCount argument is greater than the number of participants that haven't yet arrived at the barrier in this phase.";
             }
         }
 
@@ -161,7 +161,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Barrier_RemoveParticipants_ArgumentOutOfRange", resourceCulture);
+                return "The participantCount argument must be less than or equal the number of participants.";
             }
         }
 
@@ -174,7 +174,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Barrier_InvalidOperation_CalledFromPHA", resourceCulture);
+                return "This method may not be called from within the postPhaseAction.";
             }
         }
 
@@ -187,7 +187,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Barrier_SignalAndWait_InvalidOperation_ThreadsExceeded", resourceCulture);
+                return "The number of threads using the barrier exceeded the total number of registered participants.";
             }
         }
 
@@ -200,7 +200,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BarrierPostPhaseException", resourceCulture);
+                return "The postPhaseAction failed with an exception.";
             }
         }
 
@@ -213,7 +213,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Barrier_AddParticipants_Overflow_ArgumentOutOfRange", resourceCulture);
+                return "Adding participantCount participants would result in the number of participants exceeding the maximum number allowed.";
             }
         }
 
@@ -226,7 +226,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SynchronizationLockException_IncorrectDispose", resourceCulture);
+                return "The lock is being disposed while still being used. It either is being held by a thread and/or has active waiters waiting to acquire the lock.";
             }
         }
 
@@ -239,7 +239,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SynchronizationLockException_MisMatchedWrite", resourceCulture);
+                return "The write lock is being released without being held.";
             }
         }
 
@@ -252,7 +252,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LockRecursionException_UpgradeAfterReadNotAllowed", resourceCulture);
+                return "Upgradeable lock may not be acquired with read lock held.";
             }
         }
 
@@ -265,7 +265,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LockRecursionException_UpgradeAfterWriteNotAllowed", resourceCulture);
+                return "Upgradeable lock may not be acquired with write lock held in this mode. Acquiring Upgradeable lock gives the ability to read along with an option to upgrade to a writer.";
             }
         }
 
@@ -278,7 +278,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SynchronizationLockException_MisMatchedUpgrade", resourceCulture);
+                return "The upgradeable lock is being released without being held.";
             }
         }
 
@@ -291,7 +291,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SynchronizationLockException_MisMatchedRead", resourceCulture);
+                return "The read lock is being released without being held.";
             }
         }
 
@@ -304,7 +304,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LockRecursionException_WriteAfterReadNotAllowed", resourceCulture);
+                return "Write lock may not be acquired with read lock held. This pattern is prone to deadlocks. Please ensure that read locks are released before taking a write lock. If an upgrade is necessary, use an upgrade lock in place of the read lock.";
             }
         }
 
@@ -317,7 +317,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LockRecursionException_RecursiveWriteNotAllowed", resourceCulture);
+                return "Recursive write lock acquisitions not allowed in this mode.";
             }
         }
 
@@ -330,7 +330,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LockRecursionException_ReadAfterWriteNotAllowed", resourceCulture);
+                return "A read lock may not be acquired with the write lock held in this mode.";
             }
         }
 
@@ -343,7 +343,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LockRecursionException_RecursiveUpgradeNotAllowed", resourceCulture);
+                return "Recursive upgradeable lock acquisitions not allowed in this mode.";
             }
         }
 
@@ -356,7 +356,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LockRecursionException_RecursiveReadNotAllowed", resourceCulture);
+                return "Recursive read lock acquisitions not allowed in this mode.";
             }
         }
 
@@ -369,7 +369,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Overflow_UInt16", resourceCulture);
+                return "Value was either too large or too small for a UInt16.";
             }
         }
 
@@ -382,14 +382,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ReaderWriterLock_Timeout", resourceCulture);
+                return "The operation has timed out. {0}";
             }
         }
 
 
         internal static string FormatReaderWriterLock_Timeout(object arg1)
         {
-            return string.Format(ReaderWriterLock_Timeout, arg1);
+            return string.Format("The operation has timed out. {0}", arg1);
         }
 
 
@@ -400,14 +400,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ReaderWriterLock_NotOwner", resourceCulture);
+                return "Attempt to release a lock that is not owned by the calling thread. {0}";
             }
         }
 
 
         internal static string FormatReaderWriterLock_NotOwner(object arg1)
         {
-            return string.Format(ReaderWriterLock_NotOwner, arg1);
+            return string.Format("Attempt to release a lock that is not owned by the calling thread. {0}", arg1);
         }
 
 
@@ -418,14 +418,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExceptionFromHResult", resourceCulture);
+                return "(Exception from HRESULT: 0x{0:X})";
             }
         }
 
 
         internal static string FormatExceptionFromHResult(object arg1)
         {
-            return string.Format(ExceptionFromHResult, arg1);
+            return string.Format("(Exception from HRESULT: 0x{0:X})", arg1);
         }
 
 
@@ -436,14 +436,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ReaderWriterLock_InvalidLockCookie", resourceCulture);
+                return "The specified lock cookie is invalid for this operation. {0}";
             }
         }
 
 
         internal static string FormatReaderWriterLock_InvalidLockCookie(object arg1)
         {
-            return string.Format(ReaderWriterLock_InvalidLockCookie, arg1);
+            return string.Format("The specified lock cookie is invalid for this operation. {0}", arg1);
         }
 
 
@@ -454,7 +454,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ReaderWriterLock_RestoreLockWithOwnedLocks", resourceCulture);
+                return "ReaderWriterLock.RestoreLock was called without releasing all locks acquired since the call to ReleaseLock.";
             }
         }
 
@@ -467,7 +467,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("HostExecutionContextManager_InvalidOperation_NotNewCaptureContext", resourceCulture);
+                return "Cannot apply a context that has been marshaled across AppDomains, that was not acquired through a Capture operation or that has already been the argument to a Set call.";
             }
         }
 
@@ -480,7 +480,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("HostExecutionContextManager_InvalidOperation_CannotOverrideSetWithoutRevert", resourceCulture);
+                return "Must override both HostExecutionContextManager.SetHostExecutionContext and HostExecutionContextManager.Revert.";
             }
         }
 
@@ -493,7 +493,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("HostExecutionContextManager_InvalidOperation_CannotUseSwitcherOtherThread", resourceCulture);
+                return "Undo operation must be performed on the thread where the corresponding context was Set.";
             }
         }
 

@@ -281,9 +281,9 @@ namespace NetJs.Translator.CSharpToJavascript
         }
         public override SyntaxNode? VisitIdentifierName(IdentifierNameSyntax node)
         {
-            return TryRemovePartial(node) ?? 
-                TryRewriteTHIS(node) ?? 
-                TryGetQueryMemberAccessForVariable(node) ?? 
+            return TryRemovePartial(node) ??
+                TryRewriteTHIS(node) ??
+                TryGetQueryMemberAccessForVariable(node) ??
                 base.VisitIdentifierName(node);
             //if (node.Identifier.ValueText.EndsWith("_Partial"))
             //{
@@ -489,7 +489,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     var overrideParameter = overrideCandidateParameters.ElementAt(p.i);
                     if (originalParameter.Type == overrideParameter.Type)
                         return true;
-                    return originalParameter.Type?.ToString() == overrideParameter.Type?.ToString();
+                    return originalParameter.Type?.ToString().Replace(" ", "") == overrideParameter.Type?.ToString().Replace(" ", "");
                     //return originalParameter.Type?.Equals(overrideParameter.Type) ?? false;
                 }))
                 {
@@ -647,6 +647,10 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override SyntaxNode? VisitMethodDeclaration(MethodDeclarationSyntax node)
         {
+            //if (node.Identifier.ValueText == "InternalInvoke")
+            //{
+
+            //}
             var memberOverride = (MethodDeclarationSyntax?)GetMemberOverride(node)?.SingleOrDefault().Value;
             // Check if the property is an expression-bodied property (has an arrow clause)
             // and there is a conditional expression in the body.
@@ -1319,9 +1323,43 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             return base.VisitArrowExpressionClause(node);
         }
+        bool IsLinqExpressionTree(CSharpSyntaxNode lambdaNode, out INamedTypeSymbol expressionType)
+        {
+            expressionType = null!;
+            if (_semanticModel.SyntaxTree != lambdaNode.SyntaxTree)
+                return false;
 
+            var typeInfo = _semanticModel.GetTypeInfo(lambdaNode);
+            ITypeSymbol? convertedType = typeInfo.ConvertedType;
+
+            if (convertedType == null) return false;
+
+            // Walk up the type hierarchy or target metadata string definition
+            // System.Linq.Expressions.Expression<TDelegate> inherits from System.Linq.Expressions.LambdaExpression
+            var currentType = convertedType;
+            while (currentType != null)
+            {
+                string fullyQualifiedName = currentType.ToDisplayString();
+
+                if (fullyQualifiedName.StartsWith("System.Linq.Expressions.Expression<") ||
+                    fullyQualifiedName == "System.Linq.Expressions.LambdaExpression")
+                {
+                    expressionType = (INamedTypeSymbol)currentType;
+                    return true;
+                }
+
+                currentType = currentType.BaseType;
+            }
+
+            return false;
+        }
         public override SyntaxNode? VisitSimpleLambdaExpression(SimpleLambdaExpressionSyntax node)
         {
+            if (IsLinqExpressionTree(node, out var expressionType))
+            {
+                var parameterList = SyntaxFactory.ParameterList(SyntaxFactory.SingletonSeparatedList(node.Parameter));
+                return ConvertLambdaToCachedBlock(node, parameterList, node.Body, expressionType);
+            }
             if (node.ExpressionBody != null && node.FindDescendant<ConditionalAccessExpressionSyntax>().Any(e => IsRewiteCandidate(e)))
             {
                 var lamdaSymbol = GetSymbolInfo(node);
@@ -1358,6 +1396,10 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override SyntaxNode? VisitParenthesizedLambdaExpression(ParenthesizedLambdaExpressionSyntax node)
         {
+            if (IsLinqExpressionTree(node, out var expressionType))
+            {
+                return ConvertLambdaToCachedBlock(node, node.ParameterList, node.Body, expressionType);
+            }
             if (node.ExpressionBody != null && node.FindDescendant<ConditionalAccessExpressionSyntax>().Any())
             {
                 var lamdaSymbol = GetSymbolInfo(node);
@@ -1430,6 +1472,10 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public SyntaxNode? VisitConditionalAccessExpression(ConditionalAccessExpressionSyntax node, ConditionalAccessExpressionSyntax? parentCondition = null)
         {
+            if (node.ToString().Contains("oldBytes?.AsSpan"))
+            {
+
+            }
             if (parentCondition == null && !IsRewiteCandidate(node))
                 return base.VisitConditionalAccessExpression(node);
             //no block to define temp variable in
@@ -1739,6 +1785,23 @@ namespace NetJs.Translator.CSharpToJavascript
             //}
         }
 
+        public override SyntaxNode? VisitAssignmentExpression(AssignmentExpressionSyntax node)
+        {
+            //Lower array[i] ??= 1 into array[i] = array[i] ?? 1;
+            if (node.IsKind(SyntaxKind.CoalesceAssignmentExpression) && node.Left.IsKind(SyntaxKind.ElementAccessExpression))
+            {
+                var left = (ExpressionSyntax)Visit(node.Left)!;
+                var right = (ExpressionSyntax)Visit(node.Right)!;
+                return SyntaxFactory.AssignmentExpression(
+                        SyntaxKind.SimpleAssignmentExpression,
+                        left,
+                        SyntaxFactory.BinaryExpression(
+                            SyntaxKind.CoalesceExpression,
+                            left,
+                            right));
+            }
+            return base.VisitAssignmentExpression(node);
+        }
         //public /*override*/ SyntaxNode? VisitAssignmentExpression(AssignmentExpressionSyntax node)
         //{
         //    var rhsType = GetExpressionBoundMember(node.Right);

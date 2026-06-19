@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Private.Uri", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,14 +70,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_AddingDuplicate", resourceCulture);
+                return "An item with the same key has already been added. Key: {0}";
             }
         }
 
 
         internal static string FormatArgument_AddingDuplicate(object arg1)
         {
-            return string.Format(Argument_AddingDuplicate, arg1);
+            return string.Format("An item with the same key has already been added. Key: {0}", arg1);
         }
 
 
@@ -88,7 +88,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_uri_BadAuthority", resourceCulture);
+                return "Invalid URI: The Authority/Host could not be parsed.";
             }
         }
 
@@ -101,7 +101,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_uri_BadAuthorityTerminator", resourceCulture);
+                return "Invalid URI: The Authority/Host cannot end with a backslash character ('\\\\').";
             }
         }
 
@@ -114,7 +114,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_uri_BadFormat", resourceCulture);
+                return "Invalid URI: The format of the URI could not be determined.";
             }
         }
 
@@ -127,14 +127,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_uri_NeedFreshParser", resourceCulture);
+                return "The URI parser instance passed into 'uriParser' parameter is already registered with the scheme name '{0}'.";
             }
         }
 
 
         internal static string Formatnet_uri_NeedFreshParser(object arg1)
         {
-            return string.Format(net_uri_NeedFreshParser, arg1);
+            return string.Format("The URI parser instance passed into 'uriParser' parameter is already registered with the scheme name '{0}'.", arg1);
         }
 
 
@@ -145,14 +145,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_uri_AlreadyRegistered", resourceCulture);
+                return "A URI scheme name '{0}' already has a registered custom parser.";
             }
         }
 
 
         internal static string Formatnet_uri_AlreadyRegistered(object arg1)
         {
-            return string.Format(net_uri_AlreadyRegistered, arg1);
+            return string.Format("A URI scheme name '{0}' already has a registered custom parser.", arg1);
         }
 
 
@@ -163,7 +163,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_uri_BadHostName", resourceCulture);
+                return "Invalid URI: The hostname could not be parsed.";
             }
         }
 
@@ -176,7 +176,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_uri_BadPort", resourceCulture);
+                return "Invalid URI: Invalid port specified.";
             }
         }
 
@@ -189,7 +189,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_uri_BadScheme", resourceCulture);
+                return "Invalid URI: The URI scheme is not valid.";
             }
         }
 
@@ -202,7 +202,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_uri_BadUserPassword", resourceCulture);
+                return "Invalid URI: The username:password construct is badly formed.";
             }
         }
 
@@ -215,7 +215,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_uri_CannotCreateRelative", resourceCulture);
+                return "A relative URI cannot be created because the 'uriString' parameter represents an absolute URI.";
             }
         }
 
@@ -228,7 +228,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_uri_SchemeLimit", resourceCulture);
+                return "Invalid URI: The Uri scheme is too long.";
             }
         }
 
@@ -241,7 +241,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_uri_EmptyUri", resourceCulture);
+                return "Invalid URI: The URI is empty.";
             }
         }
 
@@ -254,14 +254,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_uri_InvalidUriKind", resourceCulture);
+                return "The value '{0}' passed for the UriKind parameter is invalid.";
             }
         }
 
 
         internal static string Formatnet_uri_InvalidUriKind(object arg1)
         {
-            return string.Format(net_uri_InvalidUriKind, arg1);
+            return string.Format("The value '{0}' passed for the UriKind parameter is invalid.", arg1);
         }
 
 
@@ -272,7 +272,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_uri_MustRootedPath", resourceCulture);
+                return "Invalid URI: A Dos path must be rooted, for example, 'c:\\\\'.";
             }
         }
 
@@ -285,7 +285,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_uri_NotAbsolute", resourceCulture);
+                return "This operation is not supported for a relative URI.";
             }
         }
 
@@ -298,14 +298,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_uri_PortOutOfRange", resourceCulture);
+                return "A derived type '{0}' has reported an invalid value for the Uri port '{1}'.";
             }
         }
 
 
         internal static string Formatnet_uri_PortOutOfRange(object arg1, object arg2)
         {
-            return string.Format(net_uri_PortOutOfRange, arg1, arg2);
+            return string.Format("A derived type '{0}' has reported an invalid value for the Uri port '{1}'.", arg1, arg2);
         }
 
 
@@ -316,14 +316,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_uri_UserDrivenParsing", resourceCulture);
+                return "A derived type '{0}' is responsible for parsing this Uri instance. The base implementation must not be used.";
             }
         }
 
 
         internal static string Formatnet_uri_UserDrivenParsing(object arg1)
         {
-            return string.Format(net_uri_UserDrivenParsing, arg1);
+            return string.Format("A derived type '{0}' is responsible for parsing this Uri instance. The base implementation must not be used.", arg1);
         }
 
 
@@ -334,7 +334,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_uri_NotJustSerialization", resourceCulture);
+                return "UriComponents.SerializationInfoString must not be combined with other UriComponents.";
             }
         }
 
@@ -347,7 +347,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_uri_BadUnicodeHostForIdn", resourceCulture);
+                return "An invalid Unicode character by IDN standards was specified in the host.";
             }
         }
 
@@ -360,7 +360,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_ExtraNotValid", resourceCulture);
+                return "Extra portion of URI not valid.";
             }
         }
 
@@ -373,14 +373,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidUriSubcomponent", resourceCulture);
+                return "The subcomponent, {0}, of this uri is not valid.";
             }
         }
 
 
         internal static string FormatArgument_InvalidUriSubcomponent(object arg1)
         {
-            return string.Format(Argument_InvalidUriSubcomponent, arg1);
+            return string.Format("The subcomponent, {0}, of this uri is not valid.", arg1);
         }
 
 
@@ -391,14 +391,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_KeyNotFoundWithKey", resourceCulture);
+                return "The given key '{0}' was not present in the dictionary.";
             }
         }
 
 
         internal static string FormatArg_KeyNotFoundWithKey(object arg1)
         {
-            return string.Format(Arg_KeyNotFoundWithKey, arg1);
+            return string.Format("The given key '{0}' was not present in the dictionary.", arg1);
         }
 
 
@@ -409,14 +409,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidNullArgument", resourceCulture);
+                return "Null is not a valid value for {0}.";
             }
         }
 
 
         internal static string FormatInvalidNullArgument(object arg1)
         {
-            return string.Format(InvalidNullArgument, arg1);
+            return string.Format("Null is not a valid value for {0}.", arg1);
         }
 
 
@@ -427,7 +427,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_uri_InitializeCalledAlreadyOrTooLate", resourceCulture);
+                return "UriParser's base InitializeAndValidate may only be called once on a single Uri instance and only from an override of InitializeAndValidate.";
             }
         }
 
@@ -440,7 +440,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_uri_GetComponentsCalledWhenCanonicalizationDisabled", resourceCulture);
+                return "GetComponents() may not be used for Path/Query on a Uri instance created with UriCreationOptions.DangerousDisablePathAndQueryCanonicalization.";
             }
         }
 

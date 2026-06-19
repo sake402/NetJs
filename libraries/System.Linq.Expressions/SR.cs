@@ -25,10 +25,10 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
-        
+        private static global::System.Resources.ResourceManager s_resourceManager;
+
         private static global::System.Globalization.CultureInfo resourceCulture;
-        
+
         /// <summary>
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Linq.Expressions", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,7 +70,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ReducibleMustOverrideReduce", resourceCulture);
+                return "reducible nodes must override Expression.Reduce()";
             }
         }
 
@@ -83,7 +83,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MustReduceToDifferent", resourceCulture);
+                return "node cannot reduce to itself or null";
             }
         }
 
@@ -96,7 +96,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ReducedNotCompatible", resourceCulture);
+                return "cannot assign from the reduced node type to the original node type";
             }
         }
 
@@ -109,7 +109,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SetterHasNoParams", resourceCulture);
+                return "Setter must have parameters.";
             }
         }
 
@@ -122,7 +122,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyCannotHaveRefType", resourceCulture);
+                return "Property cannot have a managed pointer type.";
             }
         }
 
@@ -135,7 +135,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IndexesOfSetGetMustMatch", resourceCulture);
+                return "Indexing parameters of getter and setter must match.";
             }
         }
 
@@ -148,7 +148,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AccessorsCannotHaveVarArgs", resourceCulture);
+                return "Accessor method should not have VarArgs.";
             }
         }
 
@@ -161,7 +161,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AccessorsCannotHaveByRefArgs", resourceCulture);
+                return "Accessor indexes cannot be passed ByRef.";
             }
         }
 
@@ -174,7 +174,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BoundsCannotBeLessThanOne", resourceCulture);
+                return "Bounds count cannot be less than 1";
             }
         }
 
@@ -187,7 +187,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TypeMustNotBeByRef", resourceCulture);
+                return "Type must not be ByRef";
             }
         }
 
@@ -200,7 +200,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TypeMustNotBePointer", resourceCulture);
+                return "Type must not be a pointer type";
             }
         }
 
@@ -213,7 +213,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SetterMustBeVoid", resourceCulture);
+                return "Setter should have void type.";
             }
         }
 
@@ -226,7 +226,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyTypeMustMatchGetter", resourceCulture);
+                return "Property type must match the value type of getter";
             }
         }
 
@@ -239,7 +239,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyTypeMustMatchSetter", resourceCulture);
+                return "Property type must match the value type of setter";
             }
         }
 
@@ -252,7 +252,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BothAccessorsMustBeStatic", resourceCulture);
+                return "Both accessors must be static.";
             }
         }
 
@@ -265,7 +265,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("OnlyStaticFieldsHaveNullInstance", resourceCulture);
+                return "Static field requires null instance, non-static field requires non-null instance.";
             }
         }
 
@@ -278,7 +278,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("OnlyStaticPropertiesHaveNullInstance", resourceCulture);
+                return "Static property requires null instance, non-static property requires non-null instance.";
             }
         }
 
@@ -291,7 +291,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("OnlyStaticMethodsHaveNullInstance", resourceCulture);
+                return "Static method requires null instance, non-static method requires non-null instance.";
             }
         }
 
@@ -304,7 +304,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyTypeCannotBeVoid", resourceCulture);
+                return "Property cannot have a void type.";
             }
         }
 
@@ -317,7 +317,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidUnboxType", resourceCulture);
+                return "Can only unbox from an object or interface type to a value type.";
             }
         }
 
@@ -330,7 +330,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpressionMustBeWriteable", resourceCulture);
+                return "Expression must be writeable";
             }
         }
 
@@ -343,7 +343,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentMustNotHaveValueType", resourceCulture);
+                return "Argument must not have a value type.";
             }
         }
 
@@ -356,7 +356,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MustBeReducible", resourceCulture);
+                return "must be reducible node";
             }
         }
 
@@ -369,7 +369,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AllTestValuesMustHaveSameType", resourceCulture);
+                return "All test values must have the same type.";
             }
         }
 
@@ -382,7 +382,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AllCaseBodiesMustHaveSameType", resourceCulture);
+                return "All case bodies and the default body must have the same type.";
             }
         }
 
@@ -395,7 +395,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DefaultBodyMustBeSupplied", resourceCulture);
+                return "Default body must be supplied if case bodies are not System.Void.";
             }
         }
 
@@ -408,7 +408,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LabelMustBeVoidOrHaveExpression", resourceCulture);
+                return "Label type must be System.Void if an expression is not supplied";
             }
         }
 
@@ -421,7 +421,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LabelTypeMustBeVoid", resourceCulture);
+                return "Type must be System.Void for this label argument";
             }
         }
 
@@ -434,7 +434,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("QuotedExpressionMustBeLambda", resourceCulture);
+                return "Quoted expression must be a lambda";
             }
         }
 
@@ -447,14 +447,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("VariableMustNotBeByRef", resourceCulture);
+                return "Variable '{0}' uses unsupported type '{1}'. Reference types are not supported for variables.";
             }
         }
 
 
         internal static string FormatVariableMustNotBeByRef(object arg1, object arg2)
         {
-            return string.Format(VariableMustNotBeByRef, arg1, arg2);
+            return string.Format("Variable '{0}' uses unsupported type '{1}'. Reference types are not supported for variables.", arg1, arg2);
         }
 
 
@@ -465,14 +465,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DuplicateVariable", resourceCulture);
+                return "Found duplicate parameter '{0}'. Each ParameterExpression in the list must be a unique object.";
             }
         }
 
 
         internal static string FormatDuplicateVariable(object arg1)
         {
-            return string.Format(DuplicateVariable, arg1);
+            return string.Format("Found duplicate parameter '{0}'. Each ParameterExpression in the list must be a unique object.", arg1);
         }
 
 
@@ -483,7 +483,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("StartEndMustBeOrdered", resourceCulture);
+                return "Start and End must be well ordered";
             }
         }
 
@@ -496,7 +496,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FaultCannotHaveCatchOrFinally", resourceCulture);
+                return "fault cannot be used with catch or finally clauses";
             }
         }
 
@@ -509,7 +509,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TryMustHaveCatchFinallyOrFault", resourceCulture);
+                return "try must have at least one catch, finally, or fault clause";
             }
         }
 
@@ -522,7 +522,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BodyOfCatchMustHaveSameTypeAsBodyOfTry", resourceCulture);
+                return "Body of catch must have the same type as body of try.";
             }
         }
 
@@ -535,14 +535,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExtensionNodeMustOverrideProperty", resourceCulture);
+                return "Extension node must override the property {0}.";
             }
         }
 
 
         internal static string FormatExtensionNodeMustOverrideProperty(object arg1)
         {
-            return string.Format(ExtensionNodeMustOverrideProperty, arg1);
+            return string.Format("Extension node must override the property {0}.", arg1);
         }
 
 
@@ -553,14 +553,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UserDefinedOperatorMustBeStatic", resourceCulture);
+                return "User-defined operator method '{0}' must be static.";
             }
         }
 
 
         internal static string FormatUserDefinedOperatorMustBeStatic(object arg1)
         {
-            return string.Format(UserDefinedOperatorMustBeStatic, arg1);
+            return string.Format("User-defined operator method '{0}' must be static.", arg1);
         }
 
 
@@ -571,14 +571,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UserDefinedOperatorMustNotBeVoid", resourceCulture);
+                return "User-defined operator method '{0}' must not be void.";
             }
         }
 
 
         internal static string FormatUserDefinedOperatorMustNotBeVoid(object arg1)
         {
-            return string.Format(UserDefinedOperatorMustNotBeVoid, arg1);
+            return string.Format("User-defined operator method '{0}' must not be void.", arg1);
         }
 
 
@@ -589,14 +589,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CoercionOperatorNotDefined", resourceCulture);
+                return "No coercion operator is defined between types '{0}' and '{1}'.";
             }
         }
 
 
         internal static string FormatCoercionOperatorNotDefined(object arg1, object arg2)
         {
-            return string.Format(CoercionOperatorNotDefined, arg1, arg2);
+            return string.Format("No coercion operator is defined between types '{0}' and '{1}'.", arg1, arg2);
         }
 
 
@@ -607,14 +607,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnaryOperatorNotDefined", resourceCulture);
+                return "The unary operator {0} is not defined for the type '{1}'.";
             }
         }
 
 
         internal static string FormatUnaryOperatorNotDefined(object arg1, object arg2)
         {
-            return string.Format(UnaryOperatorNotDefined, arg1, arg2);
+            return string.Format("The unary operator {0} is not defined for the type '{1}'.", arg1, arg2);
         }
 
 
@@ -625,14 +625,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BinaryOperatorNotDefined", resourceCulture);
+                return "The binary operator {0} is not defined for the types '{1}' and '{2}'.";
             }
         }
 
 
         internal static string FormatBinaryOperatorNotDefined(object arg1, object arg2, object arg3)
         {
-            return string.Format(BinaryOperatorNotDefined, arg1, arg2, arg3);
+            return string.Format("The binary operator {0} is not defined for the types '{1}' and '{2}'.", arg1, arg2, arg3);
         }
 
 
@@ -643,14 +643,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ReferenceEqualityNotDefined", resourceCulture);
+                return "Reference equality is not defined for the types '{0}' and '{1}'.";
             }
         }
 
 
         internal static string FormatReferenceEqualityNotDefined(object arg1, object arg2)
         {
-            return string.Format(ReferenceEqualityNotDefined, arg1, arg2);
+            return string.Format("Reference equality is not defined for the types '{0}' and '{1}'.", arg1, arg2);
         }
 
 
@@ -661,14 +661,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("OperandTypesDoNotMatchParameters", resourceCulture);
+                return "The operands for operator '{0}' do not match the parameters of method '{1}'.";
             }
         }
 
 
         internal static string FormatOperandTypesDoNotMatchParameters(object arg1, object arg2)
         {
-            return string.Format(OperandTypesDoNotMatchParameters, arg1, arg2);
+            return string.Format("The operands for operator '{0}' do not match the parameters of method '{1}'.", arg1, arg2);
         }
 
 
@@ -679,14 +679,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("OverloadOperatorTypeDoesNotMatchConversionType", resourceCulture);
+                return "The return type of overload method for operator '{0}' does not match the parameter type of conversion method '{1}'.";
             }
         }
 
 
         internal static string FormatOverloadOperatorTypeDoesNotMatchConversionType(object arg1, object arg2)
         {
-            return string.Format(OverloadOperatorTypeDoesNotMatchConversionType, arg1, arg2);
+            return string.Format("The return type of overload method for operator '{0}' does not match the parameter type of conversion method '{1}'.", arg1, arg2);
         }
 
 
@@ -697,7 +697,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ConversionIsNotSupportedForArithmeticTypes", resourceCulture);
+                return "Conversion is not supported for arithmetic types without operator overloading.";
             }
         }
 
@@ -710,7 +710,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentMustBeArray", resourceCulture);
+                return "Argument must be array";
             }
         }
 
@@ -723,7 +723,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentMustBeBoolean", resourceCulture);
+                return "Argument must be boolean";
             }
         }
 
@@ -736,14 +736,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("EqualityMustReturnBoolean", resourceCulture);
+                return "The user-defined equality method '{0}' must return a boolean value.";
             }
         }
 
 
         internal static string FormatEqualityMustReturnBoolean(object arg1)
         {
-            return string.Format(EqualityMustReturnBoolean, arg1);
+            return string.Format("The user-defined equality method '{0}' must return a boolean value.", arg1);
         }
 
 
@@ -754,7 +754,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentMustBeFieldInfoOrPropertyInfo", resourceCulture);
+                return "Argument must be either a FieldInfo or PropertyInfo";
             }
         }
 
@@ -767,7 +767,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentMustBeFieldInfoOrPropertyInfoOrMethod", resourceCulture);
+                return "Argument must be either a FieldInfo, PropertyInfo or MethodInfo";
             }
         }
 
@@ -780,7 +780,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentMustBeInstanceMember", resourceCulture);
+                return "Argument must be an instance member";
             }
         }
 
@@ -793,7 +793,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentMustBeInteger", resourceCulture);
+                return "Argument must be of an integer type";
             }
         }
 
@@ -806,7 +806,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentMustBeArrayIndexType", resourceCulture);
+                return "Argument for array index must be of type Int32";
             }
         }
 
@@ -819,7 +819,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentMustBeSingleDimensionalArrayType", resourceCulture);
+                return "Argument must be single-dimensional, zero-based array type";
             }
         }
 
@@ -832,7 +832,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentTypesMustMatch", resourceCulture);
+                return "Argument types do not match";
             }
         }
 
@@ -845,14 +845,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotAutoInitializeValueTypeElementThroughProperty", resourceCulture);
+                return "Cannot auto initialize elements of value type through property '{0}', use assignment instead";
             }
         }
 
 
         internal static string FormatCannotAutoInitializeValueTypeElementThroughProperty(object arg1)
         {
-            return string.Format(CannotAutoInitializeValueTypeElementThroughProperty, arg1);
+            return string.Format("Cannot auto initialize elements of value type through property '{0}', use assignment instead", arg1);
         }
 
 
@@ -863,14 +863,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotAutoInitializeValueTypeMemberThroughProperty", resourceCulture);
+                return "Cannot auto initialize members of value type through property '{0}', use assignment instead";
             }
         }
 
 
         internal static string FormatCannotAutoInitializeValueTypeMemberThroughProperty(object arg1)
         {
-            return string.Format(CannotAutoInitializeValueTypeMemberThroughProperty, arg1);
+            return string.Format("Cannot auto initialize members of value type through property '{0}', use assignment instead", arg1);
         }
 
 
@@ -881,14 +881,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IncorrectTypeForTypeAs", resourceCulture);
+                return "The type used in TypeAs Expression must be of reference or nullable type, {0} is neither";
             }
         }
 
 
         internal static string FormatIncorrectTypeForTypeAs(object arg1)
         {
-            return string.Format(IncorrectTypeForTypeAs, arg1);
+            return string.Format("The type used in TypeAs Expression must be of reference or nullable type, {0} is neither", arg1);
         }
 
 
@@ -899,7 +899,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CoalesceUsedOnNonNullType", resourceCulture);
+                return "Coalesce used with type that cannot be null";
             }
         }
 
@@ -912,14 +912,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpressionTypeCannotInitializeArrayType", resourceCulture);
+                return "An expression of type '{0}' cannot be used to initialize an array of type '{1}'";
             }
         }
 
 
         internal static string FormatExpressionTypeCannotInitializeArrayType(object arg1, object arg2)
         {
-            return string.Format(ExpressionTypeCannotInitializeArrayType, arg1, arg2);
+            return string.Format("An expression of type '{0}' cannot be used to initialize an array of type '{1}'", arg1, arg2);
         }
 
 
@@ -930,14 +930,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentTypeDoesNotMatchMember", resourceCulture);
+                return " Argument type '{0}' does not match the corresponding member type '{1}'";
             }
         }
 
 
         internal static string FormatArgumentTypeDoesNotMatchMember(object arg1, object arg2)
         {
-            return string.Format(ArgumentTypeDoesNotMatchMember, arg1, arg2);
+            return string.Format(" Argument type '{0}' does not match the corresponding member type '{1}'", arg1, arg2);
         }
 
 
@@ -948,14 +948,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentMemberNotDeclOnType", resourceCulture);
+                return " The member '{0}' is not declared on type '{1}' being created";
             }
         }
 
 
         internal static string FormatArgumentMemberNotDeclOnType(object arg1, object arg2)
         {
-            return string.Format(ArgumentMemberNotDeclOnType, arg1, arg2);
+            return string.Format(" The member '{0}' is not declared on type '{1}' being created", arg1, arg2);
         }
 
 
@@ -966,14 +966,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpressionTypeDoesNotMatchReturn", resourceCulture);
+                return "Expression of type '{0}' cannot be used for return type '{1}'";
             }
         }
 
 
         internal static string FormatExpressionTypeDoesNotMatchReturn(object arg1, object arg2)
         {
-            return string.Format(ExpressionTypeDoesNotMatchReturn, arg1, arg2);
+            return string.Format("Expression of type '{0}' cannot be used for return type '{1}'", arg1, arg2);
         }
 
 
@@ -984,14 +984,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpressionTypeDoesNotMatchAssignment", resourceCulture);
+                return "Expression of type '{0}' cannot be used for assignment to type '{1}'";
             }
         }
 
 
         internal static string FormatExpressionTypeDoesNotMatchAssignment(object arg1, object arg2)
         {
-            return string.Format(ExpressionTypeDoesNotMatchAssignment, arg1, arg2);
+            return string.Format("Expression of type '{0}' cannot be used for assignment to type '{1}'", arg1, arg2);
         }
 
 
@@ -1002,14 +1002,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpressionTypeDoesNotMatchLabel", resourceCulture);
+                return "Expression of type '{0}' cannot be used for label of type '{1}'";
             }
         }
 
 
         internal static string FormatExpressionTypeDoesNotMatchLabel(object arg1, object arg2)
         {
-            return string.Format(ExpressionTypeDoesNotMatchLabel, arg1, arg2);
+            return string.Format("Expression of type '{0}' cannot be used for label of type '{1}'", arg1, arg2);
         }
 
 
@@ -1020,14 +1020,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpressionTypeNotInvocable", resourceCulture);
+                return "Expression of type '{0}' cannot be invoked";
             }
         }
 
 
         internal static string FormatExpressionTypeNotInvocable(object arg1)
         {
-            return string.Format(ExpressionTypeNotInvocable, arg1);
+            return string.Format("Expression of type '{0}' cannot be invoked", arg1);
         }
 
 
@@ -1038,14 +1038,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FieldNotDefinedForType", resourceCulture);
+                return "Field '{0}' is not defined for type '{1}'";
             }
         }
 
 
         internal static string FormatFieldNotDefinedForType(object arg1, object arg2)
         {
-            return string.Format(FieldNotDefinedForType, arg1, arg2);
+            return string.Format("Field '{0}' is not defined for type '{1}'", arg1, arg2);
         }
 
 
@@ -1056,14 +1056,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InstanceFieldNotDefinedForType", resourceCulture);
+                return "Instance field '{0}' is not defined for type '{1}'";
             }
         }
 
 
         internal static string FormatInstanceFieldNotDefinedForType(object arg1, object arg2)
         {
-            return string.Format(InstanceFieldNotDefinedForType, arg1, arg2);
+            return string.Format("Instance field '{0}' is not defined for type '{1}'", arg1, arg2);
         }
 
 
@@ -1074,14 +1074,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FieldInfoNotDefinedForType", resourceCulture);
+                return "Field '{0}.{1}' is not defined for type '{2}'";
             }
         }
 
 
         internal static string FormatFieldInfoNotDefinedForType(object arg1, object arg2, object arg3)
         {
-            return string.Format(FieldInfoNotDefinedForType, arg1, arg2, arg3);
+            return string.Format("Field '{0}.{1}' is not defined for type '{2}'", arg1, arg2, arg3);
         }
 
 
@@ -1092,7 +1092,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IncorrectNumberOfIndexes", resourceCulture);
+                return "Incorrect number of indexes";
             }
         }
 
@@ -1105,7 +1105,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IncorrectNumberOfLambdaDeclarationParameters", resourceCulture);
+                return "Incorrect number of parameters supplied for lambda declaration";
             }
         }
 
@@ -1118,7 +1118,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IncorrectNumberOfMembersForGivenConstructor", resourceCulture);
+                return " Incorrect number of members for constructor";
             }
         }
 
@@ -1131,7 +1131,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IncorrectNumberOfArgumentsForMembers", resourceCulture);
+                return "Incorrect number of arguments for the given members ";
             }
         }
 
@@ -1144,7 +1144,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LambdaTypeMustBeDerivedFromSystemDelegate", resourceCulture);
+                return "Lambda type parameter must be derived from System.MulticastDelegate";
             }
         }
 
@@ -1157,14 +1157,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MemberNotFieldOrProperty", resourceCulture);
+                return "Member '{0}' not field or property";
             }
         }
 
 
         internal static string FormatMemberNotFieldOrProperty(object arg1)
         {
-            return string.Format(MemberNotFieldOrProperty, arg1);
+            return string.Format("Member '{0}' not field or property", arg1);
         }
 
 
@@ -1175,14 +1175,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MethodContainsGenericParameters", resourceCulture);
+                return "Method {0} contains generic parameters";
             }
         }
 
 
         internal static string FormatMethodContainsGenericParameters(object arg1)
         {
-            return string.Format(MethodContainsGenericParameters, arg1);
+            return string.Format("Method {0} contains generic parameters", arg1);
         }
 
 
@@ -1193,14 +1193,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MethodIsGeneric", resourceCulture);
+                return "Method {0} is a generic method definition";
             }
         }
 
 
         internal static string FormatMethodIsGeneric(object arg1)
         {
-            return string.Format(MethodIsGeneric, arg1);
+            return string.Format("Method {0} is a generic method definition", arg1);
         }
 
 
@@ -1211,14 +1211,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MethodNotPropertyAccessor", resourceCulture);
+                return "The method '{0}.{1}' is not a property accessor";
             }
         }
 
 
         internal static string FormatMethodNotPropertyAccessor(object arg1, object arg2)
         {
-            return string.Format(MethodNotPropertyAccessor, arg1, arg2);
+            return string.Format("The method '{0}.{1}' is not a property accessor", arg1, arg2);
         }
 
 
@@ -1229,14 +1229,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyDoesNotHaveGetter", resourceCulture);
+                return "The property '{0}' has no 'get' accessor";
             }
         }
 
 
         internal static string FormatPropertyDoesNotHaveGetter(object arg1)
         {
-            return string.Format(PropertyDoesNotHaveGetter, arg1);
+            return string.Format("The property '{0}' has no 'get' accessor", arg1);
         }
 
 
@@ -1247,14 +1247,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyDoesNotHaveSetter", resourceCulture);
+                return "The property '{0}' has no 'set' accessor";
             }
         }
 
 
         internal static string FormatPropertyDoesNotHaveSetter(object arg1)
         {
-            return string.Format(PropertyDoesNotHaveSetter, arg1);
+            return string.Format("The property '{0}' has no 'set' accessor", arg1);
         }
 
 
@@ -1265,14 +1265,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyDoesNotHaveAccessor", resourceCulture);
+                return "The property '{0}' has no 'get' or 'set' accessors";
             }
         }
 
 
         internal static string FormatPropertyDoesNotHaveAccessor(object arg1)
         {
-            return string.Format(PropertyDoesNotHaveAccessor, arg1);
+            return string.Format("The property '{0}' has no 'get' or 'set' accessors", arg1);
         }
 
 
@@ -1283,14 +1283,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotAMemberOfType", resourceCulture);
+                return "'{0}' is not a member of type '{1}'";
             }
         }
 
 
         internal static string FormatNotAMemberOfType(object arg1, object arg2)
         {
-            return string.Format(NotAMemberOfType, arg1, arg2);
+            return string.Format("'{0}' is not a member of type '{1}'", arg1, arg2);
         }
 
 
@@ -1301,14 +1301,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotAMemberOfAnyType", resourceCulture);
+                return "'{0}' is not a member of any type";
             }
         }
 
 
         internal static string FormatNotAMemberOfAnyType(object arg1)
         {
-            return string.Format(NotAMemberOfAnyType, arg1);
+            return string.Format("'{0}' is not a member of any type", arg1);
         }
 
 
@@ -1319,14 +1319,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnsupportedExpressionType", resourceCulture);
+                return "The expression type '{0}' is not supported";
             }
         }
 
 
         internal static string FormatUnsupportedExpressionType(object arg1)
         {
-            return string.Format(UnsupportedExpressionType, arg1);
+            return string.Format("The expression type '{0}' is not supported", arg1);
         }
 
 
@@ -1337,14 +1337,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ParameterExpressionNotValidAsDelegate", resourceCulture);
+                return "ParameterExpression of type '{0}' cannot be used for delegate parameter of type '{1}'";
             }
         }
 
 
         internal static string FormatParameterExpressionNotValidAsDelegate(object arg1, object arg2)
         {
-            return string.Format(ParameterExpressionNotValidAsDelegate, arg1, arg2);
+            return string.Format("ParameterExpression of type '{0}' cannot be used for delegate parameter of type '{1}'", arg1, arg2);
         }
 
 
@@ -1355,14 +1355,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyNotDefinedForType", resourceCulture);
+                return "Property '{0}' is not defined for type '{1}'";
             }
         }
 
 
         internal static string FormatPropertyNotDefinedForType(object arg1, object arg2)
         {
-            return string.Format(PropertyNotDefinedForType, arg1, arg2);
+            return string.Format("Property '{0}' is not defined for type '{1}'", arg1, arg2);
         }
 
 
@@ -1373,14 +1373,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InstancePropertyNotDefinedForType", resourceCulture);
+                return "Instance property '{0}' is not defined for type '{1}'";
             }
         }
 
 
         internal static string FormatInstancePropertyNotDefinedForType(object arg1, object arg2)
         {
-            return string.Format(InstancePropertyNotDefinedForType, arg1, arg2);
+            return string.Format("Instance property '{0}' is not defined for type '{1}'", arg1, arg2);
         }
 
 
@@ -1391,14 +1391,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InstancePropertyWithoutParameterNotDefinedForType", resourceCulture);
+                return "Instance property '{0}' that takes no argument is not defined for type '{1}'";
             }
         }
 
 
         internal static string FormatInstancePropertyWithoutParameterNotDefinedForType(object arg1, object arg2)
         {
-            return string.Format(InstancePropertyWithoutParameterNotDefinedForType, arg1, arg2);
+            return string.Format("Instance property '{0}' that takes no argument is not defined for type '{1}'", arg1, arg2);
         }
 
 
@@ -1409,14 +1409,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InstancePropertyWithSpecifiedParametersNotDefinedForType", resourceCulture);
+                return "Instance property '{0}{1}' is not defined for type '{2}'";
             }
         }
 
 
         internal static string FormatInstancePropertyWithSpecifiedParametersNotDefinedForType(object arg1, object arg2, object arg3)
         {
-            return string.Format(InstancePropertyWithSpecifiedParametersNotDefinedForType, arg1, arg2, arg3);
+            return string.Format("Instance property '{0}{1}' is not defined for type '{2}'", arg1, arg2, arg3);
         }
 
 
@@ -1427,14 +1427,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InstanceAndMethodTypeMismatch", resourceCulture);
+                return "Method '{0}' declared on type '{1}' cannot be called with instance of type '{2}'";
             }
         }
 
 
         internal static string FormatInstanceAndMethodTypeMismatch(object arg1, object arg2, object arg3)
         {
-            return string.Format(InstanceAndMethodTypeMismatch, arg1, arg2, arg3);
+            return string.Format("Method '{0}' declared on type '{1}' cannot be called with instance of type '{2}'", arg1, arg2, arg3);
         }
 
 
@@ -1445,14 +1445,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TypeContainsGenericParameters", resourceCulture);
+                return "Type {0} contains generic parameters";
             }
         }
 
 
         internal static string FormatTypeContainsGenericParameters(object arg1)
         {
-            return string.Format(TypeContainsGenericParameters, arg1);
+            return string.Format("Type {0} contains generic parameters", arg1);
         }
 
 
@@ -1463,14 +1463,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TypeIsGeneric", resourceCulture);
+                return "Type {0} is a generic type definition";
             }
         }
 
 
         internal static string FormatTypeIsGeneric(object arg1)
         {
-            return string.Format(TypeIsGeneric, arg1);
+            return string.Format("Type {0} is a generic type definition", arg1);
         }
 
 
@@ -1481,14 +1481,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TypeMissingDefaultConstructor", resourceCulture);
+                return "Type '{0}' does not have a default constructor";
             }
         }
 
 
         internal static string FormatTypeMissingDefaultConstructor(object arg1)
         {
-            return string.Format(TypeMissingDefaultConstructor, arg1);
+            return string.Format("Type '{0}' does not have a default constructor", arg1);
         }
 
 
@@ -1499,7 +1499,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ElementInitializerMethodNotAdd", resourceCulture);
+                return "Element initializer method must be named 'Add'";
             }
         }
 
@@ -1512,14 +1512,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ElementInitializerMethodNoRefOutParam", resourceCulture);
+                return "Parameter '{0}' of element initializer method '{1}' must not be a pass by reference parameter";
             }
         }
 
 
         internal static string FormatElementInitializerMethodNoRefOutParam(object arg1, object arg2)
         {
-            return string.Format(ElementInitializerMethodNoRefOutParam, arg1, arg2);
+            return string.Format("Parameter '{0}' of element initializer method '{1}' must not be a pass by reference parameter", arg1, arg2);
         }
 
 
@@ -1530,7 +1530,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ElementInitializerMethodWithZeroArgs", resourceCulture);
+                return "Element initializer method must have at least 1 parameter";
             }
         }
 
@@ -1543,7 +1543,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ElementInitializerMethodStatic", resourceCulture);
+                return "Element initializer method must be an instance method";
             }
         }
 
@@ -1556,14 +1556,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TypeNotIEnumerable", resourceCulture);
+                return "Type '{0}' is not IEnumerable";
             }
         }
 
 
         internal static string FormatTypeNotIEnumerable(object arg1)
         {
-            return string.Format(TypeNotIEnumerable, arg1);
+            return string.Format("Type '{0}' is not IEnumerable", arg1);
         }
 
 
@@ -1574,14 +1574,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnhandledBinary", resourceCulture);
+                return "Unhandled binary: {0}";
             }
         }
 
 
         internal static string FormatUnhandledBinary(object arg1)
         {
-            return string.Format(UnhandledBinary, arg1);
+            return string.Format("Unhandled binary: {0}", arg1);
         }
 
 
@@ -1592,7 +1592,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnhandledBinding", resourceCulture);
+                return "Unhandled binding ";
             }
         }
 
@@ -1605,14 +1605,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnhandledBindingType", resourceCulture);
+                return "Unhandled Binding Type: {0}";
             }
         }
 
 
         internal static string FormatUnhandledBindingType(object arg1)
         {
-            return string.Format(UnhandledBindingType, arg1);
+            return string.Format("Unhandled Binding Type: {0}", arg1);
         }
 
 
@@ -1623,14 +1623,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnhandledUnary", resourceCulture);
+                return "Unhandled unary: {0}";
             }
         }
 
 
         internal static string FormatUnhandledUnary(object arg1)
         {
-            return string.Format(UnhandledUnary, arg1);
+            return string.Format("Unhandled unary: {0}", arg1);
         }
 
 
@@ -1641,7 +1641,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnknownBindingType", resourceCulture);
+                return "Unknown binding type";
             }
         }
 
@@ -1654,14 +1654,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UserDefinedOpMustHaveConsistentTypes", resourceCulture);
+                return "The user-defined operator method '{1}' for operator '{0}' must have identical parameter and return types.";
             }
         }
 
 
         internal static string FormatUserDefinedOpMustHaveConsistentTypes(object arg1, object arg2)
         {
-            return string.Format(UserDefinedOpMustHaveConsistentTypes, arg1, arg2);
+            return string.Format("The user-defined operator method '{1}' for operator '{0}' must have identical parameter and return types.", arg1, arg2);
         }
 
 
@@ -1672,14 +1672,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UserDefinedOpMustHaveValidReturnType", resourceCulture);
+                return "The user-defined operator method '{1}' for operator '{0}' must return the same type as its parameter or a derived type.";
             }
         }
 
 
         internal static string FormatUserDefinedOpMustHaveValidReturnType(object arg1, object arg2)
         {
-            return string.Format(UserDefinedOpMustHaveValidReturnType, arg1, arg2);
+            return string.Format("The user-defined operator method '{1}' for operator '{0}' must return the same type as its parameter or a derived type.", arg1, arg2);
         }
 
 
@@ -1690,14 +1690,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LogicalOperatorMustHaveBooleanOperators", resourceCulture);
+                return "The user-defined operator method '{1}' for operator '{0}' must have associated boolean True and False operators.";
             }
         }
 
 
         internal static string FormatLogicalOperatorMustHaveBooleanOperators(object arg1, object arg2)
         {
-            return string.Format(LogicalOperatorMustHaveBooleanOperators, arg1, arg2);
+            return string.Format("The user-defined operator method '{1}' for operator '{0}' must have associated boolean True and False operators.", arg1, arg2);
         }
 
 
@@ -1708,14 +1708,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MethodWithArgsDoesNotExistOnType", resourceCulture);
+                return "No method '{0}' on type '{1}' is compatible with the supplied arguments.";
             }
         }
 
 
         internal static string FormatMethodWithArgsDoesNotExistOnType(object arg1, object arg2)
         {
-            return string.Format(MethodWithArgsDoesNotExistOnType, arg1, arg2);
+            return string.Format("No method '{0}' on type '{1}' is compatible with the supplied arguments.", arg1, arg2);
         }
 
 
@@ -1726,14 +1726,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("GenericMethodWithArgsDoesNotExistOnType", resourceCulture);
+                return "No generic method '{0}' on type '{1}' is compatible with the supplied type arguments and arguments. No type arguments should be provided if the method is non-generic. ";
             }
         }
 
 
         internal static string FormatGenericMethodWithArgsDoesNotExistOnType(object arg1, object arg2)
         {
-            return string.Format(GenericMethodWithArgsDoesNotExistOnType, arg1, arg2);
+            return string.Format("No generic method '{0}' on type '{1}' is compatible with the supplied type arguments and arguments. No type arguments should be provided if the method is non-generic. ", arg1, arg2);
         }
 
 
@@ -1744,14 +1744,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MethodWithMoreThanOneMatch", resourceCulture);
+                return "More than one method '{0}' on type '{1}' is compatible with the supplied arguments.";
             }
         }
 
 
         internal static string FormatMethodWithMoreThanOneMatch(object arg1, object arg2)
         {
-            return string.Format(MethodWithMoreThanOneMatch, arg1, arg2);
+            return string.Format("More than one method '{0}' on type '{1}' is compatible with the supplied arguments.", arg1, arg2);
         }
 
 
@@ -1762,14 +1762,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyWithMoreThanOneMatch", resourceCulture);
+                return "More than one property '{0}' on type '{1}' is compatible with the supplied arguments.";
             }
         }
 
 
         internal static string FormatPropertyWithMoreThanOneMatch(object arg1, object arg2)
         {
-            return string.Format(PropertyWithMoreThanOneMatch, arg1, arg2);
+            return string.Format("More than one property '{0}' on type '{1}' is compatible with the supplied arguments.", arg1, arg2);
         }
 
 
@@ -1780,7 +1780,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IncorrectNumberOfTypeArgsForFunc", resourceCulture);
+                return "An incorrect number of type arguments were specified for the declaration of a Func type.";
             }
         }
 
@@ -1793,7 +1793,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IncorrectNumberOfTypeArgsForAction", resourceCulture);
+                return "An incorrect number of type arguments were specified for the declaration of an Action type.";
             }
         }
 
@@ -1806,7 +1806,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentCannotBeOfTypeVoid", resourceCulture);
+                return "Argument type cannot be System.Void.";
             }
         }
 
@@ -1819,14 +1819,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LabelTargetAlreadyDefined", resourceCulture);
+                return "Cannot redefine label '{0}' in an inner block.";
             }
         }
 
 
         internal static string FormatLabelTargetAlreadyDefined(object arg1)
         {
-            return string.Format(LabelTargetAlreadyDefined, arg1);
+            return string.Format("Cannot redefine label '{0}' in an inner block.", arg1);
         }
 
 
@@ -1837,14 +1837,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LabelTargetUndefined", resourceCulture);
+                return "Cannot jump to undefined label '{0}'.";
             }
         }
 
 
         internal static string FormatLabelTargetUndefined(object arg1)
         {
-            return string.Format(LabelTargetUndefined, arg1);
+            return string.Format("Cannot jump to undefined label '{0}'.", arg1);
         }
 
 
@@ -1855,7 +1855,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ControlCannotLeaveFinally", resourceCulture);
+                return "Control cannot leave a finally block.";
             }
         }
 
@@ -1868,7 +1868,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ControlCannotLeaveFilterTest", resourceCulture);
+                return "Control cannot leave a filter test.";
             }
         }
 
@@ -1881,14 +1881,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AmbiguousJump", resourceCulture);
+                return "Cannot jump to ambiguous label '{0}'.";
             }
         }
 
 
         internal static string FormatAmbiguousJump(object arg1)
         {
-            return string.Format(AmbiguousJump, arg1);
+            return string.Format("Cannot jump to ambiguous label '{0}'.", arg1);
         }
 
 
@@ -1899,7 +1899,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ControlCannotEnterTry", resourceCulture);
+                return "Control cannot enter a try block.";
             }
         }
 
@@ -1912,7 +1912,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ControlCannotEnterExpression", resourceCulture);
+                return "Control cannot enter an expression--only statements can be jumped into.";
             }
         }
 
@@ -1925,14 +1925,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NonLocalJumpWithValue", resourceCulture);
+                return "Cannot jump to non-local label '{0}' with a value. Only jumps to labels defined in outer blocks can pass values.";
             }
         }
 
 
         internal static string FormatNonLocalJumpWithValue(object arg1)
         {
-            return string.Format(NonLocalJumpWithValue, arg1);
+            return string.Format("Cannot jump to non-local label '{0}' with a value. Only jumps to labels defined in outer blocks can pass values.", arg1);
         }
 
 
@@ -1943,14 +1943,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotCompileConstant", resourceCulture);
+                return "CompileToMethod cannot compile constant '{0}' because it is a non-trivial value, such as a live object. Instead, create an expression tree that can construct this value.";
             }
         }
 
 
         internal static string FormatCannotCompileConstant(object arg1)
         {
-            return string.Format(CannotCompileConstant, arg1);
+            return string.Format("CompileToMethod cannot compile constant '{0}' because it is a non-trivial value, such as a live object. Instead, create an expression tree that can construct this value.", arg1);
         }
 
 
@@ -1961,7 +1961,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotCompileDynamic", resourceCulture);
+                return "Dynamic expressions are not supported by CompileToMethod. Instead, create an expression tree that uses System.Runtime.CompilerServices.CallSite.";
             }
         }
 
@@ -1974,14 +1974,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidLvalue", resourceCulture);
+                return "Invalid lvalue for assignment: {0}.";
             }
         }
 
 
         internal static string FormatInvalidLvalue(object arg1)
         {
-            return string.Format(InvalidLvalue, arg1);
+            return string.Format("Invalid lvalue for assignment: {0}.", arg1);
         }
 
 
@@ -1992,14 +1992,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UndefinedVariable", resourceCulture);
+                return "variable '{0}' of type '{1}' referenced from scope '{2}', but it is not defined";
             }
         }
 
 
         internal static string FormatUndefinedVariable(object arg1, object arg2, object arg3)
         {
-            return string.Format(UndefinedVariable, arg1, arg2, arg3);
+            return string.Format("variable '{0}' of type '{1}' referenced from scope '{2}', but it is not defined", arg1, arg2, arg3);
         }
 
 
@@ -2010,14 +2010,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotCloseOverByRef", resourceCulture);
+                return "Cannot close over byref parameter '{0}' referenced in lambda '{1}'";
             }
         }
 
 
         internal static string FormatCannotCloseOverByRef(object arg1, object arg2)
         {
-            return string.Format(CannotCloseOverByRef, arg1, arg2);
+            return string.Format("Cannot close over byref parameter '{0}' referenced in lambda '{1}'", arg1, arg2);
         }
 
 
@@ -2028,14 +2028,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnexpectedVarArgsCall", resourceCulture);
+                return "Unexpected VarArgs call to method '{0}'";
             }
         }
 
 
         internal static string FormatUnexpectedVarArgsCall(object arg1)
         {
-            return string.Format(UnexpectedVarArgsCall, arg1);
+            return string.Format("Unexpected VarArgs call to method '{0}'", arg1);
         }
 
 
@@ -2046,7 +2046,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("RethrowRequiresCatch", resourceCulture);
+                return "Rethrow statement is valid only inside a Catch block.";
             }
         }
 
@@ -2059,7 +2059,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TryNotAllowedInFilter", resourceCulture);
+                return "Try expression is not allowed inside a filter body.";
             }
         }
 
@@ -2072,14 +2072,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MustRewriteToSameNode", resourceCulture);
+                return "When called from '{0}', rewriting a node of type '{1}' must return a non-null value of the same type. Alternatively, override '{2}' and change it to not visit children of this type.";
             }
         }
 
 
         internal static string FormatMustRewriteToSameNode(object arg1, object arg2, object arg3)
         {
-            return string.Format(MustRewriteToSameNode, arg1, arg2, arg3);
+            return string.Format("When called from '{0}', rewriting a node of type '{1}' must return a non-null value of the same type. Alternatively, override '{2}' and change it to not visit children of this type.", arg1, arg2, arg3);
         }
 
 
@@ -2090,14 +2090,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MustRewriteChildToSameType", resourceCulture);
+                return "Rewriting child expression from type '{0}' to type '{1}' is not allowed, because it would change the meaning of the operation. If this is intentional, override '{2}' and change it to allow this rewrite.";
             }
         }
 
 
         internal static string FormatMustRewriteChildToSameType(object arg1, object arg2, object arg3)
         {
-            return string.Format(MustRewriteChildToSameType, arg1, arg2, arg3);
+            return string.Format("Rewriting child expression from type '{0}' to type '{1}' is not allowed, because it would change the meaning of the operation. If this is intentional, override '{2}' and change it to allow this rewrite.", arg1, arg2, arg3);
         }
 
 
@@ -2108,14 +2108,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MustRewriteWithoutMethod", resourceCulture);
+                return "Rewritten expression calls operator method '{0}', but the original node had no operator method. If this is intentional, override '{1}' and change it to allow this rewrite.";
             }
         }
 
 
         internal static string FormatMustRewriteWithoutMethod(object arg1, object arg2)
         {
-            return string.Format(MustRewriteWithoutMethod, arg1, arg2);
+            return string.Format("Rewritten expression calls operator method '{0}', but the original node had no operator method. If this is intentional, override '{1}' and change it to allow this rewrite.", arg1, arg2);
         }
 
 
@@ -2126,14 +2126,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidNullValue", resourceCulture);
+                return "The value null is not of type '{0}' and cannot be used in this collection.";
             }
         }
 
 
         internal static string FormatInvalidNullValue(object arg1)
         {
-            return string.Format(InvalidNullValue, arg1);
+            return string.Format("The value null is not of type '{0}' and cannot be used in this collection.", arg1);
         }
 
 
@@ -2144,14 +2144,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidObjectType", resourceCulture);
+                return "The value '{0}' is not of type '{1}' and cannot be used in this collection.";
             }
         }
 
 
         internal static string FormatInvalidObjectType(object arg1, object arg2)
         {
-            return string.Format(InvalidObjectType, arg1, arg2);
+            return string.Format("The value '{0}' is not of type '{1}' and cannot be used in this collection.", arg1, arg2);
         }
 
 
@@ -2162,14 +2162,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TryNotSupportedForMethodsWithRefArgs", resourceCulture);
+                return "TryExpression is not supported as an argument to method '{0}' because it has an argument with by-ref type. Construct the tree so the TryExpression is not nested inside of this expression.";
             }
         }
 
 
         internal static string FormatTryNotSupportedForMethodsWithRefArgs(object arg1)
         {
-            return string.Format(TryNotSupportedForMethodsWithRefArgs, arg1);
+            return string.Format("TryExpression is not supported as an argument to method '{0}' because it has an argument with by-ref type. Construct the tree so the TryExpression is not nested inside of this expression.", arg1);
         }
 
 
@@ -2180,14 +2180,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TryNotSupportedForValueTypeInstances", resourceCulture);
+                return "TryExpression is not supported as a child expression when accessing a member on type '{0}' because it is a value type. Construct the tree so the TryExpression is not nested inside of this expression.";
             }
         }
 
 
         internal static string FormatTryNotSupportedForValueTypeInstances(object arg1)
         {
-            return string.Format(TryNotSupportedForValueTypeInstances, arg1);
+            return string.Format("TryExpression is not supported as a child expression when accessing a member on type '{0}' because it is a value type. Construct the tree so the TryExpression is not nested inside of this expression.", arg1);
         }
 
 
@@ -2198,7 +2198,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("EnumerationIsDone", resourceCulture);
+                return "Enumeration has either not started or has already finished.";
             }
         }
 
@@ -2211,14 +2211,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TestValueTypeDoesNotMatchComparisonMethodParameter", resourceCulture);
+                return "Test value of type '{0}' cannot be used for the comparison method parameter of type '{1}'";
             }
         }
 
 
         internal static string FormatTestValueTypeDoesNotMatchComparisonMethodParameter(object arg1, object arg2)
         {
-            return string.Format(TestValueTypeDoesNotMatchComparisonMethodParameter, arg1, arg2);
+            return string.Format("Test value of type '{0}' cannot be used for the comparison method parameter of type '{1}'", arg1, arg2);
         }
 
 
@@ -2229,14 +2229,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SwitchValueTypeDoesNotMatchComparisonMethodParameter", resourceCulture);
+                return "Switch value of type '{0}' cannot be used for the comparison method parameter of type '{1}'";
             }
         }
 
 
         internal static string FormatSwitchValueTypeDoesNotMatchComparisonMethodParameter(object arg1, object arg2)
         {
-            return string.Format(SwitchValueTypeDoesNotMatchComparisonMethodParameter, arg1, arg2);
+            return string.Format("Switch value of type '{0}' cannot be used for the comparison method parameter of type '{1}'", arg1, arg2);
         }
 
 
@@ -2247,7 +2247,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PdbGeneratorNeedsExpressionCompiler", resourceCulture);
+                return "DebugInfoGenerator created by CreatePdbGenerator can only be used with LambdaExpression.CompileToMethod.";
             }
         }
 
@@ -2260,7 +2260,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidArgumentValue_ParamName", resourceCulture);
+                return "Invalid argument value";
             }
         }
 
@@ -2273,7 +2273,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NonEmptyCollectionRequired", resourceCulture);
+                return "Non-empty collection required";
             }
         }
 
@@ -2286,7 +2286,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CollectionModifiedWhileEnumerating", resourceCulture);
+                return "Collection was modified; enumeration operation may not execute.";
             }
         }
 
@@ -2299,7 +2299,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpressionMustBeReadable", resourceCulture);
+                return "Expression must be readable";
             }
         }
 
@@ -2312,14 +2312,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpressionTypeDoesNotMatchMethodParameter", resourceCulture);
+                return "Expression of type '{0}' cannot be used for parameter of type '{1}' of method '{2}'";
             }
         }
 
 
         internal static string FormatExpressionTypeDoesNotMatchMethodParameter(object arg1, object arg2, object arg3)
         {
-            return string.Format(ExpressionTypeDoesNotMatchMethodParameter, arg1, arg2, arg3);
+            return string.Format("Expression of type '{0}' cannot be used for parameter of type '{1}' of method '{2}'", arg1, arg2, arg3);
         }
 
 
@@ -2330,14 +2330,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpressionTypeDoesNotMatchParameter", resourceCulture);
+                return "Expression of type '{0}' cannot be used for parameter of type '{1}'";
             }
         }
 
 
         internal static string FormatExpressionTypeDoesNotMatchParameter(object arg1, object arg2)
         {
-            return string.Format(ExpressionTypeDoesNotMatchParameter, arg1, arg2);
+            return string.Format("Expression of type '{0}' cannot be used for parameter of type '{1}'", arg1, arg2);
         }
 
 
@@ -2348,14 +2348,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpressionTypeDoesNotMatchConstructorParameter", resourceCulture);
+                return "Expression of type '{0}' cannot be used for constructor parameter of type '{1}'";
             }
         }
 
 
         internal static string FormatExpressionTypeDoesNotMatchConstructorParameter(object arg1, object arg2)
         {
-            return string.Format(ExpressionTypeDoesNotMatchConstructorParameter, arg1, arg2);
+            return string.Format("Expression of type '{0}' cannot be used for constructor parameter of type '{1}'", arg1, arg2);
         }
 
 
@@ -2366,14 +2366,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IncorrectNumberOfMethodCallArguments", resourceCulture);
+                return "Incorrect number of arguments supplied for call to method '{0}'";
             }
         }
 
 
         internal static string FormatIncorrectNumberOfMethodCallArguments(object arg1)
         {
-            return string.Format(IncorrectNumberOfMethodCallArguments, arg1);
+            return string.Format("Incorrect number of arguments supplied for call to method '{0}'", arg1);
         }
 
 
@@ -2384,7 +2384,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IncorrectNumberOfLambdaArguments", resourceCulture);
+                return "Incorrect number of arguments supplied for lambda invocation";
             }
         }
 
@@ -2397,7 +2397,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IncorrectNumberOfConstructorArguments", resourceCulture);
+                return "Incorrect number of arguments for constructor";
             }
         }
 
@@ -2410,7 +2410,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NonStaticConstructorRequired", resourceCulture);
+                return "The constructor should not be static";
             }
         }
 
@@ -2423,7 +2423,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NonAbstractConstructorRequired", resourceCulture);
+                return "Can't compile a NewExpression with a constructor declared on an abstract class";
             }
         }
 
@@ -2436,7 +2436,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FirstArgumentMustBeCallSite", resourceCulture);
+                return "First argument of delegate must be CallSite";
             }
         }
 
@@ -2449,7 +2449,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NoOrInvalidRuleProduced", resourceCulture);
+                return "No or Invalid rule produced";
             }
         }
 
@@ -2462,7 +2462,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TypeMustBeDerivedFromSystemDelegate", resourceCulture);
+                return "Type must be derived from System.Delegate";
             }
         }
 
@@ -2475,14 +2475,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TypeParameterIsNotDelegate", resourceCulture);
+                return "Type parameter is {0}. Expected a delegate.";
             }
         }
 
 
         internal static string FormatTypeParameterIsNotDelegate(object arg1)
         {
-            return string.Format(TypeParameterIsNotDelegate, arg1);
+            return string.Format("Type parameter is {0}. Expected a delegate.", arg1);
         }
 
 
@@ -2493,7 +2493,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentTypeCannotBeVoid", resourceCulture);
+                return "Argument type cannot be void";
             }
         }
 
@@ -2506,7 +2506,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgCntMustBeGreaterThanNameCnt", resourceCulture);
+                return "Argument count must be greater than number of named arguments.";
             }
         }
 
@@ -2519,14 +2519,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BinderNotCompatibleWithCallSite", resourceCulture);
+                return "The result type '{0}' of the binder '{1}' is not compatible with the result type '{2}' expected by the call site.";
             }
         }
 
 
         internal static string FormatBinderNotCompatibleWithCallSite(object arg1, object arg2, object arg3)
         {
-            return string.Format(BinderNotCompatibleWithCallSite, arg1, arg2, arg3);
+            return string.Format("The result type '{0}' of the binder '{1}' is not compatible with the result type '{2}' expected by the call site.", arg1, arg2, arg3);
         }
 
 
@@ -2537,7 +2537,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BindingCannotBeNull", resourceCulture);
+                return "Bind cannot return null.";
             }
         }
 
@@ -2550,14 +2550,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DynamicBinderResultNotAssignable", resourceCulture);
+                return "The result type '{0}' of the dynamic binding produced by binder '{1}' is not compatible with the result type '{2}' expected by the call site.";
             }
         }
 
 
         internal static string FormatDynamicBinderResultNotAssignable(object arg1, object arg2, object arg3)
         {
-            return string.Format(DynamicBinderResultNotAssignable, arg1, arg2, arg3);
+            return string.Format("The result type '{0}' of the dynamic binding produced by binder '{1}' is not compatible with the result type '{2}' expected by the call site.", arg1, arg2, arg3);
         }
 
 
@@ -2568,14 +2568,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DynamicBindingNeedsRestrictions", resourceCulture);
+                return "The result of the dynamic binding produced by the object with type '{0}' for the binder '{1}' needs at least one restriction.";
             }
         }
 
 
         internal static string FormatDynamicBindingNeedsRestrictions(object arg1, object arg2)
         {
-            return string.Format(DynamicBindingNeedsRestrictions, arg1, arg2);
+            return string.Format("The result of the dynamic binding produced by the object with type '{0}' for the binder '{1}' needs at least one restriction.", arg1, arg2);
         }
 
 
@@ -2586,14 +2586,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DynamicObjectResultNotAssignable", resourceCulture);
+                return "The result type '{0}' of the dynamic binding produced by the object with type '{1}' for the binder '{2}' is not compatible with the result type '{3}' expected by the call site.";
             }
         }
 
 
         internal static string FormatDynamicObjectResultNotAssignable(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(DynamicObjectResultNotAssignable, arg1, arg2, arg3, arg4);
+            return string.Format("The result type '{0}' of the dynamic binding produced by the object with type '{1}' for the binder '{2}' is not compatible with the result type '{3}' expected by the call site.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -2604,14 +2604,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidMetaObjectCreated", resourceCulture);
+                return "An IDynamicMetaObjectProvider {0} created an invalid DynamicMetaObject instance.";
             }
         }
 
 
         internal static string FormatInvalidMetaObjectCreated(object arg1)
         {
-            return string.Format(InvalidMetaObjectCreated, arg1);
+            return string.Format("An IDynamicMetaObjectProvider {0} created an invalid DynamicMetaObject instance.", arg1);
         }
 
 
@@ -2622,14 +2622,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AmbiguousMatchInExpandoObject", resourceCulture);
+                return "More than one key matching '{0}' was found in the ExpandoObject.";
             }
         }
 
 
         internal static string FormatAmbiguousMatchInExpandoObject(object arg1)
         {
-            return string.Format(AmbiguousMatchInExpandoObject, arg1);
+            return string.Format("More than one key matching '{0}' was found in the ExpandoObject.", arg1);
         }
 
 
@@ -2640,7 +2640,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CollectionReadOnly", resourceCulture);
+                return "Collection is read-only.";
             }
         }
 
@@ -2653,14 +2653,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("KeyDoesNotExistInExpando", resourceCulture);
+                return "The specified key '{0}' does not exist in the ExpandoObject.";
             }
         }
 
 
         internal static string FormatKeyDoesNotExistInExpando(object arg1)
         {
-            return string.Format(KeyDoesNotExistInExpando, arg1);
+            return string.Format("The specified key '{0}' does not exist in the ExpandoObject.", arg1);
         }
 
 
@@ -2671,14 +2671,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SameKeyExistsInExpando", resourceCulture);
+                return "An element with the same key '{0}' already exists in the ExpandoObject.";
             }
         }
 
 
         internal static string FormatSameKeyExistsInExpando(object arg1)
         {
-            return string.Format(SameKeyExistsInExpando, arg1);
+            return string.Format("An element with the same key '{0}' already exists in the ExpandoObject.", arg1);
         }
 
 
@@ -2689,14 +2689,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_KeyNotFoundWithKey", resourceCulture);
+                return "The given key '{0}' was not present in the dictionary.";
             }
         }
 
 
         internal static string FormatArg_KeyNotFoundWithKey(object arg1)
         {
-            return string.Format(Arg_KeyNotFoundWithKey, arg1);
+            return string.Format("The given key '{0}' was not present in the dictionary.", arg1);
         }
 
 
@@ -2707,14 +2707,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LiftingInExpressionRequiresDynamicCode", resourceCulture);
+                return "Nullable lifting on non-primitive type '{0}' is only supported in expression trees when dynamic code generation is available.";
             }
         }
 
 
         internal static string FormatLiftingInExpressionRequiresDynamicCode(object arg1)
         {
-            return string.Format(LiftingInExpressionRequiresDynamicCode, arg1);
+            return string.Format("Nullable lifting on non-primitive type '{0}' is only supported in expression trees when dynamic code generation is available.", arg1);
         }
     }
 }

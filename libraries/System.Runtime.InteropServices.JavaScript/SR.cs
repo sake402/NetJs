@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Runtime.InteropServices.JavaScript", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,14 +70,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentCannotBeNull", resourceCulture);
+                return "Invalid argument: {0} can not be null.";
             }
         }
 
 
         internal static string FormatArgumentCannotBeNull(object arg1)
         {
-            return string.Format(ArgumentCannotBeNull, arg1);
+            return string.Format("Invalid argument: {0} can not be null.", arg1);
         }
 
 
@@ -88,14 +88,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentCannotBeNullWithLength", resourceCulture);
+                return "Invalid argument: {0} can not be null and must have a length.";
             }
         }
 
 
         internal static string FormatArgumentCannotBeNullWithLength(object arg1)
         {
-            return string.Format(ArgumentCannotBeNullWithLength, arg1);
+            return string.Format("Invalid argument: {0} can not be null and must have a length.", arg1);
         }
 
 
@@ -106,7 +106,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SystemRuntimeInteropServicesJavaScript_PlatformNotSupported", resourceCulture);
+                return "System.Runtime.InteropServices.JavaScript is not supported on this platform.";
             }
         }
 
@@ -119,7 +119,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("TypedArrayNotCorrectType", resourceCulture);
+                return "TypedArray is not of correct type.";
             }
         }
 
@@ -132,14 +132,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnableCastNullToType", resourceCulture);
+                return "Unable to cast null to type {0}.";
             }
         }
 
 
         internal static string FormatUnableCastNullToType(object arg1)
         {
-            return string.Format(UnableCastNullToType, arg1);
+            return string.Format("Unable to cast null to type {0}.", arg1);
         }
 
 
@@ -150,14 +150,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnableCastObjectToType", resourceCulture);
+                return "Unable to cast object of type {0} to type {1}.";
             }
         }
 
 
         internal static string FormatUnableCastObjectToType(object arg1, object arg2)
         {
-            return string.Format(UnableCastObjectToType, arg1, arg2);
+            return string.Format("Unable to cast object of type {0} to type {1}.", arg1, arg2);
         }
 
 
@@ -168,7 +168,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MissingManagedEntrypointHandle", resourceCulture);
+                return "Managed entrypoint handle is not set.";
             }
         }
 
@@ -181,7 +181,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CannotResolveManagedEntrypointHandle", resourceCulture);
+                return "Cannot resolve managed entrypoint handle.";
             }
         }
 
@@ -194,14 +194,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ReturnTypeNotSupportedForMain", resourceCulture);
+                return "Return type '{0}' from main method in not supported.";
             }
         }
 
 
         internal static string FormatReturnTypeNotSupportedForMain(object arg1)
         {
-            return string.Format(ReturnTypeNotSupportedForMain, arg1);
+            return string.Format("Return type '{0}' from main method in not supported.", arg1);
         }
 
 
@@ -212,7 +212,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NullToManagedCallback", resourceCulture);
+                return "ToManagedCallback is null.";
             }
         }
 
@@ -225,7 +225,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NullPromiseHolder", resourceCulture);
+                return "PromiseHolder is null.";
             }
         }
 
@@ -238,7 +238,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("EmptyProfileData", resourceCulture);
+                return "Empty profile data.";
             }
         }
 
@@ -251,14 +251,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ErrorLegacySettingProperty", resourceCulture);
+                return "Error setting {0} on (js-obj js '{1}'): {2}.";
             }
         }
 
 
         internal static string FormatErrorLegacySettingProperty(object arg1, object arg2, object arg3)
         {
-            return string.Format(ErrorLegacySettingProperty, arg1, arg2, arg3);
+            return string.Format("Error setting {0} on (js-obj js '{1}'): {2}.", arg1, arg2, arg3);
         }
 
 
@@ -269,14 +269,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ErrorResolvingFromGlobalThis", resourceCulture);
+                return "Error resolving property {0} from globalThis.";
             }
         }
 
 
         internal static string FormatErrorResolvingFromGlobalThis(object arg1)
         {
-            return string.Format(ErrorResolvingFromGlobalThis, arg1);
+            return string.Format("Error resolving property {0} from globalThis.", arg1);
         }
 
 
@@ -287,7 +287,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FailedToMarshalException", resourceCulture);
+                return "Failed to marshal exception.";
             }
         }
 
@@ -300,7 +300,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FailedToMarshalPromiseHolder", resourceCulture);
+                return "Failed to marshal Promise callback.";
             }
         }
 
@@ -313,14 +313,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidInFlightCounter", resourceCulture);
+                return "Invalid InFlightCounter for JSObject {0}, expected: {1}, actual: {2}.";
             }
         }
 
 
         internal static string FormatInvalidInFlightCounter(object arg1, object arg2, object arg3)
         {
-            return string.Format(InvalidInFlightCounter, arg1, arg2, arg3);
+            return string.Format("Invalid InFlightCounter for JSObject {0}, expected: {1}, actual: {2}.", arg1, arg2, arg3);
         }
 
 
@@ -331,14 +331,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ToJSNotImplemented", resourceCulture);
+                return "ToJS for {0} is not implemented.";
             }
         }
 
 
         internal static string FormatToJSNotImplemented(object arg1)
         {
-            return string.Format(ToJSNotImplemented, arg1);
+            return string.Format("ToJS for {0} is not implemented.", arg1);
         }
 
 
@@ -349,14 +349,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ToManagedNotImplemented", resourceCulture);
+                return "ToManaged for {0} is not implemented.";
             }
         }
 
 
         internal static string FormatToManagedNotImplemented(object arg1)
         {
-            return string.Format(ToManagedNotImplemented, arg1);
+            return string.Format("ToManaged for {0} is not implemented.", arg1);
         }
 
 
@@ -367,7 +367,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnableToResolveHandleAsException", resourceCulture);
+                return "Unable to resolve the handle as an Exception.";
             }
         }
 
@@ -380,14 +380,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnsupportedArrayType", resourceCulture);
+                return "Unsupported array type {0}. Only single-dimensional arrays with a zero lower bound can be marshaled to JS.";
             }
         }
 
 
         internal static string FormatUnsupportedArrayType(object arg1)
         {
-            return string.Format(UnsupportedArrayType, arg1);
+            return string.Format("Unsupported array type {0}. Only single-dimensional arrays with a zero lower bound can be marshaled to JS.", arg1);
         }
 
 
@@ -398,14 +398,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnsupportedElementType", resourceCulture);
+                return "Unsupported element type {0}.";
             }
         }
 
 
         internal static string FormatUnsupportedElementType(object arg1)
         {
-            return string.Format(UnsupportedElementType, arg1);
+            return string.Format("Unsupported element type {0}.", arg1);
         }
 
 
@@ -416,14 +416,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnsupportedEnumType", resourceCulture);
+                return "Unsupported enum type {0}.";
             }
         }
 
 
         internal static string FormatUnsupportedEnumType(object arg1)
         {
-            return string.Format(UnsupportedEnumType, arg1);
+            return string.Format("Unsupported enum type {0}.", arg1);
         }
 
 
@@ -434,14 +434,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnsupportedLegacyMarshlerType", resourceCulture);
+                return "Unsupported marshal type {0}.";
             }
         }
 
 
         internal static string FormatUnsupportedLegacyMarshlerType(object arg1)
         {
-            return string.Format(UnsupportedLegacyMarshlerType, arg1);
+            return string.Format("Unsupported marshal type {0}.", arg1);
         }
 
 
@@ -452,14 +452,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnsupportedNullableType", resourceCulture);
+                return "Unsupported nullable type {0}.";
             }
         }
 
 
         internal static string FormatUnsupportedNullableType(object arg1)
         {
-            return string.Format(UnsupportedNullableType, arg1);
+            return string.Format("Unsupported nullable type {0}.", arg1);
         }
 
 
@@ -470,14 +470,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnsupportedTaskResultType", resourceCulture);
+                return "Unsupported task result type {0}.";
             }
         }
 
 
         internal static string FormatUnsupportedTaskResultType(object arg1)
         {
-            return string.Format(UnsupportedTaskResultType, arg1);
+            return string.Format("Unsupported task result type {0}.", arg1);
         }
 
 
@@ -488,7 +488,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UriConstructorMissing", resourceCulture);
+                return "Constructor on type 'System.Uri' not found. Please consider to protect it's constructor from trimming.";
             }
         }
 
@@ -501,7 +501,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UriTypeMissing", resourceCulture);
+                return "The type System.Uri could not be found. Please consider to protect the class and it's constructor from trimming.";
             }
         }
 
@@ -514,14 +514,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ValueOutOf52BitRange", resourceCulture);
+                return "Overflow: value {0} is out of {1} {2} range.";
             }
         }
 
 
         internal static string FormatValueOutOf52BitRange(object arg1, object arg2, object arg3)
         {
-            return string.Format(ValueOutOf52BitRange, arg1, arg2, arg3);
+            return string.Format("Overflow: value {0} is out of {1} {2} range.", arg1, arg2, arg3);
         }
     }
 }

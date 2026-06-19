@@ -309,6 +309,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(CoreLibProject)" />
+    <ProjectReference Include="$(NewLibrariesProjectRoot)System.Collections.Concurrent\NetJs.System.Collections.Concurrent.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Collections.NonGeneric\NetJs.System.Collections.NonGeneric.csproj" SkipUseReferenceAssembly="true" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Collections\NetJs.System.Collections.csproj" SkipUseReferenceAssembly="true" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.ComponentModel.Primitives\NetJs.System.ComponentModel.Primitives.csproj" />

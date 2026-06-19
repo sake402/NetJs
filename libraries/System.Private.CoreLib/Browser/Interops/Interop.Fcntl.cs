@@ -10,6 +10,7 @@ internal static partial class Interop
     {
         internal static partial class Fcntl
         {
+#if MEMORY_MAPPED_FILES
             internal static partial int DangerousSetIsNonBlocking(IntPtr fd, int isNonBlocking)
             {
                 return -1;
@@ -40,6 +41,7 @@ internal static partial class Interop
             {
                 return -1;
             }
+#endif
         }
     }
 }

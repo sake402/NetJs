@@ -25,7 +25,7 @@
     internal static partial class Resources
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Microsoft.AspNetCore.Components", typeof(Resources).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,14 +70,14 @@
         {
             get
             {
-                return ResourceManager.GetString("RangeConstraint_MinShouldBeLessThanOrEqualToMax", resourceCulture);
+                return "The value for argument '{0}' should be less than or equal to the value for the argument '{1}'.";
             }
         }
 
 
         internal static string FormatRangeConstraint_MinShouldBeLessThanOrEqualToMax(object arg1, object arg2)
         {
-            return string.Format(RangeConstraint_MinShouldBeLessThanOrEqualToMax, arg1, arg2);
+            return string.Format("The value for argument '{0}' should be less than or equal to the value for the argument '{1}'.", arg1, arg2);
         }
 
 
@@ -88,14 +88,14 @@
         {
             get
             {
-                return ResourceManager.GetString("DefaultInlineConstraintResolver_AmbiguousCtors", resourceCulture);
+                return "The constructor to use for activating the constraint type '{0}' is ambiguous. Multiple constructors were found with the following number of parameters: {1}.";
             }
         }
 
 
         internal static string FormatDefaultInlineConstraintResolver_AmbiguousCtors(object arg1, object arg2)
         {
-            return string.Format(DefaultInlineConstraintResolver_AmbiguousCtors, arg1, arg2);
+            return string.Format("The constructor to use for activating the constraint type '{0}' is ambiguous. Multiple constructors were found with the following number of parameters: {1}.", arg1, arg2);
         }
 
 
@@ -106,14 +106,14 @@
         {
             get
             {
-                return ResourceManager.GetString("DefaultInlineConstraintResolver_CouldNotFindCtor", resourceCulture);
+                return "Could not find a constructor for constraint type '{0}' with the following number of parameters: {1}.";
             }
         }
 
 
         internal static string FormatDefaultInlineConstraintResolver_CouldNotFindCtor(object arg1, object arg2)
         {
-            return string.Format(DefaultInlineConstraintResolver_CouldNotFindCtor, arg1, arg2);
+            return string.Format("Could not find a constructor for constraint type '{0}' with the following number of parameters: {1}.", arg1, arg2);
         }
 
 
@@ -124,14 +124,14 @@
         {
             get
             {
-                return ResourceManager.GetString("DefaultInlineConstraintResolver_TypeNotConstraint", resourceCulture);
+                return "The constraint type '{0}' which is mapped to constraint key '{1}' must implement the '{2}' interface.";
             }
         }
 
 
         internal static string FormatDefaultInlineConstraintResolver_TypeNotConstraint(object arg1, object arg2, object arg3)
         {
-            return string.Format(DefaultInlineConstraintResolver_TypeNotConstraint, arg1, arg2, arg3);
+            return string.Format("The constraint type '{0}' which is mapped to constraint key '{1}' must implement the '{2}' interface.", arg1, arg2, arg3);
         }
 
 
@@ -142,14 +142,14 @@
         {
             get
             {
-                return ResourceManager.GetString("RouteConstraintBuilder_ValidationMustBeStringOrCustomConstraint", resourceCulture);
+                return "The constraint entry '{0}' - '{1}' on the route '{2}' must have a string value or be of a type which implements '{3}'.";
             }
         }
 
 
         internal static string FormatRouteConstraintBuilder_ValidationMustBeStringOrCustomConstraint(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(RouteConstraintBuilder_ValidationMustBeStringOrCustomConstraint, arg1, arg2, arg3, arg4);
+            return string.Format("The constraint entry '{0}' - '{1}' on the route '{2}' must have a string value or be of a type which implements '{3}'.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -160,14 +160,14 @@
         {
             get
             {
-                return ResourceManager.GetString("RouteConstraintBuilder_CouldNotResolveConstraint", resourceCulture);
+                return "The constraint entry '{0}' - '{1}' on the route '{2}' could not be resolved by the constraint resolver of type '{3}'.";
             }
         }
 
 
         internal static string FormatRouteConstraintBuilder_CouldNotResolveConstraint(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(RouteConstraintBuilder_CouldNotResolveConstraint, arg1, arg2, arg3, arg4);
+            return string.Format("The constraint entry '{0}' - '{1}' on the route '{2}' could not be resolved by the constraint resolver of type '{3}'.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -178,7 +178,7 @@
         {
             get
             {
-                return ResourceManager.GetString("RoutePatternBuilder_CollectionCannotBeEmpty", resourceCulture);
+                return "The collection cannot be empty.";
             }
         }
 
@@ -191,14 +191,14 @@
         {
             get
             {
-                return ResourceManager.GetString("ConstraintMustBeStringOrConstraint", resourceCulture);
+                return "The constraint entry '{0}' - '{1}' must have a string value or be of a type which implements '{2}'.";
             }
         }
 
 
         internal static string FormatConstraintMustBeStringOrConstraint(object arg1, object arg2, object arg3)
         {
-            return string.Format(ConstraintMustBeStringOrConstraint, arg1, arg2, arg3);
+            return string.Format("The constraint entry '{0}' - '{1}' must have a string value or be of a type which implements '{2}'.", arg1, arg2, arg3);
         }
 
 
@@ -209,14 +209,14 @@
         {
             get
             {
-                return ResourceManager.GetString("RoutePattern_InvalidConstraintReference", resourceCulture);
+                return "Invalid constraint '{0}'. A constraint must be of type 'string' or '{1}'.";
             }
         }
 
 
         internal static string FormatRoutePattern_InvalidConstraintReference(object arg1, object arg2)
         {
-            return string.Format(RoutePattern_InvalidConstraintReference, arg1, arg2);
+            return string.Format("Invalid constraint '{0}'. A constraint must be of type 'string' or '{1}'.", arg1, arg2);
         }
 
 
@@ -227,14 +227,14 @@
         {
             get
             {
-                return ResourceManager.GetString("RoutePattern_InvalidParameterConstraintReference", resourceCulture);
+                return "Invalid constraint '{0}' for parameter '{1}'. A constraint must be of type 'string', '{2}', or '{3}'.";
             }
         }
 
 
         internal static string FormatRoutePattern_InvalidParameterConstraintReference(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(RoutePattern_InvalidParameterConstraintReference, arg1, arg2, arg3, arg4);
+            return string.Format("Invalid constraint '{0}' for parameter '{1}'. A constraint must be of type 'string', '{2}', or '{3}'.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -245,14 +245,14 @@
         {
             get
             {
-                return ResourceManager.GetString("RoutePattern_ConstraintReferenceNotFound", resourceCulture);
+                return "The constraint reference '{0}' could not be resolved to a type. Register the constraint type with '{1}.{2}'.";
             }
         }
 
 
         internal static string FormatRoutePattern_ConstraintReferenceNotFound(object arg1, object arg2, object arg3)
         {
-            return string.Format(RoutePattern_ConstraintReferenceNotFound, arg1, arg2, arg3);
+            return string.Format("The constraint reference '{0}' could not be resolved to a type. Register the constraint type with '{1}.{2}'.", arg1, arg2, arg3);
         }
 
 
@@ -263,14 +263,14 @@
         {
             get
             {
-                return ResourceManager.GetString("RoutePattern_InvalidStringConstraintReference", resourceCulture);
+                return "Invalid constraint type '{0}' registered as '{1}'. A constraint  type must either implement '{2}', or inherit from '{3}'.";
             }
         }
 
 
         internal static string FormatRoutePattern_InvalidStringConstraintReference(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(RoutePattern_InvalidStringConstraintReference, arg1, arg2, arg3, arg4);
+            return string.Format("Invalid constraint type '{0}' registered as '{1}'. A constraint  type must either implement '{2}', or inherit from '{3}'.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -281,7 +281,7 @@
         {
             get
             {
-                return ResourceManager.GetString("RegexRouteContraint_NotConfigured", resourceCulture);
+                return "A route parameter uses the regex constraint, which isn't registered. To enable it add the property 'BlazorRoutingEnableRegexConstraint' to your project file inside a `PropertyGroup`.";
             }
         }
 
@@ -294,14 +294,14 @@
         {
             get
             {
-                return ResourceManager.GetString("ArgumentMustBeGreaterThanOrEqualTo", resourceCulture);
+                return "Value must be greater than or equal to {0}.";
             }
         }
 
 
         internal static string FormatArgumentMustBeGreaterThanOrEqualTo(object arg1)
         {
-            return string.Format(ArgumentMustBeGreaterThanOrEqualTo, arg1);
+            return string.Format("Value must be greater than or equal to {0}.", arg1);
         }
 
 
@@ -312,7 +312,7 @@
         {
             get
             {
-                return ResourceManager.GetString("TemplateRoute_CannotHaveCatchAllInMultiSegment", resourceCulture);
+                return "A path segment that contains more than one section, such as a literal section or a parameter, cannot contain a catch-all parameter.";
             }
         }
 
@@ -325,7 +325,7 @@
         {
             get
             {
-                return ResourceManager.GetString("TemplateRoute_CannotHaveConsecutiveParameters", resourceCulture);
+                return "A path segment cannot contain two consecutive parameters. They must be separated by a '/' or by a literal string.";
             }
         }
 
@@ -338,7 +338,7 @@
         {
             get
             {
-                return ResourceManager.GetString("TemplateRoute_CannotHaveConsecutiveSeparators", resourceCulture);
+                return "The route template separator character '/' cannot appear consecutively. It must be separated by either a parameter or a literal value.";
             }
         }
 
@@ -351,14 +351,14 @@
         {
             get
             {
-                return ResourceManager.GetString("TemplateRoute_CannotHaveDefaultValueSpecifiedInlineAndExplicitly", resourceCulture);
+                return "The route parameter '{0}' has both an inline default value and an explicit default value specified. A route parameter cannot contain an inline default value when a default value is specified explicitly. Consider removing one of them.";
             }
         }
 
 
         internal static string FormatTemplateRoute_CannotHaveDefaultValueSpecifiedInlineAndExplicitly(object arg1)
         {
-            return string.Format(TemplateRoute_CannotHaveDefaultValueSpecifiedInlineAndExplicitly, arg1);
+            return string.Format("The route parameter '{0}' has both an inline default value and an explicit default value specified. A route parameter cannot contain an inline default value when a default value is specified explicitly. Consider removing one of them.", arg1);
         }
 
 
@@ -369,7 +369,7 @@
         {
             get
             {
-                return ResourceManager.GetString("TemplateRoute_CatchAllCannotBeOptional", resourceCulture);
+                return "A catch-all parameter cannot be marked optional.";
             }
         }
 
@@ -382,7 +382,7 @@
         {
             get
             {
-                return ResourceManager.GetString("TemplateRoute_CatchAllMustBeLast", resourceCulture);
+                return "A catch-all parameter can only appear as the last segment of the route template.";
             }
         }
 
@@ -395,14 +395,14 @@
         {
             get
             {
-                return ResourceManager.GetString("TemplateRoute_Exception", resourceCulture);
+                return "An error occurred while creating the route with name '{0}' and template '{1}'.";
             }
         }
 
 
         internal static string FormatTemplateRoute_Exception(object arg1, object arg2)
         {
-            return string.Format(TemplateRoute_Exception, arg1, arg2);
+            return string.Format("An error occurred while creating the route with name '{0}' and template '{1}'.", arg1, arg2);
         }
 
 
@@ -413,14 +413,14 @@
         {
             get
             {
-                return ResourceManager.GetString("TemplateRoute_InvalidLiteral", resourceCulture);
+                return "The literal section '{0}' is invalid. Literal sections cannot contain the '?' character.";
             }
         }
 
 
         internal static string FormatTemplateRoute_InvalidLiteral(object arg1)
         {
-            return string.Format(TemplateRoute_InvalidLiteral, arg1);
+            return string.Format("The literal section '{0}' is invalid. Literal sections cannot contain the '?' character.", arg1);
         }
 
 
@@ -431,14 +431,14 @@
         {
             get
             {
-                return ResourceManager.GetString("TemplateRoute_InvalidParameterName", resourceCulture);
+                return "The route parameter name '{0}' is invalid. Route parameter names must be non-empty and cannot contain these characters: '{{', '}}', '/'. The '?' character marks a parameter as optional, and can occur only at the end of the parameter. The '*' character marks a parameter as catch-all, and can occur only at the start of the parameter.";
             }
         }
 
 
         internal static string FormatTemplateRoute_InvalidParameterName(object arg1)
         {
-            return string.Format(TemplateRoute_InvalidParameterName, arg1);
+            return string.Format("The route parameter name '{0}' is invalid. Route parameter names must be non-empty and cannot contain these characters: '{{', '}}', '/'. The '?' character marks a parameter as optional, and can occur only at the end of the parameter. The '*' character marks a parameter as catch-all, and can occur only at the start of the parameter.", arg1);
         }
 
 
@@ -449,7 +449,7 @@
         {
             get
             {
-                return ResourceManager.GetString("TemplateRoute_InvalidRouteTemplate", resourceCulture);
+                return "The route template cannot start with a '~' character unless followed by a '/'.";
             }
         }
 
@@ -462,14 +462,14 @@
         {
             get
             {
-                return ResourceManager.GetString("TemplateRoute_MismatchedParameter", resourceCulture);
+                return "There is an incomplete parameter in the route template. Check that each '{' character has a matching '}' character.";
             }
         }
 
 
         internal static string FormatTemplateRoute_MismatchedParameter(object arg1)
         {
-            return string.Format(TemplateRoute_MismatchedParameter, arg1);
+            return string.Format("There is an incomplete parameter in the route template. Check that each '{' character has a matching '}' character.", arg1);
         }
 
 
@@ -480,7 +480,7 @@
         {
             get
             {
-                return ResourceManager.GetString("TemplateRoute_OptionalCannotHaveDefaultValue", resourceCulture);
+                return "An optional parameter cannot have default value.";
             }
         }
 
@@ -493,14 +493,14 @@
         {
             get
             {
-                return ResourceManager.GetString("TemplateRoute_OptionalParameterCanbBePrecededByPeriod", resourceCulture);
+                return "In the segment '{0}', the optional parameter '{1}' is preceded by an invalid segment '{2}'. Only a period (.) can precede an optional parameter.";
             }
         }
 
 
         internal static string FormatTemplateRoute_OptionalParameterCanbBePrecededByPeriod(object arg1, object arg2, object arg3)
         {
-            return string.Format(TemplateRoute_OptionalParameterCanbBePrecededByPeriod, arg1, arg2, arg3);
+            return string.Format("In the segment '{0}', the optional parameter '{1}' is preceded by an invalid segment '{2}'. Only a period (.) can precede an optional parameter.", arg1, arg2, arg3);
         }
 
 
@@ -511,14 +511,14 @@
         {
             get
             {
-                return ResourceManager.GetString("TemplateRoute_OptionalParameterHasTobeTheLast", resourceCulture);
+                return "An optional parameter must be at the end of the segment. In the segment '{0}', optional parameter '{1}' is followed by '{2}'.";
             }
         }
 
 
         internal static string FormatTemplateRoute_OptionalParameterHasTobeTheLast(object arg1, object arg2, object arg3)
         {
-            return string.Format(TemplateRoute_OptionalParameterHasTobeTheLast, arg1, arg2, arg3);
+            return string.Format("An optional parameter must be at the end of the segment. In the segment '{0}', optional parameter '{1}' is followed by '{2}'.", arg1, arg2, arg3);
         }
 
 
@@ -529,14 +529,14 @@
         {
             get
             {
-                return ResourceManager.GetString("TemplateRoute_RepeatedParameter", resourceCulture);
+                return "The route parameter name '{0}' appears more than one time in the route template.";
             }
         }
 
 
         internal static string FormatTemplateRoute_RepeatedParameter(object arg1)
         {
-            return string.Format(TemplateRoute_RepeatedParameter, arg1);
+            return string.Format("The route parameter name '{0}' appears more than one time in the route template.", arg1);
         }
 
 
@@ -547,14 +547,14 @@
         {
             get
             {
-                return ResourceManager.GetString("TemplateRoute_UnescapedBrace", resourceCulture);
+                return "In a route parameter, '{' and '}' must be escaped with '{{' and '}}'.";
             }
         }
 
 
         internal static string FormatTemplateRoute_UnescapedBrace(object arg1)
         {
-            return string.Format(TemplateRoute_UnescapedBrace, arg1);
+            return string.Format("In a route parameter, '{' and '}' must be escaped with '{{' and '}}'.", arg1);
         }
     }
 

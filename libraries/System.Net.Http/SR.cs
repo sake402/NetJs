@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Net.Http", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,7 +70,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_securityprotocolnotsupported", resourceCulture);
+                return "The requested security protocol is not supported.";
             }
         }
 
@@ -83,7 +83,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_httpmethod_format_error", resourceCulture);
+                return "The format of the HTTP method is invalid.";
             }
         }
 
@@ -96,7 +96,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_reasonphrase_format_error", resourceCulture);
+                return "The reason phrase must not contain new-line or NUL characters.";
             }
         }
 
@@ -109,7 +109,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_copyto_array_too_small", resourceCulture);
+                return "The number of elements is greater than the available space from arrayIndex to the end of the destination array.";
             }
         }
 
@@ -122,7 +122,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_headers_not_found", resourceCulture);
+                return "The given header was not found.";
             }
         }
 
@@ -135,14 +135,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_headers_single_value_header", resourceCulture);
+                return "Cannot add value because header '{0}' does not support multiple values.";
             }
         }
 
 
         internal static string Formatnet_http_headers_single_value_header(object arg1)
         {
-            return string.Format(net_http_headers_single_value_header, arg1);
+            return string.Format("Cannot add value because header '{0}' does not support multiple values.", arg1);
         }
 
 
@@ -153,14 +153,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_headers_invalid_header_name", resourceCulture);
+                return "The header name '{0}' has an invalid format.";
             }
         }
 
 
         internal static string Formatnet_http_headers_invalid_header_name(object arg1)
         {
-            return string.Format(net_http_headers_invalid_header_name, arg1);
+            return string.Format("The header name '{0}' has an invalid format.", arg1);
         }
 
 
@@ -171,14 +171,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_headers_invalid_value", resourceCulture);
+                return "The format of value '{0}' is invalid.";
             }
         }
 
 
         internal static string Formatnet_http_headers_invalid_value(object arg1)
         {
-            return string.Format(net_http_headers_invalid_value, arg1);
+            return string.Format("The format of value '{0}' is invalid.", arg1);
         }
 
 
@@ -189,14 +189,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_headers_not_allowed_header_name", resourceCulture);
+                return "Misused header name, '{0}'. Make sure request headers are used with HttpRequestMessage, response headers with HttpResponseMessage, and content headers with HttpContent objects.";
             }
         }
 
 
         internal static string Formatnet_http_headers_not_allowed_header_name(object arg1)
         {
-            return string.Format(net_http_headers_not_allowed_header_name, arg1);
+            return string.Format("Misused header name, '{0}'. Make sure request headers are used with HttpRequestMessage, response headers with HttpResponseMessage, and content headers with HttpContent objects.", arg1);
         }
 
 
@@ -207,7 +207,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_headers_invalid_host_header", resourceCulture);
+                return "The specified value is not a valid 'Host' header string.";
             }
         }
 
@@ -220,7 +220,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_headers_invalid_range", resourceCulture);
+                return "Invalid range. At least one of the two parameters must not be null.";
             }
         }
 
@@ -233,7 +233,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_headers_no_newlines_no_nul", resourceCulture);
+                return "New-line or NUL characters are not allowed in header values.";
             }
         }
 
@@ -246,14 +246,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_content_buffersize_exceeded", resourceCulture);
+                return "Cannot write more bytes to the buffer than the configured maximum buffer size: {0}.";
             }
         }
 
 
         internal static string Formatnet_http_content_buffersize_exceeded(object arg1)
         {
-            return string.Format(net_http_content_buffersize_exceeded, arg1);
+            return string.Format("Cannot write more bytes to the buffer than the configured maximum buffer size: {0}.", arg1);
         }
 
 
@@ -264,7 +264,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_content_no_task_returned", resourceCulture);
+                return "The async operation did not return a System.Threading.Tasks.Task object.";
             }
         }
 
@@ -277,7 +277,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_content_stream_already_read", resourceCulture);
+                return "The stream was already consumed. It cannot be read again.";
             }
         }
 
@@ -290,7 +290,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_content_readonly_stream", resourceCulture);
+                return "The stream does not support writing.";
             }
         }
 
@@ -303,7 +303,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_content_writeonly_stream", resourceCulture);
+                return "The stream does not support reading.";
             }
         }
 
@@ -316,7 +316,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_content_invalid_charset", resourceCulture);
+                return "The character set provided in ContentType is invalid. Cannot read content as string using an invalid character set.";
             }
         }
 
@@ -329,7 +329,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_content_stream_copy_error", resourceCulture);
+                return "Error while copying content to a stream.";
             }
         }
 
@@ -342,7 +342,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_content_read_as_stream_has_task", resourceCulture);
+                return "The content's stream has already been retrieved via async ReadAsStreamAsync and cannot be subsequently accessed synchronously.";
             }
         }
 
@@ -355,7 +355,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_client_request_already_sent", resourceCulture);
+                return "The request message was already sent. Cannot send the same request message multiple times.";
             }
         }
 
@@ -368,7 +368,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_operation_started", resourceCulture);
+                return "This instance has already started one or more requests. Properties can only be modified before sending the first request.";
             }
         }
 
@@ -381,7 +381,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_client_execution_error", resourceCulture);
+                return "An error occurred while sending the request.";
             }
         }
 
@@ -394,7 +394,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_client_absolute_baseaddress_required", resourceCulture);
+                return "The base address must be an absolute URI.";
             }
         }
 
@@ -407,7 +407,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_client_invalid_requesturi", resourceCulture);
+                return "An invalid request URI was provided. Either the request URI must be an absolute URI or BaseAddress must be set.";
             }
         }
 
@@ -420,14 +420,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_unsupported_requesturi_scheme", resourceCulture);
+                return "The '{0}' scheme is not supported.";
             }
         }
 
 
         internal static string Formatnet_http_unsupported_requesturi_scheme(object arg1)
         {
-            return string.Format(net_http_unsupported_requesturi_scheme, arg1);
+            return string.Format("The '{0}' scheme is not supported.", arg1);
         }
 
 
@@ -438,14 +438,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_parser_invalid_base64_string", resourceCulture);
+                return "Value '{0}' is not a valid Base64 string. Error: {1}";
             }
         }
 
 
         internal static string Formatnet_http_parser_invalid_base64_string(object arg1, object arg2)
         {
-            return string.Format(net_http_parser_invalid_base64_string, arg1, arg2);
+            return string.Format("Value '{0}' is not a valid Base64 string. Error: {1}", arg1, arg2);
         }
 
 
@@ -456,7 +456,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_handler_noresponse", resourceCulture);
+                return "Handler did not return a response message.";
             }
         }
 
@@ -469,7 +469,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_handler_norequest", resourceCulture);
+                return "A request message must be provided. It cannot be null.";
             }
         }
 
@@ -482,14 +482,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_message_not_success_statuscode", resourceCulture);
+                return "Response status code does not indicate success: {0}.";
             }
         }
 
 
         internal static string Formatnet_http_message_not_success_statuscode(object arg1)
         {
-            return string.Format(net_http_message_not_success_statuscode, arg1);
+            return string.Format("Response status code does not indicate success: {0}.", arg1);
         }
 
 
@@ -500,14 +500,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_message_not_success_statuscode_reason", resourceCulture);
+                return "Response status code does not indicate success: {0} ({1}).";
             }
         }
 
 
         internal static string Formatnet_http_message_not_success_statuscode_reason(object arg1, object arg2)
         {
-            return string.Format(net_http_message_not_success_statuscode_reason, arg1, arg2);
+            return string.Format("Response status code does not indicate success: {0} ({1}).", arg1, arg2);
         }
 
 
@@ -518,14 +518,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_content_field_too_long", resourceCulture);
+                return "The field cannot be longer than {0} characters.";
             }
         }
 
 
         internal static string Formatnet_http_content_field_too_long(object arg1)
         {
-            return string.Format(net_http_content_field_too_long, arg1);
+            return string.Format("The field cannot be longer than {0} characters.", arg1);
         }
 
 
@@ -536,14 +536,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_log_headers_no_newlines", resourceCulture);
+                return "Value for header '{0}' contains new-line characters. Value: '{1}'.";
             }
         }
 
 
         internal static string Formatnet_http_log_headers_no_newlines(object arg1, object arg2)
         {
-            return string.Format(net_http_log_headers_no_newlines, arg1, arg2);
+            return string.Format("Value for header '{0}' contains new-line characters. Value: '{1}'.", arg1, arg2);
         }
 
 
@@ -554,14 +554,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_log_headers_invalid_quality", resourceCulture);
+                return "The 'q' value is invalid: '{0}'.";
             }
         }
 
 
         internal static string Formatnet_http_log_headers_invalid_quality(object arg1)
         {
-            return string.Format(net_http_log_headers_invalid_quality, arg1);
+            return string.Format("The 'q' value is invalid: '{0}'.", arg1);
         }
 
 
@@ -572,7 +572,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_handler_not_assigned", resourceCulture);
+                return "The inner handler has not been assigned.";
             }
         }
 
@@ -585,14 +585,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_invalid_enable_first", resourceCulture);
+                return "The {0} property must be set to '{1}' to use this property.";
             }
         }
 
 
         internal static string Formatnet_http_invalid_enable_first(object arg1, object arg2)
         {
-            return string.Format(net_http_invalid_enable_first, arg1, arg2);
+            return string.Format("The {0} property must be set to '{1}' to use this property.", arg1, arg2);
         }
 
 
@@ -603,14 +603,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_content_buffersize_limit", resourceCulture);
+                return "Buffering more than {0} bytes is not supported.";
             }
         }
 
 
         internal static string Formatnet_http_content_buffersize_limit(object arg1)
         {
-            return string.Format(net_http_content_buffersize_limit, arg1);
+            return string.Format("Buffering more than {0} bytes is not supported.", arg1);
         }
 
 
@@ -621,7 +621,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_io_read", resourceCulture);
+                return "The read operation failed, see inner exception.";
             }
         }
 
@@ -634,14 +634,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_io_read_incomplete", resourceCulture);
+                return "Unable to read data from the transport connection. The connection was closed before all data could be read. Expected {0} bytes, read {1} bytes.";
             }
         }
 
 
         internal static string Formatnet_http_io_read_incomplete(object arg1, object arg2)
         {
-            return string.Format(net_http_io_read_incomplete, arg1, arg2);
+            return string.Format("Unable to read data from the transport connection. The connection was closed before all data could be read. Expected {0} bytes, read {1} bytes.", arg1, arg2);
         }
 
 
@@ -652,7 +652,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_io_write", resourceCulture);
+                return "The write operation failed, see inner exception.";
             }
         }
 
@@ -665,7 +665,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_chunked_not_allowed_with_empty_content", resourceCulture);
+                return "'Transfer-Encoding: chunked' header can not be used when content object is not specified.";
             }
         }
 
@@ -678,7 +678,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_invalid_cookiecontainer", resourceCulture);
+                return "When using CookieUsePolicy.UseSpecifiedCookieContainer, the CookieContainer property must not be null.";
             }
         }
 
@@ -691,7 +691,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_invalid_proxyusepolicy", resourceCulture);
+                return "When using a non-null Proxy, the WindowsProxyUsePolicy property must be set to WindowsProxyUsePolicy.UseCustomProxy.";
             }
         }
 
@@ -704,7 +704,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_invalid_proxy", resourceCulture);
+                return "When using WindowsProxyUsePolicy.UseCustomProxy, the Proxy property must not be null.";
             }
         }
 
@@ -717,14 +717,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_value_must_be_greater_than", resourceCulture);
+                return "The specified value must be greater than {0}.";
             }
         }
 
 
         internal static string Formatnet_http_value_must_be_greater_than(object arg1)
         {
-            return string.Format(net_http_value_must_be_greater_than, arg1);
+            return string.Format("The specified value must be greater than {0}.", arg1);
         }
 
 
@@ -735,14 +735,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_value_must_be_greater_than_or_equal", resourceCulture);
+                return "The specified value '{0}' must be greater than or equal to '{1}'.";
             }
         }
 
 
         internal static string Formatnet_http_value_must_be_greater_than_or_equal(object arg1, object arg2)
         {
-            return string.Format(net_http_value_must_be_greater_than_or_equal, arg1, arg2);
+            return string.Format("The specified value '{0}' must be greater than or equal to '{1}'.", arg1, arg2);
         }
 
 
@@ -753,14 +753,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_cookie_attribute", resourceCulture);
+                return "The '{0}'='{1}' part of the cookie is invalid.";
             }
         }
 
 
         internal static string Formatnet_cookie_attribute(object arg1, object arg2)
         {
-            return string.Format(net_cookie_attribute, arg1, arg2);
+            return string.Format("The '{0}'='{1}' part of the cookie is invalid.", arg1, arg2);
         }
 
 
@@ -771,7 +771,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_FileLengthTooBig", resourceCulture);
+                return "Specified file length was too large for the file system.";
             }
         }
 
@@ -784,14 +784,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_FileExists_Name", resourceCulture);
+                return "The file '{0}' already exists.";
             }
         }
 
 
         internal static string FormatIO_FileExists_Name(object arg1)
         {
-            return string.Format(IO_FileExists_Name, arg1);
+            return string.Format("The file '{0}' already exists.", arg1);
         }
 
 
@@ -802,7 +802,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_FileNotFound", resourceCulture);
+                return "Unable to find the specified file.";
             }
         }
 
@@ -815,14 +815,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_FileNotFound_FileName", resourceCulture);
+                return "Could not find file '{0}'.";
             }
         }
 
 
         internal static string FormatIO_FileNotFound_FileName(object arg1)
         {
-            return string.Format(IO_FileNotFound_FileName, arg1);
+            return string.Format("Could not find file '{0}'.", arg1);
         }
 
 
@@ -833,7 +833,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_PathNotFound_NoPathName", resourceCulture);
+                return "Could not find a part of the path.";
             }
         }
 
@@ -846,14 +846,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_PathNotFound_Path", resourceCulture);
+                return "Could not find a part of the path '{0}'.";
             }
         }
 
 
         internal static string FormatIO_PathNotFound_Path(object arg1)
         {
-            return string.Format(IO_PathNotFound_Path, arg1);
+            return string.Format("Could not find a part of the path '{0}'.", arg1);
         }
 
 
@@ -864,7 +864,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_PathTooLong", resourceCulture);
+                return "The specified file name or path is too long, or a component of the specified path is too long.";
             }
         }
 
@@ -877,14 +877,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_SharingViolation_File", resourceCulture);
+                return "The process cannot access the file '{0}' because it is being used by another process.";
             }
         }
 
 
         internal static string FormatIO_SharingViolation_File(object arg1)
         {
-            return string.Format(IO_SharingViolation_File, arg1);
+            return string.Format("The process cannot access the file '{0}' because it is being used by another process.", arg1);
         }
 
 
@@ -895,7 +895,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_SharingViolation_NoFileName", resourceCulture);
+                return "The process cannot access the file because it is being used by another process.";
             }
         }
 
@@ -908,7 +908,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnauthorizedAccess_IODenied_NoPathName", resourceCulture);
+                return "Access to the path is denied.";
             }
         }
 
@@ -921,14 +921,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnauthorizedAccess_IODenied_Path", resourceCulture);
+                return "Access to the path '{0}' is denied.";
             }
         }
 
 
         internal static string FormatUnauthorizedAccess_IODenied_Path(object arg1)
         {
-            return string.Format(UnauthorizedAccess_IODenied_Path, arg1);
+            return string.Format("Access to the path '{0}' is denied.", arg1);
         }
 
 
@@ -939,7 +939,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_username_empty_string", resourceCulture);
+                return "The username for a credential object cannot be null or empty.";
             }
         }
 
@@ -952,7 +952,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_no_concurrent_io_allowed", resourceCulture);
+                return "The stream does not support concurrent I/O read or write operations.";
             }
         }
 
@@ -965,7 +965,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_invalid_response", resourceCulture);
+                return "The server returned an invalid or unrecognized response.";
             }
         }
 
@@ -978,14 +978,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_request_content_length_mismatch", resourceCulture);
+                return "Sent {0} request content bytes, but Content-Length promised {1}.";
             }
         }
 
 
         internal static string Formatnet_http_request_content_length_mismatch(object arg1, object arg2)
         {
-            return string.Format(net_http_request_content_length_mismatch, arg1, arg2);
+            return string.Format("Sent {0} request content bytes, but Content-Length promised {1}.", arg1, arg2);
         }
 
 
@@ -996,7 +996,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_invalid_response_premature_eof", resourceCulture);
+                return "The response ended prematurely.";
             }
         }
 
@@ -1009,7 +1009,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_invalid_response_missing_frame", resourceCulture);
+                return "The response ended prematurely while waiting for the next frame from the server.";
             }
         }
 
@@ -1022,14 +1022,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_invalid_response_premature_eof_bytecount", resourceCulture);
+                return "The response ended prematurely, with at least {0} additional bytes expected.";
             }
         }
 
 
         internal static string Formatnet_http_invalid_response_premature_eof_bytecount(object arg1)
         {
-            return string.Format(net_http_invalid_response_premature_eof_bytecount, arg1);
+            return string.Format("The response ended prematurely, with at least {0} additional bytes expected.", arg1);
         }
 
 
@@ -1040,14 +1040,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_invalid_response_chunk_header_invalid", resourceCulture);
+                return "Received chunk header length could not be parsed: '{0}'.";
             }
         }
 
 
         internal static string Formatnet_http_invalid_response_chunk_header_invalid(object arg1)
         {
-            return string.Format(net_http_invalid_response_chunk_header_invalid, arg1);
+            return string.Format("Received chunk header length could not be parsed: '{0}'.", arg1);
         }
 
 
@@ -1058,14 +1058,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_invalid_response_chunk_extension_invalid", resourceCulture);
+                return "Received an invalid chunk extension: '{0}'.";
             }
         }
 
 
         internal static string Formatnet_http_invalid_response_chunk_extension_invalid(object arg1)
         {
-            return string.Format(net_http_invalid_response_chunk_extension_invalid, arg1);
+            return string.Format("Received an invalid chunk extension: '{0}'.", arg1);
         }
 
 
@@ -1076,14 +1076,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_invalid_response_chunk_terminator_invalid", resourceCulture);
+                return "Received an invalid chunk terminator: '{0}'.";
             }
         }
 
 
         internal static string Formatnet_http_invalid_response_chunk_terminator_invalid(object arg1)
         {
-            return string.Format(net_http_invalid_response_chunk_terminator_invalid, arg1);
+            return string.Format("Received an invalid chunk terminator: '{0}'.", arg1);
         }
 
 
@@ -1094,14 +1094,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_invalid_response_status_line", resourceCulture);
+                return "Received an invalid status line: '{0}'.";
             }
         }
 
 
         internal static string Formatnet_http_invalid_response_status_line(object arg1)
         {
-            return string.Format(net_http_invalid_response_status_line, arg1);
+            return string.Format("Received an invalid status line: '{0}'.", arg1);
         }
 
 
@@ -1112,14 +1112,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_invalid_response_status_code", resourceCulture);
+                return "Received an invalid status code: '{0}'.";
             }
         }
 
 
         internal static string Formatnet_http_invalid_response_status_code(object arg1)
         {
-            return string.Format(net_http_invalid_response_status_code, arg1);
+            return string.Format("Received an invalid status code: '{0}'.", arg1);
         }
 
 
@@ -1130,14 +1130,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_invalid_response_status_reason", resourceCulture);
+                return "Received status phrase could not be decoded with iso-8859-1: '{0}'.";
             }
         }
 
 
         internal static string Formatnet_http_invalid_response_status_reason(object arg1)
         {
-            return string.Format(net_http_invalid_response_status_reason, arg1);
+            return string.Format("Received status phrase could not be decoded with iso-8859-1: '{0}'.", arg1);
         }
 
 
@@ -1148,7 +1148,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_invalid_response_multiple_status_codes", resourceCulture);
+                return "The response contained more than one status code.";
             }
         }
 
@@ -1161,7 +1161,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_invalid_response_header_folder", resourceCulture);
+                return "Received an invalid folded header.";
             }
         }
 
@@ -1174,14 +1174,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_invalid_response_header_line", resourceCulture);
+                return "Received an invalid header line: '{0}'.";
             }
         }
 
 
         internal static string Formatnet_http_invalid_response_header_line(object arg1)
         {
-            return string.Format(net_http_invalid_response_header_line, arg1);
+            return string.Format("Received an invalid header line: '{0}'.", arg1);
         }
 
 
@@ -1192,14 +1192,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_invalid_response_header_name", resourceCulture);
+                return "Received an invalid header name: '{0}'.";
             }
         }
 
 
         internal static string Formatnet_http_invalid_response_header_name(object arg1)
         {
-            return string.Format(net_http_invalid_response_header_name, arg1);
+            return string.Format("Received an invalid header name: '{0}'.", arg1);
         }
 
 
@@ -1210,7 +1210,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_request_aborted", resourceCulture);
+                return "The request was aborted.";
             }
         }
 
@@ -1223,7 +1223,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_invalid_response_pseudo_header_in_trailer", resourceCulture);
+                return "Received an HTTP/2 pseudo-header as a trailing header.";
             }
         }
 
@@ -1236,7 +1236,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_buffer_insufficient_length", resourceCulture);
+                return "The buffer was not long enough.";
             }
         }
 
@@ -1249,14 +1249,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_request_headers_exceeded_length", resourceCulture);
+                return "The HTTP request headers length exceeded the server limit of {0} bytes.";
             }
         }
 
 
         internal static string Formatnet_http_request_headers_exceeded_length(object arg1)
         {
-            return string.Format(net_http_request_headers_exceeded_length, arg1);
+            return string.Format("The HTTP request headers length exceeded the server limit of {0} bytes.", arg1);
         }
 
 
@@ -1267,14 +1267,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_response_headers_exceeded_length", resourceCulture);
+                return "The HTTP response headers length exceeded the set limit of {0} bytes.";
             }
         }
 
 
         internal static string Formatnet_http_response_headers_exceeded_length(object arg1)
         {
-            return string.Format(net_http_response_headers_exceeded_length, arg1);
+            return string.Format("The HTTP response headers length exceeded the set limit of {0} bytes.", arg1);
         }
 
 
@@ -1285,7 +1285,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_UnreadableStream", resourceCulture);
+                return "Stream does not support reading.";
             }
         }
 
@@ -1298,7 +1298,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_UnwritableStream", resourceCulture);
+                return "Stream does not support writing.";
             }
         }
 
@@ -1311,20 +1311,20 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ObjectDisposed_StreamClosed", resourceCulture);
+                return "Cannot access a closed stream.";
             }
         }
 
 
 
         /// <summary>
-        /// Only the 'http', 'https', 'socks4', 'socks4a', 'socks5', and 'socks5h' schemes are allowed for proxies.
+        /// Only the 'http', 'https', 'socks4', 'socks4a' and 'socks5' schemes are allowed for proxies.
         /// </summary>
         internal static string net_http_invalid_proxy_scheme
         {
             get
             {
-                return ResourceManager.GetString("net_http_invalid_proxy_scheme", resourceCulture);
+                return "Only the 'http', 'https', 'socks4', 'socks4a' and 'socks5' schemes are allowed for proxies.";
             }
         }
 
@@ -1337,20 +1337,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_request_invalid_char_encoding", resourceCulture);
-            }
-        }
-
-
-
-        /// <summary>
-        /// Request Uri's host could not be Punycode encoded.
-        /// </summary>
-        internal static string net_http_request_invalid_host_punycode
-        {
-            get
-            {
-                return ResourceManager.GetString("net_http_request_invalid_host_punycode", resourceCulture);
+                return "Request headers must contain only ASCII characters.";
             }
         }
 
@@ -1363,7 +1350,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_ssl_connection_failed", resourceCulture);
+                return "The SSL connection could not be established, see inner exception.";
             }
         }
 
@@ -1376,7 +1363,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_unsupported_chunking", resourceCulture);
+                return "HTTP 1.0 does not support chunking.";
             }
         }
 
@@ -1389,7 +1376,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_unsupported_version", resourceCulture);
+                return "Request version value must be one of 1.0, 1.1, 2.0, or 3.0.";
             }
         }
 
@@ -1402,7 +1389,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_SeekBeforeBegin", resourceCulture);
+                return "An attempt was made to move the position before the beginning of the stream.";
             }
         }
 
@@ -1415,7 +1402,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_ssl_app_protocols_invalid", resourceCulture);
+                return "The application protocol list is invalid.";
             }
         }
 
@@ -1428,14 +1415,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_ssl_http2_requires_tls12", resourceCulture);
+                return "HTTP/2 requires TLS 1.2 or newer, but '{0}' was negotiated.";
             }
         }
 
 
         internal static string Formatnet_ssl_http2_requires_tls12(object arg1)
         {
-            return string.Format(net_ssl_http2_requires_tls12, arg1);
+            return string.Format("HTTP/2 requires TLS 1.2 or newer, but '{0}' was negotiated.", arg1);
         }
 
 
@@ -1446,14 +1433,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_PathTooLong_Path", resourceCulture);
+                return "The path '{0}' is too long, or a component of the specified path is too long.";
             }
         }
 
 
         internal static string FormatIO_PathTooLong_Path(object arg1)
         {
-            return string.Format(IO_PathTooLong_Path, arg1);
+            return string.Format("The path '{0}' is too long, or a component of the specified path is too long.", arg1);
         }
 
 
@@ -1464,7 +1451,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_request_no_host", resourceCulture);
+                return "CONNECT request must contain Host header.";
             }
         }
 
@@ -1477,14 +1464,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_winhttp_error", resourceCulture);
+                return "Error {0} calling {1}, '{2}'.";
             }
         }
 
 
         internal static string Formatnet_http_winhttp_error(object arg1, object arg2, object arg3)
         {
-            return string.Format(net_http_winhttp_error, arg1, arg2, arg3);
+            return string.Format("Error {0} calling {1}, '{2}'.", arg1, arg2, arg3);
         }
 
 
@@ -1495,14 +1482,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_http2_connection_error", resourceCulture);
+                return "The HTTP/2 server sent invalid data on the connection. HTTP/2 error code '{0}' (0x{1}).";
             }
         }
 
 
         internal static string Formatnet_http_http2_connection_error(object arg1, object arg2)
         {
-            return string.Format(net_http_http2_connection_error, arg1, arg2);
+            return string.Format("The HTTP/2 server sent invalid data on the connection. HTTP/2 error code '{0}' (0x{1}).", arg1, arg2);
         }
 
 
@@ -1513,14 +1500,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_http2_connection_close", resourceCulture);
+                return "The HTTP/2 server closed the connection. HTTP/2 error code '{0}' (0x{1}).";
             }
         }
 
 
         internal static string Formatnet_http_http2_connection_close(object arg1, object arg2)
         {
-            return string.Format(net_http_http2_connection_close, arg1, arg2);
+            return string.Format("The HTTP/2 server closed the connection. HTTP/2 error code '{0}' (0x{1}).", arg1, arg2);
         }
 
 
@@ -1531,14 +1518,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_http2_stream_error", resourceCulture);
+                return "The HTTP/2 server reset the stream. HTTP/2 error code '{0}' (0x{1}).";
             }
         }
 
 
         internal static string Formatnet_http_http2_stream_error(object arg1, object arg2)
         {
-            return string.Format(net_http_http2_stream_error, arg1, arg2);
+            return string.Format("The HTTP/2 server reset the stream. HTTP/2 error code '{0}' (0x{1}).", arg1, arg2);
         }
 
 
@@ -1549,14 +1536,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_http3_stream_error", resourceCulture);
+                return "The HTTP/3 server reset the stream. HTTP/3 error code '{0}' (0x{1}).";
             }
         }
 
 
         internal static string Formatnet_http_http3_stream_error(object arg1, object arg2)
         {
-            return string.Format(net_http_http3_stream_error, arg1, arg2);
+            return string.Format("The HTTP/3 server reset the stream. HTTP/3 error code '{0}' (0x{1}).", arg1, arg2);
         }
 
 
@@ -1567,7 +1554,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_http2_connection_not_established", resourceCulture);
+                return "An HTTP/2 connection could not be established because the server did not complete the HTTP/2 handshake.";
             }
         }
 
@@ -1580,14 +1567,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_http2_invalidinitialstreamwindowsize", resourceCulture);
+                return "The initial HTTP/2 stream window size must be between {0} and {1}.";
             }
         }
 
 
         internal static string Formatnet_http_http2_invalidinitialstreamwindowsize(object arg1, object arg2)
         {
-            return string.Format(net_http_http2_invalidinitialstreamwindowsize, arg1, arg2);
+            return string.Format("The initial HTTP/2 stream window size must be between {0} and {1}.", arg1, arg2);
         }
 
 
@@ -1598,7 +1585,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_MethodNotImplementedException", resourceCulture);
+                return "This method is not implemented by this class.";
             }
         }
 
@@ -1611,14 +1598,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_log_operation_failed_with_error", resourceCulture);
+                return "{0} failed with error {1}.";
             }
         }
 
 
         internal static string Formatnet_log_operation_failed_with_error(object arg1, object arg2)
         {
-            return string.Format(net_log_operation_failed_with_error, arg1, arg2);
+            return string.Format("{0} failed with error {1}.", arg1, arg2);
         }
 
 
@@ -1629,7 +1616,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_completed_result", resourceCulture);
+                return "This operation cannot be performed on a completed asynchronous result object.";
             }
         }
 
@@ -1642,14 +1629,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_invalid_enum", resourceCulture);
+                return "The specified value is not valid in the '{0}' enumeration.";
             }
         }
 
 
         internal static string Formatnet_invalid_enum(object arg1)
         {
-            return string.Format(net_invalid_enum, arg1);
+            return string.Format("The specified value is not valid in the '{0}' enumeration.", arg1);
         }
 
 
@@ -1660,7 +1647,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_auth_message_not_encrypted", resourceCulture);
+                return "Protocol error: A received message contains a valid signature but it was not encrypted as required by the effective Protection Level.";
             }
         }
 
@@ -1673,7 +1660,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_authconnectionfailure", resourceCulture);
+                return "Authentication failed because the connection could not be reused.";
             }
         }
 
@@ -1686,14 +1673,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_authvalidationfailure", resourceCulture);
+                return "Authentication validation failed with error - {0}.";
             }
         }
 
 
         internal static string Formatnet_http_authvalidationfailure(object arg1)
         {
-            return string.Format(net_http_authvalidationfailure, arg1);
+            return string.Format("Authentication validation failed with error - {0}.", arg1);
         }
 
 
@@ -1704,7 +1691,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_hpack_huffman_decode_failed", resourceCulture);
+                return "Huffman-coded literal string failed to decode.";
             }
         }
 
@@ -1717,7 +1704,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_hpack_incomplete_header_block", resourceCulture);
+                return "Incomplete header block received.";
             }
         }
 
@@ -1730,7 +1717,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_hpack_late_dynamic_table_size_update", resourceCulture);
+                return "Dynamic table size update received after beginning of header block.";
             }
         }
 
@@ -1743,7 +1730,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_hpack_bad_integer", resourceCulture);
+                return "HPACK integer exceeds limits or has an overlong encoding.";
             }
         }
 
@@ -1756,7 +1743,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_disposed_while_in_use", resourceCulture);
+                return "The object was disposed while operations were in progress.";
             }
         }
 
@@ -1769,14 +1756,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_hpack_large_table_size_update", resourceCulture);
+                return "Dynamic table size update to {0} bytes exceeds limit of {1} bytes.";
             }
         }
 
 
         internal static string Formatnet_http_hpack_large_table_size_update(object arg1, object arg2)
         {
-            return string.Format(net_http_hpack_large_table_size_update, arg1, arg2);
+            return string.Format("Dynamic table size update to {0} bytes exceeds limit of {1} bytes.", arg1, arg2);
         }
 
 
@@ -1787,7 +1774,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_server_shutdown", resourceCulture);
+                return "The server shut down the connection.";
             }
         }
 
@@ -1800,14 +1787,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_hpack_invalid_index", resourceCulture);
+                return "Invalid header index: {0} is outside of static table and no dynamic table entry found.";
             }
         }
 
 
         internal static string Formatnet_http_hpack_invalid_index(object arg1)
         {
-            return string.Format(net_http_hpack_invalid_index, arg1);
+            return string.Format("Invalid header index: {0} is outside of static table and no dynamic table entry found.", arg1);
         }
 
 
@@ -1818,7 +1805,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_hpack_unexpected_end", resourceCulture);
+                return "End of headers reached with incomplete token.";
             }
         }
 
@@ -1831,14 +1818,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_headers_exceeded_length", resourceCulture);
+                return "The HTTP headers length exceeded the set limit of {0} bytes.";
             }
         }
 
 
         internal static string Formatnet_http_headers_exceeded_length(object arg1)
         {
-            return string.Format(net_http_headers_exceeded_length, arg1);
+            return string.Format("The HTTP headers length exceeded the set limit of {0} bytes.", arg1);
         }
 
 
@@ -1849,14 +1836,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_invalid_header_name", resourceCulture);
+                return "Received an invalid header name: '{0}'.";
             }
         }
 
 
         internal static string Formatnet_http_invalid_header_name(object arg1)
         {
-            return string.Format(net_http_invalid_header_name, arg1);
+            return string.Format("Received an invalid header name: '{0}'.", arg1);
         }
 
 
@@ -1867,7 +1854,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_http3_connection_not_established", resourceCulture);
+                return "An HTTP/3 connection could not be established because the server did not complete the HTTP/3 handshake.";
             }
         }
 
@@ -1880,14 +1867,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_http3_connection_error", resourceCulture);
+                return "The HTTP/3 server sent invalid data on the connection. HTTP/3 error code '{0}' (0x{1}).";
             }
         }
 
 
         internal static string Formatnet_http_http3_connection_error(object arg1, object arg2)
         {
-            return string.Format(net_http_http3_connection_error, arg1, arg2);
+            return string.Format("The HTTP/3 server sent invalid data on the connection. HTTP/3 error code '{0}' (0x{1}).", arg1, arg2);
         }
 
 
@@ -1898,14 +1885,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_http3_connection_close", resourceCulture);
+                return "The HTTP/3 server closed the connection. HTTP/3 error code '{0}' (0x{1}).";
             }
         }
 
 
         internal static string Formatnet_http_http3_connection_close(object arg1, object arg2)
         {
-            return string.Format(net_http_http3_connection_close, arg1, arg2);
+            return string.Format("The HTTP/3 server closed the connection. HTTP/3 error code '{0}' (0x{1}).", arg1, arg2);
         }
 
 
@@ -1916,7 +1903,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_http3_connection_quic_error", resourceCulture);
+                return "The QUIC connection with the HTTP/3 server failed on the transport level.";
             }
         }
 
@@ -1929,7 +1916,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_retry_on_older_version", resourceCulture);
+                return "The server is unable to process the request using the current HTTP version and indicates the request should be retried on an older HTTP version.";
             }
         }
 
@@ -1942,7 +1929,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_content_write_larger_than_content_length", resourceCulture);
+                return "Unable to write content to request stream; content would exceed Content-Length.";
             }
         }
 
@@ -1955,7 +1942,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_qpack_no_dynamic_table", resourceCulture);
+                return "The HTTP/3 server attempted to reference a dynamic table index that does not exist.";
             }
         }
 
@@ -1968,14 +1955,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_request_timedout", resourceCulture);
+                return "The request was canceled due to the configured HttpClient.Timeout of {0} seconds elapsing.";
             }
         }
 
 
         internal static string Formatnet_http_request_timedout(object arg1)
         {
-            return string.Format(net_http_request_timedout, arg1);
+            return string.Format("The request was canceled due to the configured HttpClient.Timeout of {0} seconds elapsing.", arg1);
         }
 
 
@@ -1986,7 +1973,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_connect_timedout", resourceCulture);
+                return "A connection could not be established within the configured ConnectTimeout.";
             }
         }
 
@@ -1999,14 +1986,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_quic_connectionaborted", resourceCulture);
+                return "Connection aborted by peer ({0}).";
             }
         }
 
 
         internal static string Formatnet_quic_connectionaborted(object arg1)
         {
-            return string.Format(net_quic_connectionaborted, arg1);
+            return string.Format("Connection aborted by peer ({0}).", arg1);
         }
 
 
@@ -2017,7 +2004,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_quic_operationaborted", resourceCulture);
+                return "Operation aborted.";
             }
         }
 
@@ -2030,14 +2017,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_quic_streamaborted", resourceCulture);
+                return "Stream aborted by peer ({0}).";
             }
         }
 
 
         internal static string Formatnet_quic_streamaborted(object arg1)
         {
-            return string.Format(net_quic_streamaborted, arg1);
+            return string.Format("Stream aborted by peer ({0}).", arg1);
         }
 
 
@@ -2048,14 +2035,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_missing_sync_implementation", resourceCulture);
+                return "The synchronous method is not supported by '{0}'. If you're using a custom '{1}' and wish to use synchronous HTTP methods, you must override its '{2}' virtual method.";
             }
         }
 
 
         internal static string Formatnet_http_missing_sync_implementation(object arg1, object arg2, object arg3)
         {
-            return string.Format(net_http_missing_sync_implementation, arg1, arg2, arg3);
+            return string.Format("The synchronous method is not supported by '{0}'. If you're using a custom '{1}' and wish to use synchronous HTTP methods, you must override its '{2}' virtual method.", arg1, arg2, arg3);
         }
 
 
@@ -2066,14 +2053,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_http2_sync_not_supported", resourceCulture);
+                return "The synchronous method is not supported by '{0}' for HTTP/2 or higher. Either use an asynchronous method or downgrade the request version to HTTP/1.1 or lower.";
             }
         }
 
 
         internal static string Formatnet_http_http2_sync_not_supported(object arg1)
         {
-            return string.Format(net_http_http2_sync_not_supported, arg1);
+            return string.Format("The synchronous method is not supported by '{0}' for HTTP/2 or higher. Either use an asynchronous method or downgrade the request version to HTTP/1.1 or lower.", arg1);
         }
 
 
@@ -2084,14 +2071,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_upgrade_not_enabled_sync", resourceCulture);
+                return "HTTP request version upgrade is not enabled for synchronous '{0}'. Do not use '{1}' version policy for synchronous HTTP methods.";
             }
         }
 
 
         internal static string Formatnet_http_upgrade_not_enabled_sync(object arg1, object arg2)
         {
-            return string.Format(net_http_upgrade_not_enabled_sync, arg1, arg2);
+            return string.Format("HTTP request version upgrade is not enabled for synchronous '{0}'. Do not use '{1}' version policy for synchronous HTTP methods.", arg1, arg2);
         }
 
 
@@ -2102,14 +2089,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_requested_version_cannot_establish", resourceCulture);
+                return "Requesting HTTP version {0} with version policy {1} while unable to establish HTTP/{2} connection.";
             }
         }
 
 
         internal static string Formatnet_http_requested_version_cannot_establish(object arg1, object arg2, object arg3)
         {
-            return string.Format(net_http_requested_version_cannot_establish, arg1, arg2, arg3);
+            return string.Format("Requesting HTTP version {0} with version policy {1} while unable to establish HTTP/{2} connection.", arg1, arg2, arg3);
         }
 
 
@@ -2120,14 +2107,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_requested_version_server_refused", resourceCulture);
+                return "Requesting HTTP version {0} with version policy {1} while server offers only version fallback.";
             }
         }
 
 
         internal static string Formatnet_http_requested_version_server_refused(object arg1, object arg2)
         {
-            return string.Format(net_http_requested_version_server_refused, arg1, arg2);
+            return string.Format("Requesting HTTP version {0} with version policy {1} while server offers only version fallback.", arg1, arg2);
         }
 
 
@@ -2138,7 +2125,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_exception_during_plaintext_filter", resourceCulture);
+                return "An exception occurred while invoking the PlaintextStreamFilter.";
             }
         }
 
@@ -2151,7 +2138,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_null_from_connect_callback", resourceCulture);
+                return "The user-supplied ConnectCallback returned null.";
             }
         }
 
@@ -2164,7 +2151,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_null_from_plaintext_filter", resourceCulture);
+                return "The user-supplied PlaintextStreamFilter returned null.";
             }
         }
 
@@ -2177,7 +2164,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_marshalling_response_promise_from_fetch", resourceCulture);
+                return "Internal error marshalling the response Promise from `fetch`.";
             }
         }
 
@@ -2190,7 +2177,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_synchronous_reads_not_supported", resourceCulture);
+                return "Synchronous reads are not supported, use ReadAsync instead.";
             }
         }
 
@@ -2203,7 +2190,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_synchronous_writes_not_supported", resourceCulture);
+                return "Synchronous writes are not supported, use WriteAsync instead.";
             }
         }
 
@@ -2216,7 +2203,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_socks_auth_failed", resourceCulture);
+                return "Failed to authenticate with the SOCKS server.";
             }
         }
 
@@ -2229,7 +2216,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_socks_bad_address_type", resourceCulture);
+                return "SOCKS server returned an unknown address type.";
             }
         }
 
@@ -2242,14 +2229,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_socks_connection_failed", resourceCulture);
+                return "SOCKS server failed to connect to the destination. Received error code 0x{0}.";
             }
         }
 
 
         internal static string Formatnet_socks_connection_failed(object arg1)
         {
-            return string.Format(net_socks_connection_failed, arg1);
+            return string.Format("SOCKS server failed to connect to the destination. Received error code 0x{0}.", arg1);
         }
 
 
@@ -2260,7 +2247,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_socks_ipv6_notsupported", resourceCulture);
+                return "SOCKS4 does not support IPv6 addresses.";
             }
         }
 
@@ -2273,7 +2260,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_socks_no_auth_method", resourceCulture);
+                return "SOCKS server did not return a suitable authentication method.";
             }
         }
 
@@ -2286,7 +2273,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_socks_no_ipv4_address", resourceCulture);
+                return "Failed to resolve the destination host to an IPv4 address.";
             }
         }
 
@@ -2299,14 +2286,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_socks_unexpected_version", resourceCulture);
+                return "Unexpected SOCKS protocol version. Required {0}, got {1}.";
             }
         }
 
 
         internal static string Formatnet_socks_unexpected_version(object arg1, object arg2)
         {
-            return string.Format(net_socks_unexpected_version, arg1, arg2);
+            return string.Format("Unexpected SOCKS protocol version. Required {0}, got {1}.", arg1, arg2);
         }
 
 
@@ -2317,14 +2304,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_socks_string_too_long", resourceCulture);
+                return "Encoding the {0} took more than the maximum of 255 bytes.";
             }
         }
 
 
         internal static string Formatnet_socks_string_too_long(object arg1)
         {
-            return string.Format(net_socks_string_too_long, arg1);
+            return string.Format("Encoding the {0} took more than the maximum of 255 bytes.", arg1);
         }
 
 
@@ -2335,7 +2322,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_socks_auth_required", resourceCulture);
+                return "SOCKS server requested username & password authentication.";
             }
         }
 
@@ -2348,14 +2335,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_proxy_tunnel_returned_failure_status_code", resourceCulture);
+                return "The proxy tunnel request to proxy '{0}' failed with status code '{1}'.\"";
             }
         }
 
 
         internal static string Formatnet_http_proxy_tunnel_returned_failure_status_code(object arg1, object arg2)
         {
-            return string.Format(net_http_proxy_tunnel_returned_failure_status_code, arg1, arg2);
+            return string.Format("The proxy tunnel request to proxy '{0}' failed with status code '{1}'.\"", arg1, arg2);
         }
 
 
@@ -2366,7 +2353,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_proxy_tunnel_error", resourceCulture);
+                return "An error occurred while establishing a connection to the proxy tunnel.";
             }
         }
 
@@ -2379,7 +2366,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PlatformNotSupported_NetHttp", resourceCulture);
+                return "System.Net.Http is not supported on this platform.";
             }
         }
 
@@ -2392,7 +2379,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_chunk_too_large", resourceCulture);
+                return "The HTTP/1.1 response chunk was too large.";
             }
         }
 
@@ -2405,7 +2392,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_unsupported_extended_connect", resourceCulture);
+                return "Failed to establish web socket connection over HTTP/2 because extended CONNECT is not supported. Try to downgrade the request version to HTTP/1.1.";
             }
         }
 
@@ -2418,7 +2405,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_ping_request_timed_out", resourceCulture);
+                return "The HTTP/2 server didn't respond to a ping request within the configured KeepAlivePingDelay.";
             }
         }
 
@@ -2431,7 +2418,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_http_hpack_encode_failure", resourceCulture);
+                return "Failed to HPACK encode the headers.";
             }
         }
 

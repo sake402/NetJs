@@ -11,43 +11,47 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Pointer
         {
             if (node.ArgumentList.Arguments.Count == 1)
             {
-                var type = visitor.Global.GetTypeSymbol(node.Expression, visitor);
-                if (type.IsPointer(out var pointedType))
+                var symbol = visitor.Global.GetSymbol(node.Expression, visitor);
+                if (!visitor.Global.IsFixedSizeField(symbol, out _, out _))
                 {
-                    var argType = visitor.Global.GetTypeSymbol(node.ArgumentList.Arguments[0], visitor);
-                    bool isGet = node.IsReadOnlyOperation();
-                    if (isGet)
+                    var type = visitor.Global.GetTypeSymbol(symbol);
+                    if (type.IsPointer(out var pointedType))
                     {
-                        visitor.Visit(node.Expression);
-                        visitor.CurrentTypeWriter.Write(node, ".GetAt(");
-                        if (argType.IsLongNumericType())
+                        var argType = visitor.Global.GetTypeSymbol(node.ArgumentList.Arguments[0], visitor);
+                        bool isGet = node.IsReadOnlyOperation();
+                        if (isGet)
                         {
-                            visitor.CurrentTypeWriter.Write(node, "Number(");
-                        }
-                        visitor.Visit(node.ArgumentList.Arguments[0]);
-                        if (argType.IsLongNumericType())
-                        {
+                            visitor.Visit(node.Expression);
+                            visitor.CurrentTypeWriter.Write(node, ".GetAt(");
+                            if (argType.IsLongNumericType())
+                            {
+                                visitor.CurrentTypeWriter.Write(node, "Number(");
+                            }
+                            visitor.Visit(node.ArgumentList.Arguments[0]);
+                            if (argType.IsLongNumericType())
+                            {
+                                visitor.CurrentTypeWriter.Write(node, ")");
+                            }
                             visitor.CurrentTypeWriter.Write(node, ")");
                         }
-                        visitor.CurrentTypeWriter.Write(node, ")");
-                    }
-                    else
-                    {
-                        visitor.Visit(node.Expression);
-                        visitor.CurrentTypeWriter.Write(node, ".get_Item(");
-                        if (argType.IsLongNumericType())
+                        else
                         {
-                            visitor.CurrentTypeWriter.Write(node, "Number(");
-                        }
-                        visitor.Visit(node.ArgumentList.Arguments[0]);
-                        if (argType.IsLongNumericType())
-                        {
+                            visitor.Visit(node.Expression);
+                            visitor.CurrentTypeWriter.Write(node, ".get_Item(");
+                            if (argType.IsLongNumericType())
+                            {
+                                visitor.CurrentTypeWriter.Write(node, "Number(");
+                            }
+                            visitor.Visit(node.ArgumentList.Arguments[0]);
+                            if (argType.IsLongNumericType())
+                            {
+                                visitor.CurrentTypeWriter.Write(node, ")");
+                            }
                             visitor.CurrentTypeWriter.Write(node, ")");
+                            visitor.TryDereference(node);
                         }
-                        visitor.CurrentTypeWriter.Write(node, ")");
-                        visitor.TryDereference(node);
+                        return true;
                     }
-                    return true;
                 }
             }
             return false;

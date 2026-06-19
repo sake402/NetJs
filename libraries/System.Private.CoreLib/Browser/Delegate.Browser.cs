@@ -1,7 +1,7 @@
-﻿using System;
+﻿using NetJs;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Numerics.Colors;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
@@ -103,7 +103,7 @@ namespace System
         [NetJs.MemberReplace(nameof(AllocDelegateLike_internal))]
         private protected static MulticastDelegate AllocDelegateLike_internalImpl(Delegate d)
         {
-            var prototype = d.GetPrototype();
+            var prototype = d.GetClassPrototype();
             var _delegate = prototype.New().As<MulticastDelegate>();
             _delegate.bound = d.bound;
             _delegate.data = d.data;
@@ -140,8 +140,20 @@ namespace System
         [NetJs.MemberReplace(nameof(CreateDelegate_internal))]
         private static Delegate? CreateDelegate_internalImpl(QCallTypeHandle type, object? target, MethodInfo info, bool throwOnBindFailure)
         {
-            var returnType = type.QCallTypeHandleToRuntimeType();
-            return null;// new Delegate_Partial(target, info).As<Delegate>();
+            var delegateType = type.QCallTypeHandleToRuntimeType();
+            var _delegate = delegateType._prototype.New();
+            var ctor = _delegate[NetJs.Constants.DefaultConstructorName];
+            object? trampoline()
+            {
+                //TODO: More likely the delegate caller has already type checked parameters or enforced by the compiler
+                //We should consider invoking the native js method directly instead of calling info.Invoke()(slower) which does type checking again on the arguments
+                var prototype = info.DeclaringType.As<RuntimeType>()._prototype;
+                return RuntimeHelpers.NativeFunctionDispatch(info._model.Flags.TypeHasFlag(MemberFlagsModel.IsStatic) ? prototype : target!, info._model, NetJs.Script.Arguments());
+                //return info.Invoke(target, NetJs.Script.Arguments());
+            }
+            RuntimeHelpers.NativeFunctionDispatch(_delegate, NetJs.Constants.DefaultConstructorName, target, trampoline);
+            //NetJs.Script.Write("ctor.call(_delegate, target, trampoline)");
+            return _delegate.As<Delegate>();
         }
 
         [NetJs.MemberReplace(nameof(GetVirtualMethod_internal))]

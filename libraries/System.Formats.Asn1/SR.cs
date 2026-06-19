@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Formats.Asn1", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,7 +70,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_DestinationTooShort", resourceCulture);
+                return "Destination is too short.";
             }
         }
 
@@ -83,7 +83,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_EnumeratedValueRequiresNonFlagsEnum", resourceCulture);
+                return "ASN.1 Enumerated values only apply to enum types without the [Flags] attribute.";
             }
         }
 
@@ -96,14 +96,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_EnumeratedValueBackingTypeNotSupported", resourceCulture);
+                return "Enumerations with a backing type of '{0}' are not supported for ReadEnumeratedValue.";
             }
         }
 
 
         internal static string FormatArgument_EnumeratedValueBackingTypeNotSupported(object arg1)
         {
-            return string.Format(Argument_EnumeratedValueBackingTypeNotSupported, arg1);
+            return string.Format("Enumerations with a backing type of '{0}' are not supported for ReadEnumeratedValue.", arg1);
         }
 
 
@@ -114,7 +114,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidOidValue", resourceCulture);
+                return "The OID value is invalid.";
             }
         }
 
@@ -127,7 +127,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_NamedBitListRequiresFlagsEnum", resourceCulture);
+                return "Named bit list operations require an enum with the [Flags] attribute.";
             }
         }
 
@@ -140,7 +140,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_SourceOverlapsDestination", resourceCulture);
+                return "The destination buffer overlaps the source buffer.";
             }
         }
 
@@ -153,7 +153,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_Tag_NotCharacterString", resourceCulture);
+                return "The specified tag has the Universal TagClass, but the TagValue does not correspond with a known character string type.";
             }
         }
 
@@ -166,7 +166,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_IntegerCannotBeEmpty", resourceCulture);
+                return "An integer value cannot be empty.";
             }
         }
 
@@ -179,7 +179,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_IntegerRedundantByte", resourceCulture);
+                return "The first 9 bits of the integer value all have the same value. Ensure the input is in big-endian byte order and that all redundant leading bytes have been removed.";
             }
         }
 
@@ -192,7 +192,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_UniversalValueIsFixed", resourceCulture);
+                return "Tags with TagClass Universal must have the appropriate TagValue value for the data type being read or written.";
             }
         }
 
@@ -205,7 +205,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_UnusedBitCountMustBeZero", resourceCulture);
+                return "Unused bit count must be 0 when the bit string is empty.";
             }
         }
 
@@ -218,7 +218,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_UnusedBitCountRange", resourceCulture);
+                return "Unused bit count must be between 0 and 7, inclusive.";
             }
         }
 
@@ -231,7 +231,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_UnusedBitWasSet", resourceCulture);
+                return "One or more of the bits covered by the provided unusedBitCount value is set. All unused bits must be cleared.";
             }
         }
 
@@ -244,7 +244,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_WriteEncodedValue_OneValueAtATime", resourceCulture);
+                return "The input to WriteEncodedValue must represent a single encoded value with no trailing data.";
             }
         }
 
@@ -257,7 +257,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_NeedNonNegNum", resourceCulture);
+                return "Non-negative number required.";
             }
         }
 
@@ -270,7 +270,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AsnWriter_EncodeUnbalancedStack", resourceCulture);
+                return "Encode cannot be called while a Sequence, Set-Of, or Octet String is still open.";
             }
         }
 
@@ -283,7 +283,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AsnWriter_ModifyingWhileEncoding", resourceCulture);
+                return "The AsnWriter cannot be written to while performing the Encode callback.";
             }
         }
 
@@ -296,7 +296,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AsnWriter_PopWrongTag", resourceCulture);
+                return "Cannot pop the requested tag as it is not currently in progress.";
             }
         }
 
@@ -309,7 +309,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ContentException_CerRequiresIndefiniteLength", resourceCulture);
+                return "A constructed tag used a definite length encoding, which is invalid for CER data. The input may be encoded with BER or DER.";
             }
         }
 
@@ -322,14 +322,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ContentException_ConstructedEncodingRequired", resourceCulture);
+                return "The encoded value uses a primitive encoding, which is invalid for '{0}' values.";
             }
         }
 
 
         internal static string FormatContentException_ConstructedEncodingRequired(object arg1)
         {
-            return string.Format(ContentException_ConstructedEncodingRequired, arg1);
+            return string.Format("The encoded value uses a primitive encoding, which is invalid for '{0}' values.", arg1);
         }
 
 
@@ -340,7 +340,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ContentException_DefaultMessage", resourceCulture);
+                return "The ASN.1 value is invalid.";
             }
         }
 
@@ -353,14 +353,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ContentException_EnumeratedValueTooBig", resourceCulture);
+                return "The encoded enumerated value is larger than the value size of the '{0}' enum.";
             }
         }
 
 
         internal static string FormatContentException_EnumeratedValueTooBig(object arg1)
         {
-            return string.Format(ContentException_EnumeratedValueTooBig, arg1);
+            return string.Format("The encoded enumerated value is larger than the value size of the '{0}' enum.", arg1);
         }
 
 
@@ -371,7 +371,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ContentException_InvalidUnderCer_TryBerOrDer", resourceCulture);
+                return "The encoded value is not valid under the selected encoding, but it may be valid under the BER or DER encoding.";
             }
         }
 
@@ -384,7 +384,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ContentException_InvalidUnderCerOrDer_TryBer", resourceCulture);
+                return "The encoded value is not valid under the selected encoding, but it may be valid under the BER encoding.";
             }
         }
 
@@ -397,7 +397,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ContentException_InvalidUnderDer_TryBerOrCer", resourceCulture);
+                return "The encoded value is not valid under the selected encoding, but it may be valid under the BER or CER encoding.";
             }
         }
 
@@ -410,7 +410,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ContentException_InvalidTag", resourceCulture);
+                return "The provided data does not represent a valid tag.";
             }
         }
 
@@ -423,7 +423,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ContentException_LengthExceedsPayload", resourceCulture);
+                return "The encoded length exceeds the number of bytes remaining in the input buffer.";
             }
         }
 
@@ -436,7 +436,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ContentException_LengthRuleSetConstraint", resourceCulture);
+                return "The encoded length is not valid under the requested encoding rules, the value may be valid under the BER encoding.";
             }
         }
 
@@ -449,7 +449,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ContentException_LengthTooBig", resourceCulture);
+                return "The encoded length exceeds the maximum supported by this library (Int32.MaxValue).";
             }
         }
 
@@ -462,14 +462,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ContentException_NamedBitListValueTooBig", resourceCulture);
+                return "The encoded named bit list value is larger than the value size of the '{0}' enum.";
             }
         }
 
 
         internal static string FormatContentException_NamedBitListValueTooBig(object arg1)
         {
-            return string.Format(ContentException_NamedBitListValueTooBig, arg1);
+            return string.Format("The encoded named bit list value is larger than the value size of the '{0}' enum.", arg1);
         }
 
 
@@ -480,7 +480,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ContentException_OidTooBig", resourceCulture);
+                return "The encoded object identifier (OID) exceeds the limits supported by this library. Supported OIDs are limited to 64 arcs and each subidentifier is limited to a 128-bit value.";
             }
         }
 
@@ -493,14 +493,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ContentException_PrimitiveEncodingRequired", resourceCulture);
+                return "The encoded value uses a constructed encoding, which is invalid for '{0}' values.";
             }
         }
 
 
         internal static string FormatContentException_PrimitiveEncodingRequired(object arg1)
         {
-            return string.Format(ContentException_PrimitiveEncodingRequired, arg1);
+            return string.Format("The encoded value uses a constructed encoding, which is invalid for '{0}' values.", arg1);
         }
 
 
@@ -511,7 +511,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ContentException_SetOfNotSorted", resourceCulture);
+                return "The encoded set is not sorted as required by the current encoding rules. The value may be valid under the BER encoding, or you can ignore the sort validation by specifying skipSortValidation=true.";
             }
         }
 
@@ -524,7 +524,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ContentException_TooMuchData", resourceCulture);
+                return "The last expected value has been read, but the reader still has pending data. This value may be from a newer schema, or is corrupt.";
             }
         }
 
@@ -537,14 +537,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ContentException_WrongTag", resourceCulture);
+                return "The provided data is tagged with '{0}' class value '{1}', but it should have been '{2}' class value '{3}'.";
             }
         }
 
 
         internal static string FormatContentException_WrongTag(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(ContentException_WrongTag, arg1, arg2, arg3, arg4);
+            return string.Format("The provided data is tagged with '{0}' class value '{1}', but it should have been '{2}' class value '{3}'.", arg1, arg2, arg3, arg4);
         }
     }
 }

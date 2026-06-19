@@ -32,7 +32,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Ref
 
     /// <summary>
     /// Since we use the same type to abstract ref and pointer
-    /// A syntax like ref *ptr can shortcircuit to just the inner operand of the pointer
+    /// A syntax like ref *ptr or ref pointer[0] can shortcircuit to just the inner operand of the pointer
     /// </summary>
     internal class UnwrapRefOfPointerDerefereceFromArgumentSyntaxEmitter : SyntaxEmitter<ArgumentSyntax>
     {
@@ -45,11 +45,15 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Ref
             }
             if (node.RefKindKeyword.ValueText.Length > 0 && node.Expression.IsKind(SyntaxKind.ElementAccessExpression) && node.Expression is ElementAccessExpressionSyntax elementAccess)
             {
-                var type = visitor.Global.TryGetTypeSymbol(elementAccess.Expression, visitor);
-                if (type?.IsPointer(out _) ?? false)
+                var symbol = visitor.Global.TryGetSymbol(elementAccess.Expression, visitor);
+                if (symbol != null && !visitor.Global.IsFixedSizeField(symbol, out _, out _))
                 {
-                    visitor.WritePointerAdvance(node, elementAccess.Expression, elementAccess.ArgumentList.Arguments[0]);
-                    return true;
+                    var type = visitor.Global.GetTypeSymbol(symbol);
+                    if (type?.IsPointer(out _) ?? false)
+                    {
+                        visitor.WritePointerAdvance(node, elementAccess.Expression, elementAccess.ArgumentList.Arguments[0]);
+                        return true;
+                    }
                 }
             }
             return false;

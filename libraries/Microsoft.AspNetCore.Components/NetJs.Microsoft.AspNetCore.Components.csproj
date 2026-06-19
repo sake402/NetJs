@@ -108,7 +108,6 @@
     <Compile Include="$(RepoRoot)src\Components\Components\src\ComponentsMetrics.cs" />
     <Compile Include="$(RepoRoot)src\Components\Components\src\ComponentSubscriptionKey.cs" />
     <Compile Include="$(RepoRoot)src\Components\Components\src\DefaultComponentActivator.cs" />
-    <Compile Include="$(RepoRoot)src\Components\Components\src\DefaultComponentPropertyActivator.cs" />
     <Compile Include="$(RepoRoot)src\Components\Components\src\Dispatcher.cs" />
     <Compile Include="$(RepoRoot)src\Components\Components\src\DynamicComponent.cs" />
     <Compile Include="$(RepoRoot)src\Components\Components\src\EditorRequiredAttribute.cs" />
@@ -125,7 +124,6 @@
     <Compile Include="$(RepoRoot)src\Components\Components\src\ICascadingValueSupplier.cs" />
     <Compile Include="$(RepoRoot)src\Components\Components\src\IComponent.cs" />
     <Compile Include="$(RepoRoot)src\Components\Components\src\IComponentActivator.cs" />
-    <Compile Include="$(RepoRoot)src\Components\Components\src\IComponentPropertyActivator.cs" />
     <Compile Include="$(RepoRoot)src\Components\Components\src\IComponentRenderMode.cs" />
     <Compile Include="$(RepoRoot)src\Components\Components\src\IErrorBoundary.cs" />
     <Compile Include="$(RepoRoot)src\Components\Components\src\IEventCallback.cs" />

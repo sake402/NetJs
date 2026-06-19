@@ -48,7 +48,7 @@ namespace System
         public static extern bool Some<T>(this T[] array, [NativeDelegate] Func<T, bool> callback);
 
         [NetJs.Template("{source}.push({value})")]
-        public static extern void Push(this Array source, object? value);
+        public static extern void Push(this Array source, [Box(false)]object? value);
         [NetJs.Template("{source}.push({value})")]
         public static extern void Push<T>(this T[] source, T value);
         [NetJs.Template("{source}.push( ...{values})")]
@@ -87,15 +87,15 @@ namespace System
         [NetJs.Template("{array}.slice()")]
         public static extern Array ArrayClone(this Array array);
         [NetJs.Template("{array}.slice({start})")]
-        public static extern Array Slice<T>(this T[] array, int start);
+        public static extern T[] Slice<T>(this T[] array, int start);
 
         [NetJs.Template("{array}.slice({start}, {end})")]
-        public static extern Array Slice<T>(this T[] array, int start, int end);
+        public static extern T[] Slice<T>(this T[] array, int start, int end);
 
         [NetJs.Template("{array}.splice({start}, {deleteCount})")]
-        public static extern Array Splice<T>(this T[] array, int start, int deleteCount);
+        public static extern T[] Splice<T>(this T[] array, int start, int deleteCount);
         [NetJs.Template("{array}.splice({start}, {deleteCount}, ...{newItems})")]
-        public static extern Array Splice<T>(this T[] array, int start, int deleteCount, params object[] newItems);
+        public static extern T[] Splice<T>(this T[] array, int start, int deleteCount, params T[] newItems);
 
         [NetJs.Template("{array}.splice({items})")]
         public static extern void Unshift<T>(this T[] array, params T[] items);

@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Reflection.Emit", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,7 +70,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_CannotPopulateMultipleTimes", resourceCulture);
+                return "Cannot populate assembly metadata multiple times.";
             }
         }
 
@@ -83,7 +83,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_CannotSetParentToInterface", resourceCulture);
+                return "Cannot set parent to an interface.";
             }
         }
 
@@ -96,7 +96,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_BadInterfaceNotAbstract", resourceCulture);
+                return "Interface must be declared abstract.";
             }
         }
 
@@ -109,7 +109,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_AModuleRequired", resourceCulture);
+                return "Assembly needs at least one module defined.";
             }
         }
 
@@ -122,7 +122,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_NoMultiModuleAssembly", resourceCulture);
+                return "You cannot have more than one dynamic module in each dynamic assembly in this version of the runtime.";
             }
         }
 
@@ -135,7 +135,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_DynamicModule", resourceCulture);
+                return "The invoked member is not supported in a dynamic module.";
             }
         }
 
@@ -148,7 +148,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidTypeCodeForTypeArgument", resourceCulture);
+                return "The type code may not be used as a type argument of a custom attribute.";
             }
         }
 
@@ -161,14 +161,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_UnmanagedTypeOnlyForFields", resourceCulture);
+                return " 'UnmanagedType.{0}' named parameter is only valid for fields.";
             }
         }
 
 
         internal static string FormatNotSupported_UnmanagedTypeOnlyForFields(object arg1)
         {
-            return string.Format(NotSupported_UnmanagedTypeOnlyForFields, arg1);
+            return string.Format(" 'UnmanagedType.{0}' named parameter is only valid for fields.", arg1);
         }
 
 
@@ -179,14 +179,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidCustomAttributeLength", resourceCulture);
+                return "Custom attribute '{0}' data length is only '{1}'.";
             }
         }
 
 
         internal static string FormatArgument_InvalidCustomAttributeLength(object arg1, object arg2)
         {
-            return string.Format(Argument_InvalidCustomAttributeLength, arg1, arg2);
+            return string.Format("Custom attribute '{0}' data length is only '{1}'.", arg1, arg2);
         }
 
 
@@ -197,14 +197,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidProlog", resourceCulture);
+                return "Custom attribute '{0}' prolog invalid.";
             }
         }
 
 
         internal static string FormatArgument_InvalidProlog(object arg1)
         {
-            return string.Format(Argument_InvalidProlog, arg1);
+            return string.Format("Custom attribute '{0}' prolog invalid.", arg1);
         }
 
 
@@ -215,14 +215,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_UnknownNamedType", resourceCulture);
+                return "Custom attribute '{0}' has unknown named type '{1}'.";
             }
         }
 
 
         internal static string FormatArgument_UnknownNamedType(object arg1, object arg2)
         {
-            return string.Format(Argument_UnknownNamedType, arg1, arg2);
+            return string.Format("Custom attribute '{0}' has unknown named type '{1}'.", arg1, arg2);
         }
 
 
@@ -233,14 +233,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotImplemented_TypeForValue", resourceCulture);
+                return "Type '{0}' not handled in the custom attribute value decoder.";
             }
         }
 
 
         internal static string FormatNotImplemented_TypeForValue(object arg1)
         {
-            return string.Format(NotImplemented_TypeForValue, arg1);
+            return string.Format("Type '{0}' not handled in the custom attribute value decoder.", arg1);
         }
 
 
@@ -251,7 +251,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_DllNameCannotBeEmpty", resourceCulture);
+                return "DllName cannot be empty.";
             }
         }
 
@@ -264,7 +264,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_ParamSequence", resourceCulture);
+                return "The specified parameter index is not in range.";
             }
         }
 
@@ -277,14 +277,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidArgumentForAttribute", resourceCulture);
+                return "Invalid constructor argument {0} provided for MarshalAs attribute.";
             }
         }
 
 
         internal static string FormatArgument_InvalidArgumentForAttribute(object arg1)
         {
-            return string.Format(Argument_InvalidArgumentForAttribute, arg1);
+            return string.Format("Invalid constructor argument {0} provided for MarshalAs attribute.", arg1);
         }
 
 
@@ -295,14 +295,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidParameterForUnmanagedType", resourceCulture);
+                return "Named parameter {0} is not valid for UnmanagedType.{1} type.";
             }
         }
 
 
         internal static string FormatArgument_InvalidParameterForUnmanagedType(object arg1, object arg2)
         {
-            return string.Format(Argument_InvalidParameterForUnmanagedType, arg1, arg2);
+            return string.Format("Named parameter {0} is not valid for UnmanagedType.{1} type.", arg1, arg2);
         }
 
 
@@ -313,7 +313,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_SizeConstMustBeSpecified", resourceCulture);
+                return "SizeConst parameter must be specified for UnmanagedType.ByValTStr type.";
             }
         }
 
@@ -326,7 +326,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_GenericParametersAlreadySet", resourceCulture);
+                return "The generic parameters are already defined on this MethodBuilder.";
             }
         }
 
@@ -339,7 +339,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_ShouldOnlySetVisibilityFlags", resourceCulture);
+                return "Should only set visibility flags when creating EnumBuilder.";
             }
         }
 
@@ -352,7 +352,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_ConstantDoesntMatch", resourceCulture);
+                return "Constant does not match the defined type.";
             }
         }
 
@@ -365,7 +365,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_ConstantNull", resourceCulture);
+                return "Null is not a valid constant value for this type.";
             }
         }
 
@@ -378,7 +378,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_NoUnderlyingTypeOnEnum", resourceCulture);
+                return "Underlying type information on enumeration is not specified.";
             }
         }
 
@@ -391,7 +391,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_ShouldNotHaveMethodBody", resourceCulture);
+                return "Method body should not exist.";
             }
         }
 
@@ -404,7 +404,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_ConstructorNotAllowedOnInterface", resourceCulture);
+                return "Interface cannot have constructors.";
             }
         }
 
@@ -417,7 +417,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_UnmatchedMethodForLocal", resourceCulture);
+                return "Local passed in does not belong to this ILGenerator.";
             }
         }
 
@@ -430,7 +430,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidLabel", resourceCulture);
+                return "Invalid Label.";
             }
         }
 
@@ -443,7 +443,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_MustBeSwitchOpCode", resourceCulture);
+                return "Only 'OpCode.Switch' can be used.";
             }
         }
 
@@ -456,7 +456,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_NotMethodCallOpcode", resourceCulture);
+                return "The specified opcode cannot be passed to EmitCall.";
             }
         }
 
@@ -469,7 +469,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_DefaultConstructorILGen", resourceCulture);
+                return "Unable to access ILGenerator on a constructor created with DefineDefaultConstructor.";
             }
         }
 
@@ -482,7 +482,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_NoParentDefaultConstructor", resourceCulture);
+                return "Parent does not have a default constructor. The default constructor must be explicitly defined.";
             }
         }
 
@@ -495,7 +495,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_TypeHasBeenCreated", resourceCulture);
+                return "Unable to change after type has been created.";
             }
         }
 
@@ -508,7 +508,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_TypeNotYetCreated", resourceCulture);
+                return "The invoked member is not supported before the type is created.";
             }
         }
 
@@ -521,7 +521,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_NoStaticVirtual", resourceCulture);
+                return "Method cannot be both static and virtual.";
             }
         }
 
@@ -534,7 +534,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_BadExceptionCodeGen", resourceCulture);
+                return "Incorrect code generation for exception block.";
             }
         }
 
@@ -547,7 +547,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_NotInExceptionBlock", resourceCulture);
+                return "Not currently in an exception block.";
             }
         }
 
@@ -560,7 +560,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_ShouldNotSpecifyExceptionType", resourceCulture);
+                return "Should not specify exception type for catch clause for filter block.";
             }
         }
 
@@ -573,14 +573,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_NotGenericMethodDefinition", resourceCulture);
+                return "{0} is not a GenericMethodDefinition. MakeGenericMethod may only be called on a method for which MethodBase.IsGenericMethodDefinition is true.";
             }
         }
 
 
         internal static string FormatArg_NotGenericMethodDefinition(object arg1)
         {
-            return string.Format(Arg_NotGenericMethodDefinition, arg1);
+            return string.Format("{0} is not a GenericMethodDefinition. MakeGenericMethod may only be called on a method for which MethodBase.IsGenericMethodDefinition is true.", arg1);
         }
 
 
@@ -591,7 +591,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_NotAVarArgCallingConvention", resourceCulture);
+                return "Calling convention must be VarArgs.";
             }
         }
 
@@ -604,7 +604,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentException_BadMethodImplBody", resourceCulture);
+                return "MethodOverride's body must be from this type.";
             }
         }
 
@@ -617,7 +617,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_GenericParameter", resourceCulture);
+                return "Method must be called on a Type for which Type.IsGenericParameter is false.";
             }
         }
 
@@ -630,14 +630,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidMethodOverride", resourceCulture);
+                return "Type '{0}' tried to override method '{1}' but does not implement or inherit that method.";
             }
         }
 
 
         internal static string FormatArgument_InvalidMethodOverride(object arg1, object arg2)
         {
-            return string.Format(Argument_InvalidMethodOverride, arg1, arg2);
+            return string.Format("Type '{0}' tried to override method '{1}' but does not implement or inherit that method.", arg1, arg2);
         }
 
 
@@ -648,7 +648,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InterfaceNotFound", resourceCulture);
+                return "Interface not found.";
             }
         }
 
@@ -661,14 +661,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_MethodOverridden", resourceCulture);
+                return "Method '{0}' on type '{1}' is overriding a method that has been overridden.";
             }
         }
 
 
         internal static string FormatArgument_MethodOverridden(object arg1, object arg2)
         {
-            return string.Format(Argument_MethodOverridden, arg1, arg2);
+            return string.Format("Method '{0}' on type '{1}' is overriding a method that has been overridden.", arg1, arg2);
         }
 
 
@@ -679,7 +679,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_MustBeInterface", resourceCulture);
+                return "Type passed must be an interface.";
             }
         }
 
@@ -692,14 +692,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_BadMethodBody", resourceCulture);
+                return "Method '{0}' cannot have a method body";
             }
         }
 
 
         internal static string FormatInvalidOperation_BadMethodBody(object arg1)
         {
-            return string.Format(InvalidOperation_BadMethodBody, arg1);
+            return string.Format("Method '{0}' cannot have a method body", arg1);
         }
 
 
@@ -710,7 +710,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_BadTypeAttributesNotAbstract", resourceCulture);
+                return "Type must be declared abstract if any of its methods are abstract.";
             }
         }
 
@@ -723,14 +723,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AmbiguousMatch_MemberInfo", resourceCulture);
+                return "Ambiguous match found for '{0} {1}'";
             }
         }
 
 
         internal static string FormatAmbiguousMatch_MemberInfo(object arg1, object arg2)
         {
-            return string.Format(AmbiguousMatch_MemberInfo, arg1, arg2);
+            return string.Format("Ambiguous match found for '{0} {1}'", arg1, arg2);
         }
 
 
@@ -741,7 +741,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_RedefinedLabel", resourceCulture);
+                return "Label defined multiple times.";
             }
         }
 
@@ -754,7 +754,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_BadPInvokeMethod", resourceCulture);
+                return "PInvoke methods must be static and native and cannot be abstract.";
             }
         }
 
@@ -767,7 +767,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_BadPInvokeOnInterface", resourceCulture);
+                return "PInvoke methods cannot exist on interfaces.";
             }
         }
 
@@ -780,7 +780,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_MethodRedefined", resourceCulture);
+                return "Method has been already defined.";
             }
         }
 
@@ -793,7 +793,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_GlobalMembersMustBeStatic", resourceCulture);
+                return "Global members must be static.";
             }
         }
 
@@ -806,7 +806,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_GlobalsHaveBeenCreated", resourceCulture);
+                return "Type definition of the global function has been completed.";
             }
         }
 
@@ -819,7 +819,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_BadSizeForData", resourceCulture);
+                return "Data size must be &gt; 1 and &lt; 0x3f0000.";
             }
         }
 
@@ -832,7 +832,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_TokenNotPopulated", resourceCulture);
+                return "MetadataToken for the member is not generated until the assembly saved.";
             }
         }
 
@@ -845,7 +845,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_BadSigFormat", resourceCulture);
+                return "Incorrect signature format.";
             }
         }
 
@@ -858,7 +858,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_HasToBeArrayClass", resourceCulture);
+                return "Must be an array type.";
             }
         }
 
@@ -871,7 +871,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_NonReflectedType", resourceCulture);
+                return "Not supported in a non-reflected type.";
             }
         }
 
@@ -884,7 +884,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_SymbolMethod", resourceCulture);
+                return "Not supported in an array method of a type definition that is not complete.";
             }
         }
 
@@ -897,7 +897,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_InvalidDocument", resourceCulture);
+                return "Invalid source document.";
             }
         }
 
@@ -910,7 +910,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_UnmatchingSymScope", resourceCulture);
+                return "Unmatching symbol scope.";
             }
         }
 
@@ -923,20 +923,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_MustBeEnum", resourceCulture);
-            }
-        }
-
-
-
-        /// <summary>
-        /// Argument must represent a function pointer type.
-        /// </summary>
-        internal static string Argument_MustBeFunctionPointer
-        {
-            get
-            {
-                return ResourceManager.GetString("Argument_MustBeFunctionPointer", resourceCulture);
+                return "Type provided must be an Enum.";
             }
         }
 

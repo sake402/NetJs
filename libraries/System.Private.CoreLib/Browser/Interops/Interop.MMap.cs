@@ -6,7 +6,8 @@ using System.Text;
 internal static partial class Interop
 {
     internal static unsafe partial class Sys
-    {        
+    {
+#if MEMORY_MAPPED_FILES
         internal static partial IntPtr MMap(
             IntPtr addr, ulong len,
             MemoryMappedProtections prot, MemoryMappedFlags flags,
@@ -22,5 +23,6 @@ internal static partial class Interop
         {
             return IntPtr.Zero;
         }
+#endif
     }
 }

@@ -24,32 +24,38 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitLocalDeclarationStatement(LocalDeclarationStatementSyntax node)
         {
-            //var closure = CurrentTypeWriter.CurrentClosure;
-            //if (node.UsingKeyword.Text.Length > 0)
-            //{
-            //    CurrentTypeWriter.WriteLine(node, "try", true);
-            //    CurrentTypeWriter.WriteLine(node, "{", true);
-            //}
             CurrentTypeWriter.Write(node, "", true);
             base.VisitLocalDeclarationStatement(node);
             CurrentTypeWriter.WriteLine(node, ";");
             if (node.UsingKeyword.Text.Length > 0)
             {
-                //closure.OnClosing += (s, e) =>
-                //{
-                //CurrentTypeWriter.WriteLine(node, "}", true);
-                //CurrentTypeWriter.WriteLine(node, "finally", true);
-                //CurrentTypeWriter.WriteLine(node, "{", true);
-                foreach (var variable in node.Declaration.Variables)
+                var block = node.FindClosestParent<BlockSyntax>() ?? throw new InvalidOperationException();
+                var blockClosure = CurrentTypeWriter.GetClosureOf(block) ?? throw new InvalidOperationException();
+                CurrentTypeWriter.WriteLine(node, "try", true);
+                CurrentTypeWriter.WriteLine(node, "{", true);
+                blockClosure.OnBlockClosing(() =>
                 {
-                    WriteMethodInvocation(node, "System.IDisposable.Dispose", lhsExpression: new CodeNode(() =>
+                    CurrentTypeWriter.WriteLine(node, "}", true);
+                    CurrentTypeWriter.WriteLine(node, "finally", true);
+                    CurrentTypeWriter.WriteLine(node, "{", true);
+                    foreach (var variable in node.Declaration.Variables)
                     {
-                        CurrentTypeWriter.Write(node, $"{variable.Identifier.ValueText}?", true);
-                    }));
-                    CurrentTypeWriter.WriteLine(node, ";");
-                }
-                //CurrentTypeWriter.WriteLine(node, "}", true);
-                //};
+                        var declarationType = _global.TryGetTypeSymbol(variable, this);
+                        if (declarationType != null && declarationType.AllInterfaces.Any(it => SymbolEqualityComparer.Default.Equals(it, _global.SystemIDisposable)))
+                        {
+                            WriteMethodInvocation(node, "System.IDisposable.Dispose", lhsExpression: new CodeNode(() =>
+                            {
+                                CurrentTypeWriter.Write(node, $"{variable.Identifier.ResolveIdentifierName()}?", true);
+                            }));
+                            CurrentTypeWriter.WriteLine(node, ";");
+                        }
+                        else
+                        {
+                            CurrentTypeWriter.WriteLine(node, $"{variable.Identifier.ResolveIdentifierName()}?.Dispose()", true);
+                        }
+                    }
+                    CurrentTypeWriter.WriteLine(node, "}", true);
+                });
             }
         }
 

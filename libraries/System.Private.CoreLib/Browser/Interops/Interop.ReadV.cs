@@ -8,9 +8,9 @@ internal static partial class Interop
 {
     internal static partial class Sys
     {
-        internal static unsafe partial long ReadV(SafeHandle fd, IOVector* vectors, int vectorCount)
-        {
-            throw new NotImplementedException();
-        }
+        //internal static unsafe partial long ReadV(SafeHandle fd, IOVector* vectors, int vectorCount)
+        //{
+        //    throw new NotImplementedException();
+        //}
     }
 }

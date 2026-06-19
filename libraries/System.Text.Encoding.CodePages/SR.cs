@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Text.Encoding.CodePages", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,7 +70,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_NeedNonNegNum", resourceCulture);
+                return "Non-negative number required.";
             }
         }
 
@@ -83,7 +83,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_IndexCount", resourceCulture);
+                return "Index and count must refer to a location within the string.";
             }
         }
 
@@ -96,7 +96,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_IndexCountBuffer", resourceCulture);
+                return "Index and count must refer to a location within the buffer.";
             }
         }
 
@@ -109,14 +109,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_NoCodepageData", resourceCulture);
+                return "No data is available for encoding {0}.";
             }
         }
 
 
         internal static string FormatNotSupported_NoCodepageData(object arg1)
         {
-            return string.Format(NotSupported_NoCodepageData, arg1);
+            return string.Format("No data is available for encoding {0}.", arg1);
         }
 
 
@@ -127,14 +127,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_EncodingConversionOverflowBytes", resourceCulture);
+                return "The output byte buffer is too small to contain the encoded data, encoding '{0}' fallback '{1}'.";
             }
         }
 
 
         internal static string FormatArgument_EncodingConversionOverflowBytes(object arg1, object arg2)
         {
-            return string.Format(Argument_EncodingConversionOverflowBytes, arg1, arg2);
+            return string.Format("The output byte buffer is too small to contain the encoded data, encoding '{0}' fallback '{1}'.", arg1, arg2);
         }
 
 
@@ -145,7 +145,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidCharSequenceNoIndex", resourceCulture);
+                return "String contains invalid Unicode code points.";
             }
         }
 
@@ -158,7 +158,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_GetByteCountOverflow", resourceCulture);
+                return "Too many characters. The resulting number of bytes is larger than what can be returned as an int.";
             }
         }
 
@@ -171,14 +171,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_EncodingConversionOverflowChars", resourceCulture);
+                return "The output char buffer is too small to contain the decoded characters, encoding '{0}' fallback '{1}'.";
             }
         }
 
 
         internal static string FormatArgument_EncodingConversionOverflowChars(object arg1, object arg2)
         {
-            return string.Format(Argument_EncodingConversionOverflowChars, arg1, arg2);
+            return string.Format("The output char buffer is too small to contain the decoded characters, encoding '{0}' fallback '{1}'.", arg1, arg2);
         }
 
 
@@ -189,7 +189,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_GetCharCountOverflow", resourceCulture);
+                return "Too many bytes. The resulting number of chars is larger than what can be returned as an int.";
             }
         }
 
@@ -202,14 +202,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_EncoderFallbackNotEmpty", resourceCulture);
+                return "Must complete Convert() operation or call Encoder.Reset() before calling GetBytes() or GetByteCount(). Encoder '{0}' fallback '{1}'.";
             }
         }
 
 
         internal static string FormatArgument_EncoderFallbackNotEmpty(object arg1, object arg2)
         {
-            return string.Format(Argument_EncoderFallbackNotEmpty, arg1, arg2);
+            return string.Format("Must complete Convert() operation or call Encoder.Reset() before calling GetBytes() or GetByteCount(). Encoder '{0}' fallback '{1}'.", arg1, arg2);
         }
 
 
@@ -220,14 +220,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_RecursiveFallback", resourceCulture);
+                return "Recursive fallback not allowed for character \\\\u{0:X4}.";
             }
         }
 
 
         internal static string FormatArgument_RecursiveFallback(object arg1)
         {
-            return string.Format(Argument_RecursiveFallback, arg1);
+            return string.Format("Recursive fallback not allowed for character \\\\u{0:X4}.", arg1);
         }
 
 
@@ -238,14 +238,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_RecursiveFallbackBytes", resourceCulture);
+                return "Recursive fallback not allowed for bytes {0}.";
             }
         }
 
 
         internal static string FormatArgument_RecursiveFallbackBytes(object arg1)
         {
-            return string.Format(Argument_RecursiveFallbackBytes, arg1);
+            return string.Format("Recursive fallback not allowed for bytes {0}.", arg1);
         }
 
 
@@ -256,14 +256,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_Range", resourceCulture);
+                return "Valid values are between {0} and {1}, inclusive.";
             }
         }
 
 
         internal static string FormatArgumentOutOfRange_Range(object arg1, object arg2)
         {
-            return string.Format(ArgumentOutOfRange_Range, arg1, arg2);
+            return string.Format("Valid values are between {0} and {1}, inclusive.", arg1, arg2);
         }
 
 
@@ -274,14 +274,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_CodepageNotSupported", resourceCulture);
+                return "{0} is not a supported code page.";
             }
         }
 
 
         internal static string FormatArgument_CodepageNotSupported(object arg1)
         {
-            return string.Format(Argument_CodepageNotSupported, arg1);
+            return string.Format("{0} is not a supported code page.", arg1);
         }
 
 
@@ -292,7 +292,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_IndexMustBeLess", resourceCulture);
+                return "Index was out of range. Must be non-negative and less than the size of the collection.";
             }
         }
 
@@ -305,7 +305,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_IndexMustBeLessOrEqual", resourceCulture);
+                return "Index was out of range. Must be non-negative and less than or equal to the size of the collection.";
             }
         }
 
@@ -318,14 +318,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MissingEncodingNameResource", resourceCulture);
+                return "Could not find a resource entry for the encoding codepage '{0} - {1}'";
             }
         }
 
 
         internal static string FormatMissingEncodingNameResource(object arg1, object arg2)
         {
-            return string.Format(MissingEncodingNameResource, arg1, arg2);
+            return string.Format("Could not find a resource entry for the encoding codepage '{0} - {1}'", arg1, arg2);
         }
 
 
@@ -336,7 +336,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_37", resourceCulture);
+                return "IBM EBCDIC (US-Canada)";
             }
         }
 
@@ -349,7 +349,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_437", resourceCulture);
+                return "OEM United States";
             }
         }
 
@@ -362,7 +362,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_500", resourceCulture);
+                return "IBM EBCDIC (International)";
             }
         }
 
@@ -375,7 +375,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_708", resourceCulture);
+                return "Arabic (ASMO 708)";
             }
         }
 
@@ -388,7 +388,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_720", resourceCulture);
+                return "Arabic (DOS)";
             }
         }
 
@@ -401,7 +401,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_737", resourceCulture);
+                return "Greek (DOS)";
             }
         }
 
@@ -414,7 +414,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_775", resourceCulture);
+                return "Baltic (DOS)";
             }
         }
 
@@ -427,7 +427,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_850", resourceCulture);
+                return "Western European (DOS)";
             }
         }
 
@@ -440,7 +440,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_852", resourceCulture);
+                return "Central European (DOS)";
             }
         }
 
@@ -453,7 +453,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_855", resourceCulture);
+                return "OEM Cyrillic";
             }
         }
 
@@ -466,7 +466,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_857", resourceCulture);
+                return "Turkish (DOS)";
             }
         }
 
@@ -479,7 +479,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_858", resourceCulture);
+                return "OEM Multilingual Latin I";
             }
         }
 
@@ -492,7 +492,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_860", resourceCulture);
+                return "Portuguese (DOS)";
             }
         }
 
@@ -505,7 +505,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_861", resourceCulture);
+                return "Icelandic (DOS)";
             }
         }
 
@@ -518,7 +518,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_862", resourceCulture);
+                return "Hebrew (DOS)";
             }
         }
 
@@ -531,7 +531,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_863", resourceCulture);
+                return "French Canadian (DOS)";
             }
         }
 
@@ -544,7 +544,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_864", resourceCulture);
+                return "Arabic (864)";
             }
         }
 
@@ -557,7 +557,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_865", resourceCulture);
+                return "Nordic (DOS)";
             }
         }
 
@@ -570,7 +570,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_866", resourceCulture);
+                return "Cyrillic (DOS)";
             }
         }
 
@@ -583,7 +583,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_869", resourceCulture);
+                return "Greek, Modern (DOS)";
             }
         }
 
@@ -596,7 +596,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_870", resourceCulture);
+                return "IBM EBCDIC (Multilingual Latin-2)";
             }
         }
 
@@ -609,7 +609,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_874", resourceCulture);
+                return "Thai (Windows)";
             }
         }
 
@@ -622,7 +622,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_875", resourceCulture);
+                return "IBM EBCDIC (Greek Modern)";
             }
         }
 
@@ -635,7 +635,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_932", resourceCulture);
+                return "Japanese (Shift-JIS)";
             }
         }
 
@@ -648,7 +648,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_936", resourceCulture);
+                return "Chinese Simplified (GB2312)";
             }
         }
 
@@ -661,7 +661,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_949", resourceCulture);
+                return "Korean";
             }
         }
 
@@ -674,7 +674,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_950", resourceCulture);
+                return "Chinese Traditional (Big5)";
             }
         }
 
@@ -687,7 +687,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_1026", resourceCulture);
+                return "IBM EBCDIC (Turkish Latin-5)";
             }
         }
 
@@ -700,7 +700,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_1047", resourceCulture);
+                return "IBM Latin-1";
             }
         }
 
@@ -713,7 +713,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_1140", resourceCulture);
+                return "IBM EBCDIC (US-Canada-Euro)";
             }
         }
 
@@ -726,7 +726,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_1141", resourceCulture);
+                return "IBM EBCDIC (Germany-Euro)";
             }
         }
 
@@ -739,7 +739,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_1142", resourceCulture);
+                return "IBM EBCDIC (Denmark-Norway-Euro)";
             }
         }
 
@@ -752,7 +752,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_1143", resourceCulture);
+                return "IBM EBCDIC (Finland-Sweden-Euro)";
             }
         }
 
@@ -765,7 +765,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_1144", resourceCulture);
+                return "IBM EBCDIC (Italy-Euro)";
             }
         }
 
@@ -778,7 +778,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_1145", resourceCulture);
+                return "IBM EBCDIC (Spain-Euro)";
             }
         }
 
@@ -791,7 +791,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_1146", resourceCulture);
+                return "IBM EBCDIC (UK-Euro)";
             }
         }
 
@@ -804,7 +804,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_1147", resourceCulture);
+                return "IBM EBCDIC (France-Euro)";
             }
         }
 
@@ -817,7 +817,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_1148", resourceCulture);
+                return "IBM EBCDIC (International-Euro)";
             }
         }
 
@@ -830,7 +830,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_1149", resourceCulture);
+                return "IBM EBCDIC (Icelandic-Euro)";
             }
         }
 
@@ -843,7 +843,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_1250", resourceCulture);
+                return "Central European (Windows)";
             }
         }
 
@@ -856,7 +856,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_1251", resourceCulture);
+                return "Cyrillic (Windows)";
             }
         }
 
@@ -869,7 +869,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_1252", resourceCulture);
+                return "Western European (Windows)";
             }
         }
 
@@ -882,7 +882,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_1253", resourceCulture);
+                return "Greek (Windows)";
             }
         }
 
@@ -895,7 +895,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_1254", resourceCulture);
+                return "Turkish (Windows)";
             }
         }
 
@@ -908,7 +908,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_1255", resourceCulture);
+                return "Hebrew (Windows)";
             }
         }
 
@@ -921,7 +921,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_1256", resourceCulture);
+                return "Arabic (Windows)";
             }
         }
 
@@ -934,7 +934,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_1257", resourceCulture);
+                return "Baltic (Windows)";
             }
         }
 
@@ -947,7 +947,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_1258", resourceCulture);
+                return "Vietnamese (Windows)";
             }
         }
 
@@ -960,7 +960,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_1361", resourceCulture);
+                return "Korean (Johab)";
             }
         }
 
@@ -973,7 +973,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_10000", resourceCulture);
+                return "Western European (Mac)";
             }
         }
 
@@ -986,7 +986,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_10001", resourceCulture);
+                return "Japanese (Mac)";
             }
         }
 
@@ -999,7 +999,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_10002", resourceCulture);
+                return "Chinese Traditional (Mac)";
             }
         }
 
@@ -1012,7 +1012,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_10003", resourceCulture);
+                return "Korean (Mac)";
             }
         }
 
@@ -1025,7 +1025,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_10004", resourceCulture);
+                return "Arabic (Mac)";
             }
         }
 
@@ -1038,7 +1038,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_10005", resourceCulture);
+                return "Hebrew (Mac)";
             }
         }
 
@@ -1051,7 +1051,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_10006", resourceCulture);
+                return "Greek (Mac)";
             }
         }
 
@@ -1064,7 +1064,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_10007", resourceCulture);
+                return "Cyrillic (Mac)";
             }
         }
 
@@ -1077,7 +1077,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_10008", resourceCulture);
+                return "Chinese Simplified (Mac)";
             }
         }
 
@@ -1090,7 +1090,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_10010", resourceCulture);
+                return "Romanian (Mac)";
             }
         }
 
@@ -1103,7 +1103,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_10017", resourceCulture);
+                return "Ukrainian (Mac)";
             }
         }
 
@@ -1116,7 +1116,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_10021", resourceCulture);
+                return "Thai (Mac)";
             }
         }
 
@@ -1129,7 +1129,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_10029", resourceCulture);
+                return "Central European (Mac)";
             }
         }
 
@@ -1142,7 +1142,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_10079", resourceCulture);
+                return "Icelandic (Mac)";
             }
         }
 
@@ -1155,7 +1155,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_10081", resourceCulture);
+                return "Turkish (Mac)";
             }
         }
 
@@ -1168,7 +1168,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_10082", resourceCulture);
+                return "Croatian (Mac)";
             }
         }
 
@@ -1181,7 +1181,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20000", resourceCulture);
+                return "Chinese Traditional (CNS)";
             }
         }
 
@@ -1194,7 +1194,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20001", resourceCulture);
+                return "TCA Taiwan";
             }
         }
 
@@ -1207,7 +1207,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20002", resourceCulture);
+                return "Chinese Traditional (Eten)";
             }
         }
 
@@ -1220,7 +1220,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20003", resourceCulture);
+                return "IBM5550 Taiwan";
             }
         }
 
@@ -1233,7 +1233,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20004", resourceCulture);
+                return "TeleText Taiwan";
             }
         }
 
@@ -1246,7 +1246,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20005", resourceCulture);
+                return "Wang Taiwan";
             }
         }
 
@@ -1259,7 +1259,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20105", resourceCulture);
+                return "Western European (IA5)";
             }
         }
 
@@ -1272,7 +1272,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20106", resourceCulture);
+                return "German (IA5)";
             }
         }
 
@@ -1285,7 +1285,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20107", resourceCulture);
+                return "Swedish (IA5)";
             }
         }
 
@@ -1298,7 +1298,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20108", resourceCulture);
+                return "Norwegian (IA5)";
             }
         }
 
@@ -1311,7 +1311,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20261", resourceCulture);
+                return "T.61";
             }
         }
 
@@ -1324,7 +1324,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20269", resourceCulture);
+                return "ISO-6937";
             }
         }
 
@@ -1337,7 +1337,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20273", resourceCulture);
+                return "IBM EBCDIC (Germany)";
             }
         }
 
@@ -1350,7 +1350,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20277", resourceCulture);
+                return "IBM EBCDIC (Denmark-Norway)";
             }
         }
 
@@ -1363,7 +1363,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20278", resourceCulture);
+                return "IBM EBCDIC (Finland-Sweden)";
             }
         }
 
@@ -1376,7 +1376,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20280", resourceCulture);
+                return "IBM EBCDIC (Italy)";
             }
         }
 
@@ -1389,7 +1389,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20284", resourceCulture);
+                return "IBM EBCDIC (Spain)";
             }
         }
 
@@ -1402,7 +1402,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20285", resourceCulture);
+                return "IBM EBCDIC (UK)";
             }
         }
 
@@ -1415,7 +1415,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20290", resourceCulture);
+                return "IBM EBCDIC (Japanese katakana)";
             }
         }
 
@@ -1428,7 +1428,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20297", resourceCulture);
+                return "IBM EBCDIC (France)";
             }
         }
 
@@ -1441,7 +1441,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20420", resourceCulture);
+                return "IBM EBCDIC (Arabic)";
             }
         }
 
@@ -1454,7 +1454,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20423", resourceCulture);
+                return "IBM EBCDIC (Greek)";
             }
         }
 
@@ -1467,7 +1467,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20424", resourceCulture);
+                return "IBM EBCDIC (Hebrew)";
             }
         }
 
@@ -1480,7 +1480,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20833", resourceCulture);
+                return "IBM EBCDIC (Korean Extended)";
             }
         }
 
@@ -1493,7 +1493,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20838", resourceCulture);
+                return "IBM EBCDIC (Thai)";
             }
         }
 
@@ -1506,7 +1506,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20866", resourceCulture);
+                return "Cyrillic (KOI8-R)";
             }
         }
 
@@ -1519,7 +1519,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20871", resourceCulture);
+                return "IBM EBCDIC (Icelandic)";
             }
         }
 
@@ -1532,7 +1532,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20880", resourceCulture);
+                return "IBM EBCDIC (Cyrillic Russian)";
             }
         }
 
@@ -1545,7 +1545,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20905", resourceCulture);
+                return "IBM EBCDIC (Turkish)";
             }
         }
 
@@ -1558,7 +1558,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20924", resourceCulture);
+                return "IBM Latin-1";
             }
         }
 
@@ -1571,7 +1571,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20932", resourceCulture);
+                return "Japanese (JIS 0208-1990 and 0212-1990)";
             }
         }
 
@@ -1584,7 +1584,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20936", resourceCulture);
+                return "Chinese Simplified (GB2312-80)";
             }
         }
 
@@ -1597,7 +1597,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_20949", resourceCulture);
+                return "Korean Wansung";
             }
         }
 
@@ -1610,7 +1610,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_21025", resourceCulture);
+                return "IBM EBCDIC (Cyrillic Serbian-Bulgarian)";
             }
         }
 
@@ -1623,7 +1623,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_21027", resourceCulture);
+                return "Ext Alpha Lowercase";
             }
         }
 
@@ -1636,7 +1636,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_21866", resourceCulture);
+                return "Cyrillic (KOI8-U)";
             }
         }
 
@@ -1649,7 +1649,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_28592", resourceCulture);
+                return "Central European (ISO)";
             }
         }
 
@@ -1662,7 +1662,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_28593", resourceCulture);
+                return "Latin 3 (ISO)";
             }
         }
 
@@ -1675,7 +1675,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_28594", resourceCulture);
+                return "Baltic (ISO)";
             }
         }
 
@@ -1688,7 +1688,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_28595", resourceCulture);
+                return "Cyrillic (ISO)";
             }
         }
 
@@ -1701,7 +1701,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_28596", resourceCulture);
+                return "Arabic (ISO)";
             }
         }
 
@@ -1714,7 +1714,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_28597", resourceCulture);
+                return "Greek (ISO)";
             }
         }
 
@@ -1727,7 +1727,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_28598", resourceCulture);
+                return "Hebrew (ISO-Visual)";
             }
         }
 
@@ -1740,7 +1740,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_28599", resourceCulture);
+                return "Turkish (ISO)";
             }
         }
 
@@ -1753,7 +1753,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_28603", resourceCulture);
+                return "Estonian (ISO)";
             }
         }
 
@@ -1766,7 +1766,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_28605", resourceCulture);
+                return "Latin 9 (ISO)";
             }
         }
 
@@ -1779,7 +1779,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_29001", resourceCulture);
+                return "Europa";
             }
         }
 
@@ -1792,7 +1792,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_38598", resourceCulture);
+                return "Hebrew (ISO-Logical)";
             }
         }
 
@@ -1805,7 +1805,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_50000", resourceCulture);
+                return "User Defined";
             }
         }
 
@@ -1818,7 +1818,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_50220", resourceCulture);
+                return "Japanese (JIS)";
             }
         }
 
@@ -1831,7 +1831,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_50221", resourceCulture);
+                return "Japanese (JIS-Allow 1 byte Kana)";
             }
         }
 
@@ -1844,7 +1844,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_50222", resourceCulture);
+                return "Japanese (JIS-Allow 1 byte Kana - SO/SI)";
             }
         }
 
@@ -1857,7 +1857,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_50225", resourceCulture);
+                return "Korean (ISO)";
             }
         }
 
@@ -1870,7 +1870,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_50227", resourceCulture);
+                return "Chinese Simplified (ISO-2022)";
             }
         }
 
@@ -1883,7 +1883,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_50229", resourceCulture);
+                return "Chinese Traditional (ISO-2022)";
             }
         }
 
@@ -1896,7 +1896,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_50930", resourceCulture);
+                return "IBM EBCDIC (Japanese and Japanese Katakana)";
             }
         }
 
@@ -1909,7 +1909,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_50931", resourceCulture);
+                return "IBM EBCDIC (Japanese and US-Canada)";
             }
         }
 
@@ -1922,7 +1922,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_50933", resourceCulture);
+                return "IBM EBCDIC (Korean and Korean Extended)";
             }
         }
 
@@ -1935,7 +1935,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_50935", resourceCulture);
+                return "IBM EBCDIC (Simplified Chinese)";
             }
         }
 
@@ -1948,7 +1948,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_50937", resourceCulture);
+                return "IBM EBCDIC (Traditional Chinese)";
             }
         }
 
@@ -1961,7 +1961,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_50939", resourceCulture);
+                return "IBM EBCDIC (Japanese and Japanese-Latin)";
             }
         }
 
@@ -1974,7 +1974,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_51932", resourceCulture);
+                return "Japanese (EUC)";
             }
         }
 
@@ -1987,7 +1987,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_51936", resourceCulture);
+                return "Chinese Simplified (EUC)";
             }
         }
 
@@ -2000,7 +2000,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_51949", resourceCulture);
+                return "Korean (EUC)";
             }
         }
 
@@ -2013,7 +2013,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_52936", resourceCulture);
+                return "Chinese Simplified (HZ)";
             }
         }
 
@@ -2026,7 +2026,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_54936", resourceCulture);
+                return "Chinese Simplified (GB18030)";
             }
         }
 
@@ -2039,7 +2039,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_57002", resourceCulture);
+                return "ISCII Devanagari";
             }
         }
 
@@ -2052,7 +2052,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_57003", resourceCulture);
+                return "ISCII Bengali";
             }
         }
 
@@ -2065,7 +2065,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_57004", resourceCulture);
+                return "ISCII Tamil";
             }
         }
 
@@ -2078,7 +2078,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_57005", resourceCulture);
+                return "ISCII Telugu";
             }
         }
 
@@ -2091,7 +2091,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_57006", resourceCulture);
+                return "ISCII Assamese";
             }
         }
 
@@ -2104,7 +2104,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_57007", resourceCulture);
+                return "ISCII Oriya";
             }
         }
 
@@ -2117,7 +2117,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_57008", resourceCulture);
+                return "ISCII Kannada";
             }
         }
 
@@ -2130,7 +2130,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_57009", resourceCulture);
+                return "ISCII Malayalam";
             }
         }
 
@@ -2143,7 +2143,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_57010", resourceCulture);
+                return "ISCII Gujarati";
             }
         }
 
@@ -2156,7 +2156,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Globalization_cp_57011", resourceCulture);
+                return "ISCII Punjabi";
             }
         }
 

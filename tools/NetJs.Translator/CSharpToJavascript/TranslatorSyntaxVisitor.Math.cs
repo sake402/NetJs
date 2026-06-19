@@ -41,8 +41,8 @@ namespace NetJs.Translator.CSharpToJavascript
                     }
                     //lhs and rhs are not the same type, see if we need to cast before invoking the operator
                     //find the one that has highest precision
-                    int lhsRank = leftType.GetNumericPrecisionRank();
-                    int rhsRank = rightType.GetNumericPrecisionRank();
+                    int lhsRank = leftType.GetNumericRangeRank();
+                    int rhsRank = rightType.GetNumericRangeRank();
                     ITypeSymbol higherPrecision = rhsRank > lhsRank ? rightType : leftType;
                     ITypeSymbol lowerPrecision = rhsRank > lhsRank ? leftType : rightType;
                     //Generate a cast for the one from lower precision to high precision

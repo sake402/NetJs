@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Private.Xml.Linq", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,7 +70,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_AddAttribute", resourceCulture);
+                return "An attribute cannot be added to content.";
             }
         }
 
@@ -83,14 +83,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_AddNode", resourceCulture);
+                return "A node of type {0} cannot be added to content.";
             }
         }
 
 
         internal static string FormatArgument_AddNode(object arg1)
         {
-            return string.Format(Argument_AddNode, arg1);
+            return string.Format("A node of type {0} cannot be added to content.", arg1);
         }
 
 
@@ -101,7 +101,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_AddNonWhitespace", resourceCulture);
+                return "Non-whitespace characters cannot be added to content.";
             }
         }
 
@@ -114,7 +114,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_ConvertToString", resourceCulture);
+                return "The argument cannot be converted to a string.";
             }
         }
 
@@ -127,14 +127,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidExpandedName", resourceCulture);
+                return "'{0}' is an invalid expanded name.";
             }
         }
 
 
         internal static string FormatArgument_InvalidExpandedName(object arg1)
         {
-            return string.Format(Argument_InvalidExpandedName, arg1);
+            return string.Format("'{0}' is an invalid expanded name.", arg1);
         }
 
 
@@ -145,14 +145,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidPIName", resourceCulture);
+                return "'{0}' is an invalid name for a processing instruction.";
             }
         }
 
 
         internal static string FormatArgument_InvalidPIName(object arg1)
         {
-            return string.Format(Argument_InvalidPIName, arg1);
+            return string.Format("'{0}' is an invalid name for a processing instruction.", arg1);
         }
 
 
@@ -163,14 +163,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_MustBeDerivedFrom", resourceCulture);
+                return "The argument must be derived from {0}.";
             }
         }
 
 
         internal static string FormatArgument_MustBeDerivedFrom(object arg1)
         {
-            return string.Format(Argument_MustBeDerivedFrom, arg1);
+            return string.Format("The argument must be derived from {0}.", arg1);
         }
 
 
@@ -181,14 +181,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_NamespaceDeclarationPrefixed", resourceCulture);
+                return "The prefix '{0}' cannot be bound to the empty namespace name.";
             }
         }
 
 
         internal static string FormatArgument_NamespaceDeclarationPrefixed(object arg1)
         {
-            return string.Format(Argument_NamespaceDeclarationPrefixed, arg1);
+            return string.Format("The prefix '{0}' cannot be bound to the empty namespace name.", arg1);
         }
 
 
@@ -199,7 +199,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_NamespaceDeclarationXml", resourceCulture);
+                return "The prefix 'xml' is bound to the namespace name 'http://www.w3.org/XML/1998/namespace'. Other prefixes must not be bound to this namespace name, and it must not be declared as the default namespace.";
             }
         }
 
@@ -212,7 +212,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_NamespaceDeclarationXmlns", resourceCulture);
+                return "The prefix 'xmlns' is bound to the namespace name 'http://www.w3.org/2000/xmlns/'. It must not be declared. Other prefixes must not be bound to this namespace name, and it must not be declared as the default namespace.";
             }
         }
 
@@ -225,7 +225,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_XObjectValue", resourceCulture);
+                return "An XObject cannot be used as a value.";
             }
         }
 
@@ -238,7 +238,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_DeserializeInstance", resourceCulture);
+                return "This instance cannot be deserialized.";
             }
         }
 
@@ -251,7 +251,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_DocumentStructure", resourceCulture);
+                return "This operation would create an incorrectly structured document.";
             }
         }
 
@@ -264,7 +264,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_DuplicateAttribute", resourceCulture);
+                return "Duplicate attribute.";
             }
         }
 
@@ -277,7 +277,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_ExpectedEndOfFile", resourceCulture);
+                return "The XmlReader state should be EndOfFile after this operation.";
             }
         }
 
@@ -290,7 +290,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_ExpectedInteractive", resourceCulture);
+                return "The XmlReader state should be Interactive.";
             }
         }
 
@@ -303,14 +303,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_ExpectedNodeType", resourceCulture);
+                return "The XmlReader must be on a node of type {0} instead of a node of type {1}.";
             }
         }
 
 
         internal static string FormatInvalidOperation_ExpectedNodeType(object arg1, object arg2)
         {
-            return string.Format(InvalidOperation_ExpectedNodeType, arg1, arg2);
+            return string.Format("The XmlReader must be on a node of type {0} instead of a node of type {1}.", arg1, arg2);
         }
 
 
@@ -321,7 +321,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_ExternalCode", resourceCulture);
+                return "This operation was corrupted by external code.";
             }
         }
 
@@ -334,7 +334,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_MissingAncestor", resourceCulture);
+                return "A common ancestor is missing.";
             }
         }
 
@@ -347,7 +347,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_MissingParent", resourceCulture);
+                return "The parent is missing.";
             }
         }
 
@@ -360,7 +360,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_MissingRoot", resourceCulture);
+                return "The root element is missing.";
             }
         }
 
@@ -373,14 +373,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_UnexpectedNodeType", resourceCulture);
+                return "The XmlReader should not be on a node of type {0}.";
             }
         }
 
 
         internal static string FormatInvalidOperation_UnexpectedNodeType(object arg1)
         {
-            return string.Format(InvalidOperation_UnexpectedNodeType, arg1);
+            return string.Format("The XmlReader should not be on a node of type {0}.", arg1);
         }
 
 
@@ -391,7 +391,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_UnresolvedEntityReference", resourceCulture);
+                return "The XmlReader cannot resolve entity references.";
             }
         }
 
@@ -404,7 +404,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_WriteAttribute", resourceCulture);
+                return "An attribute cannot be written after content.";
             }
         }
 
@@ -417,7 +417,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_WriteBase64", resourceCulture);
+                return "This XmlWriter does not support base64 encoded data.";
             }
         }
 
@@ -430,7 +430,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_WriteEntityRef", resourceCulture);
+                return "This XmlWriter does not support entity references.";
             }
         }
 
@@ -443,14 +443,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_CreateNavigator", resourceCulture);
+                return "This XPathNavigator cannot be created on a node of type {0}.";
             }
         }
 
 
         internal static string FormatArgument_CreateNavigator(object arg1)
         {
-            return string.Format(Argument_CreateNavigator, arg1);
+            return string.Format("This XPathNavigator cannot be created on a node of type {0}.", arg1);
         }
 
 
@@ -461,14 +461,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_BadNodeType", resourceCulture);
+                return "This operation is not valid on a node of type {0}.";
             }
         }
 
 
         internal static string FormatInvalidOperation_BadNodeType(object arg1)
         {
-            return string.Format(InvalidOperation_BadNodeType, arg1);
+            return string.Format("This operation is not valid on a node of type {0}.", arg1);
         }
 
 
@@ -479,14 +479,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_UnexpectedEvaluation", resourceCulture);
+                return "The XPath expression evaluated to unexpected type {0}.";
             }
         }
 
 
         internal static string FormatInvalidOperation_UnexpectedEvaluation(object arg1)
         {
-            return string.Format(InvalidOperation_UnexpectedEvaluation, arg1);
+            return string.Format("The XPath expression evaluated to unexpected type {0}.", arg1);
         }
 
 
@@ -497,7 +497,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_MoveToId", resourceCulture);
+                return "This XPathNavigator does not support IDs.";
             }
         }
 

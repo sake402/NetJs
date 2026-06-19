@@ -294,7 +294,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 //    Writer.WriteLine(node, $"return this;", true);
                 //});
             }
-            CloseClosure();
+            CloseClosure(node);
         }
 
         public void WriteConstructorCall(

@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Text.RegularExpressions", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,14 +70,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Generic", resourceCulture);
+                return "Regular expression parser error '{0}' at offset {1}.";
             }
         }
 
 
         internal static string FormatGeneric(object arg1, object arg2)
         {
-            return string.Format(Generic, arg1, arg2);
+            return string.Format("Regular expression parser error '{0}' at offset {1}.", arg1, arg2);
         }
 
 
@@ -88,7 +88,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AlternationHasNamedCapture", resourceCulture);
+                return "Alternation conditions do not capture and cannot be named.";
             }
         }
 
@@ -101,7 +101,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AlternationHasComment", resourceCulture);
+                return "Alternation conditions cannot be comments.";
             }
         }
 
@@ -114,7 +114,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_ArrayPlusOffTooSmall", resourceCulture);
+                return "Destination array is not long enough to copy all the items in the collection. Check array index and length.";
             }
         }
 
@@ -127,14 +127,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ShorthandClassInCharacterRange", resourceCulture);
+                return "Cannot include class \\{0} in character range.";
             }
         }
 
 
         internal static string FormatShorthandClassInCharacterRange(object arg1)
         {
-            return string.Format(ShorthandClassInCharacterRange, arg1);
+            return string.Format("Cannot include class \\{0} in character range.", arg1);
         }
 
 
@@ -145,7 +145,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BeginIndexNotNegative", resourceCulture);
+                return "Start index cannot be less than 0 or greater than input length.";
             }
         }
 
@@ -158,7 +158,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("QuantifierOrCaptureGroupOutOfRange", resourceCulture);
+                return "Quantifier and capture group numbers must be less than or equal to Int32.MaxValue.";
             }
         }
 
@@ -171,7 +171,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CaptureGroupOfZero", resourceCulture);
+                return "Capture number cannot be zero.";
             }
         }
 
@@ -184,7 +184,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CountTooSmall", resourceCulture);
+                return "Count cannot be less than -1.";
             }
         }
 
@@ -197,7 +197,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("EnumNotStarted", resourceCulture);
+                return "Enumeration has either not started or has already finished.";
             }
         }
 
@@ -210,7 +210,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AlternationHasMalformedCondition", resourceCulture);
+                return "Illegal conditional (?(...)) expression.";
             }
         }
 
@@ -223,14 +223,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IllegalDefaultRegexMatchTimeoutInAppDomain", resourceCulture);
+                return "AppDomain data '{0}' contains the invalid value or object '{1}' for specifying a default matching timeout for System.Text.RegularExpressions.Regex.";
             }
         }
 
 
         internal static string FormatIllegalDefaultRegexMatchTimeoutInAppDomain(object arg1, object arg2)
         {
-            return string.Format(IllegalDefaultRegexMatchTimeoutInAppDomain, arg1, arg2);
+            return string.Format("AppDomain data '{0}' contains the invalid value or object '{1}' for specifying a default matching timeout for System.Text.RegularExpressions.Regex.", arg1, arg2);
         }
 
 
@@ -241,7 +241,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnescapedEndingBackslash", resourceCulture);
+                return "Illegal \\ at end of pattern.";
             }
         }
 
@@ -254,14 +254,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ReversedQuantifierRange", resourceCulture);
+                return "Illegal {x,y} with x > y.";
             }
         }
 
 
         internal static string FormatReversedQuantifierRange(object arg1)
         {
-            return string.Format(ReversedQuantifierRange, arg1);
+            return string.Format("Illegal {x,y} with x > y.", arg1);
         }
 
 
@@ -272,14 +272,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidUnicodePropertyEscape", resourceCulture);
+                return "Incomplete \\p{X} character escape.";
             }
         }
 
 
         internal static string FormatInvalidUnicodePropertyEscape(object arg1)
         {
-            return string.Format(InvalidUnicodePropertyEscape, arg1);
+            return string.Format("Incomplete \\p{X} character escape.", arg1);
         }
 
 
@@ -290,7 +290,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CaptureGroupNameInvalid", resourceCulture);
+                return "Invalid group name: Group names must begin with a word character.";
             }
         }
 
@@ -303,7 +303,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LengthNotNegative", resourceCulture);
+                return "Length cannot be less than 0 or exceed input length.";
             }
         }
 
@@ -316,7 +316,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MalformedNamedReference", resourceCulture);
+                return "Malformed \\k<...> named back reference.";
             }
         }
 
@@ -329,14 +329,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AlternationHasMalformedReference", resourceCulture);
+                return "Conditional alternation is missing a closing parenthesis after the group number {0}.";
             }
         }
 
 
         internal static string FormatAlternationHasMalformedReference(object arg1)
         {
-            return string.Format(AlternationHasMalformedReference, arg1);
+            return string.Format("Conditional alternation is missing a closing parenthesis after the group number {0}.", arg1);
         }
 
 
@@ -347,14 +347,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MalformedUnicodePropertyEscape", resourceCulture);
+                return "Malformed \\p{X} character escape.";
             }
         }
 
 
         internal static string FormatMalformedUnicodePropertyEscape(object arg1)
         {
-            return string.Format(MalformedUnicodePropertyEscape, arg1);
+            return string.Format("Malformed \\p{X} character escape.", arg1);
         }
 
 
@@ -365,14 +365,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MakeException", resourceCulture);
+                return "Invalid pattern '{0}' at offset {1}. {2}";
             }
         }
 
 
         internal static string FormatMakeException(object arg1, object arg2, object arg3)
         {
-            return string.Format(MakeException, arg1, arg2, arg3);
+            return string.Format("Invalid pattern '{0}' at offset {1}. {2}", arg1, arg2, arg3);
         }
 
 
@@ -383,7 +383,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MissingControlCharacter", resourceCulture);
+                return "Missing control character.";
             }
         }
 
@@ -396,14 +396,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NestedQuantifiersNotParenthesized", resourceCulture);
+                return "Nested quantifier '{0}'.";
             }
         }
 
 
         internal static string FormatNestedQuantifiersNotParenthesized(object arg1)
         {
-            return string.Format(NestedQuantifiersNotParenthesized, arg1);
+            return string.Format("Nested quantifier '{0}'.", arg1);
         }
 
 
@@ -414,7 +414,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NoResultOnFailed", resourceCulture);
+                return "Result cannot be called on a failed Match.";
             }
         }
 
@@ -427,7 +427,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InsufficientClosingParentheses", resourceCulture);
+                return "Not enough )'s.";
             }
         }
 
@@ -440,7 +440,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_ReadOnlyCollection", resourceCulture);
+                return "Collection is read-only.";
             }
         }
 
@@ -453,7 +453,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PlatformNotSupported_CompileToAssembly", resourceCulture);
+                return "This platform does not support writing compiled regular expressions to an assembly. Use GeneratedRegexAttribute with the regular expression source generator instead.";
             }
         }
 
@@ -466,14 +466,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("QuantifierAfterNothing", resourceCulture);
+                return "Quantifier '{0}' following nothing.";
             }
         }
 
 
         internal static string FormatQuantifierAfterNothing(object arg1)
         {
-            return string.Format(QuantifierAfterNothing, arg1);
+            return string.Format("Quantifier '{0}' following nothing.", arg1);
         }
 
 
@@ -484,7 +484,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("RegexMatchTimeoutException_Occurred", resourceCulture);
+                return "The Regex engine has timed out while trying to match a pattern to an input string. This can occur for many reasons, including very large inputs or excessive backtracking caused by nested quantifiers, back-references and other factors.";
             }
         }
 
@@ -497,7 +497,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ReversedCharacterRange", resourceCulture);
+                return "[x-y] range in reverse order.";
             }
         }
 
@@ -510,7 +510,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExclusionGroupNotLast", resourceCulture);
+                return "A subtraction must be the last element in a character class.";
             }
         }
 
@@ -523,7 +523,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InsufficientOrInvalidHexDigits", resourceCulture);
+                return "Insufficient or invalid hexadecimal digits.";
             }
         }
 
@@ -536,7 +536,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AlternationHasTooManyConditions", resourceCulture);
+                return "Too many | in (?()|).";
             }
         }
 
@@ -549,7 +549,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InsufficientOpeningParentheses", resourceCulture);
+                return "Too many )'s.";
             }
         }
 
@@ -562,14 +562,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UndefinedNumberedReference", resourceCulture);
+                return "Reference to undefined group number {0}.";
             }
         }
 
 
         internal static string FormatUndefinedNumberedReference(object arg1)
         {
-            return string.Format(UndefinedNumberedReference, arg1);
+            return string.Format("Reference to undefined group number {0}.", arg1);
         }
 
 
@@ -580,14 +580,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UndefinedNamedReference", resourceCulture);
+                return "Reference to undefined group name '{0}'.";
             }
         }
 
 
         internal static string FormatUndefinedNamedReference(object arg1)
         {
-            return string.Format(UndefinedNamedReference, arg1);
+            return string.Format("Reference to undefined group name '{0}'.", arg1);
         }
 
 
@@ -598,14 +598,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AlternationHasUndefinedReference", resourceCulture);
+                return "Conditional alternation refers to an undefined group number {0}.";
             }
         }
 
 
         internal static string FormatAlternationHasUndefinedReference(object arg1)
         {
-            return string.Format(AlternationHasUndefinedReference, arg1);
+            return string.Format("Conditional alternation refers to an undefined group number {0}.", arg1);
         }
 
 
@@ -616,14 +616,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnrecognizedUnicodeProperty", resourceCulture);
+                return "Unknown property '{0}'.";
             }
         }
 
 
         internal static string FormatUnrecognizedUnicodeProperty(object arg1)
         {
-            return string.Format(UnrecognizedUnicodeProperty, arg1);
+            return string.Format("Unknown property '{0}'.", arg1);
         }
 
 
@@ -634,7 +634,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnrecognizedControlCharacter", resourceCulture);
+                return "Unrecognized control character.";
             }
         }
 
@@ -647,14 +647,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnrecognizedEscape", resourceCulture);
+                return "Unrecognized escape sequence \\{0}.";
             }
         }
 
 
         internal static string FormatUnrecognizedEscape(object arg1)
         {
-            return string.Format(UnrecognizedEscape, arg1);
+            return string.Format("Unrecognized escape sequence \\{0}.", arg1);
         }
 
 
@@ -665,7 +665,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidGroupingConstruct", resourceCulture);
+                return "Unrecognized grouping construct.";
             }
         }
 
@@ -678,7 +678,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnterminatedBracket", resourceCulture);
+                return "Unterminated [] set.";
             }
         }
 
@@ -691,7 +691,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnterminatedComment", resourceCulture);
+                return "Unterminated (?#...) comment.";
             }
         }
 
@@ -704,14 +704,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_NonBacktrackingConflictingExpression", resourceCulture);
+                return "RegexOptions.NonBacktracking is not supported in conjunction with expressions containing: '{0}'.";
             }
         }
 
 
         internal static string FormatNotSupported_NonBacktrackingConflictingExpression(object arg1)
         {
-            return string.Format(NotSupported_NonBacktrackingConflictingExpression, arg1);
+            return string.Format("RegexOptions.NonBacktracking is not supported in conjunction with expressions containing: '{0}'.", arg1);
         }
 
 
@@ -722,14 +722,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_NonBacktrackingUnsafeSize", resourceCulture);
+                return "The specified pattern with RegexOptions.NonBacktracking could result in an automata as large as '{0}' nodes, which is larger than the configured limit of '{1}'.";
             }
         }
 
 
         internal static string FormatNotSupported_NonBacktrackingUnsafeSize(object arg1, object arg2)
         {
-            return string.Format(NotSupported_NonBacktrackingUnsafeSize, arg1, arg2);
+            return string.Format("The specified pattern with RegexOptions.NonBacktracking could result in an automata as large as '{0}' nodes, which is larger than the configured limit of '{1}'.", arg1, arg2);
         }
 
 
@@ -740,7 +740,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpressionDescription_Backreference", resourceCulture);
+                return "backreference (\\ number)";
             }
         }
 
@@ -753,7 +753,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpressionDescription_Conditional", resourceCulture);
+                return "captured group conditional (?( name ) yes-pattern | no-pattern ) or (?( number ) yes-pattern| no-pattern )";
             }
         }
 
@@ -766,7 +766,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpressionDescription_PositiveLookaround", resourceCulture);
+                return "positive lookahead (?= pattern) or positive lookbehind (?<= pattern)";
             }
         }
 
@@ -779,7 +779,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpressionDescription_NegativeLookaround", resourceCulture);
+                return "negative lookahead (?! pattern) or negative lookbehind (?<! pattern)";
             }
         }
 
@@ -792,7 +792,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpressionDescription_ContiguousMatches", resourceCulture);
+                return "contiguous matches (\\G)";
             }
         }
 
@@ -805,7 +805,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpressionDescription_AtomicSubexpressions", resourceCulture);
+                return "atomic subexpressions (?> pattern)";
             }
         }
 
@@ -818,7 +818,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpressionDescription_IfThenElse", resourceCulture);
+                return "test conditional (?( test-pattern ) yes-pattern | no-pattern )";
             }
         }
 
@@ -831,7 +831,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ExpressionDescription_BalancingGroup", resourceCulture);
+                return "balancing group (?<name1-name2>subexpression) or (?'name1-name2' subexpression)";
             }
         }
 
@@ -844,7 +844,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UsingSpanAPIsWithCompiledToAssembly", resourceCulture);
+                return "Searching an input span using a pre-compiled Regex assembly is not supported. Please use the string overloads or use a newer Regex implementation.";
             }
         }
 

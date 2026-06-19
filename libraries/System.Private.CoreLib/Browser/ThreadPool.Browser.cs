@@ -10,7 +10,7 @@ namespace System.Threading
         internal static unsafe void MainThreadScheduleBackgroundJobImpl(void* callback)
         {
             var call = NetJs.Script.Write<Action>("callback." + NetJs.Constants.RefValueName);
-            Global.SetTimeout(call, 1);
+            Global.SetTimeout(() => call(), 1);
         }
     }
 }

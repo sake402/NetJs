@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Microsoft.Extensions.Configuration.Binder", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,14 +70,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Error_CannotActivateAbstractOrInterface", resourceCulture);
+                return "Cannot create instance of type '{0}' because it is either abstract or an interface.";
             }
         }
 
 
         internal static string FormatError_CannotActivateAbstractOrInterface(object arg1)
         {
-            return string.Format(Error_CannotActivateAbstractOrInterface, arg1);
+            return string.Format("Cannot create instance of type '{0}' because it is either abstract or an interface.", arg1);
         }
 
 
@@ -88,14 +88,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Error_CannotBindToConstructorParameter", resourceCulture);
+                return "Cannot create instance of type '{0}' because one or more parameters cannot be bound to. Constructor parameters cannot be declared as in, out, or ref. Invalid parameters are: '{1}'";
             }
         }
 
 
         internal static string FormatError_CannotBindToConstructorParameter(object arg1, object arg2)
         {
-            return string.Format(Error_CannotBindToConstructorParameter, arg1, arg2);
+            return string.Format("Cannot create instance of type '{0}' because one or more parameters cannot be bound to. Constructor parameters cannot be declared as in, out, or ref. Invalid parameters are: '{1}'", arg1, arg2);
         }
 
 
@@ -106,14 +106,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Error_ConstructorParametersDoNotMatchProperties", resourceCulture);
+                return "Cannot create instance of type '{0}' because one or more parameters cannot be bound to. Constructor parameters must have corresponding properties. Fields are not supported. Missing properties are: '{1}'";
             }
         }
 
 
         internal static string FormatError_ConstructorParametersDoNotMatchProperties(object arg1, object arg2)
         {
-            return string.Format(Error_ConstructorParametersDoNotMatchProperties, arg1, arg2);
+            return string.Format("Cannot create instance of type '{0}' because one or more parameters cannot be bound to. Constructor parameters must have corresponding properties. Fields are not supported. Missing properties are: '{1}'", arg1, arg2);
         }
 
 
@@ -124,14 +124,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Error_FailedBinding", resourceCulture);
+                return "Failed to convert configuration value '{0}' at '{1}' to type '{2}'.";
             }
         }
 
 
         internal static string FormatError_FailedBinding(object arg1, object arg2, object arg3)
         {
-            return string.Format(Error_FailedBinding, arg1, arg2, arg3);
+            return string.Format("Failed to convert configuration value '{0}' at '{1}' to type '{2}'.", arg1, arg2, arg3);
         }
 
 
@@ -142,14 +142,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Error_FailedToActivate", resourceCulture);
+                return "Failed to create instance of type '{0}'.";
             }
         }
 
 
         internal static string FormatError_FailedToActivate(object arg1)
         {
-            return string.Format(Error_FailedToActivate, arg1);
+            return string.Format("Failed to create instance of type '{0}'.", arg1);
         }
 
 
@@ -160,14 +160,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Error_GeneralErrorWhenBinding", resourceCulture);
+                return "'{0}' was set and binding has failed. The likely cause is an invalid configuration value.";
             }
         }
 
 
         internal static string FormatError_GeneralErrorWhenBinding(object arg1)
         {
-            return string.Format(Error_GeneralErrorWhenBinding, arg1);
+            return string.Format("'{0}' was set and binding has failed. The likely cause is an invalid configuration value.", arg1);
         }
 
 
@@ -178,14 +178,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Error_MissingConfig", resourceCulture);
+                return "'{0}' was set on the provided {1}, but the following properties were not found on the instance of {2}: {3}";
             }
         }
 
 
         internal static string FormatError_MissingConfig(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(Error_MissingConfig, arg1, arg2, arg3, arg4);
+            return string.Format("'{0}' was set on the provided {1}, but the following properties were not found on the instance of {2}: {3}", arg1, arg2, arg3, arg4);
         }
 
 
@@ -196,14 +196,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Error_MissingPublicInstanceConstructor", resourceCulture);
+                return "Cannot create instance of type '{0}' because it is missing a public instance constructor.";
             }
         }
 
 
         internal static string FormatError_MissingPublicInstanceConstructor(object arg1)
         {
-            return string.Format(Error_MissingPublicInstanceConstructor, arg1);
+            return string.Format("Cannot create instance of type '{0}' because it is missing a public instance constructor.", arg1);
         }
 
 
@@ -214,14 +214,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Error_MultipleParameterizedConstructors", resourceCulture);
+                return "Cannot create instance of type '{0}' because it has multiple public parameterized constructors.";
             }
         }
 
 
         internal static string FormatError_MultipleParameterizedConstructors(object arg1)
         {
-            return string.Format(Error_MultipleParameterizedConstructors, arg1);
+            return string.Format("Cannot create instance of type '{0}' because it has multiple public parameterized constructors.", arg1);
         }
 
 
@@ -232,14 +232,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Error_ParameterBeingBoundToIsUnnamed", resourceCulture);
+                return "Cannot create instance of type '{0}' because one or more parameters are unnamed.";
             }
         }
 
 
         internal static string FormatError_ParameterBeingBoundToIsUnnamed(object arg1)
         {
-            return string.Format(Error_ParameterBeingBoundToIsUnnamed, arg1);
+            return string.Format("Cannot create instance of type '{0}' because one or more parameters are unnamed.", arg1);
         }
 
 
@@ -250,14 +250,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Error_ParameterHasNoMatchingConfig", resourceCulture);
+                return "Cannot create instance of type '{0}' because parameter '{1}' has no matching config. Each parameter in the constructor that does not have a default value must have a corresponding config entry.";
             }
         }
 
 
         internal static string FormatError_ParameterHasNoMatchingConfig(object arg1, object arg2)
         {
-            return string.Format(Error_ParameterHasNoMatchingConfig, arg1, arg2);
+            return string.Format("Cannot create instance of type '{0}' because parameter '{1}' has no matching config. Each parameter in the constructor that does not have a default value must have a corresponding config entry.", arg1, arg2);
         }
 
 
@@ -268,14 +268,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Error_UnsupportedMultidimensionalArray", resourceCulture);
+                return "Cannot create instance of type '{0}' because multidimensional arrays are not supported.";
             }
         }
 
 
         internal static string FormatError_UnsupportedMultidimensionalArray(object arg1)
         {
-            return string.Format(Error_UnsupportedMultidimensionalArray, arg1);
+            return string.Format("Cannot create instance of type '{0}' because multidimensional arrays are not supported.", arg1);
         }
     }
 }

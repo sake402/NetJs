@@ -46,6 +46,7 @@ namespace System.Reflection
         [NetJs.MemberReplace]
         internal int GetMetadataToken()
         {
+            //return _model.Handle.As<int>();
             return 0;
         }
 

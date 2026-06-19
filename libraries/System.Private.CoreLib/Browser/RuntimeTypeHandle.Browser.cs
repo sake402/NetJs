@@ -20,12 +20,12 @@ namespace System
         internal static CorElementType GetCorElementType(QCallTypeHandle type)
         {
             var runtimeType = type.QCallTypeHandleToRuntimeType();
-            if (runtimeType._genericParameterPosition > 0)
+            if (runtimeType._prototype.IsGenericParameter())
             {
                 return CorElementType.ELEMENT_TYPE_VAR;
-                return CorElementType.ELEMENT_TYPE_MVAR;
+                //return CorElementType.ELEMENT_TYPE_MVAR;
             }
-            switch (runtimeType._model.As<TypeModel>().KnownType)
+            switch (runtimeType._prototype.KnownType)
             {
                 case KnownTypeHandle.SystemString:
                     return CorElementType.ELEMENT_TYPE_STRING;
@@ -58,7 +58,7 @@ namespace System
                 case KnownTypeHandle.SystemPointer:
                     return CorElementType.ELEMENT_TYPE_PTR;
             }
-            if (runtimeType._model.As<TypeModel>().Flags.TypeHasFlag(TypeFlagsModel.IsPointer))
+            if (runtimeType._prototype!.Flags.TypeHasFlag(TypeFlagsModel.IsPointer))
             {
                 return CorElementType.ELEMENT_TYPE_PTR;
             }
@@ -70,27 +70,27 @@ namespace System
         {
             var runtimeType = type.QCallTypeHandleToRuntimeType();
             TypeAttributes att = TypeAttributes.NotPublic;
-            if (runtimeType._model.Flags.TypeHasFlag(TypeFlagsModel.IsPublic))
+            if (runtimeType._prototype.Flags.TypeHasFlag(TypeFlagsModel.IsPublic))
             {
                 att |= TypeAttributes.Public;
             }
-            if (runtimeType._model.Flags.TypeHasFlag(TypeFlagsModel.IsSealed))
+            if (runtimeType._prototype.Flags.TypeHasFlag(TypeFlagsModel.IsSealed))
             {
                 att |= TypeAttributes.Sealed;
             }
-            if (runtimeType._model.Flags.TypeHasFlag(TypeFlagsModel.IsNested) && !runtimeType._model.Flags.TypeHasFlag(TypeFlagsModel.IsPublic))
+            if (runtimeType._prototype.Flags.TypeHasFlag(TypeFlagsModel.IsNested) && !runtimeType._prototype.Flags.TypeHasFlag(TypeFlagsModel.IsPublic))
             {
                 att |= TypeAttributes.NestedPrivate;
             }
-            if (runtimeType._model.Flags.TypeHasFlag(TypeFlagsModel.IsNestedPublic))
+            if (runtimeType._prototype.Flags.TypeHasFlag(TypeFlagsModel.IsNestedPublic))
             {
                 att |= TypeAttributes.NestedPublic;
             }
-            if (runtimeType._model.Flags.TypeHasFlag(TypeFlagsModel.IsAbstract))
+            if (runtimeType._prototype.Flags.TypeHasFlag(TypeFlagsModel.IsAbstract))
             {
                 att |= TypeAttributes.Abstract;
             }
-            if (runtimeType._model.Flags.TypeHasFlag(TypeFlagsModel.IsInterface))
+            if (runtimeType._prototype.Flags.TypeHasFlag(TypeFlagsModel.IsInterface))
             {
                 att |= TypeAttributes.Interface;
             }
@@ -101,7 +101,7 @@ namespace System
         private static int GetMetadataToken(QCallTypeHandle type)
         {
             var runtimeType = type.QCallTypeHandleToRuntimeType();
-            return (int)runtimeType._model.Handle;
+            return runtimeType._prototype.TypeHandle.As<int>();
         }
 
         [NetJs.MemberReplace]
@@ -115,9 +115,9 @@ namespace System
         internal static bool HasInstantiation(QCallTypeHandle type)
         {
             var runtimeType = type.QCallTypeHandleToRuntimeType();
-            if (NetJs.Script.IsUndefined(runtimeType._model.Flags)) //boot type dont have complete model
+            if (NetJs.Script.IsUndefined(runtimeType._prototype.Flags)) //boot type dont have complete model
                 return false;
-            return runtimeType._model.As<TypeModel>().Flags.TypeHasFlag(TypeFlagsModel.IsGenericType);// && runtimeType._typeArguments != null;
+            return runtimeType._prototype.Flags.TypeHasFlag(TypeFlagsModel.IsGenericType);// && runtimeType._typeArguments != null;
         }
 
         [NetJs.MemberReplace]

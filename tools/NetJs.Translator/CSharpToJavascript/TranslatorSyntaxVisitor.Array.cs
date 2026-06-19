@@ -352,8 +352,12 @@ namespace NetJs.Translator.CSharpToJavascript
                 //isArrayLHS = true;
                 var typeMetadata = _global.GetMetadata(elementType!);
                 var typeName = typeMetadata?.InvocationName ?? elementType!.Name;
+                if (string.IsNullOrEmpty(typeName))
+                {
+                    typeName = elementType!.ComputeOutputTypeName(_global);
+                }
                 WriteMethodInvocation(node, "System.Runtime.CompilerServices.RuntimeHelpers.CreateArray", arguments: [new CodeNode(() => {
-                    CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.TypeOf}({typeName})");
+                    CurrentTypeWriter.Write(node, $"{typeName}.{Constants.PrototypeTypeName}");
                 }), new CodeNode(()=>{
                     WriteCollectionElementsAsArray(node, createNetArray:false);
                 })]);
@@ -373,13 +377,20 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
                 else
                 {
+                    if (lhsType.IsAbstract || lhsType.TypeKind == TypeKind.Interface)
+                    {
+                        if (lhsType.Name == "IReadOnlyList")
+                        {
+                            lhsType = ((INamedTypeSymbol)_global.GetSymbol("System.Collections.Generic.List<>", this)).Construct(((INamedTypeSymbol)lhsType).TypeParameters.ToArray());
+                        }
+                    }
                     //if (TryInvokeMethodOperator(node, ImplicitOperatorName, lhsType, null, node.Elements))
                     //return;
                     WrapStatementsInExpression(node, () =>
                     {
                         var ix = ++CurrentTypeWriter.CurrentClosure.NameManglingSeed;
                         var instanceName = $"$t{ix}";
-                        CurrentTypeWriter.Write(node, "let ");
+                        CurrentTypeWriter.Write(node, "let ", true);
                         CurrentTypeWriter.Write(node, instanceName);
                         CurrentTypeWriter.Write(node, " = ");
                         WriteConstructorCall(node, (INamedTypeSymbol)lhsType, lhsType.GetMembers(".ctor").Cast<IMethodSymbol>().Where(e => e.Parameters.Count() == 0).First());

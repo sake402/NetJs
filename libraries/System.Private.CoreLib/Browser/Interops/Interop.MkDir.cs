@@ -7,8 +7,7 @@ internal static partial class Interop
 {
     internal static unsafe partial class Sys
     {
-
-        internal static partial int MkDir([MarshalUsing(typeof(SpanOfCharAsUtf8StringMarshaller))] ReadOnlySpan<char> path, int mode)
+        private static partial int MkDir(ref byte path, int mode)
         {
             return 0;
         }

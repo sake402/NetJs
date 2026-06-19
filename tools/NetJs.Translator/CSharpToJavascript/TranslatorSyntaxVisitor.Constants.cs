@@ -162,9 +162,19 @@ namespace NetJs.Translator.CSharpToJavascript
             var constantValue = optionalConstantValue ?? _global.EvaluateConstant(constantExpression!, this);
             if (constantValue.HasValue)
             {
+                var valueType = constantValue.Value?.GetType();
+                ITypeSymbol? valueTypeSymbol = valueType != null && valueType.IsValueType ? (ITypeSymbol?)_global.TryGetSymbol(valueType.FullName, this) : null;
+                bool needBoxing = (valueType?.IsValueType ?? false) && valueTypeSymbol != null && SymbolEqualityComparer.Default.Equals(constantType, _global.SystemObject);
+                if (needBoxing)
+                {
+                    CurrentTypeWriter.Write(node, _global.GlobalName);
+                    CurrentTypeWriter.Write(node, ".");
+                    CurrentTypeWriter.Write(node, Constants.BoxName);
+                    CurrentTypeWriter.Write(node, "(");
+                }
                 //var longType = (INamedTypeSymbol)_global.GetTypeSymbol("long", this, out _, out _);
                 //if (longType.Equals(constantType, SymbolEqualityComparer.Default))
-                if (constantType.SpecialType == SpecialType.System_Int64)
+                if (constantType.SpecialType == SpecialType.System_Int64 || constantValue.Value is long)
                 {
                     //long handling
                     //Long literal is a different beast because js cannot actually handle it precisely
@@ -179,9 +189,8 @@ namespace NetJs.Translator.CSharpToJavascript
                             _base = 2;
                     }
                     WriteLongConstant(node, Convert.ToInt64(constantValue.Value!), _base);
-                    return true;
                 }
-                else if (constantType.SpecialType == SpecialType.System_UInt64)
+                else if (constantType.SpecialType == SpecialType.System_UInt64 || constantValue.Value is ulong)
                 {
                     //ulong handling
                     //Long literal is a different beast because js cannot actually handle it precisely
@@ -196,76 +205,82 @@ namespace NetJs.Translator.CSharpToJavascript
                             _base = 2;
                     }
                     WriteULongConstant(node, Convert.ToUInt64(constantValue.Value!), _base);
-                    return true;
                 }
-                else if (constantType.SpecialType == SpecialType.System_Decimal)
+                else if (constantType.SpecialType == SpecialType.System_Decimal || constantValue.Value is decimal)
                 {
                     //decimal handling
                     //Long literal is a different beast because js cannot actually handle it precisely
                     //This would have require us to estimate a constant expression in runtime instead of compile time
                     var val = constantValue.Value!.ToString();
                     WriteDecimalConstant(node, val);
-                    return true;
                 }
-                else if ((constantExpression.IsKind(SyntaxKind.CharacterLiteralExpression) || constantType.SpecialType == SpecialType.System_Char) && constantValue.Value != null)
+                else if ((constantExpression.IsKind(SyntaxKind.CharacterLiteralExpression) || constantType.SpecialType == SpecialType.System_Char) && constantValue.Value is char)
                 {
                     var val = constantValue.Value!.ToString().GetLiteralString(SyntaxKind.CharacterLiteralExpression, _global);
                     CurrentTypeWriter.Write(node, val);
-                    return true;
-                }
-                if (constantType.SpecialType == SpecialType.System_String && constantValue.Value != null)
-                    CurrentTypeWriter.Write(node, "\"");
-                if (constantValue.Value == null)
-                {
-                    if (constantType.IsValueType && !constantType.IsNullable(out _))
-                    {
-                        CurrentTypeWriter.Write(node, _global.GetDefaultValue(constantType, true)!);
-                    }
-                    else
-                        CurrentTypeWriter.Write(node, "null");
                 }
                 else
                 {
-                    if (constantType.SpecialType == SpecialType.System_Boolean)
-                        CurrentTypeWriter.Write(node, (bool)constantValue.Value ? "true" : "false");
-                    else if (constantType.SpecialType == SpecialType.System_Char)
+                    if (constantType.SpecialType == SpecialType.System_String && constantValue.Value != null)
+                        CurrentTypeWriter.Write(node, "\"");
+                    if (constantValue.Value == null)
                     {
-                        var c = (int)(char)constantValue.Value;
-                        CurrentTypeWriter.Write(node, c.ToString());
-                    }
-                    else if (constantType.SpecialType == SpecialType.System_Double && constantValue.Value is double d && d == double.PositiveInfinity)
-                    {
-                        CurrentTypeWriter.Write(node, "Number.POSITIVE_INFINITY");
-                    }
-                    else if (constantType.SpecialType == SpecialType.System_Double && constantValue.Value is double d2 && d2 == double.NegativeInfinity)
-                    {
-                        CurrentTypeWriter.Write(node, "Number.NEGATIVE_INFINITY");
-                    }
-                    else if (constantType.SpecialType == SpecialType.System_Double && constantValue.Value is double d3 && double.IsNaN(d3))
-                    {
-                        CurrentTypeWriter.Write(node, "Number.NaN");
-                    }
-                    else if (constantType.SpecialType == SpecialType.System_Single && constantValue.Value is float f && f == float.PositiveInfinity)
-                    {
-                        CurrentTypeWriter.Write(node, "Number.POSITIVE_INFINITY");
-                    }
-                    else if (constantType.SpecialType == SpecialType.System_Single && constantValue.Value is float f2 && f2 == float.NegativeInfinity)
-                    {
-                        CurrentTypeWriter.Write(node, "Number.NEGATIVE_INFINITY");
-                    }
-                    else if (constantType.SpecialType == SpecialType.System_Single && constantValue.Value is float f3 && float.IsNaN(f3))
-                    {
-                        CurrentTypeWriter.Write(node, "Number.NaN");
+                        if (constantType.IsValueType && !constantType.IsNullable(out _))
+                        {
+                            CurrentTypeWriter.Write(node, _global.GetDefaultValue(constantType, true)!);
+                        }
+                        else
+                            CurrentTypeWriter.Write(node, "null");
                     }
                     else
                     {
-                        var str = constantValue.Value.ToString();
-                        str = str.Escape();
-                        CurrentTypeWriter.Write(node, str);
+                        if (constantType.SpecialType == SpecialType.System_Boolean || constantValue.Value is bool)
+                            CurrentTypeWriter.Write(node, (bool)constantValue.Value ? "true" : "false");
+                        else if (constantType.SpecialType == SpecialType.System_Char || constantValue.Value is char)
+                        {
+                            var c = (int)(char)constantValue.Value;
+                            CurrentTypeWriter.Write(node, c.ToString());
+                        }
+                        else if (constantType.SpecialType == SpecialType.System_Double && constantValue.Value is double d && d == double.PositiveInfinity)
+                        {
+                            CurrentTypeWriter.Write(node, "Number.POSITIVE_INFINITY");
+                        }
+                        else if (constantType.SpecialType == SpecialType.System_Double && constantValue.Value is double d2 && d2 == double.NegativeInfinity)
+                        {
+                            CurrentTypeWriter.Write(node, "Number.NEGATIVE_INFINITY");
+                        }
+                        else if (constantType.SpecialType == SpecialType.System_Double && constantValue.Value is double d3 && double.IsNaN(d3))
+                        {
+                            CurrentTypeWriter.Write(node, "Number.NaN");
+                        }
+                        else if (constantType.SpecialType == SpecialType.System_Single && constantValue.Value is float f && f == float.PositiveInfinity)
+                        {
+                            CurrentTypeWriter.Write(node, "Number.POSITIVE_INFINITY");
+                        }
+                        else if (constantType.SpecialType == SpecialType.System_Single && constantValue.Value is float f2 && f2 == float.NegativeInfinity)
+                        {
+                            CurrentTypeWriter.Write(node, "Number.NEGATIVE_INFINITY");
+                        }
+                        else if (constantType.SpecialType == SpecialType.System_Single && constantValue.Value is float f3 && float.IsNaN(f3))
+                        {
+                            CurrentTypeWriter.Write(node, "Number.NaN");
+                        }
+                        else
+                        {
+                            var str = constantValue.Value.ToString();
+                            str = str.EscapeString();
+                            CurrentTypeWriter.Write(node, str);
+                        }
                     }
+                    if (constantType.SpecialType == SpecialType.System_String && constantValue.Value != null)
+                        CurrentTypeWriter.Write(node, "\"");
                 }
-                if (constantType.SpecialType == SpecialType.System_String && constantValue.Value != null)
-                    CurrentTypeWriter.Write(node, "\"");
+                if (needBoxing)
+                {
+                    CurrentTypeWriter.Write(node, ", ");
+                    CurrentTypeWriter.Write(node, valueTypeSymbol!.ComputeOutputTypeName(_global));
+                    CurrentTypeWriter.Write(node, ")");
+                }
                 return true;
             }
             return false;

@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Console", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,33 +70,28 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_ConsoleWindowBufferSize", resourceCulture);
+                return "The value must be less than the console's current maximum window size of {0} in that dimension. Note that this value depends on screen resolution and the console font.";
             }
         }
 
 
         internal static string FormatArgumentOutOfRange_ConsoleWindowBufferSize(object arg1)
         {
-            return string.Format(ArgumentOutOfRange_ConsoleWindowBufferSize, arg1);
+            return string.Format("The value must be less than the console's current maximum window size of {0} in that dimension. Note that this value depends on screen resolution and the console font.", arg1);
         }
 
 
         /// <summary>
-        /// The new console window size would force the console buffer size to be too large. Maximum allowed is {0}.
+        /// The new console window size would force the console buffer size to be too large.
         /// </summary>
         internal static string ArgumentOutOfRange_ConsoleWindowSize_Size
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_ConsoleWindowSize_Size", resourceCulture);
+                return "The new console window size would force the console buffer size to be too large.";
             }
         }
 
-
-        internal static string FormatArgumentOutOfRange_ConsoleWindowSize_Size(object arg1)
-        {
-            return string.Format(ArgumentOutOfRange_ConsoleWindowSize_Size, arg1);
-        }
 
 
         /// <summary>
@@ -106,7 +101,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidOffLen", resourceCulture);
+                return "Offset and length were out of bounds for the array or count is greater than the number of elements from index to the end of the source collection.";
             }
         }
 
@@ -119,7 +114,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_FileLengthTooBig", resourceCulture);
+                return "Specified file length was too large for the file system.";
             }
         }
 
@@ -132,7 +127,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_UnseekableStream", resourceCulture);
+                return "Stream does not support seeking.";
             }
         }
 
@@ -145,7 +140,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ObjectDisposed_FileClosed", resourceCulture);
+                return "Cannot access a closed file.";
             }
         }
 
@@ -158,7 +153,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_UnwritableStream", resourceCulture);
+                return "Stream does not support writing.";
             }
         }
 
@@ -171,7 +166,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_UnreadableStream", resourceCulture);
+                return "Stream does not support reading.";
             }
         }
 
@@ -184,14 +179,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_AlreadyExists_Name", resourceCulture);
+                return "Cannot create '{0}' because a file or directory with the same name already exists.";
             }
         }
 
 
         internal static string FormatIO_AlreadyExists_Name(object arg1)
         {
-            return string.Format(IO_AlreadyExists_Name, arg1);
+            return string.Format("Cannot create '{0}' because a file or directory with the same name already exists.", arg1);
         }
 
 
@@ -202,14 +197,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_FileExists_Name", resourceCulture);
+                return "The file '{0}' already exists.";
             }
         }
 
 
         internal static string FormatIO_FileExists_Name(object arg1)
         {
-            return string.Format(IO_FileExists_Name, arg1);
+            return string.Format("The file '{0}' already exists.", arg1);
         }
 
 
@@ -220,7 +215,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_FileNotFound", resourceCulture);
+                return "Unable to find the specified file.";
             }
         }
 
@@ -233,14 +228,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_FileNotFound_FileName", resourceCulture);
+                return "Could not find file '{0}'.";
             }
         }
 
 
         internal static string FormatIO_FileNotFound_FileName(object arg1)
         {
-            return string.Format(IO_FileNotFound_FileName, arg1);
+            return string.Format("Could not find file '{0}'.", arg1);
         }
 
 
@@ -251,7 +246,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_PathNotFound_NoPathName", resourceCulture);
+                return "Could not find a part of the path.";
             }
         }
 
@@ -264,14 +259,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_PathNotFound_Path", resourceCulture);
+                return "Could not find a part of the path '{0}'.";
             }
         }
 
 
         internal static string FormatIO_PathNotFound_Path(object arg1)
         {
-            return string.Format(IO_PathNotFound_Path, arg1);
+            return string.Format("Could not find a part of the path '{0}'.", arg1);
         }
 
 
@@ -282,7 +277,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_PathTooLong", resourceCulture);
+                return "The specified file name or path is too long, or a component of the specified path is too long.";
             }
         }
 
@@ -295,7 +290,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnauthorizedAccess_IODenied_NoPathName", resourceCulture);
+                return "Access to the path is denied.";
             }
         }
 
@@ -308,14 +303,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnauthorizedAccess_IODenied_Path", resourceCulture);
+                return "Access to the path '{0}' is denied.";
             }
         }
 
 
         internal static string FormatUnauthorizedAccess_IODenied_Path(object arg1)
         {
-            return string.Format(UnauthorizedAccess_IODenied_Path, arg1);
+            return string.Format("Access to the path '{0}' is denied.", arg1);
         }
 
 
@@ -326,14 +321,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_SharingViolation_File", resourceCulture);
+                return "The process cannot access the file '{0}' because it is being used by another process.";
             }
         }
 
 
         internal static string FormatIO_SharingViolation_File(object arg1)
         {
-            return string.Format(IO_SharingViolation_File, arg1);
+            return string.Format("The process cannot access the file '{0}' because it is being used by another process.", arg1);
         }
 
 
@@ -344,7 +339,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_SharingViolation_NoFileName", resourceCulture);
+                return "The process cannot access the file because it is being used by another process.";
             }
         }
 
@@ -357,7 +352,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_InvalidConsoleColor", resourceCulture);
+                return "The ConsoleColor enum value was not defined on that enum. Please use a defined color from the enum.";
             }
         }
 
@@ -370,7 +365,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_NoConsole", resourceCulture);
+                return "There is no console.";
             }
         }
 
@@ -383,7 +378,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_TermInfoInvalid", resourceCulture);
+                return "The terminfo database is invalid.";
             }
         }
 
@@ -396,7 +391,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_PrintF", resourceCulture);
+                return "The printf operation failed.";
             }
         }
 
@@ -409,7 +404,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_ConsoleReadKeyOnFile", resourceCulture);
+                return "Cannot read keys when either application does not have a console or when console input has been redirected. Try Console.Read.";
             }
         }
 
@@ -422,7 +417,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_SetWindowSize", resourceCulture);
+                return "Cannot set window size when console output has been redirected.";
             }
         }
 
@@ -435,7 +430,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PersistedFiles_NoHomeDirectory", resourceCulture);
+                return "The home directory of the current user could not be determined.";
             }
         }
 
@@ -448,7 +443,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_ConsoleKey", resourceCulture);
+                return "Console key values must be between 0 and 255 inclusive.";
             }
         }
 
@@ -461,7 +456,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_ConsoleBufferBoundaries", resourceCulture);
+                return "The value must be greater than or equal to zero and less than the console's buffer size in that dimension.";
             }
         }
 
@@ -474,7 +469,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_ConsoleWindowPos", resourceCulture);
+                return "The window position must be set such that the current window size fits within the console's buffer, and the numbers must not be negative.";
             }
         }
 
@@ -487,7 +482,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_ConsoleKeyAvailableOnFile", resourceCulture);
+                return "Cannot see if a key has been pressed when either application does not have a console or when console input has been redirected from a file. Try Console.In.Peek.";
             }
         }
 
@@ -500,7 +495,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_ConsoleBufferLessThanWindowSize", resourceCulture);
+                return "The console buffer size must not be less than the current size and position of the console window, nor greater than or equal to short.MaxValue.";
             }
         }
 
@@ -513,7 +508,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_CursorSize", resourceCulture);
+                return "The cursor size is invalid. It must be a percentage between 1 and 100.";
             }
         }
 
@@ -526,14 +521,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_BeepFrequency", resourceCulture);
+                return "The frequency must be between {0} and {1}.";
             }
         }
 
 
         internal static string FormatArgumentOutOfRange_BeepFrequency(object arg1, object arg2)
         {
-            return string.Format(ArgumentOutOfRange_BeepFrequency, arg1, arg2);
+            return string.Format("The frequency must be between {0} and {1}.", arg1, arg2);
         }
 
 
@@ -544,7 +539,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_IndexCountBuffer", resourceCulture);
+                return "Index and count must refer to a location within the buffer.";
             }
         }
 
@@ -557,7 +552,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_IndexCount", resourceCulture);
+                return "Index and count must refer to a location within the string.";
             }
         }
 
@@ -570,7 +565,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_IndexMustBeLess", resourceCulture);
+                return "Index was out of range. Must be non-negative and less than the size of the collection.";
             }
         }
 
@@ -583,7 +578,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_IndexMustBeLessOrEqual", resourceCulture);
+                return "Index was out of range. Must be non-negative and less than or equal to the size of the collection.";
             }
         }
 
@@ -596,14 +591,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_EncodingConversionOverflowBytes", resourceCulture);
+                return "The output byte buffer is too small to contain the encoded data, encoding '{0}' fallback '{1}'.";
             }
         }
 
 
         internal static string FormatArgument_EncodingConversionOverflowBytes(object arg1, object arg2)
         {
-            return string.Format(Argument_EncodingConversionOverflowBytes, arg1, arg2);
+            return string.Format("The output byte buffer is too small to contain the encoded data, encoding '{0}' fallback '{1}'.", arg1, arg2);
         }
 
 
@@ -614,14 +609,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_EncodingConversionOverflowChars", resourceCulture);
+                return "The output char buffer is too small to contain the decoded characters, encoding '{0}' fallback '{1}'.";
             }
         }
 
 
         internal static string FormatArgument_EncodingConversionOverflowChars(object arg1, object arg2)
         {
-            return string.Format(Argument_EncodingConversionOverflowChars, arg1, arg2);
+            return string.Format("The output char buffer is too small to contain the decoded characters, encoding '{0}' fallback '{1}'.", arg1, arg2);
         }
 
 
@@ -632,7 +627,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_GetByteCountOverflow", resourceCulture);
+                return "Too many characters. The resulting number of bytes is larger than what can be returned as an int.";
             }
         }
 
@@ -645,7 +640,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_GetCharCountOverflow", resourceCulture);
+                return "Too many bytes. The resulting number of chars is larger than what can be returned as an int.";
             }
         }
 
@@ -658,7 +653,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidCharSequenceNoIndex", resourceCulture);
+                return "String contains invalid Unicode code points.";
             }
         }
 
@@ -671,14 +666,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_PathTooLong_Path", resourceCulture);
+                return "The path '{0}' is too long, or a component of the specified path is too long.";
             }
         }
 
 
         internal static string FormatIO_PathTooLong_Path(object arg1)
         {
-            return string.Format(IO_PathTooLong_Path, arg1);
+            return string.Format("The path '{0}' is too long, or a component of the specified path is too long.", arg1);
         }
 
 
@@ -689,14 +684,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("IO_TermInfoInvalidMagicNumber", resourceCulture);
+                return "The terminfo database has an invalid magic number: '{0}'.";
             }
         }
 
 
         internal static string FormatIO_TermInfoInvalidMagicNumber(object arg1)
         {
-            return string.Format(IO_TermInfoInvalidMagicNumber, arg1);
+            return string.Format("The terminfo database has an invalid magic number: '{0}'.", arg1);
         }
 
 
@@ -707,7 +702,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PlatformNotSupported_SystemConsole", resourceCulture);
+                return "System.Console is not supported on this platform.";
             }
         }
 

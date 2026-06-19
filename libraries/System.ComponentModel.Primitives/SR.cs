@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.ComponentModel.Primitives", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,14 +70,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidEnumArgument", resourceCulture);
+                return "The value of argument '{0}' ({1}) is invalid for Enum type '{2}'.";
             }
         }
 
 
         internal static string FormatInvalidEnumArgument(object arg1, object arg2, object arg3)
         {
-            return string.Format(InvalidEnumArgument, arg1, arg2, arg3);
+            return string.Format("The value of argument '{0}' ({1}) is invalid for Enum type '{2}'.", arg1, arg2, arg3);
         }
 
 
@@ -88,7 +88,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyCategoryAction", resourceCulture);
+                return "Action";
             }
         }
 
@@ -101,7 +101,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyCategoryAppearance", resourceCulture);
+                return "Appearance";
             }
         }
 
@@ -114,7 +114,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyCategoryAsynchronous", resourceCulture);
+                return "Asynchronous";
             }
         }
 
@@ -127,7 +127,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyCategoryBehavior", resourceCulture);
+                return "Behavior";
             }
         }
 
@@ -140,7 +140,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyCategoryConfig", resourceCulture);
+                return "Configurations";
             }
         }
 
@@ -153,7 +153,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyCategoryData", resourceCulture);
+                return "Data";
             }
         }
 
@@ -166,7 +166,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyCategoryDDE", resourceCulture);
+                return "DDE";
             }
         }
 
@@ -179,7 +179,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyCategoryDefault", resourceCulture);
+                return "Misc";
             }
         }
 
@@ -192,7 +192,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyCategoryDesign", resourceCulture);
+                return "Design";
             }
         }
 
@@ -205,7 +205,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyCategoryDragDrop", resourceCulture);
+                return "Drag Drop";
             }
         }
 
@@ -218,7 +218,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyCategoryFocus", resourceCulture);
+                return "Focus";
             }
         }
 
@@ -231,7 +231,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyCategoryFont", resourceCulture);
+                return "Font";
             }
         }
 
@@ -244,7 +244,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyCategoryFormat", resourceCulture);
+                return "Format";
             }
         }
 
@@ -257,7 +257,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyCategoryKey", resourceCulture);
+                return "Key";
             }
         }
 
@@ -270,7 +270,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyCategoryLayout", resourceCulture);
+                return "Layout";
             }
         }
 
@@ -283,7 +283,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyCategoryList", resourceCulture);
+                return "List";
             }
         }
 
@@ -296,7 +296,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyCategoryMouse", resourceCulture);
+                return "Mouse";
             }
         }
 
@@ -309,7 +309,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyCategoryPosition", resourceCulture);
+                return "Position";
             }
         }
 
@@ -322,7 +322,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyCategoryScale", resourceCulture);
+                return "Scale";
             }
         }
 
@@ -335,7 +335,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyCategoryText", resourceCulture);
+                return "Text";
             }
         }
 
@@ -348,7 +348,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PropertyCategoryWindowStyle", resourceCulture);
+                return "Window Style";
             }
         }
 

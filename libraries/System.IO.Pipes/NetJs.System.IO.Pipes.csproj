@@ -29,7 +29,6 @@
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Pipes\src\System\IO\Pipes\PipeStream.cs" />-->
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Pipes\src\System\IO\Pipes\PipeTransmissionMode.cs" />-->
     <!--<Compile Include="$(CommonPath)DisableRuntimeMarshalling.cs" Link="Common\DisableRuntimeMarshalling.cs" />-->
-    <!--<Compile Include="$(CommonPath)System\Obsoletions.cs" Link="Common\System\Obsoletions.cs" />-->
   </ItemGroup>
   <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'windows'">
     <!--<Compile Include="$(CommonPath)Microsoft\Win32\SafeHandles\SafeThreadHandle.cs" Link="Microsoft\Win32\SafeHandles\SafeThreadHandle.cs" />-->

@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Security.Cryptography", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,7 +70,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_CryptographyException", resourceCulture);
+                return "Error occurred during a cryptographic operation.";
             }
         }
 
@@ -83,7 +83,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_EmptyOrNullArray", resourceCulture);
+                return "Array may not be empty or null.";
             }
         }
 
@@ -96,7 +96,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_EmptyOrNullString", resourceCulture);
+                return "String cannot be empty or null.";
             }
         }
 
@@ -109,14 +109,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_EmptyOrNullString_Named", resourceCulture);
+                return "The `{0}` string cannot be empty or null.";
             }
         }
 
 
         internal static string FormatArg_EmptyOrNullString_Named(object arg1)
         {
-            return string.Format(Arg_EmptyOrNullString_Named, arg1);
+            return string.Format("The `{0}` string cannot be empty or null.", arg1);
         }
 
 
@@ -127,7 +127,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_EmptySpan", resourceCulture);
+                return "Span may not be empty.";
             }
         }
 
@@ -140,14 +140,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_EnumIllegalVal", resourceCulture);
+                return "Illegal enum value: {0}.";
             }
         }
 
 
         internal static string FormatArg_EnumIllegalVal(object arg1)
         {
-            return string.Format(Arg_EnumIllegalVal, arg1);
+            return string.Format("Illegal enum value: {0}.", arg1);
         }
 
 
@@ -158,7 +158,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_InvalidHandle", resourceCulture);
+                return "Invalid handle.";
             }
         }
 
@@ -171,7 +171,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_InvalidType", resourceCulture);
+                return "Invalid type.";
             }
         }
 
@@ -184,7 +184,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_RankMultiDimNotSupported", resourceCulture);
+                return "Only single dimensional arrays are supported for the requested action.";
             }
         }
 
@@ -197,7 +197,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_Asn1_InvalidCharacterString", resourceCulture);
+                return "The specified UniversalTagNumber must be a string type.";
             }
         }
 
@@ -210,14 +210,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_Asn1_InvalidStringContents", resourceCulture);
+                return "The contents of the string are not valid for the '{0}' ASN.1 encoding.";
             }
         }
 
 
         internal static string FormatArgument_Asn1_InvalidStringContents(object arg1)
         {
-            return string.Format(Argument_Asn1_InvalidStringContents, arg1);
+            return string.Format("The contents of the string are not valid for the '{0}' ASN.1 encoding.", arg1);
         }
 
 
@@ -228,7 +228,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_DestinationTooShort", resourceCulture);
+                return "Destination is too short.";
             }
         }
 
@@ -241,14 +241,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_DestinationImprecise", resourceCulture);
+                return "Destination must be exactly {0} bytes.";
             }
         }
 
 
         internal static string FormatArgument_DestinationImprecise(object arg1)
         {
-            return string.Format(Argument_DestinationImprecise, arg1);
+            return string.Format("Destination must be exactly {0} bytes.", arg1);
         }
 
 
@@ -259,20 +259,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_EmptyString", resourceCulture);
-            }
-        }
-
-
-
-        /// <summary>
-        /// Hash cannot be empty.
-        /// </summary>
-        internal static string Argument_HashEmpty
-        {
-            get
-            {
-                return ResourceManager.GetString("Argument_HashEmpty", resourceCulture);
+                return "The value cannot be an empty string.";
             }
         }
 
@@ -285,14 +272,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_HashImprecise", resourceCulture);
+                return "Hash must be exactly {0} bytes.";
             }
         }
 
 
         internal static string FormatArgument_HashImprecise(object arg1)
         {
-            return string.Format(Argument_HashImprecise, arg1);
+            return string.Format("Hash must be exactly {0} bytes.", arg1);
         }
 
 
@@ -303,7 +290,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_Invalid_SafeHandleInvalidOrClosed", resourceCulture);
+                return "The method cannot be called with an invalid or closed SafeHandle.";
             }
         }
 
@@ -316,7 +303,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidFlag", resourceCulture);
+                return "Value of flags is invalid.";
             }
         }
 
@@ -329,7 +316,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidHostnameOrIPAddress", resourceCulture);
+                return "The provided value is not a valid DNS hostname or IP Address.";
             }
         }
 
@@ -342,7 +329,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidNameType", resourceCulture);
+                return "The value of 'nameType' is invalid.";
             }
         }
 
@@ -355,7 +342,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidOffLen", resourceCulture);
+                return "Offset and length were out of bounds for the array or count is greater than the number of elements from index to the end of the source collection.";
             }
         }
 
@@ -368,7 +355,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidOidValue", resourceCulture);
+                return "The OID value was invalid.";
             }
         }
 
@@ -381,7 +368,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidRandomRange", resourceCulture);
+                return "Range of random number does not contain at least one possibility.";
             }
         }
 
@@ -394,7 +381,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidSerialNumberBytes", resourceCulture);
+                return "The provided serial number is invalid. Ensure the input is in big-endian byte order and that all redundant leading bytes have been removed.";
             }
         }
 
@@ -407,7 +394,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_InvalidValue", resourceCulture);
+                return "Value was invalid.";
             }
         }
 
@@ -420,7 +407,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_KemInvalidCiphertextLength", resourceCulture);
+                return "The specified ciphertext is not the correct length for the ML-KEM algorithm.";
             }
         }
 
@@ -433,7 +420,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_KemInvalidDecapsulationKeyLength", resourceCulture);
+                return "The specified decapsulation key is not the correct length for the ML-KEM algorithm.";
             }
         }
 
@@ -446,7 +433,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_KemInvalidEncapsulationKeyLength", resourceCulture);
+                return "The specified encapsulation key is not the correct length for the ML-KEM algorithm.";
             }
         }
 
@@ -459,7 +446,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_KemInvalidSeedLength", resourceCulture);
+                return "The specified private seed is not the correct length for the ML-KEM algorithm.";
             }
         }
 
@@ -472,7 +459,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_MLDsaMuInvalidLength", resourceCulture);
+                return "The specified mu value is not the correct length for the ML-DSA algorithm.";
             }
         }
 
@@ -485,7 +472,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_PrivateKeyWrongSizeForAlgorithm", resourceCulture);
+                return "The private key is not the correct size for the indicated algorithm.";
             }
         }
 
@@ -498,7 +485,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_PublicKeyWrongSizeForAlgorithm", resourceCulture);
+                return "The public key is not the correct size for the indicated algorithm.";
             }
         }
 
@@ -511,7 +498,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_PrivateSeedWrongSizeForAlgorithm", resourceCulture);
+                return "The private seed is not the correct size for the indicated algorithm.";
             }
         }
 
@@ -524,7 +511,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_PublicKeyTooShortForAlgorithm", resourceCulture);
+                return "The public key is too short for the indicated algorithm.";
             }
         }
 
@@ -537,7 +524,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_SignatureContextTooLong255", resourceCulture);
+                return "The specified signature context exceeds the maximum length of 255 bytes.";
             }
         }
 
@@ -550,7 +537,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_StreamNotReadable", resourceCulture);
+                return "Stream was not readable.";
             }
         }
 
@@ -563,7 +550,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_StreamNotWritable", resourceCulture);
+                return "Stream was not writable.";
             }
         }
 
@@ -576,7 +563,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_BitsMustBeWholeBytes", resourceCulture);
+                return "The value specified in bits must be a whole number of bytes.";
             }
         }
 
@@ -589,7 +576,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_PasswordNullChars", resourceCulture);
+                return "The password contains a Unicode 'NULL' character, which is not permitted.";
             }
         }
 
@@ -602,7 +589,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_PemEncoding_NoPemFound", resourceCulture);
+                return "No PEM encoded data found.";
             }
         }
 
@@ -615,7 +602,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_PemEncoding_InvalidLabel", resourceCulture);
+                return "The specified label is not valid.";
             }
         }
 
@@ -628,7 +615,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_PemEncoding_EncodedSizeTooLarge", resourceCulture);
+                return "The encoded PEM size is too large to represent as a signed 32-bit integer.";
             }
         }
 
@@ -641,7 +628,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_PemImport_NoPemFound", resourceCulture);
+                return "No supported key formats were found. Check that the input represents the contents of a PEM-encoded key file, not the path to such a file.";
             }
         }
 
@@ -654,7 +641,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_PemImport_AmbiguousPem", resourceCulture);
+                return "The input contains multiple keys, but only one key can be imported.";
             }
         }
 
@@ -667,7 +654,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_PemImport_EncryptedPem", resourceCulture);
+                return "An encrypted key was found, but no password was provided. Use ImportFromEncryptedPem to import this key.";
             }
         }
 
@@ -680,7 +667,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_Thumbprint_Invalid", resourceCulture);
+                return "The supplied thumbprint is not a valid hex-encoded digest.";
             }
         }
 
@@ -693,7 +680,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_X500_EmailTooLong", resourceCulture);
+                return "The email address cannot exceed 255 characters.";
             }
         }
 
@@ -706,7 +693,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_X500_InvalidCountryOrRegion", resourceCulture);
+                return "The country or region code must be exactly two characters and contain characters between A through Z, inclusive.";
             }
         }
 
@@ -719,7 +706,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_IndexMustBeLess", resourceCulture);
+                return "Index was out of range. Must be non-negative and less than the size of the collection.";
             }
         }
 
@@ -732,7 +719,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_IndexMustBeLessOrEqual", resourceCulture);
+                return "Index was out of range. Must be non-negative and less than or equal to the size of the collection.";
             }
         }
 
@@ -745,7 +732,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_KOut_Too_Large", resourceCulture);
+                return "The number of bytes requested is too large. The number of bytes produced by SP800108HmacCounterKdf cannot exceed 536,870,911 bytes.";
             }
         }
 
@@ -758,7 +745,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArgumentOutOfRange_NeedNonNegNum", resourceCulture);
+                return "Non-negative number required.";
             }
         }
 
@@ -771,7 +758,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Chain_EmptyCustomTrustNotSupported", resourceCulture);
+                return "An empty custom trust store is not supported on this platform.";
             }
         }
 
@@ -784,7 +771,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Chain_NoPolicyMatch", resourceCulture);
+                return "The certificate has invalid policy.";
             }
         }
 
@@ -797,7 +784,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Chain_PartialChain", resourceCulture);
+                return "The certificate chain is incomplete.";
             }
         }
 
@@ -810,7 +797,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Chain_RevocationStatusUnknown", resourceCulture);
+                return "The certificate's revocation status could not be determined.";
             }
         }
 
@@ -823,7 +810,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CryptoConfigNotSupported", resourceCulture);
+                return "Accessing a hash algorithm by manipulating the HashName property is not supported on this platform. Instead, you must instantiate one of the supplied subtypes (such as HMACSHA1.)";
             }
         }
 
@@ -836,14 +823,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_AlgKdfRequiresChars", resourceCulture);
+                return "The KDF for algorithm '{0}' requires a char-based password input.";
             }
         }
 
 
         internal static string FormatCryptography_AlgKdfRequiresChars(object arg1)
         {
-            return string.Format(Cryptography_AlgKdfRequiresChars, arg1);
+            return string.Format("The KDF for algorithm '{0}' requires a char-based password input.", arg1);
         }
 
 
@@ -854,14 +841,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_AlgorithmNotSupported", resourceCulture);
+                return "Algorithm '{0}' is not supported on this platform.";
             }
         }
 
 
         internal static string FormatCryptography_AlgorithmNotSupported(object arg1)
         {
-            return string.Format(Cryptography_AlgorithmNotSupported, arg1);
+            return string.Format("Algorithm '{0}' is not supported on this platform.", arg1);
         }
 
 
@@ -872,7 +859,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_AlgorithmTypesMustBeVisible", resourceCulture);
+                return "Algorithms added to CryptoConfig must be accessible from outside their assembly.";
             }
         }
 
@@ -885,7 +872,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_ArgDSARequiresDSAKey", resourceCulture);
+                return "Keys used with the DSACng algorithm must have an algorithm group of DSA.";
             }
         }
 
@@ -898,7 +885,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_ArgECDHKeySizeMismatch", resourceCulture);
+                return "The keys from both parties must be the same size to generate a secret agreement.";
             }
         }
 
@@ -911,7 +898,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_ArgECDHRequiresECDHKey", resourceCulture);
+                return "Keys used with the ECDiffieHellmanCng algorithm must have an algorithm group of ECDiffieHellman.";
             }
         }
 
@@ -924,7 +911,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_ArgECDsaRequiresECDsaKey", resourceCulture);
+                return "Keys used with the ECDsaCng algorithm must have an algorithm group of ECDsa.";
             }
         }
 
@@ -937,7 +924,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_ArgMLDsaRequiresMLDsaKey", resourceCulture);
+                return "Keys used with the MLDsaCng algorithm must have an algorithm group of MLDsa.";
             }
         }
 
@@ -950,7 +937,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_ArgMLKemRequiresMLKemKey", resourceCulture);
+                return "Keys used with the MLKemCng algorithm must have an algorithm group of MLKem.";
             }
         }
 
@@ -963,7 +950,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_ArgRSARequiresRSAKey", resourceCulture);
+                return "Keys used with the RSACng algorithm must have an algorithm group of RSA.";
             }
         }
 
@@ -976,7 +963,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_AuthTagMismatch", resourceCulture);
+                return "The computed authentication tag did not match the input authentication tag.";
             }
         }
 
@@ -989,14 +976,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_BadHashSize_ForAlgorithm", resourceCulture);
+                return "The provided value of {0} bytes does not match the expected size of {1} bytes for the algorithm ({2}).";
             }
         }
 
 
         internal static string FormatCryptography_BadHashSize_ForAlgorithm(object arg1, object arg2, object arg3)
         {
-            return string.Format(Cryptography_BadHashSize_ForAlgorithm, arg1, arg2, arg3);
+            return string.Format("The provided value of {0} bytes does not match the expected size of {1} bytes for the algorithm ({2}).", arg1, arg2, arg3);
         }
 
 
@@ -1007,14 +994,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CAPI_Required", resourceCulture);
+                return "'{0}' requires Windows Cryptographic API (CAPI), which is not available on this platform.";
             }
         }
 
 
         internal static string FormatCryptography_CAPI_Required(object arg1)
         {
-            return string.Format(Cryptography_CAPI_Required, arg1);
+            return string.Format("'{0}' requires Windows Cryptographic API (CAPI), which is not available on this platform.", arg1);
         }
 
 
@@ -1025,7 +1012,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Cert_AlreadyHasPrivateKey", resourceCulture);
+                return "The certificate already has an associated private key.";
             }
         }
 
@@ -1038,14 +1025,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CertReq_AlgorithmMustMatch", resourceCulture);
+                return "The issuer certificate public key algorithm ({0}) does not match the value for this certificate request ({1}), use the X509SignatureGenerator overload.";
             }
         }
 
 
         internal static string FormatCryptography_CertReq_AlgorithmMustMatch(object arg1, object arg2)
         {
-            return string.Format(Cryptography_CertReq_AlgorithmMustMatch, arg1, arg2);
+            return string.Format("The issuer certificate public key algorithm ({0}) does not match the value for this certificate request ({1}), use the X509SignatureGenerator overload.", arg1, arg2);
         }
 
 
@@ -1056,7 +1043,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CertReq_BasicConstraintsRequired", resourceCulture);
+                return "The issuer certificate does not have a Basic Constraints extension.";
             }
         }
 
@@ -1069,7 +1056,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CertReq_DatesReversed", resourceCulture);
+                return "The provided notBefore value is later than the notAfter value.";
             }
         }
 
@@ -1082,14 +1069,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CertReq_DuplicateExtension", resourceCulture);
+                return "An X509Extension with OID '{0}' has already been specified.";
             }
         }
 
 
         internal static string FormatCryptography_CertReq_DuplicateExtension(object arg1)
         {
-            return string.Format(Cryptography_CertReq_DuplicateExtension, arg1);
+            return string.Format("An X509Extension with OID '{0}' has already been specified.", arg1);
         }
 
 
@@ -1100,7 +1087,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CertReq_ExtensionRequestInOtherAttributes", resourceCulture);
+                return "The OtherRequestAttributes collection contains a PKCS#9 Extension Request Attribute. This attribute cannot be manually specified, it is generated via the CertificateExtensions property.";
             }
         }
 
@@ -1113,7 +1100,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CertReq_IssuerBasicConstraintsInvalid", resourceCulture);
+                return "The issuer certificate does not have an appropriate value for the Basic Constraints extension.";
             }
         }
 
@@ -1126,7 +1113,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CertReq_IssuerKeyUsageInvalid", resourceCulture);
+                return "The issuer certificate's Key Usage extension is present but does not contain the KeyCertSign flag.";
             }
         }
 
@@ -1139,7 +1126,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CertReq_IssuerRequiresPrivateKey", resourceCulture);
+                return "The provided issuer certificate does not have an associated private key.";
             }
         }
 
@@ -1152,7 +1139,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CertReq_Load_DuplicateExtensionRequests", resourceCulture);
+                return "The PKCS#10 Certification Request contains multiple PKCS#9 Extension Request attributes.";
             }
         }
 
@@ -1165,14 +1152,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CertReq_Load_VersionTooNew", resourceCulture);
+                return "The provided PKCS#10 Certification Request value has version '{0}', but version '{1}' is the maximum supported.";
             }
         }
 
 
         internal static string FormatCryptography_CertReq_Load_VersionTooNew(object arg1, object arg2)
         {
-            return string.Format(Cryptography_CertReq_Load_VersionTooNew, arg1, arg2);
+            return string.Format("The provided PKCS#10 Certification Request value has version '{0}', but version '{1}' is the maximum supported.", arg1, arg2);
         }
 
 
@@ -1183,14 +1170,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CertReq_MissingOidInCollection", resourceCulture);
+                return "The collection in the '{0}' property contains a value that has a null Oid value.";
             }
         }
 
 
         internal static string FormatCryptography_CertReq_MissingOidInCollection(object arg1)
         {
-            return string.Format(Cryptography_CertReq_MissingOidInCollection, arg1);
+            return string.Format("The collection in the '{0}' property contains a value that has a null Oid value.", arg1);
         }
 
 
@@ -1201,14 +1188,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CertReq_NullValueInCollection", resourceCulture);
+                return "The collection in the '{0}' property contains a null value.";
             }
         }
 
 
         internal static string FormatCryptography_CertReq_NullValueInCollection(object arg1)
         {
-            return string.Format(Cryptography_CertReq_NullValueInCollection, arg1);
+            return string.Format("The collection in the '{0}' property contains a null value.", arg1);
         }
 
 
@@ -1219,7 +1206,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CertReq_NoKeyProvided", resourceCulture);
+                return "This method cannot be used since no signing key was provided via a constructor, use an overload accepting an X509SignatureGenerator instead.";
             }
         }
 
@@ -1232,7 +1219,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CertReq_NoHashAlgorithmProvided", resourceCulture);
+                return "The intended signature algorithm requires a HashAlgorithmName, but one was not provided when building the CertificateRequest object.";
             }
         }
 
@@ -1245,14 +1232,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CertReq_NotAfterNotNested", resourceCulture);
+                return "The requested notAfter value ({0}) is later than issuerCertificate.NotAfter ({1}).";
             }
         }
 
 
         internal static string FormatCryptography_CertReq_NotAfterNotNested(object arg1, object arg2)
         {
-            return string.Format(Cryptography_CertReq_NotAfterNotNested, arg1, arg2);
+            return string.Format("The requested notAfter value ({0}) is later than issuerCertificate.NotAfter ({1}).", arg1, arg2);
         }
 
 
@@ -1263,14 +1250,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CertReq_NotBeforeNotNested", resourceCulture);
+                return "The requested notBefore value ({0}) is earlier than issuerCertificate.NotBefore ({1}).";
             }
         }
 
 
         internal static string FormatCryptography_CertReq_NotBeforeNotNested(object arg1, object arg2)
         {
-            return string.Format(Cryptography_CertReq_NotBeforeNotNested, arg1, arg2);
+            return string.Format("The requested notBefore value ({0}) is earlier than issuerCertificate.NotBefore ({1}).", arg1, arg2);
         }
 
 
@@ -1281,7 +1268,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CertReq_RSAPaddingRequired", resourceCulture);
+                return "The issuer certificate uses an RSA key but no RSASignaturePadding was provided to a constructor. If one cannot be provided, use the X509SignatureGenerator overload.";
             }
         }
 
@@ -1294,7 +1281,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CertReq_SignatureVerificationFailed", resourceCulture);
+                return "The public key within the PKCS#10 Certification Request did not verify the embedded signature.";
             }
         }
 
@@ -1307,14 +1294,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CipherModeFeedbackNotSupported", resourceCulture);
+                return "The specified feedback size '{0}' for CipherMode '{1}' is not supported.";
             }
         }
 
 
         internal static string FormatCryptography_CipherModeFeedbackNotSupported(object arg1, object arg2)
         {
-            return string.Format(Cryptography_CipherModeFeedbackNotSupported, arg1, arg2);
+            return string.Format("The specified feedback size '{0}' for CipherMode '{1}' is not supported.", arg1, arg2);
         }
 
 
@@ -1325,14 +1312,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CipherModeNotSupported", resourceCulture);
+                return "The specified CipherMode '{0}' is not supported.";
             }
         }
 
 
         internal static string FormatCryptography_CipherModeNotSupported(object arg1)
         {
-            return string.Format(Cryptography_CipherModeNotSupported, arg1);
+            return string.Format("The specified CipherMode '{0}' is not supported.", arg1);
         }
 
 
@@ -1343,7 +1330,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CompositeSignDataError", resourceCulture);
+                return "Composite signature generation failed due to an error in one or both of the components.";
             }
         }
 
@@ -1356,7 +1343,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_ConcurrentUseNotSupported", resourceCulture);
+                return "Concurrent operations from multiple threads on this type are not supported.";
             }
         }
 
@@ -1369,14 +1356,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Cms_UnknownAlgorithm", resourceCulture);
+                return "Unknown algorithm '{0}'.";
             }
         }
 
 
         internal static string FormatCryptography_Cms_UnknownAlgorithm(object arg1)
         {
-            return string.Format(Cryptography_Cms_UnknownAlgorithm, arg1);
+            return string.Format("Unknown algorithm '{0}'.", arg1);
         }
 
 
@@ -1387,14 +1374,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CngKeyWrongAlgorithm", resourceCulture);
+                return "This key is for algorithm '{0}'. Expected '{1}'.";
             }
         }
 
 
         internal static string FormatCryptography_CngKeyWrongAlgorithm(object arg1, object arg2)
         {
-            return string.Format(Cryptography_CngKeyWrongAlgorithm, arg1, arg2);
+            return string.Format("This key is for algorithm '{0}'. Expected '{1}'.", arg1, arg2);
         }
 
 
@@ -1405,7 +1392,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Config_EncodedOIDError", resourceCulture);
+                return "Encoded OID length is too large (greater than 0x7f bytes).";
             }
         }
 
@@ -1418,7 +1405,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CRLBuilder_DatesReversed", resourceCulture);
+                return "The provided thisUpdate value is later than the nextUpdate value.";
             }
         }
 
@@ -1431,7 +1418,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CRLBuilder_IssuerKeyUsageInvalid", resourceCulture);
+                return "The issuer certificate's Key Usage extension is present but does not contain the CrlSign flag.";
             }
         }
 
@@ -1444,7 +1431,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CRLBuilder_ReasonNotSupported", resourceCulture);
+                return "The specified revocation reason is not supported.";
             }
         }
 
@@ -1457,7 +1444,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CryptoStream_FlushFinalBlockTwice", resourceCulture);
+                return "FlushFinalBlock() method was called twice on a CryptoStream. It can only be called once.";
             }
         }
 
@@ -1470,7 +1457,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CSP_NoPrivateKey", resourceCulture);
+                return "Object contains only the public half of a key pair. A private key must also be provided.";
             }
         }
 
@@ -1483,7 +1470,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CSP_NotFound", resourceCulture);
+                return "The requested key container was not found.";
             }
         }
 
@@ -1496,14 +1483,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CSP_WrongKeySpec", resourceCulture);
+                return "The specified cryptographic service provider (CSP) does not support this key algorithm: {0}.";
             }
         }
 
 
         internal static string FormatCryptography_CSP_WrongKeySpec(object arg1)
         {
-            return string.Format(Cryptography_CSP_WrongKeySpec, arg1);
+            return string.Format("The specified cryptographic service provider (CSP) does not support this key algorithm: {0}.", arg1);
         }
 
 
@@ -1514,14 +1501,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CurveNotSupported", resourceCulture);
+                return "The specified curve '{0}' or its parameters are not valid for this platform.";
             }
         }
 
 
         internal static string FormatCryptography_CurveNotSupported(object arg1)
         {
-            return string.Format(Cryptography_CurveNotSupported, arg1);
+            return string.Format("The specified curve '{0}' or its parameters are not valid for this platform.", arg1);
         }
 
 
@@ -1532,7 +1519,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_CustomTrustCertsInSystemMode", resourceCulture);
+                return "Custom trust certificates were provided while in System trust mode.";
             }
         }
 
@@ -1545,7 +1532,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_DefaultAlgorithm_NotSupported", resourceCulture);
+                return "This platform does not allow the automatic selection of an algorithm.";
             }
         }
 
@@ -1558,7 +1545,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Der_Invalid_Encoding", resourceCulture);
+                return "ASN1 corrupted data.";
             }
         }
 
@@ -1571,7 +1558,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_DSA_KeyGenNotSupported", resourceCulture);
+                return "DSA keys can be imported, but new key generation is not supported on this platform.";
             }
         }
 
@@ -1584,7 +1571,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_ECC_NamedCurvesOnly", resourceCulture);
+                return "Only named curves are supported on this platform.";
             }
         }
 
@@ -1597,7 +1584,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_ECXmlSerializationFormatRequired", resourceCulture);
+                return "XML serialization of an elliptic curve key requires using an overload which specifies the XML format to be used.";
             }
         }
 
@@ -1610,14 +1597,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_EncryptedIncorrectLength", resourceCulture);
+                return "{0} unexpectedly produced a ciphertext with the incorrect length.";
             }
         }
 
 
         internal static string FormatCryptography_EncryptedIncorrectLength(object arg1)
         {
-            return string.Format(Cryptography_EncryptedIncorrectLength, arg1);
+            return string.Format("{0} unexpectedly produced a ciphertext with the incorrect length.", arg1);
         }
 
 
@@ -1628,7 +1615,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_EnginesNotSupported", resourceCulture);
+                return "OpenSSL ENGINE is not available on this platform.";
             }
         }
 
@@ -1641,7 +1628,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_ExceedKdfExtractLimit", resourceCulture);
+                return "The total number of bytes extracted cannot exceed UInt32.MaxValue * hash length.";
             }
         }
 
@@ -1654,7 +1641,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_FeedbackSizeNotSupported", resourceCulture);
+                return "The current platform does not support the specified feedback size.";
             }
         }
 
@@ -1667,7 +1654,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_FileStatusError", resourceCulture);
+                return "Unable to get file status.";
             }
         }
 
@@ -1680,7 +1667,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_FormatterMissingAlgorithm", resourceCulture);
+                return "No hash algorithm has been associated with this formatter object, assign one via the SetHashAlgorithm method.";
             }
         }
 
@@ -1693,7 +1680,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_FormatterMissingKey", resourceCulture);
+                return "No asymmetric key object has been associated with this formatter object, assign one via the SetKey method.";
             }
         }
 
@@ -1706,7 +1693,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_FromXmlParseError", resourceCulture);
+                return "The provided XML could not be read.";
             }
         }
 
@@ -1719,7 +1706,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_HashAlgorithmNameNullOrEmpty", resourceCulture);
+                return "The hash algorithm name cannot be null or empty.";
             }
         }
 
@@ -1732,7 +1719,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_HashLengthMismatch", resourceCulture);
+                return "The specified hash is not a valid size for this hash algorithm.";
             }
         }
 
@@ -1745,14 +1732,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_HashMLDsaAlgorithmMismatch", resourceCulture);
+                return "HashML-DSA '{0}' cannot be used with hash algorithm '{1}'.";
             }
         }
 
 
         internal static string FormatCryptography_HashMLDsaAlgorithmMismatch(object arg1, object arg2)
         {
-            return string.Format(Cryptography_HashMLDsaAlgorithmMismatch, arg1, arg2);
+            return string.Format("HashML-DSA '{0}' cannot be used with hash algorithm '{1}'.", arg1, arg2);
         }
 
 
@@ -1763,7 +1750,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_HashNotYetFinalized", resourceCulture);
+                return "Hash must be finalized before the hash value is retrieved.";
             }
         }
 
@@ -1776,14 +1763,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_IncorrectTagLength", resourceCulture);
+                return "The size of the specified tag does not match the expected size of {0}.";
             }
         }
 
 
         internal static string FormatCryptography_IncorrectTagLength(object arg1)
         {
-            return string.Format(Cryptography_IncorrectTagLength, arg1);
+            return string.Format("The size of the specified tag does not match the expected size of {0}.", arg1);
         }
 
 
@@ -1794,7 +1781,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidBlockSize", resourceCulture);
+                return "Specified block size is not valid for this algorithm.";
             }
         }
 
@@ -1807,7 +1794,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidCipherMode", resourceCulture);
+                return "Specified cipher mode is not valid for this algorithm.";
             }
         }
 
@@ -1820,7 +1807,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidContextHandle", resourceCulture);
+                return "The chain context handle is invalid.";
             }
         }
 
@@ -1833,7 +1820,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidCurveKeyParameters", resourceCulture);
+                return "The specified key parameters are not valid. Q.X and Q.Y, or D, must be specified. Q.X, Q.Y must be the same length. If D is specified it must be the same length as Q.X and Q.Y if also specified for named curves or the same length as Order for explicit curves.";
             }
         }
 
@@ -1846,14 +1833,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidCurveOid", resourceCulture);
+                return "The specified Oid ({0}) is not valid. The Oid.FriendlyName or Oid.Value property must be set.";
             }
         }
 
 
         internal static string FormatCryptography_InvalidCurveOid(object arg1)
         {
-            return string.Format(Cryptography_InvalidCurveOid, arg1);
+            return string.Format("The specified Oid ({0}) is not valid. The Oid.FriendlyName or Oid.Value property must be set.", arg1);
         }
 
 
@@ -1864,14 +1851,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidDirectoryPermissions", resourceCulture);
+                return "Invalid directory permissions. The directory '{0}' must be readable, writable and executable by the owner.";
             }
         }
 
 
         internal static string FormatCryptography_InvalidDirectoryPermissions(object arg1)
         {
-            return string.Format(Cryptography_InvalidDirectoryPermissions, arg1);
+            return string.Format("Invalid directory permissions. The directory '{0}' must be readable, writable and executable by the owner.", arg1);
         }
 
 
@@ -1882,7 +1869,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidDsaParameters_MismatchedPGY", resourceCulture);
+                return "The specified DSA parameters are not valid; P, G and Y must be the same length (the key size).";
             }
         }
 
@@ -1895,7 +1882,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidDsaParameters_MismatchedPJ", resourceCulture);
+                return "The specified DSA parameters are not valid; J (if present) must be shorter than P.";
             }
         }
 
@@ -1908,7 +1895,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidDsaParameters_MismatchedQX", resourceCulture);
+                return "The specified DSA parameters are not valid; Q and X (if present) must be the same length.";
             }
         }
 
@@ -1921,7 +1908,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidDsaParameters_MissingFields", resourceCulture);
+                return "The specified DSA parameters are not valid; P, Q, G and Y are all required.";
             }
         }
 
@@ -1934,7 +1921,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidDsaParameters_QRestriction_LargeKey", resourceCulture);
+                return "The specified DSA parameters are not valid; Q's length must be one of 20, 32 or 64 bytes.";
             }
         }
 
@@ -1947,7 +1934,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidDsaParameters_QRestriction_ShortKey", resourceCulture);
+                return "The specified DSA parameters are not valid; Q must be 20 bytes long for keys shorter than 1024 bits.";
             }
         }
 
@@ -1960,7 +1947,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidDsaParameters_SeedRestriction_ShortKey", resourceCulture);
+                return "The specified DSA parameters are not valid; Seed, if present, must be 20 bytes long for keys shorter than 1024 bits.";
             }
         }
 
@@ -1973,7 +1960,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidDSASignatureSize", resourceCulture);
+                return "Length of the DSA signature was not 40 bytes.";
             }
         }
 
@@ -1986,7 +1973,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidECCharacteristic2Curve", resourceCulture);
+                return "The specified Characteristic2 curve parameters are not valid. Polynomial, A, B, G.X, G.Y, and Order are required. A, B, G.X, G.Y must be the same length, and the same length as Q.X, Q.Y and D if those are specified. Cofactor is required. Seed and Hash are optional. Other parameters are not allowed.";
             }
         }
 
@@ -1999,7 +1986,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidECPrimeCurve", resourceCulture);
+                return "The specified prime curve parameters are not valid. Prime, A, B, G.X, G.Y and Order are required and must be the same length, and the same length as Q.X, Q.Y and D if those are specified. Cofactor is required. Seed and Hash are optional. Other parameters are not allowed.";
             }
         }
 
@@ -2012,7 +1999,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidECNamedCurve", resourceCulture);
+                return "The specified named curve parameters are not valid. Only the Oid parameter must be set.";
             }
         }
 
@@ -2025,7 +2012,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidFeedbackSize", resourceCulture);
+                return "Specified feedback size is not valid for this algorithm.";
             }
         }
 
@@ -2038,14 +2025,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidFilePermissions", resourceCulture);
+                return "Invalid file permissions. The file '{0}' must readable and writable by the current owner and by no one else, and the permissions could not be changed to meet that criteria.";
             }
         }
 
 
         internal static string FormatCryptography_InvalidFilePermissions(object arg1)
         {
-            return string.Format(Cryptography_InvalidFilePermissions, arg1);
+            return string.Format("Invalid file permissions. The file '{0}' must readable and writable by the current owner and by no one else, and the permissions could not be changed to meet that criteria.", arg1);
         }
 
 
@@ -2056,14 +2043,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidFromXmlString", resourceCulture);
+                return "Input string does not contain a valid encoding of the '{0}' '{1}' parameter.";
             }
         }
 
 
         internal static string FormatCryptography_InvalidFromXmlString(object arg1, object arg2)
         {
-            return string.Format(Cryptography_InvalidFromXmlString, arg1, arg2);
+            return string.Format("Input string does not contain a valid encoding of the '{0}' '{1}' parameter.", arg1, arg2);
         }
 
 
@@ -2074,14 +2061,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidHandle", resourceCulture);
+                return "{0} is an invalid handle.";
             }
         }
 
 
         internal static string FormatCryptography_InvalidHandle(object arg1)
         {
-            return string.Format(Cryptography_InvalidHandle, arg1);
+            return string.Format("{0} is an invalid handle.", arg1);
         }
 
 
@@ -2092,14 +2079,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidHashAlgorithmOid", resourceCulture);
+                return "The specified OID ({0}) does not represent a known hash algorithm.";
             }
         }
 
 
         internal static string FormatCryptography_InvalidHashAlgorithmOid(object arg1)
         {
-            return string.Format(Cryptography_InvalidHashAlgorithmOid, arg1);
+            return string.Format("The specified OID ({0}) does not represent a known hash algorithm.", arg1);
         }
 
 
@@ -2110,14 +2097,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidHashSize", resourceCulture);
+                return "{0} algorithm hash size is {1} bytes.";
             }
         }
 
 
         internal static string FormatCryptography_InvalidHashSize(object arg1, object arg2)
         {
-            return string.Format(Cryptography_InvalidHashSize, arg1, arg2);
+            return string.Format("{0} algorithm hash size is {1} bytes.", arg1, arg2);
         }
 
 
@@ -2128,7 +2115,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidIVSize", resourceCulture);
+                return "Specified initialization vector (IV) does not match the block size for this algorithm.";
             }
         }
 
@@ -2141,14 +2128,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidKey_SemiWeak", resourceCulture);
+                return "Specified key is a known semi-weak key for '{0}' and cannot be used.";
             }
         }
 
 
         internal static string FormatCryptography_InvalidKey_SemiWeak(object arg1)
         {
-            return string.Format(Cryptography_InvalidKey_SemiWeak, arg1);
+            return string.Format("Specified key is a known semi-weak key for '{0}' and cannot be used.", arg1);
         }
 
 
@@ -2159,14 +2146,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidKey_Weak", resourceCulture);
+                return "Specified key is a known weak key for '{0}' and cannot be used.";
             }
         }
 
 
         internal static string FormatCryptography_InvalidKey_Weak(object arg1)
         {
-            return string.Format(Cryptography_InvalidKey_Weak, arg1);
+            return string.Format("Specified key is a known weak key for '{0}' and cannot be used.", arg1);
         }
 
 
@@ -2177,7 +2164,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidKeySize", resourceCulture);
+                return "Specified key is not a valid size for this algorithm.";
             }
         }
 
@@ -2190,7 +2177,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidNonceLength", resourceCulture);
+                return "The specified nonce is not a valid size for this algorithm.";
             }
         }
 
@@ -2203,7 +2190,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidOID", resourceCulture);
+                return "Object identifier (OID) is unknown.";
             }
         }
 
@@ -2216,7 +2203,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidOidFormat", resourceCulture);
+                return "Invalid OID format.";
             }
         }
 
@@ -2229,7 +2216,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidOperation", resourceCulture);
+                return "This operation is not supported for this class.";
             }
         }
 
@@ -2242,7 +2229,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidPadding", resourceCulture);
+                return "Padding is invalid and cannot be removed.";
             }
         }
 
@@ -2255,7 +2242,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidPaddingMode", resourceCulture);
+                return "Specified padding mode is not valid for this algorithm.";
             }
         }
 
@@ -2268,7 +2255,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidStoreHandle", resourceCulture);
+                return "The store handle is invalid.";
             }
         }
 
@@ -2281,7 +2268,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidTagLength", resourceCulture);
+                return "The specified tag is not a valid size for this algorithm.";
             }
         }
 
@@ -2294,7 +2281,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidTrustCertificate", resourceCulture);
+                return "A null or disposed certificate was present in CustomTrustStore.";
             }
         }
 
@@ -2307,7 +2294,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Invalid_IA5String", resourceCulture);
+                return "The string contains a character not in the 7 bit ASCII character set.";
             }
         }
 
@@ -2320,7 +2307,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Invalid_X500Name", resourceCulture);
+                return "The string contains an invalid X500 name attribute key, oid, value or delimiter.";
             }
         }
 
@@ -2333,7 +2320,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_KemInvalidAlgorithmHandle", resourceCulture);
+                return "The specified EVP_PKEY handle is not a known ML-KEM algorithm.";
             }
         }
 
@@ -2346,7 +2333,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_KemNoDecapsulationKey", resourceCulture);
+                return "The current instance does not contain a decapsulation key.";
             }
         }
 
@@ -2359,7 +2346,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_KemPkcs8KeyMismatch", resourceCulture);
+                return "The specified PKCS#8 key contains a seed that does not match the expanded key.";
             }
         }
 
@@ -2372,7 +2359,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_KeyBlobParsingError", resourceCulture);
+                return "Key Blob not in expected format.";
             }
         }
 
@@ -2385,7 +2372,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_KeyNotExtractable", resourceCulture);
+                return "The key does not permit being exported.";
             }
         }
 
@@ -2398,7 +2385,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_KeyTooSmall", resourceCulture);
+                return "The key is too small for the requested operation.";
             }
         }
 
@@ -2411,7 +2398,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_KeyWrap_DecryptFailed", resourceCulture);
+                return "The ciphertext did not successfully decrypt with the instance key.";
             }
         }
 
@@ -2424,7 +2411,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_KeyWrap_InvalidLength", resourceCulture);
+                return "The ciphertext is not a valid length for the Key Wrap with Padding Unwrap algorithm.";
             }
         }
 
@@ -2437,7 +2424,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_KeyWrongSizeForAlgorithm", resourceCulture);
+                return "The specified key is not the correct size for the indicated algorithm.";
             }
         }
 
@@ -2450,7 +2437,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_MatchBlockSize", resourceCulture);
+                return "The specified plaintext size is not valid for the padding and block size.";
             }
         }
 
@@ -2463,7 +2450,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_MatchFeedbackSize", resourceCulture);
+                return "The specified plaintext size is not valid for the padding and feedback size.";
             }
         }
 
@@ -2476,7 +2463,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_MLDsaInvalidAlgorithmHandle", resourceCulture);
+                return "The specified EVP_PKEY handle is not a known ML-DSA algorithm.";
             }
         }
 
@@ -2489,7 +2476,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_MLDsaPkcs8KeyMismatch", resourceCulture);
+                return "The specified PKCS#8 key contains a seed that does not match the expanded key.";
             }
         }
 
@@ -2502,14 +2489,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Encryption_MessageTooLong", resourceCulture);
+                return "The message exceeds the maximum allowable length for the chosen options ({0}).";
             }
         }
 
 
         internal static string FormatCryptography_Encryption_MessageTooLong(object arg1)
         {
-            return string.Format(Cryptography_Encryption_MessageTooLong, arg1);
+            return string.Format("The message exceeds the maximum allowable length for the chosen options ({0}).", arg1);
         }
 
 
@@ -2520,7 +2507,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_InvalidRsaParameters", resourceCulture);
+                return "The specified RSA parameters are not valid. Exponent and Modulus are required. If D is present, it must have the same length as Modulus. If D is present, P, Q, DP, DQ, and InverseQ are required and must have half the length of Modulus, rounded up, otherwise they must be omitted.";
             }
         }
 
@@ -2533,7 +2520,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_MissingIV", resourceCulture);
+                return "The cipher mode specified requires that an initialization vector (IV) be used.";
             }
         }
 
@@ -2546,7 +2533,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_MustTransformWholeBlock", resourceCulture);
+                return "TransformBlock may only process bytes in block sized increments.";
             }
         }
 
@@ -2559,14 +2546,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_NoPemOfLabel", resourceCulture);
+                return "The contents do not contain a PEM with a '{0}' label, or the content is malformed.";
             }
         }
 
 
         internal static string FormatCryptography_NoPemOfLabel(object arg1)
         {
-            return string.Format(Cryptography_NoPemOfLabel, arg1);
+            return string.Format("The contents do not contain a PEM with a '{0}' label, or the content is malformed.", arg1);
         }
 
 
@@ -2577,7 +2564,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_NoPrivateKeyAvailable", resourceCulture);
+                return "The current instance does not contain a private key.";
             }
         }
 
@@ -2590,7 +2577,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_NotRetrievable", resourceCulture);
+                return "The key contents are not retrievable.";
             }
         }
 
@@ -2603,7 +2590,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_NotValidPrivateKey", resourceCulture);
+                return "Key is not a valid private key.";
             }
         }
 
@@ -2616,7 +2603,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_NotValidPublicOrPrivateKey", resourceCulture);
+                return "Key is not a valid public or private key.";
             }
         }
 
@@ -2629,7 +2616,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_OAEP_Decryption_Failed", resourceCulture);
+                return "Error occurred while decoding OAEP padding.";
             }
         }
 
@@ -2642,7 +2629,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Oid_InvalidName", resourceCulture);
+                return "No OID value matches this name.";
             }
         }
 
@@ -2655,7 +2642,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Oid_InvalidValue", resourceCulture);
+                return "The OID value is invalid.";
             }
         }
 
@@ -2668,7 +2655,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Oid_SetOnceFriendlyName", resourceCulture);
+                return "The OID friendly name cannot be changed from its current value.";
             }
         }
 
@@ -2681,7 +2668,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Oid_SetOnceValue", resourceCulture);
+                return "The OID value cannot be changed from its current value.";
             }
         }
 
@@ -2694,14 +2681,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Okm_TooLarge", resourceCulture);
+                return "Output keying material length can be at most {0} bytes (255 * hash length).";
             }
         }
 
 
         internal static string FormatCryptography_Okm_TooLarge(object arg1)
         {
-            return string.Format(Cryptography_Okm_TooLarge, arg1);
+            return string.Format("Output keying material length can be at most {0} bytes (255 * hash length).", arg1);
         }
 
 
@@ -2712,7 +2699,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_OpenEphemeralKeyHandleWithoutEphemeralFlag", resourceCulture);
+                return "The CNG key handle being opened was detected to be ephemeral, but the EphemeralKey open option was not specified.";
             }
         }
 
@@ -2725,7 +2712,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_OpenInvalidHandle", resourceCulture);
+                return "Cannot open an invalid handle.";
             }
         }
 
@@ -2738,7 +2725,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_OverlappingBuffers", resourceCulture);
+                return "One or more provided buffers overlap.";
             }
         }
 
@@ -2751,14 +2738,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_OwnerNotCurrentUser", resourceCulture);
+                return "The owner of '{0}' is not the current user.";
             }
         }
 
 
         internal static string FormatCryptography_OwnerNotCurrentUser(object arg1)
         {
-            return string.Format(Cryptography_OwnerNotCurrentUser, arg1);
+            return string.Format("The owner of '{0}' is not the current user.", arg1);
         }
 
 
@@ -2769,7 +2756,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_PartialBlock", resourceCulture);
+                return "The input data is not a complete block.";
             }
         }
 
@@ -2782,7 +2769,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_PasswordDerivedBytes_InvalidAlgorithm", resourceCulture);
+                return "Algorithm is unavailable or is not supported for this operation.";
             }
         }
 
@@ -2795,7 +2782,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_PasswordDerivedBytes_InvalidIV", resourceCulture);
+                return "The Initialization vector should have the same length as the algorithm block size in bytes.";
             }
         }
 
@@ -2808,7 +2795,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_PasswordDerivedBytes_TooManyBytes", resourceCulture);
+                return "Requested number of bytes exceeds the maximum.";
             }
         }
 
@@ -2821,14 +2808,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_PasswordDerivedBytes_ValuesFixed", resourceCulture);
+                return "Value of '{0}' cannot be changed after the bytes have been retrieved.";
             }
         }
 
 
         internal static string FormatCryptography_PasswordDerivedBytes_ValuesFixed(object arg1)
         {
-            return string.Format(Cryptography_PasswordDerivedBytes_ValuesFixed, arg1);
+            return string.Format("Value of '{0}' cannot be changed after the bytes have been retrieved.", arg1);
         }
 
 
@@ -2839,7 +2826,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Pfx_BadKeyReference", resourceCulture);
+                return "A certificate referenced a private key which was already referenced, or could not be loaded.";
             }
         }
 
@@ -2852,7 +2839,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Pfx_BadPassword", resourceCulture);
+                return "The certificate data cannot be read with the provided password, the password may be incorrect.";
             }
         }
 
@@ -2865,7 +2852,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Pfx_NoCertificates", resourceCulture);
+                return "The provided PFX data contains no certificates.";
             }
         }
 
@@ -2878,7 +2865,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Pkcs_InvalidSignatureParameters", resourceCulture);
+                return "Invalid signature parameters.";
             }
         }
 
@@ -2891,14 +2878,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Pkcs_PssParametersHashMismatch", resourceCulture);
+                return "This platform requires that the PSS hash algorithm ({0}) match the data digest algorithm ({1}).";
             }
         }
 
 
         internal static string FormatCryptography_Pkcs_PssParametersHashMismatch(object arg1, object arg2)
         {
-            return string.Format(Cryptography_Pkcs_PssParametersHashMismatch, arg1, arg2);
+            return string.Format("This platform requires that the PSS hash algorithm ({0}) match the data digest algorithm ({1}).", arg1, arg2);
         }
 
 
@@ -2909,14 +2896,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Pkcs_PssParametersMgfHashMismatch", resourceCulture);
+                return "This platform does not support the MGF hash algorithm ({0}) being different from the signature hash algorithm ({1}).";
             }
         }
 
 
         internal static string FormatCryptography_Pkcs_PssParametersMgfHashMismatch(object arg1, object arg2)
         {
-            return string.Format(Cryptography_Pkcs_PssParametersMgfHashMismatch, arg1, arg2);
+            return string.Format("This platform does not support the MGF hash algorithm ({0}) being different from the signature hash algorithm ({1}).", arg1, arg2);
         }
 
 
@@ -2927,14 +2914,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Pkcs_PssParametersMgfNotSupported", resourceCulture);
+                return "Mask generation function '{0}' is not supported by this platform.";
             }
         }
 
 
         internal static string FormatCryptography_Pkcs_PssParametersMgfNotSupported(object arg1)
         {
-            return string.Format(Cryptography_Pkcs_PssParametersMgfNotSupported, arg1);
+            return string.Format("Mask generation function '{0}' is not supported by this platform.", arg1);
         }
 
 
@@ -2945,14 +2932,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Pkcs_PssParametersSaltMismatch", resourceCulture);
+                return "PSS salt size {0} is not supported by this platform with hash algorithm {1}.";
             }
         }
 
 
         internal static string FormatCryptography_Pkcs_PssParametersSaltMismatch(object arg1, object arg2)
         {
-            return string.Format(Cryptography_Pkcs_PssParametersSaltMismatch, arg1, arg2);
+            return string.Format("PSS salt size {0} is not supported by this platform with hash algorithm {1}.", arg1, arg2);
         }
 
 
@@ -2963,7 +2950,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Pkcs12_CannotProcessEncryptedSafeContents", resourceCulture);
+                return "This operation is not valid on an encrypted or enveloped Pkcs12SafeContents.";
             }
         }
 
@@ -2976,7 +2963,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Pkcs12_CertBagNotX509", resourceCulture);
+                return "The Pkcs12CertBag contents are not an X.509 certificate.";
             }
         }
 
@@ -2989,7 +2976,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Pkcs12_PfxIsSealed", resourceCulture);
+                return "The Pkcs12Builder can no longer be modified because one of the Seal methods was already invoked.";
             }
         }
 
@@ -3002,7 +2989,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Pkcs12_PfxMustBeSealed", resourceCulture);
+                return "One of the Seal methods must be invoked on the Pkcs12Builder before invoking an Encode method.";
             }
         }
 
@@ -3015,7 +3002,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Pkcs12_SafeContentsIsEncrypted", resourceCulture);
+                return "Cannot enumerate the contents of an encrypted or enveloped Pkcs12SafeContents.";
             }
         }
 
@@ -3028,7 +3015,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Pkcs12_SafeContentsIsReadOnly", resourceCulture);
+                return "New Pkcs12SafeBag values cannot be added to a Pkcs12SafeContents that was read from existing data.";
             }
         }
 
@@ -3041,14 +3028,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Pkcs12_WrongModeForDecrypt", resourceCulture);
+                return "This decryption operation applies to 'Pkcs12ConfidentialityMode.{0}', but the target object is in 'Pkcs12ConfidentialityMode.{1}'.";
             }
         }
 
 
         internal static string FormatCryptography_Pkcs12_WrongModeForDecrypt(object arg1, object arg2)
         {
-            return string.Format(Cryptography_Pkcs12_WrongModeForDecrypt, arg1, arg2);
+            return string.Format("This decryption operation applies to 'Pkcs12ConfidentialityMode.{0}', but the target object is in 'Pkcs12ConfidentialityMode.{1}'.", arg1, arg2);
         }
 
 
@@ -3059,14 +3046,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Pkcs12_WrongModeForVerify", resourceCulture);
+                return "This verification operation applies to 'Pkcs12IntegrityMode.{0}', but the target object is in 'Pkcs12IntegrityMode.{1}'.";
             }
         }
 
 
         internal static string FormatCryptography_Pkcs12_WrongModeForVerify(object arg1, object arg2)
         {
-            return string.Format(Cryptography_Pkcs12_WrongModeForVerify, arg1, arg2);
+            return string.Format("This verification operation applies to 'Pkcs12IntegrityMode.{0}', but the target object is in 'Pkcs12IntegrityMode.{1}'.", arg1, arg2);
         }
 
 
@@ -3077,7 +3064,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Pkcs8_EncryptedReadFailed", resourceCulture);
+                return "The EncryptedPrivateKeyInfo structure was decoded but was not successfully interpreted, the password may be incorrect.";
             }
         }
 
@@ -3090,7 +3077,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Pkcs9_AttributeMismatch", resourceCulture);
+                return "The parameter should be a PKCS 9 attribute.";
             }
         }
 
@@ -3103,7 +3090,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Pkcs9_MultipleSigningTimeNotAllowed", resourceCulture);
+                return "Cannot add multiple PKCS 9 signing time attributes.";
             }
         }
 
@@ -3116,7 +3103,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_PlaintextCiphertextLengthMismatch", resourceCulture);
+                return "Plaintext and ciphertext must have the same length.";
             }
         }
 
@@ -3129,7 +3116,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_PlaintextTooLarge", resourceCulture);
+                return "The specified plaintext size is too large.";
             }
         }
 
@@ -3142,7 +3129,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_PqcNoSeed", resourceCulture);
+                return "The current instance does not contain a seed.";
             }
         }
 
@@ -3155,7 +3142,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_PrivateKey_DoesNotMatch", resourceCulture);
+                return "The provided key does not match the public key for this certificate.";
             }
         }
 
@@ -3168,7 +3155,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_PrivateKey_WrongAlgorithm", resourceCulture);
+                return "The provided key does not match the public key algorithm for this certificate.";
             }
         }
 
@@ -3181,14 +3168,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Prk_TooSmall", resourceCulture);
+                return "The pseudo-random key length must be at least {0} bytes.";
             }
         }
 
 
         internal static string FormatCryptography_Prk_TooSmall(object arg1)
         {
-            return string.Format(Cryptography_Prk_TooSmall, arg1);
+            return string.Format("The pseudo-random key length must be at least {0} bytes.", arg1);
         }
 
 
@@ -3199,7 +3186,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_RC2_EKS40", resourceCulture);
+                return "EffectiveKeySize value must be at least 40 bits.";
             }
         }
 
@@ -3212,7 +3199,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_RC2_EKSKS", resourceCulture);
+                return "KeySize value must be at least as large as the EffectiveKeySize value.";
             }
         }
 
@@ -3225,7 +3212,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_RC2_EKSKS2", resourceCulture);
+                return "EffectiveKeySize must be the same as KeySize in this implementation.";
             }
         }
 
@@ -3238,7 +3225,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Rijndael_BlockSize", resourceCulture);
+                return "BlockSize must be 128 in this implementation.";
             }
         }
 
@@ -3251,7 +3238,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_RSA_DecryptWrongSize", resourceCulture);
+                return "The length of the data to decrypt is not valid for the size of this key.";
             }
         }
 
@@ -3264,14 +3251,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_RSAPrivateKey_VersionTooNew", resourceCulture);
+                return "The provided RSAPrivateKey value has version '{0}', but version '{1}' is the maximum supported.";
             }
         }
 
 
         internal static string FormatCryptography_RSAPrivateKey_VersionTooNew(object arg1, object arg2)
         {
-            return string.Format(Cryptography_RSAPrivateKey_VersionTooNew, arg1, arg2);
+            return string.Format("The provided RSAPrivateKey value has version '{0}', but version '{1}' is the maximum supported.", arg1, arg2);
         }
 
 
@@ -3282,7 +3269,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_SignHash_WrongSize", resourceCulture);
+                return "The provided hash value is not the expected size for the specified hash algorithm.";
             }
         }
 
@@ -3295,7 +3282,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_SlhDsaInvalidAlgorithmHandle", resourceCulture);
+                return "The specified EVP_PKEY handle is not a known SLH-DSA algorithm.";
             }
         }
 
@@ -3308,7 +3295,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_TlsRequires64ByteSeed", resourceCulture);
+                return "The TLS key derivation function requires a seed value of exactly 64 bytes.";
             }
         }
 
@@ -3321,7 +3308,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_TlsRequiresLabelAndSeed", resourceCulture);
+                return "The TLS key derivation function requires both the label and seed properties to be set.";
             }
         }
 
@@ -3334,7 +3321,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_UnexpectedTransformTruncation", resourceCulture);
+                return "CNG provider unexpectedly terminated encryption or decryption prematurely.";
             }
         }
 
@@ -3347,14 +3334,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Unix_X509_DisallowedStoreNotEmpty", resourceCulture);
+                return "The Disallowed store is not supported on this platform, but already has data. All files under '{0}' must be removed.";
             }
         }
 
 
         internal static string FormatCryptography_Unix_X509_DisallowedStoreNotEmpty(object arg1)
         {
-            return string.Format(Cryptography_Unix_X509_DisallowedStoreNotEmpty, arg1);
+            return string.Format("The Disallowed store is not supported on this platform, but already has data. All files under '{0}' must be removed.", arg1);
         }
 
 
@@ -3365,7 +3352,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Unix_X509_MachineStoresReadOnly", resourceCulture);
+                return "Unix LocalMachine X509Stores are read-only for all users.";
             }
         }
 
@@ -3378,7 +3365,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Unix_X509_MachineStoresRootOnly", resourceCulture);
+                return "Unix LocalMachine X509Store is limited to the Root and CertificateAuthority stores.";
             }
         }
 
@@ -3391,7 +3378,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Unix_X509_NoDisallowedStore", resourceCulture);
+                return "The Disallowed store is not supported on this platform.";
             }
         }
 
@@ -3404,14 +3391,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Unix_X509_PropertyNotSettable", resourceCulture);
+                return "The {0} value cannot be set on Unix.";
             }
         }
 
 
         internal static string FormatCryptography_Unix_X509_PropertyNotSettable(object arg1)
         {
-            return string.Format(Cryptography_Unix_X509_PropertyNotSettable, arg1);
+            return string.Format("The {0} value cannot be set on Unix.", arg1);
         }
 
 
@@ -3422,7 +3409,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Unix_X509_SerializedExport", resourceCulture);
+                return "X509ContentType.SerializedCert and X509ContentType.SerializedStore are not supported on Unix.";
             }
         }
 
@@ -3435,14 +3422,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_UnknownAlgorithmIdentifier", resourceCulture);
+                return "The algorithm identified by '{0}' is unknown, not valid for the requested usage, or was not handled.";
             }
         }
 
 
         internal static string FormatCryptography_UnknownAlgorithmIdentifier(object arg1)
         {
-            return string.Format(Cryptography_UnknownAlgorithmIdentifier, arg1);
+            return string.Format("The algorithm identified by '{0}' is unknown, not valid for the requested usage, or was not handled.", arg1);
         }
 
 
@@ -3453,7 +3440,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_UnknownCertContentType", resourceCulture);
+                return "The certificate content type could not be determined.";
             }
         }
 
@@ -3466,14 +3453,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_UnknownHashAlgorithm", resourceCulture);
+                return "'{0}' is not a known hash algorithm.";
             }
         }
 
 
         internal static string FormatCryptography_UnknownHashAlgorithm(object arg1)
         {
-            return string.Format(Cryptography_UnknownHashAlgorithm, arg1);
+            return string.Format("'{0}' is not a known hash algorithm.", arg1);
         }
 
 
@@ -3484,14 +3471,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_UnknownKeyAlgorithm", resourceCulture);
+                return "'{0}' is not a known key algorithm.";
             }
         }
 
 
         internal static string FormatCryptography_UnknownKeyAlgorithm(object arg1)
         {
-            return string.Format(Cryptography_UnknownKeyAlgorithm, arg1);
+            return string.Format("'{0}' is not a known key algorithm.", arg1);
         }
 
 
@@ -3502,7 +3489,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_UnknownPaddingMode", resourceCulture);
+                return "Unknown padding mode used.";
             }
         }
 
@@ -3515,14 +3502,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_UnknownSignatureFormat", resourceCulture);
+                return "The signature format '{0}' is unknown.";
             }
         }
 
 
         internal static string FormatCryptography_UnknownSignatureFormat(object arg1)
         {
-            return string.Format(Cryptography_UnknownSignatureFormat, arg1);
+            return string.Format("The signature format '{0}' is unknown.", arg1);
         }
 
 
@@ -3533,14 +3520,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_Unmapped_System_Typed_Error", resourceCulture);
+                return "The system cryptographic library returned error '{0}' of type '{1}'";
             }
         }
 
 
         internal static string FormatCryptography_Unmapped_System_Typed_Error(object arg1, object arg2)
         {
-            return string.Format(Cryptography_Unmapped_System_Typed_Error, arg1, arg2);
+            return string.Format("The system cryptographic library returned error '{0}' of type '{1}'", arg1, arg2);
         }
 
 
@@ -3551,14 +3538,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_UnmappedOpenSslCode", resourceCulture);
+                return "OpenSSL mapping function {0} reported unhandled error code '{1}'.";
             }
         }
 
 
         internal static string FormatCryptography_UnmappedOpenSslCode(object arg1, object arg2)
         {
-            return string.Format(Cryptography_UnmappedOpenSslCode, arg1, arg2);
+            return string.Format("OpenSSL mapping function {0} reported unhandled error code '{1}'.", arg1, arg2);
         }
 
 
@@ -3569,7 +3556,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_UnsupportedPaddingMode", resourceCulture);
+                return "The specified PaddingMode is not supported.";
             }
         }
 
@@ -3582,7 +3569,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X500_MultiValued", resourceCulture);
+                return "Single-element methods are not valid on an X.500 Relative Distinguished Name that has multiple elements.";
             }
         }
 
@@ -3595,7 +3582,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_AIA_MustNotBuildEmpty", resourceCulture);
+                return "At least one of the ocspUris or caIssuersUris values must be non-empty.";
             }
         }
 
@@ -3608,7 +3595,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_AIA_NullValue", resourceCulture);
+                return "One of the ocspUris or caIssuersUris enumerables contains a null value.";
             }
         }
 
@@ -3621,7 +3608,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_AKID_NoSKID", resourceCulture);
+                return "The provided certificate does not have a Subject Key Identifier extension.";
             }
         }
 
@@ -3634,7 +3621,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_CDP_MustNotBuildEmpty", resourceCulture);
+                return "The collection of distribution URIs must be non-empty.";
             }
         }
 
@@ -3647,7 +3634,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_CDP_NullValue", resourceCulture);
+                return "One of the provided CRL Distribution Point URIs is a null value.";
             }
         }
 
@@ -3660,14 +3647,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_CertificateCorrupted", resourceCulture);
+                return "Certificate '{0}' is corrupted.";
             }
         }
 
 
         internal static string FormatCryptography_X509_CertificateCorrupted(object arg1)
         {
-            return string.Format(Cryptography_X509_CertificateCorrupted, arg1);
+            return string.Format("Certificate '{0}' is corrupted.", arg1);
         }
 
 
@@ -3678,7 +3665,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_ChainBuildingFailed", resourceCulture);
+                return "An unknown chain building error occurred.";
             }
         }
 
@@ -3691,7 +3678,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_ExportFailed", resourceCulture);
+                return "The certificate export operation failed.";
             }
         }
 
@@ -3704,7 +3691,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_ExtensionMismatch", resourceCulture);
+                return "The parameter should be an X509Extension.";
             }
         }
 
@@ -3717,7 +3704,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_InvalidContentType", resourceCulture);
+                return "Invalid content type.";
             }
         }
 
@@ -3730,7 +3717,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_InvalidFindType", resourceCulture);
+                return "Invalid find type.";
             }
         }
 
@@ -3743,7 +3730,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_InvalidFindValue", resourceCulture);
+                return "Invalid find value.";
             }
         }
 
@@ -3756,14 +3743,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_InvalidFlagCombination", resourceCulture);
+                return "The flags '{0}' may not be specified together.";
             }
         }
 
 
         internal static string FormatCryptography_X509_InvalidFlagCombination(object arg1)
         {
-            return string.Format(Cryptography_X509_InvalidFlagCombination, arg1);
+            return string.Format("The flags '{0}' may not be specified together.", arg1);
         }
 
 
@@ -3774,7 +3761,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_NoEphemeralPfx", resourceCulture);
+                return "This platform does not support loading with EphemeralKeySet. Remove the flag to allow keys to be temporarily created on disk.";
             }
         }
 
@@ -3787,7 +3774,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_NoOrMismatchedPemKey", resourceCulture);
+                return "The key contents do not contain a PEM, the content is malformed, or the key does not match the certificate.";
             }
         }
 
@@ -3800,7 +3787,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_NoPemCertificate", resourceCulture);
+                return "The certificate contents do not contain a PEM with a CERTIFICATE label, or the content is malformed.";
             }
         }
 
@@ -3813,7 +3800,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_PKCS7_NoSigner", resourceCulture);
+                return "Cannot find the original signer.";
             }
         }
 
@@ -3826,7 +3813,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_PKCS7_Unsupported", resourceCulture);
+                return "PKCS#7 certificate format is not supported on this platform.";
             }
         }
 
@@ -3839,7 +3826,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_PKCS12_ExportableNotSupported", resourceCulture);
+                return "The PKCS#12 Exportable flag is not supported on this platform.";
             }
         }
 
@@ -3852,14 +3839,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_PKCS12_LimitExceeded", resourceCulture);
+                return "The PKCS#12/PFX violated the '{0}' limit.";
             }
         }
 
 
         internal static string FormatCryptography_X509_PKCS12_LimitExceeded(object arg1)
         {
-            return string.Format(Cryptography_X509_PKCS12_LimitExceeded, arg1);
+            return string.Format("The PKCS#12/PFX violated the '{0}' limit.", arg1);
         }
 
 
@@ -3870,7 +3857,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_PKCS12_LimitsReadOnly", resourceCulture);
+                return "This Pkcs12LoaderLimits object has been made read-only and can no longer be modified.";
             }
         }
 
@@ -3883,7 +3870,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_PKCS12_PersistKeySetNotSupported", resourceCulture);
+                return "The PKCS#12 PersistKeySet flag is not supported on this platform.";
             }
         }
 
@@ -3896,7 +3883,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_SAN_UnknownIPAddressSize", resourceCulture);
+                return "The Subject Alternative Name has an ipAddress entry that is not a recognized size.";
             }
         }
 
@@ -3909,7 +3896,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_Store_RootUnsupported", resourceCulture);
+                return "Root certificate store is not supported on this platform.";
             }
         }
 
@@ -3922,7 +3909,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_StoreAddFailure", resourceCulture);
+                return "The X509 certificate could not be added to the store.";
             }
         }
 
@@ -3935,14 +3922,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_StoreCannotCreate", resourceCulture);
+                return "The platform does not have a definition for an X509 certificate store named '{0}' with a StoreLocation of '{1}', and does not support creating it.";
             }
         }
 
 
         internal static string FormatCryptography_X509_StoreCannotCreate(object arg1, object arg2)
         {
-            return string.Format(Cryptography_X509_StoreCannotCreate, arg1, arg2);
+            return string.Format("The platform does not have a definition for an X509 certificate store named '{0}' with a StoreLocation of '{1}', and does not support creating it.", arg1, arg2);
         }
 
 
@@ -3953,7 +3940,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_StoreDSAPrivateKeyNotSupported", resourceCulture);
+                return "Adding a DSA private key to the store is not supported on this platform.";
             }
         }
 
@@ -3966,7 +3953,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_StoreEnumerateFailure", resourceCulture);
+                return "Failed to enumerate certificates from the store.";
             }
         }
 
@@ -3979,7 +3966,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_StoreNoFileAvailable", resourceCulture);
+                return "The X509 certificate could not be added to the store because all candidate file names were in use.";
             }
         }
 
@@ -3992,7 +3979,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_StoreNotFound", resourceCulture);
+                return "The specified X509 certificate store does not exist.";
             }
         }
 
@@ -4005,7 +3992,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_StoreNotOpen", resourceCulture);
+                return "The X509 certificate store has not been opened.";
             }
         }
 
@@ -4018,7 +4005,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_StoreReadOnly", resourceCulture);
+                return "The X509 certificate store is read-only.";
             }
         }
 
@@ -4031,7 +4018,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_StoreRemoveFailure", resourceCulture);
+                return "The X509 certificate could not be removed from the store.";
             }
         }
 
@@ -4044,7 +4031,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_TooManySANs", resourceCulture);
+                return "The X509 certificate has more than one Subject Alternative Name extension.";
             }
         }
 
@@ -4057,7 +4044,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509Store_WouldModifyAdminTrust", resourceCulture);
+                return "Removing the requested certificate would modify admin trust settings, and has been denied.";
             }
         }
 
@@ -4070,7 +4057,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509Store_WouldModifyUserTrust", resourceCulture);
+                return "Removing the requested certificate would modify user trust settings, and has been denied.";
             }
         }
 
@@ -4083,15 +4070,28 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CryptSetKeyParam_Failed", resourceCulture);
+                return "CryptSetKeyParam failed with error code {0}.";
             }
         }
 
 
         internal static string FormatCryptSetKeyParam_Failed(object arg1)
         {
-            return string.Format(CryptSetKeyParam_Failed, arg1);
+            return string.Format("CryptSetKeyParam failed with error code {0}.", arg1);
         }
+
+
+        /// <summary>
+        /// CSPParameters cannot be null
+        /// </summary>
+        internal static string CspParameter_invalid
+        {
+            get
+            {
+                return "CSPParameters cannot be null";
+            }
+        }
+
 
 
         /// <summary>
@@ -4101,7 +4101,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("HashNameMultipleSetNotSupported", resourceCulture);
+                return "Setting the hashname after it's already been set is not supported on this platform.";
             }
         }
 
@@ -4114,7 +4114,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_DuplicateItemNotAllowed", resourceCulture);
+                return "Duplicate items are not allowed in the collection.";
             }
         }
 
@@ -4127,14 +4127,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_WrongOidInAsnCollection", resourceCulture);
+                return "AsnEncodedData element in the collection has wrong Oid value: expected = '{0}', actual = '{1}'.";
             }
         }
 
 
         internal static string FormatInvalidOperation_WrongOidInAsnCollection(object arg1, object arg2)
         {
-            return string.Format(InvalidOperation_WrongOidInAsnCollection, arg1, arg2);
+            return string.Format("AsnEncodedData element in the collection has wrong Oid value: expected = '{0}', actual = '{1}'.", arg1, arg2);
         }
 
 
@@ -4145,7 +4145,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_EnumNotStarted", resourceCulture);
+                return "Enumeration has not started. Call MoveNext.";
             }
         }
 
@@ -4158,7 +4158,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_IncorrectImplementation", resourceCulture);
+                return "The algorithm's implementation is incorrect.";
             }
         }
 
@@ -4171,7 +4171,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_UnsupportedBlockSize", resourceCulture);
+                return "The algorithm's block size is not supported.";
             }
         }
 
@@ -4184,7 +4184,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_AlreadyReading", resourceCulture);
+                return "This operation is not supported once the algorithm has started reading.";
             }
         }
 
@@ -4197,7 +4197,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_ECDsa_Csp", resourceCulture);
+                return "CryptoApi ECDsa keys are not supported.";
             }
         }
 
@@ -4210,7 +4210,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_ECDiffieHellman_Csp", resourceCulture);
+                return "CryptoApi ECDiffieHellman keys are not supported.";
             }
         }
 
@@ -4223,7 +4223,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_ImmutableX509Certificate", resourceCulture);
+                return "X509Certificate is immutable on this platform. Use the equivalent constructor instead.";
             }
         }
 
@@ -4236,7 +4236,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_KeyAlgorithm", resourceCulture);
+                return "The certificate key algorithm is not supported.";
             }
         }
 
@@ -4249,7 +4249,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_LegacyBasicConstraints", resourceCulture);
+                return "The X509 Basic Constraints extension with OID 2.5.29.10 is not supported.";
             }
         }
 
@@ -4262,7 +4262,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_Method", resourceCulture);
+                return "Method not supported.";
             }
         }
 
@@ -4275,7 +4275,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_SubclassOverride", resourceCulture);
+                return "Method not supported. Derived class must override.";
             }
         }
 
@@ -4288,7 +4288,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_UnreadableStream", resourceCulture);
+                return "Stream does not support reading.";
             }
         }
 
@@ -4301,7 +4301,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_UnseekableStream", resourceCulture);
+                return "Stream does not support seeking.";
             }
         }
 
@@ -4314,7 +4314,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_UnwritableStream", resourceCulture);
+                return "Stream does not support writing.";
             }
         }
 
@@ -4327,7 +4327,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PersistedFiles_NoHomeDirectory", resourceCulture);
+                return "The home directory of the current user could not be determined.";
             }
         }
 
@@ -4340,7 +4340,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PlatformNotSupported_CryptographyCng", resourceCulture);
+                return "Windows Cryptography Next Generation (CNG) is not supported on this platform.";
             }
         }
 
@@ -4353,7 +4353,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PlatformNotSupported_CryptographyOpenSSL", resourceCulture);
+                return "OpenSSL is not supported on this platform.";
             }
         }
 
@@ -4366,14 +4366,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PlatformNotSupported_CryptographyOpenSSLNotFound", resourceCulture);
+                return "OpenSSL is required for algorithm '{0}' but could not be found or loaded.";
             }
         }
 
 
         internal static string FormatPlatformNotSupported_CryptographyOpenSSLNotFound(object arg1)
         {
-            return string.Format(PlatformNotSupported_CryptographyOpenSSLNotFound, arg1);
+            return string.Format("OpenSSL is required for algorithm '{0}' but could not be found or loaded.", arg1);
         }
 
 
@@ -4384,7 +4384,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PlatformNotSupported_CryptographyOpenSSLProvidersNotSupported", resourceCulture);
+                return "OpenSSL providers are not supported on this platform.";
             }
         }
 
@@ -4397,7 +4397,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Security_AccessDenied", resourceCulture);
+                return "Access is denied.";
             }
         }
 
@@ -4410,14 +4410,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Security_InvalidValue", resourceCulture);
+                return "The {0} value was invalid.";
             }
         }
 
 
         internal static string FormatSecurity_InvalidValue(object arg1)
         {
-            return string.Format(Security_InvalidValue, arg1);
+            return string.Format("The {0} value was invalid.", arg1);
         }
 
 
@@ -4428,7 +4428,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SystemSecurityCryptography_PlatformNotSupported", resourceCulture);
+                return "System.Security.Cryptography is not supported on this platform.";
             }
         }
 
@@ -4441,7 +4441,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SystemSecurityCryptographyX509Certificates_PlatformNotSupported", resourceCulture);
+                return "System.Security.Cryptography.X509Certificates is not supported on this platform.";
             }
         }
 
@@ -4454,7 +4454,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Unknown_Error", resourceCulture);
+                return "Unknown error.";
             }
         }
 
@@ -4467,7 +4467,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_PfxWithoutPassword_MaxAllowedIterationsExceeded", resourceCulture);
+                return "PKCS12 (PFX) without a supplied password has exceeded maximum allowed iterations. See https://go.microsoft.com/fwlink/?linkid=2233907 for more information.";
             }
         }
 
@@ -4480,7 +4480,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Cryptography_X509_PfxWithoutPassword_ProblemFound", resourceCulture);
+                return "There was a problem with the PKCS12 (PFX) without a supplied password. See https://go.microsoft.com/fwlink/?linkid=2233907 for more information.";
             }
         }
 

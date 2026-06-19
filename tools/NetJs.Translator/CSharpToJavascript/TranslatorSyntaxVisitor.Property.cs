@@ -19,14 +19,15 @@ namespace NetJs.Translator.CSharpToJavascript
             var symbol = OpenClosure(node);
             if (accessor.ExpressionBody != null)
             {
-                CurrentTypeWriter.WriteLine(node, "{", true);
-                if (!accessor.ExpressionBody.Expression.IsKind(SyntaxKind.ThrowExpression)/* is not ThrowExpressionSyntax*/)
-                    CurrentTypeWriter.Write(node, $"return ", true);
-                else
-                    CurrentTypeWriter.Write(node, $"", true);
-                Visit(accessor.ExpressionBody.Expression);
-                CurrentTypeWriter.WriteLine(node, $";");
-                CurrentTypeWriter.WriteLine(node, "}", true);
+                WriteBlock(accessor.ExpressionBody, new CodeNode(() =>
+                {
+                    if (!accessor.ExpressionBody.Expression.IsKind(SyntaxKind.ThrowExpression)/* is not ThrowExpressionSyntax*/)
+                        CurrentTypeWriter.Write(node, $"return ", true);
+                    else
+                        CurrentTypeWriter.Write(node, $"", true);
+                    Visit(accessor.ExpressionBody.Expression);
+                    CurrentTypeWriter.WriteLine(node, $";");
+                }));
             }
             else if (accessor.Body != null)
             {
@@ -35,13 +36,14 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             else
             {
-                CurrentTypeWriter.WriteLine(node, "{", true);
-                var declaringMetadata = _global.GetRequiredMetadata(propertySymbol.ContainingType);
-                var propertyMetadata = _global.GetRequiredMetadata(propertySymbol);
-                CurrentTypeWriter.WriteLine(node, $"return {(propertySymbol.IsStatic ? "" : "this.")}{propertyMetadata.InvocationName ?? propertyName}$;", true);
-                CurrentTypeWriter.WriteLine(node, "}", true);
+                WriteBlock(node, new CodeNode(() =>
+                {
+                    var declaringMetadata = _global.GetRequiredMetadata(propertySymbol.ContainingType);
+                    var propertyMetadata = _global.GetRequiredMetadata(propertySymbol);
+                    CurrentTypeWriter.WriteLine(node, $"return {(propertySymbol.IsStatic ? "" : "this.")}{propertyMetadata.InvocationName ?? propertyName}$;", true);
+                }));
             }
-            CloseClosure();
+            CloseClosure(node);
         }
 
         //void TryWriteImplementedPropertyGetter(BasePropertyDeclarationSyntax node, IPropertySymbol? propertySymbol, string propertyName)
@@ -124,25 +126,26 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 CurrentClosure.DefineIdentifierType("value", CodeSymbol.From(@event.AddMethod.Parameters.Last()));
             }
-            CurrentTypeWriter.WriteLine(node, "{", true);
-            if (accessor?.ExpressionBody != null)
+            WriteBlock(accessor?.ExpressionBody ?? accessor?.Body ?? (CSharpSyntaxNode)node, new CodeNode(() =>
             {
-                CurrentTypeWriter.Write(node, "", true);
-                Visit(accessor.ExpressionBody.Expression);
-                CurrentTypeWriter.WriteLine(node, ";");
-            }
-            else if (accessor?.Body != null)
-            {
-                VisitChildren(accessor.Body.Statements);
-            }
-            else
-            {
-                var declaringMetadata = _global.GetRequiredMetadata(propertySymbol.ContainingType);
-                var propertyMetadata = _global.GetRequiredMetadata(propertySymbol);
-                CurrentTypeWriter.WriteLine(node, $"{(propertySymbol.IsStatic ? "" : "this.")}{propertyMetadata.InvocationName ?? propertyName}$ = value;", true);
-            }
-            CurrentTypeWriter.WriteLine(node, "}", true);
-            CloseClosure();
+                if (accessor?.ExpressionBody != null)
+                {
+                    CurrentTypeWriter.Write(node, "", true);
+                    Visit(accessor.ExpressionBody.Expression);
+                    CurrentTypeWriter.WriteLine(node, ";");
+                }
+                else if (accessor?.Body != null)
+                {
+                    VisitChildren(accessor.Body.Statements);
+                }
+                else
+                {
+                    var declaringMetadata = _global.GetRequiredMetadata(propertySymbol.ContainingType);
+                    var propertyMetadata = _global.GetRequiredMetadata(propertySymbol);
+                    CurrentTypeWriter.WriteLine(node, $"{(propertySymbol.IsStatic ? "" : "this.")}{propertyMetadata.InvocationName ?? propertyName}$ = value;", true);
+                }
+            }));
+            CloseClosure(node);
         }
 
         public override void VisitEventDeclaration(EventDeclarationSyntax node)
@@ -324,11 +327,11 @@ namespace NetJs.Translator.CSharpToJavascript
                                 EnsureWriteBackingField();
                             if (accessor.IsKind(SyntaxKind.GetAccessorDeclaration))
                             {
-                                if (node.Parent.IsKind(SyntaxKind.ExtensionBlockDeclaration))
+                                if (node.Parent.IsKind(SyntaxKind.ExtensionBlockDeclaration) && !propertySymbol.IsStatic)
                                 {
                                     var extensionBlock = (ExtensionBlockDeclarationSyntax)node.Parent;
                                     var extensionParameter = extensionBlock.ParameterList!.Parameters.Single();
-                                    CurrentTypeWriter.WriteLine(node, $"static {smodifier}{modifier} {propertyName}$get(/*this {extensionParameter.Type}*/{extensionParameter.Identifier.ValueText})", true);
+                                    CurrentTypeWriter.WriteLine(node, $"static {smodifier}{modifier} {(Constants.CompatibleExtensionPropertyGetSetMethod ? "get_" : "")}{propertyName}{(!Constants.CompatibleExtensionPropertyGetSetMethod ? "$get" : "")}(/*this {extensionParameter.Type}*/{extensionParameter.Identifier.ValueText})", true);
                                 }
                                 else
                                 {
@@ -338,11 +341,11 @@ namespace NetJs.Translator.CSharpToJavascript
                             }
                             else if (accessor.IsKind(SyntaxKind.SetAccessorDeclaration))
                             {
-                                if (node.Parent.IsKind(SyntaxKind.ExtensionBlockDeclaration))
+                                if (node.Parent.IsKind(SyntaxKind.ExtensionBlockDeclaration) && !propertySymbol.IsStatic)
                                 {
                                     var extensionBlock = (ExtensionBlockDeclarationSyntax)node.Parent;
                                     var extensionParameter = extensionBlock.ParameterList!.Parameters.Single();
-                                    CurrentTypeWriter.WriteLine(node, $"static {smodifier}{modifier} {propertyName}$set(/*this {extensionParameter.Type}*/{extensionParameter.Identifier.ValueText}, value)", true);
+                                    CurrentTypeWriter.WriteLine(node, $"static {smodifier}{modifier} {(Constants.CompatibleExtensionPropertyGetSetMethod ? "set_" : "")}{propertyName}{(!Constants.CompatibleExtensionPropertyGetSetMethod ? "$set" : "")}(/*this {extensionParameter.Type}*/{extensionParameter.Identifier.ValueText}, value)", true);
                                 }
                                 else
                                 {
@@ -365,34 +368,41 @@ namespace NetJs.Translator.CSharpToJavascript
                     bool usesFieldKeyword = node.DescendantNodes().Any(e => e.IsKind(SyntaxKind.FieldExpression));
                     if (usesFieldKeyword)
                         EnsureWriteBackingField();
-                    if (node.Parent.IsKind(SyntaxKind.ExtensionBlockDeclaration))
+                    if (node.Parent.IsKind(SyntaxKind.ExtensionBlockDeclaration) && !propertySymbol.IsStatic)
                     {
                         var extensionBlock = (ExtensionBlockDeclarationSyntax)node.Parent;
                         var extensionParameter = extensionBlock.ParameterList!.Parameters.Single();
-                        CurrentTypeWriter.WriteLine(node, $"{smodifier}{modifier} {propertyName}(/*this {extensionParameter.Type}*/{extensionParameter.Identifier.ValueText})", true);
+                        CurrentTypeWriter.WriteLine(node, $"static {smodifier}{modifier} {(Constants.CompatibleExtensionPropertyGetSetMethod ? "get_" : "")}{propertyName}{(!Constants.CompatibleExtensionPropertyGetSetMethod ? "$get" : "")}(/*this {extensionParameter.Type}*/{extensionParameter.Identifier.ValueText})", true);
                     }
                     else
                     {
                         CurrentTypeWriter.WriteLine(node, $"{smodifier}{modifier} {(!isStaticConvention ? "get " : "")}{propertyName}{(isStaticConvention ? "$get" : "")}()", true);
                     }
-                    CurrentTypeWriter.WriteLine(node, "{", true);
-                    if (HasYield(node))
-                        TryWrapInYieldingGetEnumerable(node, (node.Type as GenericNameSyntax)?.TypeArgumentList.Arguments, [node.ExpressionBody.Expression]);
-                    else
+                    WriteBlock(node.ExpressionBody, new CodeNode(() =>
                     {
-                        if (!node.ExpressionBody.Expression.IsKind(SyntaxKind.ThrowExpression)/* is not ThrowExpressionSyntax*/)
-                        {
-                            WriteReturn(node, node.ExpressionBody.Expression);
-                        }
+                        if (HasYield(node))
+                            TryWrapInYieldingGetEnumerable(node, (node.Type as GenericNameSyntax)?.TypeArgumentList.Arguments, [node.ExpressionBody.Expression]);
                         else
                         {
-                            CurrentTypeWriter.Write(node, "", true);
-                            Visit(node.ExpressionBody.Expression);
-                            CurrentTypeWriter.WriteLine(node, ";");
+                            if (!node.ExpressionBody.Expression.IsKind(SyntaxKind.ThrowExpression)/* is not ThrowExpressionSyntax*/)
+                            {
+                                string? cacheKey = null;
+                                if (propertySymbol.IsStatic && SymbolEqualityComparer.Default.Equals(propertySymbol.Type.OriginalDefinition, _global.SystemReadOnlySpan))
+                                {
+                                    //Optimize ReadOnlySpan properties by caching the result, instead of making a new one everytime the property is read
+                                    cacheKey = $"this.$cache{propertySymbol.Name}";
+                                }
+                                WriteReturn(node, node.ExpressionBody.Expression, cacheKey);
+                            }
+                            else
+                            {
+                                CurrentTypeWriter.Write(node, "", true);
+                                Visit(node.ExpressionBody.Expression);
+                                CurrentTypeWriter.WriteLine(node, ";");
+                            }
                         }
-                    }
-                    CurrentTypeWriter.WriteLine(node, "}", true);
-                    CloseClosure();
+                    }));
+                    CloseClosure(node);
                 }
                 else
                 {
@@ -458,19 +468,20 @@ namespace NetJs.Translator.CSharpToJavascript
                                 CurrentTypeWriter.Write(node, $"/*{node.Type.ToString().Trim()}*/ {modifier}{propertyMetadata?.OverloadName ?? "get_Item"}(", true);
                                 WriteMethodDeclarationParameters(node, node.ParameterList.Parameters);
                                 CurrentTypeWriter.WriteLine(node, $")");
-                                CurrentTypeWriter.WriteLine(node, "{", true);
-                                if (accessor.ExpressionBody != null)
+                                WriteBlock(accessor.Body ?? accessor.ExpressionBody ?? (CSharpSyntaxNode)node, new CodeNode(() =>
                                 {
-                                    CurrentTypeWriter.Write(node, $"return ", true);
-                                    Visit(accessor.ExpressionBody.Expression);
-                                    CurrentTypeWriter.WriteLine(node, $";");
-                                }
-                                else if (accessor.Body != null)
-                                {
-                                    VisitChildren(accessor.Body.Statements);
-                                }
-                                CurrentTypeWriter.WriteLine(node, "}", true);
-                                CloseClosure();
+                                    if (accessor.ExpressionBody != null)
+                                    {
+                                        CurrentTypeWriter.Write(node, $"return ", true);
+                                        Visit(accessor.ExpressionBody.Expression);
+                                        CurrentTypeWriter.WriteLine(node, $";");
+                                    }
+                                    else if (accessor.Body != null)
+                                    {
+                                        VisitChildren(accessor.Body.Statements);
+                                    }
+                                }));
+                                CloseClosure(node);
                             }
                         }
                         else if (accessor.IsKind(SyntaxKind.SetAccessorDeclaration))
@@ -486,19 +497,20 @@ namespace NetJs.Translator.CSharpToJavascript
                                     CurrentTypeWriter.Write(node, ", ");
                                 CurrentTypeWriter.Write(node, $"/*{node.Type.ToString().Trim()}*/ value");
                                 CurrentTypeWriter.WriteLine(node, $")");
-                                CurrentTypeWriter.WriteLine(node, "{", true);
-                                if (accessor.ExpressionBody != null)
+                                WriteBlock(accessor.Body ?? accessor.ExpressionBody ?? (CSharpSyntaxNode)node, new CodeNode(() =>
                                 {
-                                    CurrentTypeWriter.Write(node, "", true);
-                                    Visit(accessor.ExpressionBody.Expression);
-                                    CurrentTypeWriter.WriteLine(node, ";");
-                                }
-                                else if (accessor.Body != null)
-                                {
-                                    VisitChildren(accessor.Body.Statements);
-                                }
-                                CurrentTypeWriter.WriteLine(node, "}", true);
-                                CloseClosure();
+                                    if (accessor.ExpressionBody != null)
+                                    {
+                                        CurrentTypeWriter.Write(node, "", true);
+                                        Visit(accessor.ExpressionBody.Expression);
+                                        CurrentTypeWriter.WriteLine(node, ";");
+                                    }
+                                    else if (accessor.Body != null)
+                                    {
+                                        VisitChildren(accessor.Body.Statements);
+                                    }
+                                }));
+                                CloseClosure(node);
                             }
                         }
                     }
@@ -510,13 +522,14 @@ namespace NetJs.Translator.CSharpToJavascript
                     CurrentTypeWriter.Write(node, $"/*{node.Type.ToString().Trim()}*/ {modifier}{(propertyMetadata.OverloadName ?? "get_Item")}(", true);
                     WriteMethodDeclarationParameters(node, node.ParameterList.Parameters);
                     CurrentTypeWriter.WriteLine(node, $")");
-                    CurrentTypeWriter.WriteLine(node, "{", true);
-                    WriteReturn(node, node.ExpressionBody.Expression);
-                    //Writer.Write(node, $"return ", true);
-                    //Visit(node.ExpressionBody.Expression);
-                    CurrentTypeWriter.WriteLine(node, $";");
-                    CurrentTypeWriter.WriteLine(node, "}", true);
-                    CloseClosure();
+                    WriteBlock(node.ExpressionBody, new CodeNode(() =>
+                    {
+                        WriteReturn(node, node.ExpressionBody.Expression);
+                        //Writer.Write(node, $"return ", true);
+                        //Visit(node.ExpressionBody.Expression);
+                        CurrentTypeWriter.WriteLine(node, $";");
+                    }));
+                    CloseClosure(node);
                 }
                 else
                 {

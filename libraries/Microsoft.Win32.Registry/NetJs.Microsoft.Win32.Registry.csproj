@@ -6,6 +6,7 @@
     <!--<TargetFrameworks>$(NetCoreAppCurrent)-windows;$(NetCoreAppCurrent)</TargetFrameworks>-->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DefineConstants>$(DefineConstants);REGISTRY_ASSEMBLY</DefineConstants>
+    <NoWarn>$(NoWarn);CA2249</NoWarn>
     <UseCompilerGeneratedDocXmlFile>false</UseCompilerGeneratedDocXmlFile>
     <StrongNameKeyId>Microsoft</StrongNameKeyId>
     <SupportedOSPlatforms>windows</SupportedOSPlatforms>

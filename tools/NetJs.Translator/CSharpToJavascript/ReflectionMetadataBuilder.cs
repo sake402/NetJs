@@ -1,10 +1,12 @@
 ﻿using Microsoft.CodeAnalysis;
 using System.IO;
 using System.Reflection;
+using System.Reflection.Metadata;
 using System.Resources;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
 namespace NetJs.Translator.CSharpToJavascript
@@ -55,34 +57,14 @@ namespace NetJs.Translator.CSharpToJavascript
 
         uint assemblyHandle;
         ITypeSymbol[] types = default!;
-        ulong TypeHandle(ITypeSymbol type, ulong orWith = 0)
+        public Handle NumericTypeHandle(INamedTypeSymbol type)
         {
-            if (type.Kind == SymbolKind.TypeParameter)
-            {
-                ITypeParameterSymbol tp = (ITypeParameterSymbol)type;
-                if (tp.DeclaringType != null)
-                {
-                    var index = tp.DeclaringType.TypeParameters.IndexOf(tp);
-                    //T.$metadata.handle
-                    return GenericTypeHandle(index) | orWith;
-                }
-                else
-                {
-                    var index = tp.DeclaringMethod!.TypeParameters.IndexOf(tp);
-                    return GenericMethodHandle(tp.DeclaringMethod, index) | orWith;
-                }
-            }
-            if (type is INamedTypeSymbol nt && nt.IsDefinedTypeParameter(global))
+            if (global.IsDefinedTypeParameter(type))
             {
                 var index = int.Parse(type.Name.Substring("T".Length));
-                return GenericTypeHandle(index);
+                var handle = index + (int)KnownTypeHandle.GenericType1Placeholder;
+                return ((ulong)handle << ReflectionHandleExtension.TypeShift);
             }
-            //if (type.IsArray(out var elementType))
-            //{
-            //    var th = TypeHandle(elementType);
-            //    return new ReflectionHandleModel { Value = th.Value | (ulong)TypeHandleFlags.Array };
-            //}
-            //var name = type.CreateSignature(global, withGlobalNamespace: false);
             int typeHandle = Array.IndexOf(types, type.OriginalDefinition);
             if (typeHandle < 0)
             {
@@ -95,16 +77,146 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             if (typeHandle < 0)
                 return 0;
-            return (assemblyHandle << ReflectionHandleExtension.AssemblyShift) | ((ulong)typeHandle << ReflectionHandleExtension.TypeShift) | orWith;
+            return (assemblyHandle << ReflectionHandleExtension.AssemblyShift) | ((ulong)typeHandle << ReflectionHandleExtension.TypeShift);
         }
 
-        ulong GenericTypeHandle(int typeIndex)
+        public Handle TypeHandle(ITypeSymbol type, TranslatorSyntaxVisitor? fromVisitor)
+        {
+            //if (!global.ShouldExportType(type, null))
+                //return default!;
+            if (type.Kind == SymbolKind.TypeParameter)
+            {
+                ITypeParameterSymbol tp = (ITypeParameterSymbol)type;
+                if (tp.DeclaringType != null)
+                {
+                    return GenericTypeHandle(tp);
+                }
+                else
+                {
+                    //Type declared on a method
+                    var index = tp.DeclaringMethod!.TypeParameters.IndexOf(tp);
+                    return GenericMethodHandle(tp.DeclaringMethod, index);
+                }
+            }
+            if (type is INamedTypeSymbol nt)
+            {
+                if (nt.IsGenericType)
+                {
+                    if (fromVisitor != null && SymbolEqualityComparer.Default.Equals(fromVisitor.CurrentTypeSymbol, type))
+                    {
+                        return $"this.{Constants.PrototypeTypeHandle}";
+                    }
+                    static IEnumerable<ITypeParameterSymbol> GetTypeArguments(INamedTypeSymbol ts)
+                    {
+                        foreach (var tts in ts.TypeArguments)
+                        {
+                            if (tts is ITypeParameterSymbol tp)
+                                yield return tp;
+                            if (tts is INamedTypeSymbol nt)
+                            {
+                                foreach (var ttss in GetTypeArguments(nt))
+                                    yield return ttss;
+                            }
+                            else if (tts is IArrayTypeSymbol at)
+                            {
+                                if (at.ElementType is ITypeParameterSymbol tp2)
+                                    yield return tp2;
+                                if (at.ElementType is INamedTypeSymbol nt2)
+                                    foreach (var ttss in GetTypeArguments(nt2))
+                                        yield return ttss;
+                            }
+                        }
+                        if (ts.ContainingType != null)
+                        {
+                            foreach (var tts in GetTypeArguments(ts.ContainingType))
+                                yield return tts;
+                        }
+                    }
+                    var allTypeArgs = GetTypeArguments(nt);
+                    IMethodSymbol? declaringMethod = null;
+                    if (allTypeArgs.Any(t => (declaringMethod = t.DeclaringMethod) != null))
+                    {
+                        //at least a generic type argument on this type is defined by method
+                        return $"({string.Join(", ", declaringMethod!.TypeParameters.Select(tp => tp.Name))}) => {nt.ComputeOutputTypeName(global)}.{Constants.PrototypeTypeHandle}";
+                    }
+                    else
+                    {
+                        //if (fromVisitor != null && nt.TypeArguments.Any(t => t.TypeKind == TypeKind.TypeParameter))
+                        //{
+                        //    static IEnumerable<ITypeSymbol> GetTypeArguments(INamedTypeSymbol ts)
+                        //    {
+                        //        foreach (var tts in ts.TypeArguments)
+                        //            yield return tts;
+                        //        if (ts.ContainingType != null)
+                        //        {
+                        //            foreach (var tts in GetTypeArguments(ts.ContainingType))
+                        //                yield return tts;
+                        //        }
+                        //    }
+                        //    var ts = nt.TypeArguments;
+                        //    var scopTypeArguments = GetTypeArguments(fromVisitor.CurrentTypeSymbol);
+                        //    var allTypeArgumentsAreAvailableInScope = nt.TypeArguments.All(t => scopTypeArguments.Contains(t, SymbolEqualityComparer.Default));
+                        //    //$.$spc.System.Collections.Generic.HashSet$$(T).AlternateLookup$$(TAlternate) should be $.$spc.System.Collections.Generic.HashSet$$(T).AlternateLookup$$()
+                        //    if (!allTypeArgumentsAreAvailableInScope)
+                        //    {
+                        //        return $"{nt.ConstructUnboundGenericType().ComputeOutputTypeName(global)}.{Constants.PrototypeTypeHandle}";
+                        //    }
+                        //}
+                        if (nt.ContainingType != null && nt.TypeParameters.Length > 0 && fromVisitor != null && !SymbolEqualityComparer.Default.Equals(nt, fromVisitor.CurrentTypeSymbol))
+                        {
+                            static IEnumerable<ITypeSymbol> GetScopeTypeArguments(INamedTypeSymbol ts)
+                            {
+                                foreach (var tts in ts.TypeArguments)
+                                    yield return tts;
+                                if (ts.ContainingType != null)
+                                {
+                                    foreach (var tts in GetScopeTypeArguments(ts.ContainingType))
+                                        yield return tts;
+                                }
+                            }
+                            var ts = nt.TypeArguments;
+                            var scopeTypeArguments = GetScopeTypeArguments(fromVisitor.CurrentTypeSymbol);
+                            var allTypeArgumentsAreAvailableInScope = nt.TypeArguments.All(t => scopeTypeArguments.Contains(t, SymbolEqualityComparer.Default));
+                            //$.$spc.System.Collections.Generic.HashSet$$(T).AlternateLookup$$(TAlternate) should be $.$spc.System.Collections.Generic.HashSet$$(T).AlternateLookup$$()
+                            if (!allTypeArgumentsAreAvailableInScope)
+                            {
+                                //return $"{nt.ConstructUnboundGenericType().ComputeOutputTypeName(global)}.{Constants.PrototypeTypeHandle}";
+                                return NumericTypeHandle(nt);
+                            }
+                        }
+                        return $"{nt.ComputeOutputTypeName(global)}.{Constants.PrototypeTypeHandle}";
+                    }
+                }
+                return NumericTypeHandle(nt);
+            }
+            int typeHandle = Array.IndexOf(types, type.OriginalDefinition);
+            if (typeHandle < 0)
+            {
+                var nn = type.CreateSignature(global, withGlobalNamespace: true);
+                var symbol = global.ImportedNames.Types.GetValueOrDefault(nn);
+                if (symbol?.Handle != null)
+                {
+                    return symbol.Handle.Value;
+                }
+            }
+            if (typeHandle < 0)
+                return 0;
+            return (assemblyHandle << ReflectionHandleExtension.AssemblyShift) | ((ulong)typeHandle << ReflectionHandleExtension.TypeShift);
+        }
+
+        Handle GenericTypeHandle(int typeIndex)
         {
             var typeHandle = typeIndex + (int)KnownTypeHandle.GenericType1Placeholder;
             return ((ulong)typeHandle << ReflectionHandleExtension.TypeShift);
         }
 
-        ulong GenericMethodHandle(IMethodSymbol method, int typeIndex)
+        Handle GenericTypeHandle(ITypeParameterSymbol type)
+        {
+            var typeIndex = type.DeclaringType!.TypeArguments.IndexOf(type);
+            return new Handle() { Expression = $"{type.Name}?.{Constants.PrototypeTypeHandle}??{GenericTypeHandle(typeIndex).Expression}" };
+        }
+
+        Handle GenericMethodHandle(IMethodSymbol method, int typeIndex)
         {
             var typeHandle = typeIndex + (int)KnownTypeHandle.GenericMethodType1Placeholder;
             var memberIndex = method.ContainingType.GetMembers().IndexOf(method);
@@ -112,33 +224,15 @@ namespace NetJs.Translator.CSharpToJavascript
                 ((ulong)memberIndex << ReflectionHandleExtension.MemberShift);
         }
 
-        ulong MemberHandle(ISymbol member)
+        Handle MemberHandle(ISymbol member, TranslatorSyntaxVisitor? fromVisitor)
         {
-            var index = member.ContainingType.GetMembers().IndexOf(member);
-            var typeHandle = TypeHandle(member.ContainingType, ((ulong)index << ReflectionHandleExtension.MemberShift));
-            return typeHandle;// | ((ulong)index << ReflectionHandleExtension.MemberShift);
-        }
-
-        KnownTypeHandle KnownTypeFromName(string t)
-        {
-            return t == "System.Object" ? KnownTypeHandle.SystemObject :
-                        t == "System.Boolean" ? KnownTypeHandle.SystemBool :
-                        t == "System.Char" ? KnownTypeHandle.SystemChar :
-                        t == "System.SByte" ? KnownTypeHandle.SystemSByte :
-                        t == "System.Byte" ? KnownTypeHandle.SystemByte :
-                        t == "System.Int16" ? KnownTypeHandle.SystemInt16 :
-                        t == "System.UInt16" ? KnownTypeHandle.SystemUInt16 :
-                        t == "System.Int32" ? KnownTypeHandle.SystemInt32 :
-                        t == "System.UInt32" ? KnownTypeHandle.SystemUint32 :
-                        t == "System.IntPtr" ? KnownTypeHandle.SystemIntPtr :
-                        t == "System.UIntPtr" ? KnownTypeHandle.SystemUintPtr :
-                        t == "System.Int64" ? KnownTypeHandle.SystemInt64 :
-                        t == "System.UInt64" ? KnownTypeHandle.SystemUint64 :
-                        t == "System.Single" ? KnownTypeHandle.SystemSingle :
-                        t == "System.Double" ? KnownTypeHandle.SystemDouble :
-                        t == "System.String" ? KnownTypeHandle.SystemString :
-                        t == "System.Enum" ? KnownTypeHandle.SystemEnum :
-                        t == "System.Array" ? KnownTypeHandle.SystemArray : KnownTypeHandle.Unknown;
+            var index = member.ContainingType.GetMembers().IndexOf(member) + 1;
+            var handle = TypeHandle(member.ContainingType, fromVisitor);
+            if (member.ContainingType.IsGenericType)
+                handle = handle.Or($"0x{(ulong)index << ReflectionHandleExtension.MemberShift:X}");
+            else
+                handle = handle.Or((ulong)index << ReflectionHandleExtension.MemberShift);
+            return handle;
         }
 
         public IEnumerable<INamedTypeSymbol> InitializeForAssembly(IAssemblySymbol assembly)
@@ -161,8 +255,9 @@ namespace NetJs.Translator.CSharpToJavascript
             //.Concat(Enumerable.Range(1, isSystemPrivateCoreLib ? 32 : 0)
             //.Select(i => $"$T{i}")).Concat(types.Select(t => t.CreateSignature(global, withGlobalNamespace: false))).Distinct();
             //make sure unknown type is index zero, System.Object is at index 1
-            this.types = new ITypeSymbol[] { null }.Concat( types).OrderBy(t =>
+            this.types = new ITypeSymbol[] { null }.Concat(types).OrderBy(t =>
             t == null ? (int)KnownTypeHandle.Unknown :
+            SymbolEqualityComparer.Default.Equals(t, global.SystemVoid) ? (int)KnownTypeHandle.SystemVoid :
             SymbolEqualityComparer.Default.Equals(t, global.SystemObject) ? (int)KnownTypeHandle.SystemObject :
             SymbolEqualityComparer.Default.Equals(t, global.SystemValueType) ? (int)KnownTypeHandle.SystemValueType :
             SymbolEqualityComparer.Default.Equals(t, global.SystemBoolean) ? (int)KnownTypeHandle.SystemBool :
@@ -213,12 +308,12 @@ namespace NetJs.Translator.CSharpToJavascript
             SymbolEqualityComparer.Default.Equals(t, global.SystemT31) ? (int)KnownTypeHandle.GenericType31Placeholder :
             SymbolEqualityComparer.Default.Equals(t, global.SystemT32) ? (int)KnownTypeHandle.GenericType32Placeholder :
             int.MaxValue).ToArray();
-            var symbolDictionary = global.Symbols.Types.ToDictionary(e => e.Value.Signature, e => e.Value);
+            //var symbolDictionary = global.Symbols.Types.ToDictionary(e => e.Value.Signature, e => e.Value);
             foreach (var type in types)
             {
-                var handle = TypeHandle(type);
+                var handle = NumericTypeHandle(type);
                 var name = type.CreateSignature(global, withTypeParameterNames: true, withGlobalNamespace: true);
-                var symbol = symbolDictionary.GetValueOrDefault(name);
+                var symbol = global.Symbols.Types.FirstOrDefault(e => e.Value.Signature == name).Value;// symbolDictionary.GetValueOrDefault(name);
                 if (symbol != null)
                 {
                     symbol.Handle = handle;
@@ -243,7 +338,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 Attributes = NullIfEmpty(assembly.GetAttributes()
                     .Where(a => a.AttributeClass != null)
                     .Where(a => global.ShouldExportType(a.AttributeClass!, null))
-                    .Select(s => FromAttribute(s))
+                    .Select(s => FromAttribute(s, null))
                     .ToArray())
             };
             List<AssemblyManifestModel> manifests = new List<AssemblyManifestModel>();
@@ -299,36 +394,36 @@ namespace NetJs.Translator.CSharpToJavascript
             return model;
         }
 
-        public TypeModel FromTypeSymbol(ITypeSymbol? symbol, bool minimal = false)
+        public TypeModel FromTypeSymbol(ITypeSymbol? symbol, TranslatorSyntaxVisitor? fromVisitor, bool minimal = false)
         {
             if (symbol == null) return new TypeModel { };
             var model = new TypeModel
             {
                 //Name = symbol.Name,
-                Handle = TypeHandle(symbol),
+                Handle = TypeHandle(symbol, fromVisitor: fromVisitor),
                 //AssemblyQualifiedName = $"{RemoveGlobal(symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))}, {symbol.ContainingAssembly?.Name}",
-                BaseType = symbol.BaseType != null ? NullIfZero(TypeHandle(symbol.BaseType)) : null,
-                DeclaringType = symbol.ContainingType != null ? TypeHandle(symbol.ContainingType) : default,
+                BaseType = symbol.BaseType != null ? NullIfZero(TypeHandle(symbol.BaseType, fromVisitor: fromVisitor)) : null,
+                DeclaringType = symbol.ContainingType != null ? TypeHandle(symbol.ContainingType, fromVisitor: fromVisitor) : default,
                 UnderlyingType = (symbol is INamedTypeSymbol nt && nt.EnumUnderlyingType != null)
-                    ? TypeHandle(nt.EnumUnderlyingType)
-                    : null,
-                Kind = MapTypeKind(symbol.TypeKind),
-                Flags = symbol.GetTypeFlags(),
+                    ? TypeHandle(nt.EnumUnderlyingType, fromVisitor: fromVisitor)
+                    : default,
+                Kind = global.MapTypeKind(symbol.TypeKind),
+                Flags = global.GetTypeFlags(symbol),
                 //TypeAttributes = 0,
-                KnownType = KnownTypeFromName(symbol.CreateSignature(global, withGlobalNamespace: false)),
+                KnownType = global. KnownTypeFromName(symbol.CreateSignature(global, withGlobalNamespace: false)),
                 Properties = minimal ? null : NullIfEmpty(symbol.GetMembers()
                             .Where(m => global.IsReflectable(m, null))
                             .Where(m => !m.IsExtern/*Extern methods are called via templates, not reflectable*/)
                             //.Where(m => !m.DeclaredAccessibility.HasFlag(Accessibility.Internal)/*Internal methods are used by compiler only*/)
-                            .OfType<IPropertySymbol>().Select(FromPropertySymbol).ToArray()),
+                            .OfType<IPropertySymbol>().Select(e => FromPropertySymbol(e, fromVisitor)).ToArray()),
                 Methods = minimal ? null : NullIfEmpty(symbol.GetMembers()
                             .Where(m => global.IsReflectable(m, null))
                             .Where(m => !m.IsExtern/*Extern methods are called via templates, not reflectable*/)
                             //.Where(m => !m.DeclaredAccessibility.HasFlag(Accessibility.Internal)/*Internal methods are used by compiler only*/)
                             .OfType<IMethodSymbol>()
-                            .Where(m => m.MethodKind == MethodKind.Ordinary)
+                            .Where(m => m.MethodKind == MethodKind.Ordinary || m.MethodKind == MethodKind.DelegateInvoke)
                             .Where(m => !global.LinkTrimOutMethod(m))
-                            .Select(e => FromMethodSymbol(e))
+                            .Select(e => FromMethodSymbol(e, fromVisitor))
                             .ToArray()),
                 Constructors = minimal ? null : NullIfEmpty(symbol.GetMembers()
                             .Where(m => global.IsReflectable(m, null))
@@ -337,42 +432,70 @@ namespace NetJs.Translator.CSharpToJavascript
                             .OfType<IMethodSymbol>()
                             .Where(m => m.MethodKind == MethodKind.Constructor)
                             .Where(m => !global.LinkTrimOutMethod(m))
-                            .Select(FromConstructorSymbol).ToArray()),
+                            .Select(e => FromConstructorSymbol(e, fromVisitor)).ToArray()),
                 Fields = minimal ? null : NullIfEmpty(symbol.GetMembers()
                             .Where(m => global.IsReflectable(m, null))
                             .Where(m => !m.IsExtern/*Extern methods are called via templates, not reflectable*/)
                             //.Where(m => !m.DeclaredAccessibility.HasFlag(Accessibility.Internal)/*Internal methods are used by compiler only*/)
                             .Where(m => !m.Name.Contains("k__BackingField")/*Property backing fields are not needed*/)
-                            .OfType<IFieldSymbol>().Select(FromFieldSymbol).ToArray()),
+                            .OfType<IFieldSymbol>().Select(e => FromFieldSymbol(e, fromVisitor)).ToArray()),
                 Events = minimal ? null : NullIfEmpty(symbol.GetMembers()
                             .Where(m => global.IsReflectable(m, null))
                              .Where(m => !m.IsExtern/*Extern methods are called via templates, not reflectable*/)
                             //.Where(m => !m.DeclaredAccessibility.HasFlag(Accessibility.Internal)/*Internal methods are used by compiler only*/)
-                            .OfType<IEventSymbol>().Select(FromEventSymbol).ToArray()),
-                Interfaces = minimal ? null : NullIfEmpty(symbol.AllInterfaces.Where(i => global.ShouldExportType(i, null)).Select(i => TypeHandle(i)).ToArray()),
+                            .OfType<IEventSymbol>().Select(e => FromEventSymbol(e, fromVisitor)).ToArray()),
+                Interfaces = minimal ? null : NullIfEmpty(symbol.AllInterfaces.Where(i => global.ShouldExportType(i, null)).Select(i => TypeHandle(i, fromVisitor: fromVisitor)).ToArray()),
                 Attributes = minimal ? null : NullIfEmpty(symbol.GetAttributes()
                 .Where(a => a.AttributeClass != null && global.ShouldExportType(a.AttributeClass, null))
-                .Select(a => FromAttribute(a)).ToArray()),
-                GenericArguments = minimal ? null : NullIfEmpty(symbol is INamedTypeSymbol g && g.TypeArguments.Any()
-                    ? g.TypeArguments.Select((t, i) =>
+                .Select(a => FromAttribute(a, fromVisitor)).ToArray()),
+                GenericArguments = minimal ? null : NullIfEmpty(symbol is INamedTypeSymbol g && g.TypeParameters.Any()
+                    ? g.TypeParameters.Select((t, i) =>
                     {
-                        var handle = TypeHandle(t);
-                        if (handle == 0)
-                        {
-                            handle = GenericTypeHandle(i);
-                        }
+                        //var handle = TypeHandle(t);
+                        //if (handle == 0)
+                        //{
+                        var handle = GenericTypeHandle(t);
+                        //}
                         return handle;
                     }).ToArray()
-                    : Array.Empty<ulong>()),
+                    : Array.Empty<Handle>()),
                 GenericConstraints = minimal ? null : NullIfEmpty(Array.Empty<GenericParameterConstraintModel>()),
-                NestedTypes = minimal ? null : NullIfEmpty(symbol.GetTypeMembers().Where(t => global.ShouldExportType(t, null) && global.IsReflectable(t, null)).Select(t => TypeHandle(t)).ToArray()),
+                NestedTypes = minimal ? null : NullIfEmpty(symbol.GetTypeMembers().Where(t => global.ShouldExportType(t, null) && global.IsReflectable(t, null)).Select(t => TypeHandle(t, fromVisitor)).ToArray()),
                 GenericParameterCount = symbol is INamedTypeSymbol ng ? ng.TypeParameters.Length : 0,
-                Size = symbol.SizeOf()
+                Size = global.SizeOf(symbol)
             };
 
             return model;
         }
 
+        static string ReplaceWholeWord(string input, string wordToReplace, string replacement)
+        {
+            if (string.IsNullOrEmpty(input) || string.IsNullOrEmpty(wordToReplace))
+                return input;
+
+            // \b anchors match word boundaries (e.g., spaces, punctuation, start/end of string)
+            string pattern = $@"\b{Regex.Escape(wordToReplace)}\b";
+
+            return Regex.Replace(input, pattern, replacement);
+        }
+
+        public string FromTypeSymbolAsJson(ITypeSymbol? symbol, TranslatorSyntaxVisitor? fromVisitor, bool minimal = false)
+        {
+            var model = FromTypeSymbol(symbol, fromVisitor, minimal);
+            var json = JsonSerializer.Serialize(model, SerializationOption);
+            //if (symbol is INamedTypeSymbol nt && nt.OriginalDefinition.IsGenericType)
+            //{
+            //    var selfHandle = TypeHandle(nt);
+            //    json = ReplaceWholeWord(json, $"{selfHandle}", $"this.{Constants.PrototypeTypeHandle}");
+            //    foreach (var t in nt.OriginalDefinition.TypeParameters) //replace every handle in the json with the runtime handle of the generic type
+            //    {
+            //        var handle = GenericTypeHandle(t);
+            //        var needle = $"{handle}";
+            //        json = ReplaceWholeWord(json, needle, $"{t.Name}?.{Constants.PrototypeMetadata}?.h??{handle}");
+            //    }
+            //}
+            return json;
+        }
         // --- Internal helpers ---
         private IEnumerable<INamedTypeSymbol> GetInnerTypes(ITypeSymbol ns)
         {
@@ -402,18 +525,6 @@ namespace NetJs.Translator.CSharpToJavascript
             }
         }
 
-        private static TypeKindModel MapTypeKind(Microsoft.CodeAnalysis.TypeKind roslynKind) =>
-            roslynKind switch
-            {
-                Microsoft.CodeAnalysis.TypeKind.Class => TypeKindModel.Class,
-                Microsoft.CodeAnalysis.TypeKind.Struct => TypeKindModel.Struct,
-                Microsoft.CodeAnalysis.TypeKind.Interface => TypeKindModel.Interface,
-                Microsoft.CodeAnalysis.TypeKind.Enum => TypeKindModel.Enum,
-                Microsoft.CodeAnalysis.TypeKind.Delegate => TypeKindModel.Delegate,
-                Microsoft.CodeAnalysis.TypeKind.Array => TypeKindModel.Array,
-                Microsoft.CodeAnalysis.TypeKind.Pointer => TypeKindModel.Pointer,
-                _ => TypeKindModel.Unknown
-            };
         //private static TypeAttributes GetTypeAttributes(ITypeSymbol type)
         //{
         //    var flags = (CoreLibTypeAttributes)0;
@@ -444,7 +555,7 @@ namespace NetJs.Translator.CSharpToJavascript
         //    return flags;
         //}
 
-        PropertyModel FromPropertySymbol(IPropertySymbol prop)
+        PropertyModel FromPropertySymbol(IPropertySymbol prop, TranslatorSyntaxVisitor? fromVisitor)
         {
             var name = prop.Name;
             //a method that implements explicitly will have a long name qualified by the interface it is defined on
@@ -452,8 +563,8 @@ namespace NetJs.Translator.CSharpToJavascript
             if (prop.ExplicitInterfaceImplementations.Any())
             {
                 var ex = prop.ExplicitInterfaceImplementations.First().ContainingType;
-                var handle = TypeHandle(ex);
-                name = (handle > 0 ? $"{{{handle}}}." : "") + name.Split('.').Last();
+                var handle = TypeHandle(ex, fromVisitor);
+                name = (handle.Expression != null ? $"{{{handle}}}." : "") + name.Split('.').Last();
             }
             if (name == "this[]")
             {
@@ -468,7 +579,7 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             var metadata = global.GetRequiredMetadata(prop);
             var outputName = metadata.OverloadName ?? name;
-            var propertyTypeHandle = !global.ShouldExportType(prop.Type, null) ? default : TypeHandle(prop.Type);
+            var propertyTypeHandle = !global.ShouldExportType(prop.Type, null) ? default : TypeHandle(prop.Type, fromVisitor);
             //if (propertyTypeHandle == 0 && prop.ContainingType.Arity > 0)
             //{
             //    var args = prop.ContainingType.TypeArguments;
@@ -480,16 +591,16 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 Name = name,
                 OutputName = outputName != name ? (outputName.StartsWith(name) ? outputName.Replace(name, "@") : outputName) : null,
-                DeclaringType = TypeHandle(prop.ContainingType),
+                DeclaringType = TypeHandle(prop.ContainingType, fromVisitor),
                 Flags = prop.GetSymbolFlags(),
                 PropertyType = propertyTypeHandle,
-                IndexParameters = prop.Parameters.Select(FromParameterSymbol).ToArray(),
-                GetMethod = prop.GetMethod != null ? FromMethodSymbol(prop.GetMethod, prop) : null,
-                SetMethod = prop.SetMethod != null ? FromMethodSymbol(prop.SetMethod, prop) : null,
-                Handle = MemberHandle(prop),
+                IndexParameters = NullIfEmpty(prop.Parameters.Select(e => FromParameterSymbol(e, fromVisitor)).ToArray()),
+                GetMethod = prop.GetMethod != null ? FromMethodSymbol(prop.GetMethod, fromVisitor, prop) : null,
+                SetMethod = prop.SetMethod != null ? FromMethodSymbol(prop.SetMethod, fromVisitor, prop) : null,
+                Handle = MemberHandle(prop, fromVisitor),
                 Attributes = NullIfEmpty(prop.GetAttributes()
                 .Where(a => a.AttributeClass != null && global.ShouldExportType(a.AttributeClass, null))
-                .Select(a => FromAttribute(a)).ToArray())
+                .Select(a => FromAttribute(a, fromVisitor)).ToArray())
             };
         }
 
@@ -500,7 +611,7 @@ namespace NetJs.Translator.CSharpToJavascript
             return t;
         }
 
-        MethodModel FromMethodSymbol(IMethodSymbol method, IPropertySymbol? fromProperty = null)
+        MethodModel FromMethodSymbol(IMethodSymbol method, TranslatorSyntaxVisitor? fromVisitor, IPropertySymbol? fromProperty = null)
         {
             var name = method.Name;
             //a method that implements explicitly will have a long name qualified by the interface it is defined on
@@ -508,12 +619,12 @@ namespace NetJs.Translator.CSharpToJavascript
             if (method.ExplicitInterfaceImplementations.Any())
             {
                 var ex = method.ExplicitInterfaceImplementations.First().ContainingType;
-                var handle = TypeHandle(ex);
+                var handle = TypeHandle(ex, fromVisitor);
                 name = (handle > 0 ? $"{{{handle}}}." : "") + name.Split('.').Last();
             }
             var metadata = global.GetRequiredMetadata(method);
             var outputName = metadata.OverloadName ?? name;
-            var methodReturnTypeHandle = !global.ShouldExportType(method.ReturnType, null) ? default : TypeHandle(method.ReturnType);
+            var methodReturnTypeHandle = !global.ShouldExportType(method.ReturnType, null) ? default : TypeHandle(method.ReturnType, fromVisitor);
             //if (methodReturnTypeHandle == 0 && method.ContainingType.Arity > 0)
             //{
             //    var args = method.ContainingType.TypeArguments;
@@ -525,19 +636,19 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 Name = fromProperty == null ? name : null!,
                 OutputName = fromProperty == null ? (outputName != name ? (outputName.StartsWith(name) ? outputName.Replace(name, "@") : outputName) : null) : null,
-                DeclaringType = fromProperty == null ? TypeHandle(method.ContainingType) : 0,
+                DeclaringType = fromProperty == null ? TypeHandle(method.ContainingType, fromVisitor) : 0,
                 Flags = method.GetSymbolFlags(),
                 ReturnType = fromProperty == null ? methodReturnTypeHandle : 0,
-                Parameters = fromProperty == null ? NullIfEmpty(method.Parameters.Select(FromParameterSymbol).ToArray()) : null,
+                Parameters = fromProperty == null ? NullIfEmpty(method.Parameters.Select(e => FromParameterSymbol(e, fromVisitor)).ToArray()) : null,
                 GenericArguments = fromProperty == null ? NullIfEmpty(method.TypeArguments.Select(t => !global.ShouldExportType(t, null) ? "object" : t.CreateSignature(global, withGlobalNamespace: false)).ToArray()) : null,
-                Handle = MemberHandle(method),
+                Handle = MemberHandle(method, fromVisitor),
                 Attributes = NullIfEmpty(method.GetAttributes()
                 .Where(a => a.AttributeClass != null && global.ShouldExportType(a.AttributeClass, null))
-                .Select(a => FromAttribute(a)).ToArray())
+                .Select(a => FromAttribute(a, fromVisitor)).ToArray())
             };
         }
 
-        ConstructorModel FromConstructorSymbol(IMethodSymbol ctor)
+        ConstructorModel FromConstructorSymbol(IMethodSymbol ctor, TranslatorSyntaxVisitor? fromVisitor)
         {
             var metadata = global.GetRequiredMetadata(ctor);
             var name = ctor.Name;
@@ -546,22 +657,22 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 Name = name,
                 OutputName = outputName != name ? (outputName.StartsWith(name) ? outputName.Replace(name, "@") : outputName) : null,
-                DeclaringType = TypeHandle(ctor.ContainingType),
+                DeclaringType = TypeHandle(ctor.ContainingType, fromVisitor),
                 Flags = ctor.GetSymbolFlags(),
-                Parameters = NullIfEmpty(ctor.Parameters.Select(FromParameterSymbol).ToArray()),
-                Handle = MemberHandle(ctor),
+                Parameters = NullIfEmpty(ctor.Parameters.Select(e => FromParameterSymbol(e, fromVisitor)).ToArray()),
+                Handle = MemberHandle(ctor, fromVisitor),
                 Attributes = NullIfEmpty(ctor.GetAttributes()
                 .Where(a => a.AttributeClass != null && global.ShouldExportType(a.AttributeClass, null))
-                .Select(a => FromAttribute(a)).ToArray())
+                .Select(a => FromAttribute(a, fromVisitor)).ToArray())
             };
         }
 
-        FieldModel FromFieldSymbol(IFieldSymbol field)
+        FieldModel FromFieldSymbol(IFieldSymbol field, TranslatorSyntaxVisitor? fromVisitor)
         {
             var metadata = global.GetRequiredMetadata(field);
             var name = field.Name;
             var outputName = metadata.OverloadName ?? name;
-            var fieldTypeHandle = !global.ShouldExportType(field.Type, null) ? default : TypeHandle(field.Type);
+            var fieldTypeHandle = !global.ShouldExportType(field.Type, null) ? default : TypeHandle(field.Type, fromVisitor);
             //if (fieldTypeHandle == 0 && field.ContainingType.Arity > 0)
             //{
             //    var args = field.ContainingType.TypeArguments;
@@ -573,22 +684,22 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 Name = name,
                 OutputName = outputName != name ? (outputName.StartsWith(name) ? outputName.Replace(name, "@") : outputName) : null,
-                DeclaringType = !global.ShouldExportType(field.Type, null) ? default : TypeHandle(field.ContainingType),
+                DeclaringType = !global.ShouldExportType(field.Type, null) ? default : TypeHandle(field.ContainingType, fromVisitor),
                 Flags = field.GetSymbolFlags(),
                 FieldType = fieldTypeHandle,
-                Handle = MemberHandle(field),
+                Handle = MemberHandle(field, fromVisitor),
                 Attributes = NullIfEmpty(field.GetAttributes()
                 .Where(a => a.AttributeClass != null && global.ShouldExportType(a.AttributeClass, null))
-                .Select(a => FromAttribute(a)).ToArray())
+                .Select(a => FromAttribute(a, fromVisitor)).ToArray())
             };
         }
 
-        EventModel FromEventSymbol(IEventSymbol ev)
+        EventModel FromEventSymbol(IEventSymbol ev, TranslatorSyntaxVisitor? fromVisitor)
         {
             var metadata = global.GetRequiredMetadata(ev);
             var name = ev.Name;
             var outputName = metadata.OverloadName ?? name;
-            var eventTypeHandle = !global.ShouldExportType(ev.Type, null) ? default : TypeHandle(ev.Type);
+            var eventTypeHandle = !global.ShouldExportType(ev.Type, null) ? default : TypeHandle(ev.Type, fromVisitor);
             //if (eventTypeHandle == 0 && ev.ContainingType.Arity > 0)
             //{
             //    var args = ev.ContainingType.TypeArguments;
@@ -600,22 +711,22 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 Name = name,
                 OutputName = outputName != name ? (outputName.StartsWith(name) ? outputName.Replace(name, "@") : outputName) : null,
-                DeclaringType = TypeHandle(ev.ContainingType),
+                DeclaringType = TypeHandle(ev.ContainingType, fromVisitor),
                 Flags = ev.GetSymbolFlags(),
-                EventHandlerType = !global.ShouldExportType(ev.Type, null) ? default : TypeHandle(ev.Type),
-                AddMethod = ev.AddMethod != null ? FromMethodSymbol(ev.AddMethod) : null,
-                RemoveMethod = ev.RemoveMethod != null ? FromMethodSymbol(ev.RemoveMethod) : null,
-                RaiseMethod = ev.RaiseMethod != null ? FromMethodSymbol(ev.RaiseMethod) : null,
-                Handle = MemberHandle(ev),
+                EventHandlerType = !global.ShouldExportType(ev.Type, null) ? default : TypeHandle(ev.Type, fromVisitor),
+                AddMethod = ev.AddMethod != null ? FromMethodSymbol(ev.AddMethod, fromVisitor) : null,
+                RemoveMethod = ev.RemoveMethod != null ? FromMethodSymbol(ev.RemoveMethod, fromVisitor) : null,
+                RaiseMethod = ev.RaiseMethod != null ? FromMethodSymbol(ev.RaiseMethod, fromVisitor) : null,
+                Handle = MemberHandle(ev, fromVisitor),
                 Attributes = NullIfEmpty(ev.GetAttributes()
                 .Where(a => a.AttributeClass != null && global.ShouldExportType(a.AttributeClass, null))
-                .Select(a => FromAttribute(a)).ToArray())
+                .Select(a => FromAttribute(a, fromVisitor)).ToArray())
             };
         }
 
-        ParameterModel FromParameterSymbol(IParameterSymbol param)
+        ParameterModel FromParameterSymbol(IParameterSymbol param, TranslatorSyntaxVisitor? fromVisitor)
         {
-            var paramTypeHandle = !global.ShouldExportType(param.Type, null) ? default : TypeHandle(param.Type);
+            var paramTypeHandle = !global.ShouldExportType(param.Type, null) ? default : TypeHandle(param.Type, fromVisitor);
             //if (paramTypeHandle == 0 && param.ContainingType.Arity > 0)
             //{
             //    var args = param.ContainingType.TypeArguments;
@@ -627,7 +738,7 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 Name = param.Name,
                 ParameterType = paramTypeHandle,
-                Position = param.Ordinal,
+                //Position = param.Ordinal,
                 Flags =
                 (param.IsOptional ? ParameterFlagsModel.Optional : ParameterFlagsModel.None) |
                 (param.RefKind == RefKind.Out ? ParameterFlagsModel.Out : ParameterFlagsModel.None) |
@@ -636,11 +747,11 @@ namespace NetJs.Translator.CSharpToJavascript
                 DefaultValue = param.HasExplicitDefaultValue ? param.ExplicitDefaultValue ?? "__typeDefault__" : null,
                 Attributes = NullIfEmpty(param.GetAttributes()
                 .Where(a => a.AttributeClass != null && global.ShouldExportType(a.AttributeClass, null))
-                .Select(a => FromAttribute(a)).ToArray())
+                .Select(a => FromAttribute(a, fromVisitor)).ToArray())
             };
         }
 
-        object? AdaptAttrValue(object? a)
+        object? AdaptAttrValue(object? a, TranslatorSyntaxVisitor? fromVisitor)
         {
             //if (a is not string && a is not byte && a is not short && a is not int && a is not long && a is not bool && a is not ITypeSymbol && a is not TypedConstant && a is not IEnumerable<ITypeSymbol> && a is not IEnumerable<TypedConstant>)
             //{
@@ -649,32 +760,32 @@ namespace NetJs.Translator.CSharpToJavascript
             if (a == null)
                 return null;
             if (a is ITypeSymbol t)
-                return TypeHandle(t);
+                return TypeHandle(t, fromVisitor);
             if (a is TypedConstant tc)
-                return TypeHandle(tc.Type!);
+                return TypeHandle(tc.Type!, fromVisitor);
             if (a is IEnumerable<ITypeSymbol> tt)
-                return tt.Select(t => TypeHandle(t));
+                return tt.Select(t => TypeHandle(t, fromVisitor));
             if (a is IEnumerable<TypedConstant> tcc)
-                return tcc.Select(t => TypeHandle(t.Type!));
+                return tcc.Select(t => TypeHandle(t.Type!, fromVisitor));
             return a;
         }
 
-        AttributeModel FromAttribute(AttributeData att)
+        AttributeModel FromAttribute(AttributeData att, TranslatorSyntaxVisitor? fromVisitor)
         {
             return new AttributeModel
             {
-                TypeHandle = att.AttributeClass == null ? default : TypeHandle(att.AttributeClass),
-                ConstructorHandle = att.AttributeConstructor == null ? default : MemberHandle(att.AttributeConstructor),
+                TypeHandle = att.AttributeClass == null ? default : TypeHandle(att.AttributeClass, fromVisitor),
+                ConstructorHandle = att.AttributeConstructor == null ? default : MemberHandle(att.AttributeConstructor, fromVisitor),
                 ConstructorArguments = NullIfEmpty(att.ConstructorArguments.Select(arg => new AttributeConstructorArgumentModel
                 {
-                    Type = arg.Type != null ? TypeHandle(arg.Type) : default,
-                    Value = AdaptAttrValue(arg.Kind == TypedConstantKind.Array ? arg.Values : arg.Value),
+                    Type = arg.Type != null ? TypeHandle(arg.Type, fromVisitor) : default,
+                    Value = AdaptAttrValue(arg.Kind == TypedConstantKind.Array ? arg.Values : arg.Value, fromVisitor),
                 }).ToArray()),
                 NamedArguments = NullIfEmpty(att.NamedArguments.Select(arg => new AttributeNamedArgumentModel
                 {
                     Name = arg.Key,
-                    Type = arg.Value.Type != null ? TypeHandle(arg.Value.Type) : default,
-                    Value = AdaptAttrValue(arg.Value.Kind == TypedConstantKind.Array ? arg.Value.Values : arg.Value.Value),
+                    Type = arg.Value.Type != null ? TypeHandle(arg.Value.Type, fromVisitor) : default,
+                    Value = AdaptAttrValue(arg.Value.Kind == TypedConstantKind.Array ? arg.Value.Values : arg.Value.Value, fromVisitor),
                 }).ToArray())
             };
         }

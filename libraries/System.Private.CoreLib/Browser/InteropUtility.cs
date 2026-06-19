@@ -1,4 +1,6 @@
-﻿using System;
+﻿using NetJs;
+using System;
+using Window;
 
 [NetJs.Boot]
 [NetJs.OutputOrder(int.MinValue)]
@@ -12,7 +14,12 @@ public static class InteropUtility
     public const uint virtualAddressOffset = 0x80000000;
     public const uint virtualBlockAddressOffset = 0x80000000;
     public const uint virtualObjectAddressOffset = 0xC0000000;
-    static SimpleDictionary<object> virtualAddressSpaces = new();
+    static SimpleDictionary<WeakRef<object>> virtualAddressSpaces = new();
+
+    static InteropUtility()
+    {
+        Global.SetInterval(cleanupVirtualAddresses, 10000);
+    }
 
     public static bool IsVirtualAddress(uint address) => (address & virtualAddressOffset) != 0;
     static void freeAddressSpace(uint start, uint blocks)
@@ -60,7 +67,7 @@ public static class InteropUtility
         //pointerFinalizer.register(pointer, { start, blocks });
         while (blocks-- > 0)
         {
-            virtualAddressSpaces[blockStart] = pointer;
+            virtualAddressSpaces[blockStart] = new WeakRef<object>(pointer);
             blockStart++;
             if (blocks > 0)
                 pointer = pointer.Add(virtualAddressSpaceSlotSize);
@@ -70,7 +77,7 @@ public static class InteropUtility
     static void markAddressSpaceUsed(uint blockStart, object obj)
     {
         //pointerFinalizer.register(pointer, { start, blocks });
-        virtualAddressSpaces[blockStart] = obj;
+        virtualAddressSpaces[blockStart] = new WeakRef<object>(obj);
     }
 
     public static uint castObject2Address(object obj, uint handle = 0, bool deleteOld = false)
@@ -84,19 +91,20 @@ public static class InteropUtility
             throw new InvalidOperationException();
         }
         markAddressSpaceUsed(freeAddressSpace, obj);
-        virtualAddressSpaces[freeAddressSpace] = obj;
+        virtualAddressSpaces[freeAddressSpace] = new WeakRef<object>(obj);
         obj["$virtualAddress"] = freeAddressSpace.As<object>();
         return virtualObjectAddressOffset + freeAddressSpace;
     }
 
     public static object castAddress2Object(uint address)
     {
+        address = NetJs.Script.AsUnsigned(address);
         if (address < virtualObjectAddressOffset)
         {
             throw new InvalidOperationException("Not an object virtual address");
         }
         address -= virtualObjectAddressOffset;
-        return virtualAddressSpaces[address];
+        return virtualAddressSpaces[address].deref();
     }
 
     public static uint castPtr2Address(RefOrPointer<object> pointer)
@@ -106,17 +114,17 @@ public static class InteropUtility
         Array? array = null;
         var cur = pointer;
         var root = pointer;
-        int offset = 0;
+        int byteOffset = 0;
         while (cur is not null)
         {
             root = cur;
             if (cur._parentRef != null && cur._arrayOffset > 0)
             {
-                offset += cur._arrayOffset;
+                byteOffset += cur._byteOffset;
             }
             else if (cur._array != null)
             {
-                offset += cur._arrayOffset;
+                byteOffset += cur._byteOffset;
                 array = cur._array;
                 break;
             }
@@ -132,12 +140,14 @@ public static class InteropUtility
             if (root._virtualAddress == 0)
             {
                 uint len = array.Length.As<uint>();
+                if (len == 0)
+                    len = 1;
                 uint addressSpaces = ((len - 1) / virtualAddressSpaceSlotSize) + 1;
                 uint freeBlockAddressSpace = getContaguousAddressSpace(addressSpaces.As<uint>());
                 markAddressSpaceUsed(freeBlockAddressSpace, addressSpaces.As<uint>(), root);
                 root._virtualAddress = virtualBlockAddressOffset + (freeBlockAddressSpace * virtualAddressSpaceSlotSize);
             }
-            return pointer._virtualAddress = root._virtualAddress + offset.As<uint>();
+            return pointer._virtualAddress = root._virtualAddress + byteOffset.As<uint>();
         }
         return castObject2Address(pointer);
     }
@@ -152,9 +162,9 @@ public static class InteropUtility
         {
             address -= virtualBlockAddressOffset;
             var block = address / virtualAddressSpaceSlotSize;
-            var ptr = virtualAddressSpaces[block].As<RefOrPointer<object>>();
-            var toModel = ptrType != null ? ptrType.Arguments![0].Metadata : null;
-            var fromModel = ptr.GetPrototype().Arguments![0].Metadata;
+            var ptr = virtualAddressSpaces[block].deref().As<RefOrPointer<object>>();
+            var toModel = ptrType != null ? ptrType.Arguments![0] : null;
+            var fromModel = ptr.GetClassPrototype().Arguments![0];
             if (fromModel != null && toModel != null)
             {
                 //If both are numeric type, create a new TTo ref such that it can read from the TFrom ref
@@ -162,9 +172,9 @@ public static class InteropUtility
                 {
                     var toSize = toModel.Size;
                     var fromSize = fromModel.Size;
-                    if (fromSize != null && toSize != null)
+                    if (NetJs.Script.IsDefined(fromSize) && NetJs.Script.IsDefined(toSize))
                     {
-                        if (fromSize.Value != toSize.Value)
+                        if (fromSize != toSize)
                         {
                             //var mreff = new Ref<TTo>(reff);
                             var mreff = NetJs.Script.Write<Ref<object>>("new ($.$spc.System.Ref$$(ptrType.$args[0]))().$ctor$5(ptr)");
@@ -183,4 +193,44 @@ public static class InteropUtility
     {
         virtualAddressSpaces.Remove(address);
     }
+
+    static void cleanupVirtualAddresses()
+    {
+        virtualAddressSpaces.ForEach((key, value) =>
+        {
+            var v = value.deref();
+            if (NetJs.Script.IsUndefined(v))
+            {
+                virtualAddressSpaces.Remove(key);
+            }
+        });
+    }
+
+    public static int IntegerChecked(int value, int signed)
+    {
+        if (signed == 0)
+        {
+            if (value >= 0 && value.As<uint>() <= uint.MaxValue)
+                return value;
+        }
+        else
+        {
+            if (value >= int.MinValue && value <= int.MaxValue)
+                return value;
+        }
+        throw new OverflowException();
+    }
+
+
+    //public static int IntegerWrap(int value, int signed)
+    //{
+    //    if (signed == 0)
+    //    {
+    //        return value.As<uint>() & 0xFFFFFFFF;
+    //    }
+    //    else
+    //    {
+    //        return value & 0xFFFFFFFF;
+    //    }
+    //}
 }

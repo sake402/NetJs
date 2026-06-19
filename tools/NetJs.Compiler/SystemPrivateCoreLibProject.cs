@@ -65,7 +65,10 @@ namespace NetJs.Compiler
                 .InsertAfter("<!--<Import Project=\"$(LibrariesProjectRoot)\\System.Private.CoreLib\\src\\System.Private.CoreLib.Shared.projitems\" Label=\"Shared\" />-->", "\r\n" + imported)
                 .Replace("<FeaturePerfTracing Condition=\"('$(TargetsWasi)' != 'true')\">true</FeaturePerfTracing>", "<FeaturePerfTracing Condition=\"('$(TargetsWasi)' != 'true')\">false</FeaturePerfTracing>");
 
-            File.WriteAllText($"{dotnetJsSolutionPath}/libraries/System.Private.CoreLib/NetJs.System.Private.CoreLib.csproj", monoCsProject);
+            var csProjPath = $"{dotnetJsSolutionPath}/libraries/System.Private.CoreLib/NetJs.System.Private.CoreLib.csproj";
+            File.WriteAllText(csProjPath, monoCsProject);
+
+            LibraryDoctor.GenerateStaticResourceInlined(null, "System.Private.CoreLib", PrivateCoreLibSharedProjectDirectory.Replace("$(DotnetRuntimeRoot)", DotnetRuntimeRoot), Path.GetDirectoryName(csProjPath)!, "SR1");
         }
     }
 }

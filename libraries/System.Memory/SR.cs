@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Memory", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,7 +70,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_CannotCallEqualsOnSpan", resourceCulture);
+                return "Equals() on Span and ReadOnlySpan is not supported. Use operator== instead.";
             }
         }
 
@@ -83,27 +83,27 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_CannotCallGetHashCodeOnSpan", resourceCulture);
+                return "GetHashCode() on Span and ReadOnlySpan is not supported.";
             }
         }
 
 
 
         /// <summary>
-        /// The type '{0}' is not supported because it contains references.
+        /// Cannot use type '{0}'. Only value types without pointers or references are supported.
         /// </summary>
-        internal static string Argument_TypeContainsReferences
+        internal static string Argument_InvalidTypeWithPointersNotSupported
         {
             get
             {
-                return ResourceManager.GetString("Argument_TypeContainsReferences", resourceCulture);
+                return "Cannot use type '{0}'. Only value types without pointers or references are supported.";
             }
         }
 
 
-        internal static string FormatArgument_TypeContainsReferences(object arg1)
+        internal static string FormatArgument_InvalidTypeWithPointersNotSupported(object arg1)
         {
-            return string.Format(Argument_TypeContainsReferences, arg1);
+            return string.Format("Cannot use type '{0}'. Only value types without pointers or references are supported.", arg1);
         }
 
 
@@ -114,7 +114,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_DestinationTooShort", resourceCulture);
+                return "Destination is too short.";
             }
         }
 
@@ -127,7 +127,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("OutstandingReferences", resourceCulture);
+                return "Release all references before disposing this instance.";
             }
         }
 
@@ -140,7 +140,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_BadFormatSpecifier", resourceCulture);
+                return "Format specifier was invalid.";
             }
         }
 
@@ -153,7 +153,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_OverlapAlignmentMismatch", resourceCulture);
+                return "Overlapping spans have mismatching alignment.";
             }
         }
 
@@ -166,7 +166,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("EndPositionNotReached", resourceCulture);
+                return "End position was not reached during enumeration.";
             }
         }
 
@@ -179,14 +179,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BufferWriterAdvancedTooFar", resourceCulture);
+                return "Cannot advance past the end of the buffer, which has a size of {0}.";
             }
         }
 
 
         internal static string FormatBufferWriterAdvancedTooFar(object arg1)
         {
-            return string.Format(BufferWriterAdvancedTooFar, arg1);
+            return string.Format("Cannot advance past the end of the buffer, which has a size of {0}.", arg1);
         }
 
 
@@ -197,14 +197,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BufferMaximumSizeExceeded", resourceCulture);
+                return "Cannot allocate a buffer of size {0}.";
             }
         }
 
 
         internal static string FormatBufferMaximumSizeExceeded(object arg1)
         {
-            return string.Format(BufferMaximumSizeExceeded, arg1);
+            return string.Format("Cannot allocate a buffer of size {0}.", arg1);
         }
     }
 }

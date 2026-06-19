@@ -3,7 +3,7 @@
 
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <!--<TargetFrameworks>$(NetCoreAppCurrent)-windows;$(NetCoreAppCurrent)-freebsd;$(NetCoreAppCurrent)-linux;$(NetCoreAppCurrent)-osx;$(NetCoreAppCurrent)-maccatalyst;$(NetCoreAppCurrent)-ios;$(NetCoreAppCurrent)-tvos;$(NetCoreAppCurrent)-illumos;$(NetCoreAppCurrent)-solaris;$(NetCoreAppCurrent)</TargetFrameworks>-->
+    <!--<TargetFrameworks>$(NetCoreAppCurrent)-windows;$(NetCoreAppCurrent)-freebsd;$(NetCoreAppCurrent)-linux;$(NetCoreAppCurrent)-osx;$(NetCoreAppCurrent)-maccatalyst;$(NetCoreAppCurrent)-ios;$(NetCoreAppCurrent)-tvos;$(NetCoreAppCurrent)</TargetFrameworks>-->
     <DefineConstants>$(DefineConstants);FEATURE_REGISTRY</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <UseCompilerGeneratedDocXmlFile>false</UseCompilerGeneratedDocXmlFile>
@@ -23,14 +23,12 @@
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\System\Diagnostics\AsyncStreamReader.cs" />-->
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\System\Diagnostics\DataReceivedEventArgs.cs" />-->
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\System\Diagnostics\Process.cs" />-->
-    <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\System\Diagnostics\ProcessExitStatus.cs" />-->
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\System\Diagnostics\ProcessInfo.cs" />-->
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\System\Diagnostics\ProcessManager.cs" />-->
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\System\Diagnostics\ProcessModule.cs" />-->
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\System\Diagnostics\ProcessModuleCollection.cs" />-->
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\System\Diagnostics\ProcessPriorityClass.cs" />-->
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\System\Diagnostics\ProcessStartInfo.cs" />-->
-    <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\System\Diagnostics\ProcessUtils.cs" />-->
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\System\Diagnostics\ProcessThread.cs" />-->
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\System\Diagnostics\ProcessThreadCollection.cs" />-->
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\System\Diagnostics\ProcessWindowStyle.cs" />-->
@@ -46,7 +44,6 @@
     <!--<Compile Include="$(CommonPath)Interop\Windows\Interop.Errors.cs" Link="Common\Interop\Windows\Interop.Errors.cs" />-->
     <!--<Compile Include="$(CommonPath)System\Text\ValueStringBuilder.cs" Link="Common\System\Text\ValueStringBuilder.cs" />-->
     <!--<Compile Include="$(CommonPath)System\Collections\Generic\ArrayBuilder.cs" Link="Common\System\Collections\Generic\ArrayBuilder.cs" />-->
-    <!--<Compile Include="$(CommonPath)System\IO\StringParser.cs" Link="Common\System\IO\StringParser.cs" />-->
   </ItemGroup>
   <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'windows'">
     <!--<Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.EnumProcessModulesEx.cs" Link="Common\Interop\Windows\Kernel32\Interop.EnumProcessModulesEx.cs" />-->
@@ -74,6 +71,7 @@
     <!--<Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.GetExitCodeProcess.cs" Link="Common\Interop\Windows\Kernel32\Interop.GetExitCodeProcess.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.GetProcessTimes.cs" Link="Common\Interop\Windows\Kernel32\Interop.GetProcessTimes.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.GetThreadTimes.cs" Link="Common\Interop\Windows\Kernel32\Interop.GetThreadTimes.cs" />-->
+    <!--<Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.GetStdHandle.cs" Link="Common\Interop\Windows\Kernel32\Interop.GetStdHandle.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.CreateProcess.cs" Link="Common\Interop\Windows\Kernel32\Interop.CreateProcess.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.TerminateProcess.cs" Link="Common\Interop\Windows\Kernel32\Interop.TerminateProcess.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.GetCurrentProcess.cs" Link="Common\Interop\Windows\kernel32\Interop.GetCurrentProcess.cs" />-->
@@ -82,7 +80,6 @@
     <!--<Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.GetModuleInformation.cs" Link="Common\Interop\Windows\Kernel32\Interop.GetModuleInformation.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.GetModuleBaseName.cs" Link="Common\Interop\Windows\Kernel32\Interop.GetModuleBaseName.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.GetModuleFileNameEx.cs" Link="Common\Interop\Windows\Kernel32\Interop.GetModuleFileNameEx.cs" />-->
-    <!--<Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.HandleInformation.cs" Link="Common\Interop\Windows\Kernel32\Interop.HandleInformation.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.SetProcessWorkingSetSizeEx.cs" Link="Common\Interop\Windows\Kernel32\Interop.SetProcessWorkingSetSizeEx.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.GetProcessWorkingSetSizeEx.cs" Link="Common\Interop\Windows\Kernel32\Interop.GetProcessWorkingSetSizeEx.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.SetProcessAffinityMask.cs" Link="Common\Interop\Windows\Kernel32\Interop.SetProcessAffinityMask.cs" />-->
@@ -116,9 +113,11 @@
     <!--<Compile Include="$(CommonPath)Interop\Windows\Advapi32\Interop.LUID_AND_ATTRIBUTES.cs" Link="Common\Interop\Windows\Advapi32\Interop.LUID_AND_ATTRIBUTES.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Windows\Advapi32\Interop.TOKEN_PRIVILEGE.cs" Link="Common\Interop\Windows\Advapi32\Interop.TOKEN_PRIVILEGE.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.Constants.cs" Link="Common\Interop\Windows\Kernel32\Interop.Constants.cs" />-->
+    <!--<Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.CreatePipe_SafeFileHandle.cs" Link="Common\Interop\Windows\kernel32\Interop.CreatePipe.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.ThreadOptions.cs" Link="Common\Interop\Windows\Kernel32\Interop.ThreadOptions.cs" />-->
+    <!--<Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.HandleTypes.cs" Link="Common\Interop\Windows\Kernel32\Interop.HandleTypes.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Windows\Advapi32\Interop.ProcessOptions.cs" Link="Common\Interop\Windows\Advapi32\Interop.ProcessOptions.cs" />-->
-    <!--<Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.HandleOptions.cs" Link="Common\Interop\Windows\Kernel32\Interop.HandleOptions.cs" />-->
+    <!--<Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.HandleOptions.cs" Link="Common\Interop\Windows\kernel32\Interop.ProcessOptions.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.MultiByteToWideChar.cs" Link="Common\Interop\Windows\Kernel32\Interop.MultiByteToWideChar.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Windows\Interop.UNICODE_STRING.cs" Link="Common\Interop\Interop.UNICODE_STRING.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.WideCharToMultiByte.cs" Link="Common\Interop\Windows\Kernel32\Interop.WideCharToMultiByte.cs" />-->
@@ -138,7 +137,6 @@
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\System\Diagnostics\ProcessStartInfo.Windows.cs" />-->
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\System\Diagnostics\ProcessThread.Windows.cs" />-->
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\System\Diagnostics\ProcessThreadTimes.cs" />-->
-    <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\System\Diagnostics\ProcessUtils.Windows.cs" />-->
   </ItemGroup>
   <ItemGroup Condition="'$(TargetPlatformIdentifier)' != '' and '$(TargetPlatformIdentifier)' != 'windows'">
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\Microsoft\Win32\SafeHandles\SafeProcessHandle.Unix.cs" />-->
@@ -148,7 +146,7 @@
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\System\Diagnostics\ProcessStartInfo.Unix.cs" />-->
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\System\Diagnostics\ProcessWaitHandle.Unix.cs" />-->
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\System\Diagnostics\ProcessWaitState.Unix.cs" />-->
-    <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\System\Diagnostics\ProcessUtils.Unix.cs" />-->
+    <!--<Compile Include="$(CommonPath)System\IO\StringParser.cs" Link="Common\System\IO\StringParser.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Unix\Interop.Libraries.cs" Link="Common\Interop\Unix\Interop.Libraries.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Unix\Interop.Errors.cs" Link="Common\Interop\Unix\Interop.Errors.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.Close.cs" Link="Common\Interop\Unix\Interop.Close.cs" />-->
@@ -167,16 +165,13 @@
     <!--<Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.SetDelayedSigChildConsoleConfigurationHandler.cs" Link="Common\Interop\Unix\Interop.SetDelayedSigChildConsoleConfigurationHandler.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.ResourceLimits.cs" Link="Common\Interop\Unix\Interop.ResourceLimits.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.PathConf.cs" Link="Common\Interop\Unix\Interop.PathConf.cs" />-->
-    <!--<Compile Include="$(CommonPath)System\Runtime\InteropServices\SpanOfCharAsUtf8StringMarshaller.cs" Link="Common\System\Runtime\InteropServices\SpanOfCharAsUtf8StringMarshaller.cs" />-->
+    <!--<Compile Include="$(CommonPath)System\Text\ValueUtf8Converter.cs" Link="Common\System\Text\ValueUtf8Converter.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.WaitId.cs" Link="Common\Interop\Unix\Interop.WaitId.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.WaitPid.cs" Link="Common\Interop\Unix\Interop.WaitPid.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.Access.cs" Link="Common\Interop\Unix\System.Native\Interop.Access.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.Stat.cs" Link="Common\Interop\Unix\Interop.Stat.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.GetEUid.cs" Link="Common\Interop\Unix\Interop.GetEUid.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.IsMemberOfGroup.cs" Link="Common\Interop\Unix\Interop.IsMemberOfGroup.cs" />-->
-    <!--<Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.IsAtomicNonInheritablePipeCreationSupported.cs" Link="Common\Interop\Unix\Interop.IsAtomicNonInheritablePipeCreationSupported.cs" />-->
-    <!--<Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.IsATty.cs" Link="Common\Interop\Unix\Interop.IsATty.cs" />-->
-    <!--<Compile Include="$(CommonPath)System\NullableBool.cs" Link="Common\System\NullableBool.cs" />-->
   </ItemGroup>
   <ItemGroup Condition="'$(TargetPlatformIdentifier)' != '' and '$(TargetPlatformIdentifier)' != 'windows' and '$(IsiOSLike)' != 'true'">
     <!--<Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.ConfigureTerminalForChildProcess.cs" Link="Common\Interop\Unix\Interop.ConfigureTerminalForChildProcess.cs" />-->
@@ -194,6 +189,7 @@
     <!--<Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.RealPath.cs" Link="Common\Interop\Unix\Interop.RealPath.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Linux\procfs\Interop.ProcMountInfo.cs" Link="Common\Interop\Linux\procfs\Interop.ProcMountInfo.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Linux\procfs\Interop.ProcMountInfo.TryParseMountInfoLine.cs" Link="Common\Interop\Linux\procfs\Interop.ProcMountInfo.TryParseMountInfoLine.cs" />-->
+    <!--<Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.UnixFileSystemTypes.cs" Link="Common\Interop\Unix\System.Native\Interop.UnixFileSystemTypes.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Linux\procfs\Interop.ProcFsStat.cs" Link="Common\Interop\Linux\Interop.ProcFsStat.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Linux\procfs\Interop.ProcFsStat.ParseMapModules.cs" Link="Common\Interop\Linux\Interop.ProcFsStat.ParseMapModules.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\Linux\procfs\Interop.ProcFsStat.TryReadStatusFile.cs" Link="Common\Interop\Linux\Interop.ProcFsStat.TryReadStatusFile.cs" />-->
@@ -230,14 +226,6 @@
     <!--<Compile Include="$(CommonPath)Interop\FreeBSD\Interop.Process.cs" Link="Common\Interop\FreeBSD\Interop.Process.cs" />-->
     <!--<Compile Include="$(CommonPath)Interop\FreeBSD\Interop.Process.GetProcInfo.cs" Link="Common\Interop\FreeBSD\Interop.Process.GetProcInfo.cs" />-->
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'illumos' or '$(TargetPlatformIdentifier)' == 'solaris'">
-    <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\System\Diagnostics\Process.BSD.cs" />-->
-    <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\System\Diagnostics\Process.SunOS.cs" />-->
-    <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\System\Diagnostics\ProcessManager.SunOS.cs" />-->
-    <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\System\Diagnostics\ProcessThread.SunOS.cs" />-->
-    <!--<Compile Include="$(CommonPath)Interop\SunOS\procfs\Interop.ProcFs.GetProcessInfoById.cs" Link="Common\Interop\SunOS\procfs\Interop.ProcFs.GetProcessInfoById.cs" />-->
-    <!--<Compile Include="$(CommonPath)Interop\SunOS\procfs\Interop.ProcFs.GetThreadInfoById.cs" Link="Common\Interop\SunOS\procfs\Interop.ProcFs.GetThreadInfoById.cs" />-->
-  </ItemGroup>
   <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'ios' or '$(TargetPlatformIdentifier)' == 'tvos'">
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\System\Diagnostics\Process.iOS.cs" />-->
     <!--<Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Diagnostics.Process\src\System\Diagnostics\ProcessManager.iOS.cs" />-->
@@ -251,7 +239,6 @@
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Collections.NonGeneric\NetJs.System.Collections.NonGeneric.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Collections.Specialized\NetJs.System.Collections.Specialized.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.ComponentModel.Primitives\NetJs.System.ComponentModel.Primitives.csproj" />
-    <ProjectReference Include="$(NewLibrariesProjectRoot)System.Console\NetJs.System.Console.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Diagnostics.FileVersionInfo\NetJs.System.Diagnostics.FileVersionInfo.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.IO.FileSystem.DriveInfo\NetJs.System.IO.FileSystem.DriveInfo.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Memory\NetJs.System.Memory.csproj" />

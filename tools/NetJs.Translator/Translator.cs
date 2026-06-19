@@ -376,7 +376,7 @@ namespace {project.GetNamespace()}
             $"Preparing to transpile".Profile(() =>
             {
                 var importedNames = symbolFiles.Select(s => deSerializer.Deserialize<SymbolDescriptor>(File.ReadAllText(s))).ToList();
-                global = new GlobalCompilationVisitor(csCompilation, project, importedNames);
+                global = new GlobalCompilationVisitor(csCompilation, project, isSystemPrivateCoreLib, importedNames);
                 metadataBuilder = new ReflectionMetadataBuilder(global, isSystemPrivateCoreLib, contentFiles.Where(e => e.EndsWith(".resx")).ToArray(), embeddedFiles.ToArray());
                 metadataBuilder.InitializeForAssembly(csCompilation.Assembly);
                 global.Reflection = metadataBuilder;
@@ -410,7 +410,7 @@ namespace {project.GetNamespace()}
 
             void DeepCopyFolder(string source, string? relative = null)
             {
-                foreach (var file in Directory.EnumerateFiles(source))
+                foreach (var file in Directory.EnumerateFiles(source, "*.*", SearchOption.AllDirectories))
                 {
                     var relativePath = Utility.GetRelativePath(relative ?? source, file);
                     //var thisPath = Path.Combine(outputPath, "js", relative);
@@ -423,10 +423,10 @@ namespace {project.GetNamespace()}
                     //File.Copy(file, thisPath, true);
                     //outputtedFiles.Add(relative);
                 }
-                foreach (var file in Directory.EnumerateDirectories(source))
-                {
-                    DeepCopyFolder(file, source);
-                }
+                //foreach (var file in Directory.EnumerateDirectories(source))
+                //{
+                //    DeepCopyFolder(file, source);
+                //}
             }
 
             //output the dll and pdb
@@ -760,13 +760,6 @@ namespace {project.GetNamespace()}
                 {
                     codes = string.Join("\r\n", global.Visitors.Select(v => v.Value.Build(2).Trim()).Where(e => !string.IsNullOrEmpty(e)));
                 }
-                if (isSystemPrivateCoreLib)
-                {
-                    bootCodes += @$"
-
-    {global.GlobalName}.{global.GetAssemblyGlobalSlug(global.Compilation.Assembly)}.System.AppDomain.{Constants.AppDomainInitialize}()
-";
-                }
                 //                if (global.ModuleInitializers.Count > 0)
                 //                {
                 //                    codes +=
@@ -785,11 +778,14 @@ namespace {project.GetNamespace()}
     let _;
     {(isSystemPrivateCoreLib ? "let $asm; function $setasm(v){ $asm = v; }" : "")}
     {bootCodes}
-    $.$meta(""{project.GetAssemblyName()}"", {JsonSerializer.Serialize(reflectionMetadata, ReflectionMetadataBuilder.SerializationOption)});
-
-	{global.GlobalName}.{Constants.AssemblyRegistryName}(""{project.GetAssemblyName()}"", function({Constants.AssemblyRegistryName})
+    {(isSystemPrivateCoreLib ? $"{global.GlobalName}.{Constants.AssemblyRegistryName} = {global.GlobalName}.{global.GetAssemblyGlobalSlug(global.Compilation.Assembly)}.System.AppDomain.{Constants.AssemblyRegistryName};" : "")}
+	{global.GlobalName}.{Constants.AssemblyRegistryName}(
+    ""{project.GetAssemblyName()}"", 
+    {JsonSerializer.Serialize(reflectionMetadata, ReflectionMetadataBuilder.SerializationOption)},
+    function({Constants.AssemblyRegistryName})
 	{{
         {(isSystemPrivateCoreLib ? "$setasm($asm);" : "")}
+        {(isSystemPrivateCoreLib ? $"{global.GlobalName}.{global.GetAssemblyGlobalSlug(global.Compilation.Assembly)}.System.AppDomain.{Constants.AppDomainInitialize}($asm)" : "")}
         {codes}
 	}});
 }})(window.{Constants.ProjectName}.{Constants.BootName}(), window)" : codes), null);

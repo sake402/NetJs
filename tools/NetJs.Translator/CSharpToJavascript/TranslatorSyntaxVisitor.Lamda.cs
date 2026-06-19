@@ -47,7 +47,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
             }
             var smodifiers = GetMethodModifier(node, modifiers, null);
-            var parameters = string.Join(", ", lamdaParameters?.Select((p, i) => $"/*{p.Type?.ToString().Trim() ?? _global.TryGetSymbol(p.Identifier.Text, this)?.Name}*/ {(p.Identifier.Text == "_" ? $"_{i}" : p.Identifier.Text)}") ?? Enumerable.Empty<string>());
+            var parameters = string.Join(", ", lamdaParameters?.Select((p, i) => $"/*{p.Type?.ToString().Trim() ?? _global.TryGetSymbol(p.Identifier.ValueText, this)?.Name}*/ {(p.Identifier.ValueText == "_" ? $"_{i}" : p.Identifier.ResolveIdentifierName())}") ?? Enumerable.Empty<string>());
             CurrentTypeWriter.WriteLine(node, $"/*{smodifiers}*/ {(modifiers.IsAsync() ? "async " : "")} ({parameters}) =>");
             CurrentTypeWriter.WriteLine(node, "{", true);
             //var child = node.ChildNodes().Where(t => !t.IsKind(SyntaxKind.ParameterList)/* is not ParameterListSyntax*/ && !t.IsKind(SyntaxKind.Parameter)/* is not ParameterSyntax*/);
@@ -80,7 +80,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 CurrentTypeWriter.EnsureNewLine();
             }
             CurrentTypeWriter.Write(node, "}", true);
-            CloseClosure();
+            CloseClosure(node);
         }
 
         public override void VisitAnonymousMethodExpression(AnonymousMethodExpressionSyntax node)

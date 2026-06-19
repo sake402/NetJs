@@ -18,26 +18,26 @@ public class Global
     //public static extern TOut? IfNotNull<TIn, TOut>(TIn? nullable, Func<TIn, TOut?> whenNotNull) where TOut : struct;
     [IgnoreGeneric]
     [Name("$ifnn")]
-    public static extern TOut? IfNotNull<TIn, TOut>(TIn? nullable, Func<TIn, TOut?> whenNotNull, TOut? ifNull = default(TOut));// where TIn : class;
+    public static extern TOut? IfNotNull<TIn, TOut>(TIn? nullable, NativeFunction<TIn, TOut?> whenNotNull, TOut? ifNull = default(TOut));// where TIn : class;
     [IgnoreGeneric]
     [Name("$ifnn")]
-    public static extern void IfNotNull<TIn>(TIn? nullable, System.Action<TIn> whenNotNull);
+    public static extern void IfNotNull<TIn>(TIn? nullable, NativeAction<TIn> whenNotNull);
     [IgnoreGeneric]
     [Name("$ifnn")]
-    public static extern void IfNotNullVoid<TIn>(TIn? nullable, System.Action<TIn> whenNotNull);
+    public static extern void IfNotNullVoid<TIn>(TIn? nullable, NativeAction<TIn> whenNotNull);
     //[IgnoreGeneric]
     //[Name("$ifnn")]
     //public static extern void IfNotNull<TIn>(TIn? nullable, System.Action<TIn> whenNotNull);
     [IgnoreGeneric]
     [Name("$exp")]
-    public static extern TOut Expression<TOut>(Func<TOut> execute);
+    public static extern TOut Expression<TOut>(NativeFunction<TOut> execute);
 
     [Template("setTimeout({0}, 1)")]
-    public static extern int SetTimeout(System.Action handler, int delay);
+    public static extern int SetTimeout(NativeAction handler, int delay);
     [Template("clearTimeout({0})")]
     public static extern void ClearTimeout(int timeoutID);
-    [Template("setInterval({0}, 1)")]
-    public static extern int SetInterval(System.Action handler, int delay);
+    [Template("setInterval({handler}, {delay})")]
+    public static extern int SetInterval(NativeAction handler, int delay);
     [Template("null")]
     public static extern T TypeInference<T>(T t);
     [Template("{0}")]

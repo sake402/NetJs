@@ -75,7 +75,6 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
             _disabled.Add(node);
             return new DelegateDispose(() => _disabled.Remove(node));
         }
-        Stack<CSharpSyntaxNode> _processing = new Stack<CSharpSyntaxNode>();
         public override bool TryEmit(CSharpSyntaxNode node, TranslatorSyntaxVisitor visitor)
         {
             if (_disabled.Contains(node))
@@ -216,7 +215,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                         conversion.IsImplicit /*&& conversion.IsConstantExpression*/)
                     {
                         var literalOperation = sm.GetOperation(node) as ILiteralOperation;
-                        var convertOperation = sm.GetOperation(node)?.Parent as IConversionOperation;
+                        var convertOperation = literalOperation?.Parent as IConversionOperation;
                         if ((literalOperation != null &&
                             (SymbolEqualityComparer.Default.Equals(literalOperation.Type, visitor.Global.SystemUInt64) || SymbolEqualityComparer.Default.Equals(literalOperation.Type, visitor.Global.SystemInt64)))
                             ||

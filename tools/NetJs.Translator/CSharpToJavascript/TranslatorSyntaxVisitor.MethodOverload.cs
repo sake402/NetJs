@@ -25,7 +25,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
     public struct MethodOverloadResult
     {
-        public Dictionary<ITypeParameterSymbol, ISymbol>? GenericTypeSubstitutions { get; set; }
+        public Dictionary<ITypeParameterSymbol, ITypeSymbol>? GenericTypeSubstitutions { get; set; }
         public Dictionary<IParameterSymbol, MethodParameterResult>? ParameterValueSubstitutions { get; set; }
     }
 
@@ -49,7 +49,7 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             updatedMethod = method;
             Dictionary<IParameterSymbol, MethodParameterResult> _parameterSubstitutions = new Dictionary<IParameterSymbol, MethodParameterResult>(SymbolEqualityComparer.Default);
-            Dictionary<ITypeParameterSymbol, ISymbol>? _genericTypeSubstitutions = new Dictionary<ITypeParameterSymbol, ISymbol>(SymbolEqualityComparer.Default);
+            Dictionary<ITypeParameterSymbol, ITypeSymbol>? _genericTypeSubstitutions = new Dictionary<ITypeParameterSymbol, ITypeSymbol>(SymbolEqualityComparer.Default);
             int i = 0;
             int weight = 0;
             bool calledAsExtensionMethod = method.IsStatic && !targetThis.OriginalDefinition.Equals(method.ContainingSymbol.OriginalDefinition, SymbolEqualityComparer.Default);
@@ -90,7 +90,7 @@ namespace NetJs.Translator.CSharpToJavascript
                                     outType = CodeSymbol.From(parameter);
                                 }
                             }
-                            outName = (declaration.Designation as SingleVariableDesignationSyntax)?.Identifier.ValueText;
+                            outName = (declaration.Designation as SingleVariableDesignationSyntax)?.Identifier.ResolveIdentifierName();
                             w = 1;
                         }
                         else

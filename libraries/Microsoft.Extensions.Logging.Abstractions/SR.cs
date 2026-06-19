@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Microsoft.Extensions.Logging.Abstractions", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,14 +70,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnexpectedNumberOfNamedParameters", resourceCulture);
+                return "The format string '{0}' does not have the expected number of named parameters. Expected {1} parameter(s) but found {2} parameter(s).";
             }
         }
 
 
         internal static string FormatUnexpectedNumberOfNamedParameters(object arg1, object arg2, object arg3)
         {
-            return string.Format(UnexpectedNumberOfNamedParameters, arg1, arg2, arg3);
+            return string.Format("The format string '{0}' does not have the expected number of named parameters. Expected {1} parameter(s) but found {2} parameter(s).", arg1, arg2, arg3);
         }
     }
 }

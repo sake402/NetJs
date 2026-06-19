@@ -65,10 +65,24 @@ namespace System
     [Reflectable(false)]
     public static class SimpleDictionaryExtension
     {
+        [IgnoreGeneric]
+        public static void ForEach<T>(this SimpleDictionary<T> dic, NativeAction<string, T> action)
+        {
+            unchecked
+            {
+                var keys = dic.Keys;
+                for (int i = 0; i < keys.Length; i++)
+                {
+                    var value = dic[keys[i]];
+                    action(keys[i], value);
+                }
+            }
+        }
+
         [Template("s.split({by})")]
         static extern string[] NativeSplit(this string s, string by);
         [IgnoreGeneric]
-        public static void SetNested<T>(this SimpleDictionary<T> dic, string name, T value, bool throwIfExisting = true, [NativeDelegate] Func<T, bool>? onAccess = null)
+        public static void SetNested<T>(this SimpleDictionary<T> dic, string name, T value, bool throwIfExisting = true, NativeFunction<T, bool>? onAccess = null)
         {
             unchecked
             {

@@ -92,7 +92,7 @@
   </ItemGroup>
   <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'unix' or '$(TargetPlatformIdentifier)' == 'browser' or '$(TargetPlatformIdentifier)' == 'wasi'">
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.Net.Primitives\src\System\Net\SocketException.Unix.cs" />
-    <Compile Include="$(CommonPath)System\Net\SocketAddressPal.Unix.cs" Link="Common\System\Net\SocketAddressPal.Unix.cs" Condition="'$(TargetPlatformIdentifier)' != 'browser'" />
+    <Compile Include="$(CommonPath)System\Net\SocketAddressPal.Unix.cs" Link="Common\System\Net\SocketAddressPal.Unix.cs" />
     <Compile Include="$(CommonPath)System\Net\Sockets\SocketErrorPal.Unix.cs" Link="Common\System\Net\Sockets\SocketErrorPal.Unix.cs" />
     <Compile Include="$(CommonPath)Interop\Unix\Interop.Errors.cs" Link="Common\Interop\Unix\Interop.Errors.cs" />
     <Compile Include="$(CommonPath)Interop\Unix\Interop.Libraries.cs" Link="Common\Interop\Unix\Interop.Libraries.cs" />
@@ -111,9 +111,6 @@
   <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'browser' or '$(TargetPlatformIdentifier)' == 'wasi'">
     <Compile Include="$(CommonPath)System\Net\NetworkInformation\HostInformationPal.Browser.cs" Link="Common\System\Net\NetworkInformation\HostInformationPal.Browser.cs" />
     <Compile Include="$(CommonPath)System\Net\NetworkInformation\InterfaceInfoPal.Browser.cs" Link="Common\System\Net\NetworkInformation\InterfaceInfoPal.Browser.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'browser'">
-    <Compile Include="$(CommonPath)System\Net\SocketAddressPal.Browser.cs" Link="Common\System\Net\SocketAddressPal.Browser.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Win32.Primitives\NetJs.Microsoft.Win32.Primitives.csproj" />

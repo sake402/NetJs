@@ -61,6 +61,12 @@ namespace NetJs.Translator.CSharpToJavascript
         Stack<CodeWriterClosure> closures = new Stack<CodeWriterClosure>();
         public CodeWriterClosure CurrentClosure => closures.Peek();
         Stack<CodeLineWriter> temporaryWriter = new Stack<CodeLineWriter>();
+
+        public CodeWriterClosure? GetClosureOf(SyntaxNode node)
+        {
+            return closures.FirstOrDefault(c => c.Source == node);
+        }
+        
         LinkedListNode<CodeLineWriter> EnsureCanInsertAbove(LinkedListNode<CodeLineWriter> node)
         {
             if (node.Value.RedirectInsertBefore != null)
@@ -168,28 +174,32 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public CodeLineWriter Write(SyntaxNode source, string code, bool withTabs = false, bool forbidInsertion = false)
         {
+            CodeWriterClosure? pendingClosedEvent = null;
             if (withTabs)
             {
                 if (code.StartsWith("}"))
                 {
-                    CurrentClosure.RaiseOnClosing();
+                    //CurrentClosure.RaiseOnClosing();
+                    pendingClosedEvent = CurrentClosure;
                     closures.Pop();
                     ClosureDepth--;
                 }
                 WriteTabs();
                 if (code == "{")
                 {
-                    closures.Push(new CodeWriterClosure(closures.Count > 0 ? CurrentClosure.NameManglingSeed : 0, lines.Last) { ForbidsInsertion = forbidInsertion });
+                    closures.Push(new CodeWriterClosure(source, closures.Count > 0 ? CurrentClosure.NameManglingSeed : 0, lines.Last) { ForbidsInsertion = forbidInsertion });
                     ClosureDepth++;
                 }
             }
             if (temporaryWriter.TryPeek(out var tpw))
             {
                 tpw.Write(ProcessReplacement(code));
+                //pendingClosedEvent?.RaiseOnClosed();
                 return tpw;
             }
             else
                 currentWriter.Write(ProcessReplacement(code));
+            //pendingClosedEvent?.RaiseOnClosed();
             return currentWriter;
         }
 

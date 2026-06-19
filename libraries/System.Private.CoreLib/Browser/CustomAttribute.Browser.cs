@@ -79,6 +79,8 @@ namespace System.Reflection
             {
                 attributesModel = rpp.As<RuntimeParameterInfo_Partial>()._model.Attributes;
             }
+            if (NetJs.Script.IsUndefinedOrNull(attributesModel))
+                attributesModel = null;
             return attributesModel;
         }
 

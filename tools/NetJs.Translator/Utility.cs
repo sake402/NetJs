@@ -12,14 +12,14 @@ namespace NetJs.Translator
 {
     public static class Utility
     {
-        public static TValue? GetValueOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> dic, TKey key)
+        internal static TValue? GetValueOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> dic, TKey key)
         {
             TValue? value = default!;
             dic.TryGetValue(key, out value);
             return value;
         }
 
-        public static bool TryAdd<TKey, TValue>(this IDictionary<TKey, TValue> dic, TKey key, TValue value)
+        internal static bool TryAdd<TKey, TValue>(this IDictionary<TKey, TValue> dic, TKey key, TValue value)
         {
             if (!dic.ContainsKey(key))
             {
@@ -28,7 +28,7 @@ namespace NetJs.Translator
             return false;
         }
 
-        public static bool TryPop<TValue>(this Stack<TValue> stack, out TValue value)
+        internal static bool TryPop<TValue>(this Stack<TValue> stack, out TValue value)
         {
             if (stack.Count > 0)
             {
@@ -39,7 +39,7 @@ namespace NetJs.Translator
             return false;
         }
 
-        public static bool TryPeek<TValue>(this Stack<TValue> stack, out TValue value)
+        internal static bool TryPeek<TValue>(this Stack<TValue> stack, out TValue value)
         {
             if (stack.Count > 0)
             {
@@ -50,7 +50,7 @@ namespace NetJs.Translator
             return false;
         }
 
-        public static IEnumerable<TSource> DistinctBy<TSource, TKey>(
+        internal static IEnumerable<TSource> DistinctBy<TSource, TKey>(
             this IEnumerable<TSource> source,
             Func<TSource, TKey> keySelector)
         {
@@ -195,5 +195,19 @@ namespace NetJs.Translator
             }
             return sb.ToString();
         }
+
+        public static string EscapeString(this string str)
+        {
+            return str.Replace(@"\", @"\\")
+                .Replace("\"", "\\\"")
+                .Replace("\r", "\\r")
+                .Replace("\n", "\\n")
+                .Replace("\t", "\\t")
+                .Replace("\b", "\\b")
+                .Replace("\f", "\\f")
+                .Replace("\v", "\\v")/*.Replace("\0", "\\0")*/;
+        }
+
+
     }
 }

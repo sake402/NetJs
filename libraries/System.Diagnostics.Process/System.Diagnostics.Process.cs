@@ -160,7 +160,7 @@ namespace System.Diagnostics
         [System.Runtime.Versioning.UnsupportedOSPlatformAttribute("ios")]
         [System.Runtime.Versioning.UnsupportedOSPlatformAttribute("tvos")]
         [System.Runtime.Versioning.SupportedOSPlatformAttribute("maccatalyst")] // this needs to come after the ios attribute due to limitations in the platform analyzer
-        public static System.Diagnostics.Process Start(string fileName, string? arguments) { throw new System.PlatformNotSupportedException(); }
+        public static System.Diagnostics.Process Start(string fileName, string arguments) { throw new System.PlatformNotSupportedException(); }
         [System.Runtime.Versioning.UnsupportedOSPlatformAttribute("ios")]
         [System.Runtime.Versioning.UnsupportedOSPlatformAttribute("tvos")]
         [System.Runtime.Versioning.SupportedOSPlatformAttribute("maccatalyst")] // this needs to come after the ios attribute due to limitations in the platform analyzer
@@ -201,13 +201,6 @@ namespace System.Diagnostics
         public void CopyTo(System.Diagnostics.ProcessModule[] array, int index) { }
         public int IndexOf(System.Diagnostics.ProcessModule module) { throw new System.PlatformNotSupportedException(); }
     }
-    public sealed partial class ProcessExitStatus
-    {
-        public ProcessExitStatus(int exitCode, bool canceled, System.Runtime.InteropServices.PosixSignal? signal = null) { throw new System.PlatformNotSupportedException(); }
-        public bool Canceled { get { throw new System.PlatformNotSupportedException(); } }
-        public int ExitCode { get { throw new System.PlatformNotSupportedException(); } }
-        public System.Runtime.InteropServices.PosixSignal? Signal { get { throw new System.PlatformNotSupportedException(); } }
-    }
     public enum ProcessPriorityClass
     {
         Normal = 32,
@@ -221,7 +214,7 @@ namespace System.Diagnostics
     {
         public ProcessStartInfo() { }
         public ProcessStartInfo(string fileName) { }
-        public ProcessStartInfo(string fileName, string? arguments) { }
+        public ProcessStartInfo(string fileName, string arguments) { }
         public ProcessStartInfo(string fileName, System.Collections.Generic.IEnumerable<string> arguments) { }
         public System.Collections.ObjectModel.Collection<string> ArgumentList { get { throw new System.PlatformNotSupportedException(); } }
         [System.Diagnostics.CodeAnalysis.AllowNullAttribute]
@@ -253,9 +246,6 @@ namespace System.Diagnostics
         public bool RedirectStandardInput { get { throw new System.PlatformNotSupportedException(); } set { throw new System.PlatformNotSupportedException(); } }
         public bool RedirectStandardOutput { get { throw new System.PlatformNotSupportedException(); } set { throw new System.PlatformNotSupportedException(); } }
         public System.Text.Encoding? StandardErrorEncoding { get { throw new System.PlatformNotSupportedException(); } set { throw new System.PlatformNotSupportedException(); } }
-        public Microsoft.Win32.SafeHandles.SafeFileHandle? StandardErrorHandle { get { throw new System.PlatformNotSupportedException(); } set { throw new System.PlatformNotSupportedException(); } }
-        public Microsoft.Win32.SafeHandles.SafeFileHandle? StandardInputHandle { get { throw new System.PlatformNotSupportedException(); } set { throw new System.PlatformNotSupportedException(); } }
-        public Microsoft.Win32.SafeHandles.SafeFileHandle? StandardOutputHandle { get { throw new System.PlatformNotSupportedException(); } set { throw new System.PlatformNotSupportedException(); } }
         public System.Text.Encoding? StandardInputEncoding { get { throw new System.PlatformNotSupportedException(); } set { throw new System.PlatformNotSupportedException(); } }
         public System.Text.Encoding? StandardOutputEncoding { get { throw new System.PlatformNotSupportedException(); } set { throw new System.PlatformNotSupportedException(); } }
         [System.Diagnostics.CodeAnalysis.AllowNullAttribute]

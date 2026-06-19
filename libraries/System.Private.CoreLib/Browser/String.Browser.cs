@@ -14,10 +14,14 @@ namespace System
         public extern string NativeSubstring(int startIndex);
         [NetJs.Template("{this}.substr({startIndex}, {length})")]
         public extern string NativeSubstring(int startIndex, int length);
+        [NetJs.Template("{this}.slice({startIndex}, {length})")]
+        public extern string NativeSlice(int startIndex, int length);
         [NetJs.Template("{this}.indexOf({value})")]
         public extern int NativeIndexOf(string value);
         [NetJs.Template("{this}.indexOf({value}, {start})")]
         public extern int NativeIndexOf(string value, int start);
+        [NetJs.Template("{this}.lastIndexOf({value})")]
+        public extern int NativeLastIndexOf(string value);
         [NetJs.Template("{this}.replace({pattern}, {value})")]
         public extern string NativeReplace(NetJs.Union<string, RegExp> pattern, string value);
         [NetJs.Template("{this}.replaceAll({pattern}, {value})")]
@@ -37,6 +41,8 @@ namespace System
         public static extern string NativeFromCharCode(int[] codes);
         [NetJs.Template("String.fromCharCode.apply(null, {codes})")]
         public static extern string NativeFromCharCode(char[] codes);
+        [NetJs.Template("String.fromCharCode.apply(null, {codes}.slice({startIndex}, {startIndex} + {length}))")]
+        public static extern string NativeFromCharCode(char[] codes, int startIndex, int length);
         [NetJs.Template("{this}.charCodeAt({i})")]
         public extern char NativeCharCodeAt(int i);
         [NetJs.Template("{this} === {b}")]

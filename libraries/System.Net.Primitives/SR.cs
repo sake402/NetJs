@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Net.Primitives", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,7 +70,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_MethodNotImplementedException", resourceCulture);
+                return "This method is not implemented by this class.";
             }
         }
 
@@ -83,7 +83,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_PropertyNotImplementedException", resourceCulture);
+                return "This property is not implemented by this class.";
             }
         }
 
@@ -96,14 +96,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_InvalidAddressFamily", resourceCulture);
+                return "The AddressFamily {0} is not valid for the {1} end point.";
             }
         }
 
 
         internal static string Formatnet_InvalidAddressFamily(object arg1, object arg2)
         {
-            return string.Format(net_InvalidAddressFamily, arg1, arg2);
+            return string.Format("The AddressFamily {0} is not valid for the {1} end point.", arg1, arg2);
         }
 
 
@@ -114,14 +114,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_InvalidSocketAddressSize", resourceCulture);
+                return "The supplied {0} is an invalid size for the {1} end point.";
             }
         }
 
 
         internal static string Formatnet_InvalidSocketAddressSize(object arg1, object arg2)
         {
-            return string.Format(net_InvalidSocketAddressSize, arg1, arg2);
+            return string.Format("The supplied {0} is an invalid size for the {1} end point.", arg1, arg2);
         }
 
 
@@ -132,7 +132,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_sockets_invalid_optionValue_all", resourceCulture);
+                return "The specified value is not valid.";
             }
         }
 
@@ -145,14 +145,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_emptystringcall", resourceCulture);
+                return "The parameter '{0}' cannot be an empty string.";
             }
         }
 
 
         internal static string Formatnet_emptystringcall(object arg1)
         {
-            return string.Format(net_emptystringcall, arg1);
+            return string.Format("The parameter '{0}' cannot be an empty string.", arg1);
         }
 
 
@@ -163,7 +163,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("dns_bad_ip_address", resourceCulture);
+                return "An invalid IP address was specified.";
             }
         }
 
@@ -176,7 +176,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_bad_ip_network", resourceCulture);
+                return "An invalid IP network was specified.";
             }
         }
 
@@ -189,7 +189,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_container_add_cookie", resourceCulture);
+                return "An error occurred when adding a cookie to the container.";
             }
         }
 
@@ -202,14 +202,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_cookie_size", resourceCulture);
+                return "The value size of the cookie is '{0}'. This exceeds the configured maximum size, which is '{1}'.";
             }
         }
 
 
         internal static string Formatnet_cookie_size(object arg1, object arg2)
         {
-            return string.Format(net_cookie_size, arg1, arg2);
+            return string.Format("The value size of the cookie is '{0}'. This exceeds the configured maximum size, which is '{1}'.", arg1, arg2);
         }
 
 
@@ -220,14 +220,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_cookie_parse_header", resourceCulture);
+                return "An error occurred when parsing the Cookie header for Uri '{0}'.";
             }
         }
 
 
         internal static string Formatnet_cookie_parse_header(object arg1)
         {
-            return string.Format(net_cookie_parse_header, arg1);
+            return string.Format("An error occurred when parsing the Cookie header for Uri '{0}'.", arg1);
         }
 
 
@@ -238,14 +238,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_cookie_attribute", resourceCulture);
+                return "The '{0}'='{1}' part of the cookie is invalid.";
             }
         }
 
 
         internal static string Formatnet_cookie_attribute(object arg1, object arg2)
         {
-            return string.Format(net_cookie_attribute, arg1, arg2);
+            return string.Format("The '{0}'='{1}' part of the cookie is invalid.", arg1, arg2);
         }
 
 
@@ -256,7 +256,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_cookie_format", resourceCulture);
+                return "Cookie format error.";
             }
         }
 
@@ -269,14 +269,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_cookie_capacity_range", resourceCulture);
+                return "'{0}' has to be greater than '{1}' and less than '{2}'.";
             }
         }
 
 
         internal static string Formatnet_cookie_capacity_range(object arg1, object arg2, object arg3)
         {
-            return string.Format(net_cookie_capacity_range, arg1, arg2, arg3);
+            return string.Format("'{0}' has to be greater than '{1}' and less than '{2}'.", arg1, arg2, arg3);
         }
 
 
@@ -287,7 +287,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_collection_readonly", resourceCulture);
+                return "The collection is read-only.";
             }
         }
 
@@ -300,14 +300,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("net_nodefaultcreds", resourceCulture);
+                return "Default credentials cannot be supplied for the {0} authentication scheme.";
             }
         }
 
 
         internal static string Formatnet_nodefaultcreds(object arg1)
         {
-            return string.Format(net_nodefaultcreds, arg1);
+            return string.Format("Default credentials cannot be supplied for the {0} authentication scheme.", arg1);
         }
 
 
@@ -318,7 +318,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_EnumFailedVersion", resourceCulture);
+                return "Collection was modified after the enumerator was instantiated.";
             }
         }
 
@@ -331,7 +331,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InvalidOperation_EnumOpCantHappen", resourceCulture);
+                return "Enumeration has either not started or has already finished.";
             }
         }
 
@@ -344,7 +344,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("bad_endpoint_string", resourceCulture);
+                return "An invalid IPEndPoint was specified.";
             }
         }
 
@@ -357,38 +357,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PlatformNotSupported_NetPrimitives", resourceCulture);
-            }
-        }
-
-
-
-        /// <summary>
-        /// The requested property is not supported for the '{0}' AddressFamily.
-        /// </summary>
-        internal static string net_SocketException_OperationNotSupported
-        {
-            get
-            {
-                return ResourceManager.GetString("net_SocketException_OperationNotSupported", resourceCulture);
-            }
-        }
-
-
-        internal static string Formatnet_SocketException_OperationNotSupported(object arg1)
-        {
-            return string.Format(net_SocketException_OperationNotSupported, arg1);
-        }
-
-
-        /// <summary>
-        /// This operation is not supported on a read-only IPAddress instance.
-        /// </summary>
-        internal static string net_SocketException_OperationNotSupported_ReadOnlyIPAddress
-        {
-            get
-            {
-                return ResourceManager.GetString("net_SocketException_OperationNotSupported_ReadOnlyIPAddress", resourceCulture);
+                return "System.Net.Primitives is not supported on this platform.";
             }
         }
 

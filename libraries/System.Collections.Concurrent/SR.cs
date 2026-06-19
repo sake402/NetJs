@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Collections.Concurrent", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,7 +70,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BlockingCollection_Add_ConcurrentCompleteAdd", resourceCulture);
+                return "CompleteAdding may not be used concurrently with additions to the collection.";
             }
         }
 
@@ -83,7 +83,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BlockingCollection_Add_Failed", resourceCulture);
+                return "The underlying collection didn't accept the item.";
             }
         }
 
@@ -96,7 +96,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BlockingCollection_CantAddAnyWhenCompleted", resourceCulture);
+                return "At least one of the specified collections is marked as complete with regards to additions.";
             }
         }
 
@@ -109,7 +109,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BlockingCollection_CantTakeAnyWhenAllDone", resourceCulture);
+                return "All collections are marked as complete with regards to additions.";
             }
         }
 
@@ -122,7 +122,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BlockingCollection_CantTakeWhenDone", resourceCulture);
+                return "The collection argument is empty and has been marked as complete with regards to additions.";
             }
         }
 
@@ -135,7 +135,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BlockingCollection_Completed", resourceCulture);
+                return "The collection has been marked as complete with regards to additions.";
             }
         }
 
@@ -148,7 +148,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BlockingCollection_CopyTo_IncorrectType", resourceCulture);
+                return "The array argument is of the incorrect type.";
             }
         }
 
@@ -161,7 +161,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BlockingCollection_CopyTo_MultiDim", resourceCulture);
+                return "The array argument is multidimensional.";
             }
         }
 
@@ -174,7 +174,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BlockingCollection_CopyTo_NonNegative", resourceCulture);
+                return "The index argument must be greater than or equal zero.";
             }
         }
 
@@ -187,7 +187,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Collection_CopyTo_TooManyElems", resourceCulture);
+                return "The number of elements in the collection is greater than the available space from index to the end of the destination array.";
             }
         }
 
@@ -200,7 +200,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BlockingCollection_ctor_CountMoreThanCapacity", resourceCulture);
+                return "The collection argument contains more items than are allowed by the boundedCapacity.";
             }
         }
 
@@ -213,7 +213,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BlockingCollection_Take_CollectionModified", resourceCulture);
+                return "The underlying collection was modified from outside of the BlockingCollection<T>.";
             }
         }
 
@@ -226,14 +226,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BlockingCollection_TimeoutInvalid", resourceCulture);
+                return "The specified timeout must represent a value between -1 and {0}, inclusive.";
             }
         }
 
 
         internal static string FormatBlockingCollection_TimeoutInvalid(object arg1)
         {
-            return string.Format(BlockingCollection_TimeoutInvalid, arg1);
+            return string.Format("The specified timeout must represent a value between -1 and {0}, inclusive.", arg1);
         }
 
 
@@ -244,7 +244,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BlockingCollection_ValidateCollectionsArray_DispElems", resourceCulture);
+                return "The collections argument contains at least one disposed element.";
             }
         }
 
@@ -257,7 +257,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BlockingCollection_ValidateCollectionsArray_LargeSize", resourceCulture);
+                return "The collections length is greater than the supported range.";
             }
         }
 
@@ -270,7 +270,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BlockingCollection_ValidateCollectionsArray_NullElems", resourceCulture);
+                return "The collections argument contains at least one null element.";
             }
         }
 
@@ -283,7 +283,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("BlockingCollection_ValidateCollectionsArray_ZeroSize", resourceCulture);
+                return "The collections argument is a zero-length array.";
             }
         }
 
@@ -296,7 +296,111 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ConcurrentCollection_SyncRoot_NotSupported", resourceCulture);
+                return "The SyncRoot property may not be used for the synchronization of concurrent collections.";
+            }
+        }
+
+
+
+        /// <summary>
+        /// The array is multidimensional, or the type parameter for the set cannot be cast automatically to the type of the destination array.
+        /// </summary>
+        internal static string ConcurrentDictionary_ArrayIncorrectType
+        {
+            get
+            {
+                return "The array is multidimensional, or the type parameter for the set cannot be cast automatically to the type of the destination array.";
+            }
+        }
+
+
+
+        /// <summary>
+        /// The source argument contains duplicate keys.
+        /// </summary>
+        internal static string ConcurrentDictionary_SourceContainsDuplicateKeys
+        {
+            get
+            {
+                return "The source argument contains duplicate keys.";
+            }
+        }
+
+
+
+        /// <summary>
+        /// The concurrencyLevel argument must be positive, or -1 to indicate a default level.
+        /// </summary>
+        internal static string ConcurrentDictionary_ConcurrencyLevelMustBePositiveOrNegativeOne
+        {
+            get
+            {
+                return "The concurrencyLevel argument must be positive, or -1 to indicate a default level.";
+            }
+        }
+
+
+
+        /// <summary>
+        /// The index is equal to or greater than the length of the array, or the number of elements in the dictionary is greater than the available space from index to the end of the destination array.
+        /// </summary>
+        internal static string ConcurrentDictionary_ArrayNotLargeEnough
+        {
+            get
+            {
+                return "The index is equal to or greater than the length of the array, or the number of elements in the dictionary is greater than the available space from index to the end of the destination array.";
+            }
+        }
+
+
+
+        /// <summary>
+        /// The key already existed in the dictionary.
+        /// </summary>
+        internal static string ConcurrentDictionary_KeyAlreadyExisted
+        {
+            get
+            {
+                return "The key already existed in the dictionary.";
+            }
+        }
+
+
+
+        /// <summary>
+        /// TKey is a reference type and item.Key is null.
+        /// </summary>
+        internal static string ConcurrentDictionary_ItemKeyIsNull
+        {
+            get
+            {
+                return "TKey is a reference type and item.Key is null.";
+            }
+        }
+
+
+
+        /// <summary>
+        /// The key was of an incorrect type for this dictionary.
+        /// </summary>
+        internal static string ConcurrentDictionary_TypeOfKeyIncorrect
+        {
+            get
+            {
+                return "The key was of an incorrect type for this dictionary.";
+            }
+        }
+
+
+
+        /// <summary>
+        /// The value was of an incorrect type for this dictionary.
+        /// </summary>
+        internal static string ConcurrentDictionary_TypeOfValueIncorrect
+        {
+            get
+            {
+                return "The value was of an incorrect type for this dictionary.";
             }
         }
 
@@ -309,7 +413,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ConcurrentStack_PushPopRange_InvalidCount", resourceCulture);
+                return "The sum of the startIndex and count arguments must be less than or equal to the collection's Count.";
             }
         }
 
@@ -322,7 +426,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Partitioner_DynamicPartitionsNotSupported", resourceCulture);
+                return "Dynamic partitions are not supported by this partitioner.";
             }
         }
 
@@ -335,7 +439,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PartitionerStatic_CurrentCalledBeforeMoveNext", resourceCulture);
+                return "MoveNext must be called at least once before calling Current.";
             }
         }
 
@@ -348,7 +452,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ConcurrentBag_Enumerator_EnumerationNotStartedOrAlreadyFinished", resourceCulture);
+                return "Enumeration has either not started or has already finished.";
             }
         }
 
@@ -361,14 +465,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_KeyNotFoundWithKey", resourceCulture);
+                return "The given key '{0}' was not present in the dictionary.";
             }
         }
 
 
         internal static string FormatArg_KeyNotFoundWithKey(object arg1)
         {
-            return string.Format(Arg_KeyNotFoundWithKey, arg1);
+            return string.Format("The given key '{0}' was not present in the dictionary.", arg1);
         }
 
 
@@ -379,7 +483,20 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_HTCapacityOverflow", resourceCulture);
+                return "Hashtable's capacity overflowed and went negative. Check load factor, capacity and the current size of the table.";
+            }
+        }
+
+
+
+        /// <summary>
+        /// The collection's comparer does not support the requested operation.
+        /// </summary>
+        internal static string InvalidOperation_IncompatibleComparer
+        {
+            get
+            {
+                return "The collection's comparer does not support the requested operation.";
             }
         }
 

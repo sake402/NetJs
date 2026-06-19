@@ -18,7 +18,11 @@ namespace NetJs.Translator.CSharpToJavascript
         /// <summary>
         /// Name is unique globally
         /// </summary>
-        public string FullName { get; set; } = default!;
+        public string OriginalFullName { get; set; } = default!;
+        /// <summary>
+        /// Name is unique globally
+        /// </summary>
+        public string UniqueFullName { get; set; } = default!;
         string? _originalOverloadName;
         /// <summary>
         /// If a name is shortened, this hold the original name before being shortened. Otherwise it is the same as the overload name
@@ -154,7 +158,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override string ToString()
         {
-            return FullName;
+            return UniqueFullName;
         }
 
         const string ShortenedNameIdentitfier = "\\";
@@ -162,7 +166,7 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (!generate || !_global.OutputMode.HasFlag(OutputMode.ShortNames))
             {
-                var resolvedName = (shortPrefix != null ? shortPrefix + "." : "") + name;
+                var resolvedName = (!string.IsNullOrEmpty(shortPrefix) ? shortPrefix + "." : "") + name;
                 if (export)
                 {
                     //var key = resolvedName;
@@ -305,7 +309,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 return "";
             if (type is INamedTypeSymbol tt && tt.IsNullable(out var ntt))
             {
-                if (!ntt!.IsValueType)
+                if (ntt!.Kind != SymbolKind.ErrorType && ntt.Kind != SymbolKind.TypeParameter && !ntt.IsValueType)
                 {
                     type = ntt;
                 }
@@ -403,7 +407,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 overloadName = typeMeta.OverloadName ?? throw new InvalidOperationException("Containing type must be processed before contained type");
             }
             var invocationName = overloadName;
-            if (property.IsStatic || property.IsStaticCallConvention(_global) || property.IsExtensionPropertyMember(_global))
+            if (property.IsStatic || property.IsStaticCallConvention(_global))
             {
                 var declaringType = property.ContainingType;
                 var declaringTypeMetadata = _global.GetRequiredMetadata(declaringType);
@@ -427,6 +431,12 @@ namespace NetJs.Translator.CSharpToJavascript
             if (method.IsStatic || method.IsStaticCallConvention(_global))
             {
                 var declaringType = method.ContainingType;
+                var declaringTypeMetadata = _global.GetRequiredMetadata(declaringType);
+                invocationName = declaringTypeMetadata.InvocationName + "." + invocationName;
+            }
+            else if (method.AssociatedSymbol?.Kind == SymbolKind.Property && method.AssociatedSymbol.IsExtensionPropertyMember(_global) && !method.AssociatedSymbol.IsStatic)
+            {
+                var declaringType = method.AssociatedSymbol.ContainingType;
                 var declaringTypeMetadata = _global.GetRequiredMetadata(declaringType);
                 invocationName = declaringTypeMetadata.InvocationName + "." + invocationName;
             }

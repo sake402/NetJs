@@ -59,8 +59,8 @@ namespace System.Runtime.CompilerServices
             //OR
             //If we are tring to cast a numeric array to a structlayout object,
             //allow it by pulling the provided array into the backing field array of the target type
-            var fromModel = typeof(TFrom).As<RuntimeType>()._model.As<TypeModel>();
-            var toModel = typeof(TTo).As<RuntimeType>()._model.As<TypeModel>();
+            var fromModel = typeof(TFrom).As<RuntimeType>()._prototype;
+            var toModel = typeof(TTo).As<RuntimeType>()._prototype;
             if ((toModel.Flags.TypeHasFlag(TypeFlagsModel.IsValueType) &&
                 fromModel.Flags.TypeHasFlag(TypeFlagsModel.IsValueType) &&
                 !toModel.KnownType.IsPrimitive() &&
@@ -170,8 +170,25 @@ namespace System.Runtime.CompilerServices
             return System.Runtime.InteropServices.Marshal.SizeOf(typeof(T));
         }
 
+
+        [NetJs.MemberReplace(nameof(AddByteOffset) + "<>(ref T, nuint)")]
+        public static ref T AddByteOffsetImplNuint<T>(ref T source, nuint byteOffset)
+            where T : allows ref struct
+        {
+            return ref AddByteOffset(ref source, (nint)byteOffset);
+        }
+
         [NetJs.MemberReplace(nameof(AddByteOffset) + "<>(ref T, nint)")]
         public static ref T AddByteOffsetImpl<T>(ref T source, nint byteOffset)
+            where T : allows ref struct
+        {
+            RefOrPointer<object> reff = NetJs.Script.Write<RefOrPointer<object>>("source");
+            reff = reff.AddByteOffset((int)byteOffset);// with { _primitiveWindowItems = byteOffset.As<int>() };
+            NetJs.Script.Write("return reff");
+            throw null!;
+        }
+        [NetJs.MemberReplace(nameof(AddByteOffset) + "<>(ref T, IntPtr)")]
+        public static ref T AddByteOffsetImpl2<T>(ref T source, IntPtr byteOffset)
             where T : allows ref struct
         {
             RefOrPointer<object> reff = NetJs.Script.Write<RefOrPointer<object>>("source");
@@ -182,6 +199,16 @@ namespace System.Runtime.CompilerServices
 
         [NetJs.MemberReplace(nameof(SubtractByteOffset) + "<>(ref T, nint)")]
         public static ref T SubtractByteOffsetImpl<T>(ref T source, nint byteOffset)
+            where T : allows ref struct
+        {
+            RefOrPointer<object> reff = NetJs.Script.Write<RefOrPointer<object>>("source");
+            reff = reff.AddByteOffset(-(int)byteOffset);// with { _primitiveWindowItems = byteOffset.As<int>() };
+            NetJs.Script.Write("return reff");
+            throw null!;
+        }
+
+        [NetJs.MemberReplace(nameof(SubtractByteOffset) + "<>(ref T, IntPtr)")]
+        public static ref T SubtractByteOffsetIntPtrImpl<T>(ref T source, IntPtr byteOffset)
             where T : allows ref struct
         {
             RefOrPointer<object> reff = NetJs.Script.Write<RefOrPointer<object>>("source");

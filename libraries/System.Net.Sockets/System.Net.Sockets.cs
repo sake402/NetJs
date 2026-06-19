@@ -6,11 +6,6 @@
 
 namespace System.Net.Sockets
 {
-    public enum ConnectAlgorithm
-    {
-        Default = 0,
-        Parallel = 1,
-    }
     public enum IOControlCode : long
     {
         [System.Runtime.Versioning.SupportedOSPlatformAttribute("windows")]
@@ -348,7 +343,6 @@ namespace System.Net.Sockets
         public System.Threading.Tasks.ValueTask ConnectAsync(System.Net.IPAddress[] addresses, int port, System.Threading.CancellationToken cancellationToken) { throw new System.PlatformNotSupportedException(); }
         public bool ConnectAsync(System.Net.Sockets.SocketAsyncEventArgs e) { throw new System.PlatformNotSupportedException(); }
         public static bool ConnectAsync(System.Net.Sockets.SocketType socketType, System.Net.Sockets.ProtocolType protocolType, System.Net.Sockets.SocketAsyncEventArgs e) { throw new System.PlatformNotSupportedException(); }
-        public static bool ConnectAsync(System.Net.Sockets.SocketType socketType, System.Net.Sockets.ProtocolType protocolType, System.Net.Sockets.SocketAsyncEventArgs e, System.Net.Sockets.ConnectAlgorithm connectAlgorithm) { throw new System.PlatformNotSupportedException(); }
         public System.Threading.Tasks.Task ConnectAsync(string host, int port) { throw new System.PlatformNotSupportedException(); }
         public System.Threading.Tasks.ValueTask ConnectAsync(string host, int port, System.Threading.CancellationToken cancellationToken) { throw new System.PlatformNotSupportedException(); }
         public void Disconnect(bool reuseSocket) { }

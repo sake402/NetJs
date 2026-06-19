@@ -21,12 +21,30 @@ namespace NetJs.Translator.CSharpToJavascript
 
         List<LabeledStatementSyntax> CollectGotoLabelsIntoCurrentClosure(CSharpSyntaxNode node)
         {
-            var labels = node.ChildNodes().Where(e => e.IsKind(SyntaxKind.LabeledStatement)).Cast<LabeledStatementSyntax>().ToList();
+            List<LabeledStatementSyntax> rlabels = new();
+            var labels = node.ChildNodes().Where(e => e.IsKind(SyntaxKind.LabeledStatement)).Cast<LabeledStatementSyntax>();
             foreach (var label in labels)
             {
+                rlabels.Add(label);
                 CurrentClosure.GotoJumpLabels.Add(label.Identifier.ValueText);
+                //Handle scenario. Not 64 bit, so labels cascade inside each other. DiffNextInt inside DiffOffset0
+                //DiffOffset0:
+                // If we reached here, we already see a difference in the unrolled loop above
+                //#if TARGET_64BIT
+                //                if (*(int*)a == *(int*)b)
+                //                {
+                //                    a += 2; b += 2;
+                //                }
+                //#endif // TARGET_64BIT
+                //DiffNextInt:
+                var labelCascades = label.ChildNodes().Where(e => e.IsKind(SyntaxKind.LabeledStatement)).Cast<LabeledStatementSyntax>().ToList();
+                foreach (var mlabel in labelCascades)
+                {
+                    CurrentClosure.GotoJumpLabels.Add(mlabel.Identifier.ValueText);
+                    rlabels.Add(mlabel);
+                }
             }
-            return labels;
+            return rlabels;
         }
 
         bool BlockTryHandleJumpLabels(BlockSyntax node)

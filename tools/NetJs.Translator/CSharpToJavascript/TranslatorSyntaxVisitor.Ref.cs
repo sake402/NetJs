@@ -38,14 +38,16 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public void WriteCreateArrayRefOrPointer(CSharpSyntaxNode node, ITypeSymbol type, CodeNode arrayExpression, IEnumerable<CodeNode>? indexExpression)
         {
-            WriteMethodInvocation(node, "System.Runtime.CompilerServices.RuntimeHelpers.CreateArrayReference", methodGenericTypes: [type], arguments: [arrayExpression, .. (indexExpression ?? Enumerable.Empty<CodeNode>())]);
+            WriteMethodInvocation(node, "System.Runtime.CompilerServices.RuntimeHelpers.CreateArrayReference", 
+                methodGenericTypes: [type], 
+                arguments: [arrayExpression, .. (indexExpression ?? Enumerable.Empty<CodeNode>())]);
             //var refStaticClass = (ITypeSymbol)_global.GetTypeSymbol("System.RefOrPointer", this);
             //var createMethod = (IMethodSymbol)refStaticClass.GetMembers("CreateFromArray").Single();
             //createMethod = createMethod.Construct(type);
             //WriteMethodInvocation(node, createMethod, null, null, [arrayExpression, .. indexExpression], null, null, false);
         }
 
-        public void WriteCreateObjectRefOrPointer(CSharpSyntaxNode node, ITypeSymbol type, ExpressionSyntax objectTargetExpression)
+        public void WriteCreateObjectRefOrPointer(CSharpSyntaxNode node, ITypeSymbol type, ExpressionSyntax objectTargetExpression, CodeNode? byteOffset = null)
         {
             //CurrentTypeWriter.Write(node, $"{{ get {Constants.RefValueName}(){{ return ");
             //Visit(objectTargetExpression);
@@ -54,28 +56,33 @@ namespace NetJs.Translator.CSharpToJavascript
             //Visit(objectTargetExpression);
             //CurrentTypeWriter.Write(node, $" = v; }}");
             //CurrentTypeWriter.Write(node, $" }}");
-            WriteMethodInvocation(node, "System.Runtime.CompilerServices.RuntimeHelpers.CreateObjectReference", methodGenericTypes: [type], arguments: [new CodeNode(() => {
-                CurrentTypeWriter.Write(node, "() => ");
-                Visit(objectTargetExpression);
-            }),
-            new CodeNode(() => {
-                CurrentTypeWriter.Write(node, "($v) => ");
-                if (objectTargetExpression.IsKind(SyntaxKind.ThisExpression))
-                {
-                    //The only time when c# allows this to be assigned is if it is a struct type.
-                    //We clone the rhs into this
-                    CurrentTypeWriter.Write(node, "$v.");
-                    CurrentTypeWriter.Write(node, Constants.Clone);
-                    CurrentTypeWriter.Write(node, "(");
+            WriteMethodInvocation(node, "System.Runtime.CompilerServices.RuntimeHelpers.CreateObjectReference", methodGenericTypes: [type], arguments: [
+                new CodeNode(() => {
+                    CurrentTypeWriter.Write(node, "() => ");
                     Visit(objectTargetExpression);
-                    CurrentTypeWriter.Write(node, ")");
-                }
-                else
-                {
-                    Visit(objectTargetExpression);
-                    CurrentTypeWriter.Write(node, " = $v");
-                }
-            })]);
+                }),
+                new CodeNode(() => {
+                    CurrentTypeWriter.Write(node, "($v) => ");
+                    if (objectTargetExpression.IsKind(SyntaxKind.ThisExpression))
+                    {
+                        //The only time when c# allows this to be assigned is if it is a struct type.
+                        //We clone the rhs into this
+                        CurrentTypeWriter.Write(node, "$v.");
+                        CurrentTypeWriter.Write(node, Constants.Clone);
+                        CurrentTypeWriter.Write(node, "(");
+                        Visit(objectTargetExpression);
+                        CurrentTypeWriter.Write(node, ")");
+                    }
+                    else
+                    {
+                        Visit(objectTargetExpression);
+                        CurrentTypeWriter.Write(node, " = $v");
+                    }
+                }),
+                byteOffset ?? new CodeNode(() => {
+                    CurrentTypeWriter.Write(node, "null");
+                })
+                ]);
             //var refStaticClass = (ITypeSymbol)_global.GetTypeSymbol("System.RefOrPointer", this);
             //var createMethod = (IMethodSymbol)refStaticClass.GetMembers("CreateFromObject").Single();
             //createMethod = createMethod.Construct(type);
@@ -132,7 +139,7 @@ namespace NetJs.Translator.CSharpToJavascript
             //    CurrentTypeWriter.Write(node, str, true);
         }
 
-        public void WriteCreateRef(CSharpSyntaxNode node, ExpressionSyntax expression, ITypeSymbol? type/*, string? prefix = null, string? suffix = null, bool _readOnly = false*/)
+        public void WriteCreateRef(CSharpSyntaxNode node, ExpressionSyntax expression, ITypeSymbol? type, CodeNode? byteOffset = null)
         {
             type ??= _global.GetTypeSymbol(expression, this);
             if (expression.IsKind(SyntaxKind.ElementAccessExpression))
@@ -143,41 +150,27 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             else
             {
-                WriteCreateObjectRefOrPointer(node, type, expression);
+                WriteCreateObjectRefOrPointer(node, type, expression, byteOffset: byteOffset);
             }
-            //if (prefix != null)
-            //    Writer.Write(node, prefix);
-            //Writer.Write(node, $"{{ get {Constants.RefValueName}(){{ return ");
-            //Visit(expression);
-            //Writer.Write(node, $"; }}");
-            //if (!_readOnly)
-            //{
-            //    Writer.Write(node, $", set {Constants.RefValueName}(v){{ ");
-            //    if (expression.IsKind(SyntaxKind.ElementAccessExpression))
-            //    {
-
-            //    }
-            //    else
-            //    {
-            //        Visit(expression);
-            //    }
-            //    Writer.Write(node, $" = v; }}");
-            //}
-            //Writer.Write(node, $" }}");
-            //if (suffix != null)
-            //    Writer.Write(node, suffix);
         }
 
-        void WriteCreateRef(CSharpSyntaxNode node, Action expression, string? prefix = null, string? suffix = null, bool _readOnly = false)
+        public void WriteCreateSimpleRef(CSharpSyntaxNode node, CodeNode expression, string? prefix = null, string? suffix = null, bool _readOnly = false, bool _writeOnly = false)
         {
-            CurrentTypeWriter.Write(node, $"{prefix}");
-            CurrentTypeWriter.Write(node, $"{{ get {Constants.RefValueName}(){{ return ");
-            expression();
-            CurrentTypeWriter.Write(node, $"; }}");
+            CurrentTypeWriter.Write(node, $"{prefix}{{");
+            if (!_writeOnly)
+            {
+                CurrentTypeWriter.Write(node, $" get {Constants.RefValueName}(){{ return ");
+                VisitNode(expression);
+                CurrentTypeWriter.Write(node, $"; }}");
+            }
+            if (!_writeOnly && !_readOnly)
+            {
+                CurrentTypeWriter.Write(node, $",");
+            }
             if (!_readOnly)
             {
-                CurrentTypeWriter.Write(node, $", set {Constants.RefValueName}(v){{ ");
-                expression();
+                CurrentTypeWriter.Write(node, $" set {Constants.RefValueName}(v){{ ");
+                VisitNode(expression);
                 CurrentTypeWriter.Write(node, $" = v; }} ");
             }
             CurrentTypeWriter.Write(node, $"}}{suffix}");

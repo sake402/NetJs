@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Private.Xml", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,14 +70,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_UserException", resourceCulture);
+                return "{0}";
             }
         }
 
 
         internal static string FormatXml_UserException(object arg1)
         {
-            return string.Format(Xml_UserException, arg1);
+            return string.Format("{0}", arg1);
         }
 
 
@@ -88,7 +88,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_DefaultException", resourceCulture);
+                return "An XML error has occurred.";
             }
         }
 
@@ -101,7 +101,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidOperation", resourceCulture);
+                return "Operation is not valid due to the current state of the object.";
             }
         }
 
@@ -114,14 +114,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ErrorFilePosition", resourceCulture);
+                return "An error occurred at {0}, ({1}, {2}).";
             }
         }
 
 
         internal static string FormatXml_ErrorFilePosition(object arg1, object arg2, object arg3)
         {
-            return string.Format(Xml_ErrorFilePosition, arg1, arg2, arg3);
+            return string.Format("An error occurred at {0}, ({1}, {2}).", arg1, arg2, arg3);
         }
 
 
@@ -132,7 +132,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_StackOverflow", resourceCulture);
+                return "Stack overflow.";
             }
         }
 
@@ -145,7 +145,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_NoStylesheetLoaded", resourceCulture);
+                return "No stylesheet was loaded.";
             }
         }
 
@@ -158,14 +158,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_NotCompiledStylesheet", resourceCulture);
+                return "Type '{0}' is not a compiled stylesheet class.";
             }
         }
 
 
         internal static string FormatXslt_NotCompiledStylesheet(object arg1)
         {
-            return string.Format(Xslt_NotCompiledStylesheet, arg1);
+            return string.Format("Type '{0}' is not a compiled stylesheet class.", arg1);
         }
 
 
@@ -176,14 +176,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_IncompatibleCompiledStylesheetVersion", resourceCulture);
+                return "Executing a stylesheet that was compiled using a later version of the framework is not supported. Stylesheet Version: {0}. Current Framework Version: {1}.";
             }
         }
 
 
         internal static string FormatXslt_IncompatibleCompiledStylesheetVersion(object arg1, object arg2)
         {
-            return string.Format(Xslt_IncompatibleCompiledStylesheetVersion, arg1, arg2);
+            return string.Format("Executing a stylesheet that was compiled using a later version of the framework is not supported. Stylesheet Version: {0}. Current Framework Version: {1}.", arg1, arg2);
         }
 
 
@@ -194,7 +194,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_AsyncIsRunningException", resourceCulture);
+                return "An asynchronous operation is already in progress.";
             }
         }
 
@@ -207,7 +207,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ReaderAsyncNotSetException", resourceCulture);
+                return "Set XmlReaderSettings.Async to true if you want to use Async Methods.";
             }
         }
 
@@ -220,7 +220,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_UnclosedQuote", resourceCulture);
+                return "There is an unclosed literal string.";
             }
         }
 
@@ -233,14 +233,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_UnexpectedEOF", resourceCulture);
+                return "Unexpected end of file while parsing {0} has occurred.";
             }
         }
 
 
         internal static string FormatXml_UnexpectedEOF(object arg1)
         {
-            return string.Format(Xml_UnexpectedEOF, arg1);
+            return string.Format("Unexpected end of file while parsing {0} has occurred.", arg1);
         }
 
 
@@ -251,7 +251,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_UnexpectedEOF1", resourceCulture);
+                return "Unexpected end of file has occurred.";
             }
         }
 
@@ -264,14 +264,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_UnexpectedEOFInElementContent", resourceCulture);
+                return "Unexpected end of file has occurred. The following elements are not closed: {0}";
             }
         }
 
 
         internal static string FormatXml_UnexpectedEOFInElementContent(object arg1)
         {
-            return string.Format(Xml_UnexpectedEOFInElementContent, arg1);
+            return string.Format("Unexpected end of file has occurred. The following elements are not closed: {0}", arg1);
         }
 
 
@@ -282,14 +282,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_BadStartNameChar", resourceCulture);
+                return "Name cannot begin with the '{0}' character, hexadecimal value {1}.";
             }
         }
 
 
         internal static string FormatXml_BadStartNameChar(object arg1, object arg2)
         {
-            return string.Format(Xml_BadStartNameChar, arg1, arg2);
+            return string.Format("Name cannot begin with the '{0}' character, hexadecimal value {1}.", arg1, arg2);
         }
 
 
@@ -300,14 +300,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_BadNameChar", resourceCulture);
+                return "The '{0}' character, hexadecimal value {1}, cannot be included in a name.";
             }
         }
 
 
         internal static string FormatXml_BadNameChar(object arg1, object arg2)
         {
-            return string.Format(Xml_BadNameChar, arg1, arg2);
+            return string.Format("The '{0}' character, hexadecimal value {1}, cannot be included in a name.", arg1, arg2);
         }
 
 
@@ -318,7 +318,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_BadDecimalEntity", resourceCulture);
+                return "Invalid syntax for a decimal numeric entity reference.";
             }
         }
 
@@ -331,7 +331,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_BadHexEntity", resourceCulture);
+                return "Invalid syntax for a hexadecimal numeric entity reference.";
             }
         }
 
@@ -344,7 +344,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_MissingByteOrderMark", resourceCulture);
+                return "There is no Unicode byte order mark. Cannot switch to Unicode.";
             }
         }
 
@@ -357,14 +357,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_UnknownEncoding", resourceCulture);
+                return "System does not support '{0}' encoding.";
             }
         }
 
 
         internal static string FormatXml_UnknownEncoding(object arg1)
         {
-            return string.Format(Xml_UnknownEncoding, arg1);
+            return string.Format("System does not support '{0}' encoding.", arg1);
         }
 
 
@@ -375,7 +375,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InternalError", resourceCulture);
+                return "An internal error has occurred.";
             }
         }
 
@@ -388,7 +388,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidCharInThisEncoding", resourceCulture);
+                return "Invalid character in the given encoding.";
             }
         }
 
@@ -401,14 +401,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ErrorPosition", resourceCulture);
+                return "Line {0}, position {1}.";
             }
         }
 
 
         internal static string FormatXml_ErrorPosition(object arg1, object arg2)
         {
-            return string.Format(Xml_ErrorPosition, arg1, arg2);
+            return string.Format("Line {0}, position {1}.", arg1, arg2);
         }
 
 
@@ -419,14 +419,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_MessageWithErrorPosition", resourceCulture);
+                return "{0} Line {1}, position {2}.";
             }
         }
 
 
         internal static string FormatXml_MessageWithErrorPosition(object arg1, object arg2, object arg3)
         {
-            return string.Format(Xml_MessageWithErrorPosition, arg1, arg2, arg3);
+            return string.Format("{0} Line {1}, position {2}.", arg1, arg2, arg3);
         }
 
 
@@ -437,14 +437,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_UnexpectedTokenEx", resourceCulture);
+                return "'{0}' is an unexpected token. The expected token is '{1}'.";
             }
         }
 
 
         internal static string FormatXml_UnexpectedTokenEx(object arg1, object arg2)
         {
-            return string.Format(Xml_UnexpectedTokenEx, arg1, arg2);
+            return string.Format("'{0}' is an unexpected token. The expected token is '{1}'.", arg1, arg2);
         }
 
 
@@ -455,14 +455,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_UnexpectedTokens2", resourceCulture);
+                return "'{0}' is an unexpected token. The expected token is '{1}' or '{2}'.";
             }
         }
 
 
         internal static string FormatXml_UnexpectedTokens2(object arg1, object arg2, object arg3)
         {
-            return string.Format(Xml_UnexpectedTokens2, arg1, arg2, arg3);
+            return string.Format("'{0}' is an unexpected token. The expected token is '{1}' or '{2}'.", arg1, arg2, arg3);
         }
 
 
@@ -473,14 +473,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ExpectingWhiteSpace", resourceCulture);
+                return "'{0}' is an unexpected token. Expecting whitespace.";
             }
         }
 
 
         internal static string FormatXml_ExpectingWhiteSpace(object arg1)
         {
-            return string.Format(Xml_ExpectingWhiteSpace, arg1);
+            return string.Format("'{0}' is an unexpected token. Expecting whitespace.", arg1);
         }
 
 
@@ -491,14 +491,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_TagMismatchEx", resourceCulture);
+                return "The '{0}' start tag on line {1} position {2} does not match the end tag of '{3}'.";
             }
         }
 
 
         internal static string FormatXml_TagMismatchEx(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(Xml_TagMismatchEx, arg1, arg2, arg3, arg4);
+            return string.Format("The '{0}' start tag on line {1} position {2} does not match the end tag of '{3}'.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -509,7 +509,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_UnexpectedEndTag", resourceCulture);
+                return "Unexpected end tag.";
             }
         }
 
@@ -522,14 +522,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_UnknownNs", resourceCulture);
+                return "'{0}' is an undeclared prefix.";
             }
         }
 
 
         internal static string FormatXml_UnknownNs(object arg1)
         {
-            return string.Format(Xml_UnknownNs, arg1);
+            return string.Format("'{0}' is an undeclared prefix.", arg1);
         }
 
 
@@ -540,14 +540,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_BadAttributeChar", resourceCulture);
+                return "'{0}', hexadecimal value {1}, is an invalid attribute character.";
             }
         }
 
 
         internal static string FormatXml_BadAttributeChar(object arg1, object arg2)
         {
-            return string.Format(Xml_BadAttributeChar, arg1, arg2);
+            return string.Format("'{0}', hexadecimal value {1}, is an invalid attribute character.", arg1, arg2);
         }
 
 
@@ -558,7 +558,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ExpectExternalOrClose", resourceCulture);
+                return "Expecting external ID, '[' or '>'.";
             }
         }
 
@@ -571,7 +571,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_MissingRoot", resourceCulture);
+                return "Root element is missing.";
             }
         }
 
@@ -584,7 +584,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_MultipleRoots", resourceCulture);
+                return "There are multiple root elements.";
             }
         }
 
@@ -597,7 +597,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidRootData", resourceCulture);
+                return "Data at the root level is invalid.";
             }
         }
 
@@ -610,7 +610,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_XmlDeclNotFirst", resourceCulture);
+                return "Unexpected XML declaration. The XML declaration must be the first node in the document, and no whitespace characters are allowed to appear before it.";
             }
         }
 
@@ -623,7 +623,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidXmlDecl", resourceCulture);
+                return "Syntax for an XML declaration is invalid.";
             }
         }
 
@@ -636,14 +636,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidNodeType", resourceCulture);
+                return "'{0}' is an invalid XmlNodeType.";
             }
         }
 
 
         internal static string FormatXml_InvalidNodeType(object arg1)
         {
-            return string.Format(Xml_InvalidNodeType, arg1);
+            return string.Format("'{0}' is an invalid XmlNodeType.", arg1);
         }
 
 
@@ -654,14 +654,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidPIName", resourceCulture);
+                return "'{0}' is an invalid name for processing instructions.";
             }
         }
 
 
         internal static string FormatXml_InvalidPIName(object arg1)
         {
-            return string.Format(Xml_InvalidPIName, arg1);
+            return string.Format("'{0}' is an invalid name for processing instructions.", arg1);
         }
 
 
@@ -672,14 +672,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidXmlSpace", resourceCulture);
+                return "'{0}' is an invalid xml:space value.";
             }
         }
 
 
         internal static string FormatXml_InvalidXmlSpace(object arg1)
         {
-            return string.Format(Xml_InvalidXmlSpace, arg1);
+            return string.Format("'{0}' is an invalid xml:space value.", arg1);
         }
 
 
@@ -690,14 +690,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidVersionNumber", resourceCulture);
+                return "Version number '{0}' is invalid.";
             }
         }
 
 
         internal static string FormatXml_InvalidVersionNumber(object arg1)
         {
-            return string.Format(Xml_InvalidVersionNumber, arg1);
+            return string.Format("Version number '{0}' is invalid.", arg1);
         }
 
 
@@ -708,14 +708,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_DupAttributeName", resourceCulture);
+                return "'{0}' is a duplicate attribute name.";
             }
         }
 
 
         internal static string FormatXml_DupAttributeName(object arg1)
         {
-            return string.Format(Xml_DupAttributeName, arg1);
+            return string.Format("'{0}' is a duplicate attribute name.", arg1);
         }
 
 
@@ -726,7 +726,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_BadDTDLocation", resourceCulture);
+                return "Unexpected DTD declaration.";
             }
         }
 
@@ -739,14 +739,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ElementNotFound", resourceCulture);
+                return "Element '{0}' was not found.";
             }
         }
 
 
         internal static string FormatXml_ElementNotFound(object arg1)
         {
-            return string.Format(Xml_ElementNotFound, arg1);
+            return string.Format("Element '{0}' was not found.", arg1);
         }
 
 
@@ -757,14 +757,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ElementNotFoundNs", resourceCulture);
+                return "Element '{0}' with namespace name '{1}' was not found.";
             }
         }
 
 
         internal static string FormatXml_ElementNotFoundNs(object arg1, object arg2)
         {
-            return string.Format(Xml_ElementNotFoundNs, arg1, arg2);
+            return string.Format("Element '{0}' with namespace name '{1}' was not found.", arg1, arg2);
         }
 
 
@@ -775,14 +775,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_PartialContentNodeTypeNotSupportedEx", resourceCulture);
+                return "XmlNodeType {0} is not supported for partial content parsing.";
             }
         }
 
 
         internal static string FormatXml_PartialContentNodeTypeNotSupportedEx(object arg1)
         {
-            return string.Format(Xml_PartialContentNodeTypeNotSupportedEx, arg1);
+            return string.Format("XmlNodeType {0} is not supported for partial content parsing.", arg1);
         }
 
 
@@ -793,7 +793,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_MultipleDTDsProvided", resourceCulture);
+                return "Cannot have multiple DTDs.";
             }
         }
 
@@ -806,7 +806,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_CanNotBindToReservedNamespace", resourceCulture);
+                return "Cannot bind to the reserved namespace.";
             }
         }
 
@@ -819,46 +819,51 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidCharacter", resourceCulture);
+                return "'{0}', hexadecimal value {1}, is an invalid character.";
             }
         }
 
 
         internal static string FormatXml_InvalidCharacter(object arg1, object arg2)
         {
-            return string.Format(Xml_InvalidCharacter, arg1, arg2);
+            return string.Format("'{0}', hexadecimal value {1}, is an invalid character.", arg1, arg2);
         }
 
 
         /// <summary>
-        /// '{0}' is not a valid BinHex character.
+        /// '{0}' is not a valid BinHex text sequence.
         /// </summary>
         internal static string Xml_InvalidBinHexValue
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidBinHexValue", resourceCulture);
+                return "'{0}' is not a valid BinHex text sequence.";
             }
         }
 
 
         internal static string FormatXml_InvalidBinHexValue(object arg1)
         {
-            return string.Format(Xml_InvalidBinHexValue, arg1);
+            return string.Format("'{0}' is not a valid BinHex text sequence.", arg1);
         }
 
 
         /// <summary>
-        /// BinHex text is not valid. The sequence must contain an even number of characters.
+        /// '{0}' is not a valid BinHex text sequence. The sequence must contain an even number of characters.
         /// </summary>
         internal static string Xml_InvalidBinHexValueOddCount
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidBinHexValueOddCount", resourceCulture);
+                return "'{0}' is not a valid BinHex text sequence. The sequence must contain an even number of characters.";
             }
         }
 
+
+        internal static string FormatXml_InvalidBinHexValueOddCount(object arg1)
+        {
+            return string.Format("'{0}' is not a valid BinHex text sequence. The sequence must contain an even number of characters.", arg1);
+        }
 
 
         /// <summary>
@@ -868,27 +873,27 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidTextDecl", resourceCulture);
+                return "Invalid text declaration.";
             }
         }
 
 
 
         /// <summary>
-        /// '{0}' is not a valid Base64 character.
+        /// '{0}' is not a valid Base64 text sequence.
         /// </summary>
         internal static string Xml_InvalidBase64Value
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidBase64Value", resourceCulture);
+                return "'{0}' is not a valid Base64 text sequence.";
             }
         }
 
 
         internal static string FormatXml_InvalidBase64Value(object arg1)
         {
-            return string.Format(Xml_InvalidBase64Value, arg1);
+            return string.Format("'{0}' is not a valid Base64 text sequence.", arg1);
         }
 
 
@@ -899,14 +904,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_UndeclaredEntity", resourceCulture);
+                return "Reference to undeclared entity '{0}'.";
             }
         }
 
 
         internal static string FormatXml_UndeclaredEntity(object arg1)
         {
-            return string.Format(Xml_UndeclaredEntity, arg1);
+            return string.Format("Reference to undeclared entity '{0}'.", arg1);
         }
 
 
@@ -917,14 +922,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_RecursiveParEntity", resourceCulture);
+                return "Parameter entity '{0}' references itself.";
             }
         }
 
 
         internal static string FormatXml_RecursiveParEntity(object arg1)
         {
-            return string.Format(Xml_RecursiveParEntity, arg1);
+            return string.Format("Parameter entity '{0}' references itself.", arg1);
         }
 
 
@@ -935,14 +940,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_RecursiveGenEntity", resourceCulture);
+                return "General entity '{0}' references itself.";
             }
         }
 
 
         internal static string FormatXml_RecursiveGenEntity(object arg1)
         {
-            return string.Format(Xml_RecursiveGenEntity, arg1);
+            return string.Format("General entity '{0}' references itself.", arg1);
         }
 
 
@@ -953,14 +958,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ExternalEntityInAttValue", resourceCulture);
+                return "External entity '{0}' reference cannot appear in the attribute value.";
             }
         }
 
 
         internal static string FormatXml_ExternalEntityInAttValue(object arg1)
         {
-            return string.Format(Xml_ExternalEntityInAttValue, arg1);
+            return string.Format("External entity '{0}' reference cannot appear in the attribute value.", arg1);
         }
 
 
@@ -971,14 +976,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_UnparsedEntityRef", resourceCulture);
+                return "Reference to unparsed entity '{0}'.";
             }
         }
 
 
         internal static string FormatXml_UnparsedEntityRef(object arg1)
         {
-            return string.Format(Xml_UnparsedEntityRef, arg1);
+            return string.Format("Reference to unparsed entity '{0}'.", arg1);
         }
 
 
@@ -989,7 +994,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_NotSameNametable", resourceCulture);
+                return "Not the same name table.";
             }
         }
 
@@ -1002,7 +1007,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_NametableMismatch", resourceCulture);
+                return "XmlReaderSettings.XmlNameTable must be the same name table as in XmlParserContext.NameTable or XmlParserContext.NamespaceManager.NameTable, or it must be null.";
             }
         }
 
@@ -1015,7 +1020,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_BadNamespaceDecl", resourceCulture);
+                return "Invalid namespace declaration.";
             }
         }
 
@@ -1028,7 +1033,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ErrorParsingEntityName", resourceCulture);
+                return "An error occurred while parsing EntityName.";
             }
         }
 
@@ -1041,14 +1046,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidNmToken", resourceCulture);
+                return "Invalid NmToken value '{0}'.";
             }
         }
 
 
         internal static string FormatXml_InvalidNmToken(object arg1)
         {
-            return string.Format(Xml_InvalidNmToken, arg1);
+            return string.Format("Invalid NmToken value '{0}'.", arg1);
         }
 
 
@@ -1059,7 +1064,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_EntityRefNesting", resourceCulture);
+                return "Entity replacement text must nest properly within markup declarations.";
             }
         }
 
@@ -1072,14 +1077,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_CannotResolveEntity", resourceCulture);
+                return "Cannot resolve entity reference '{0}'.";
             }
         }
 
 
         internal static string FormatXml_CannotResolveEntity(object arg1)
         {
-            return string.Format(Xml_CannotResolveEntity, arg1);
+            return string.Format("Cannot resolve entity reference '{0}'.", arg1);
         }
 
 
@@ -1090,14 +1095,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_CannotResolveEntityDtdIgnored", resourceCulture);
+                return "Cannot resolve entity reference '{0}' because the DTD has been ignored. To enable DTD processing set the DtdProcessing property on XmlReaderSettings to Parse and pass the settings into XmlReader.Create method.";
             }
         }
 
 
         internal static string FormatXml_CannotResolveEntityDtdIgnored(object arg1)
         {
-            return string.Format(Xml_CannotResolveEntityDtdIgnored, arg1);
+            return string.Format("Cannot resolve entity reference '{0}' because the DTD has been ignored. To enable DTD processing set the DtdProcessing property on XmlReaderSettings to Parse and pass the settings into XmlReader.Create method.", arg1);
         }
 
 
@@ -1108,14 +1113,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_CannotResolveExternalSubset", resourceCulture);
+                return "Cannot resolve external DTD subset - public ID = '{0}', system ID = '{1}'.";
             }
         }
 
 
         internal static string FormatXml_CannotResolveExternalSubset(object arg1, object arg2)
         {
-            return string.Format(Xml_CannotResolveExternalSubset, arg1, arg2);
+            return string.Format("Cannot resolve external DTD subset - public ID = '{0}', system ID = '{1}'.", arg1, arg2);
         }
 
 
@@ -1126,14 +1131,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_CannotResolveUrl", resourceCulture);
+                return "Cannot resolve '{0}'.";
             }
         }
 
 
         internal static string FormatXml_CannotResolveUrl(object arg1)
         {
-            return string.Format(Xml_CannotResolveUrl, arg1);
+            return string.Format("Cannot resolve '{0}'.", arg1);
         }
 
 
@@ -1144,7 +1149,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_CDATAEndInText", resourceCulture);
+                return "']]>' is not allowed in character data.";
             }
         }
 
@@ -1157,14 +1162,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ExternalEntityInStandAloneDocument", resourceCulture);
+                return "Standalone document declaration must have a value of 'no' because an external entity '{0}' is referenced.";
             }
         }
 
 
         internal static string FormatXml_ExternalEntityInStandAloneDocument(object arg1)
         {
-            return string.Format(Xml_ExternalEntityInStandAloneDocument, arg1);
+            return string.Format("Standalone document declaration must have a value of 'no' because an external entity '{0}' is referenced.", arg1);
         }
 
 
@@ -1175,7 +1180,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_DtdAfterRootElement", resourceCulture);
+                return "DTD must be defined before the document root element.";
             }
         }
 
@@ -1188,14 +1193,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ReadOnlyProperty", resourceCulture);
+                return "The '{0}' property is read only and cannot be set.";
             }
         }
 
 
         internal static string FormatXml_ReadOnlyProperty(object arg1)
         {
-            return string.Format(Xml_ReadOnlyProperty, arg1);
+            return string.Format("The '{0}' property is read only and cannot be set.", arg1);
         }
 
 
@@ -1206,7 +1211,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_DtdIsProhibited", resourceCulture);
+                return "DTD is prohibited in this XML document.";
             }
         }
 
@@ -1219,7 +1224,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_DtdIsProhibitedEx", resourceCulture);
+                return "For security reasons DTD is prohibited in this XML document. To enable DTD processing set the DtdProcessing property on XmlReaderSettings to Parse and pass the settings into XmlReader.Create method.";
             }
         }
 
@@ -1232,7 +1237,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ReadSubtreeNotOnElement", resourceCulture);
+                return "ReadSubtree() can be called only if the reader is on an element node.";
             }
         }
 
@@ -1245,7 +1250,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_DtdNotAllowedInFragment", resourceCulture);
+                return "DTD is not allowed in XML fragments.";
             }
         }
 
@@ -1258,7 +1263,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_CannotStartDocumentOnFragment", resourceCulture);
+                return "WriteStartDocument cannot be called on writers created with ConformanceLevel.Fragment.";
             }
         }
 
@@ -1271,14 +1276,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ErrorOpeningExternalDtd", resourceCulture);
+                return "An error has occurred while opening external DTD '{0}': {1}";
             }
         }
 
 
         internal static string FormatXml_ErrorOpeningExternalDtd(object arg1, object arg2)
         {
-            return string.Format(Xml_ErrorOpeningExternalDtd, arg1, arg2);
+            return string.Format("An error has occurred while opening external DTD '{0}': {1}", arg1, arg2);
         }
 
 
@@ -1289,14 +1294,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ErrorOpeningExternalEntity", resourceCulture);
+                return "An error has occurred while opening external entity '{0}': {1}";
             }
         }
 
 
         internal static string FormatXml_ErrorOpeningExternalEntity(object arg1, object arg2)
         {
-            return string.Format(Xml_ErrorOpeningExternalEntity, arg1, arg2);
+            return string.Format("An error has occurred while opening external entity '{0}': {1}", arg1, arg2);
         }
 
 
@@ -1307,14 +1312,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ReadBinaryContentNotSupported", resourceCulture);
+                return "{0} method is not supported on this XmlReader. Use CanReadBinaryContent property to find out if a reader implements it.";
             }
         }
 
 
         internal static string FormatXml_ReadBinaryContentNotSupported(object arg1)
         {
-            return string.Format(Xml_ReadBinaryContentNotSupported, arg1);
+            return string.Format("{0} method is not supported on this XmlReader. Use CanReadBinaryContent property to find out if a reader implements it.", arg1);
         }
 
 
@@ -1325,7 +1330,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ReadValueChunkNotSupported", resourceCulture);
+                return "ReadValueChunk method is not supported on this XmlReader. Use CanReadValueChunk property to find out if an XmlReader implements it.";
             }
         }
 
@@ -1338,14 +1343,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidReadContentAs", resourceCulture);
+                return "The {0} method is not supported on node type {1}. If you want to read typed content of an element, use the ReadElementContentAs method.";
             }
         }
 
 
         internal static string FormatXml_InvalidReadContentAs(object arg1, object arg2)
         {
-            return string.Format(Xml_InvalidReadContentAs, arg1, arg2);
+            return string.Format("The {0} method is not supported on node type {1}. If you want to read typed content of an element, use the ReadElementContentAs method.", arg1, arg2);
         }
 
 
@@ -1356,14 +1361,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidReadElementContentAs", resourceCulture);
+                return "The {0} method is not supported on node type {1}.";
             }
         }
 
 
         internal static string FormatXml_InvalidReadElementContentAs(object arg1, object arg2)
         {
-            return string.Format(Xml_InvalidReadElementContentAs, arg1, arg2);
+            return string.Format("The {0} method is not supported on node type {1}.", arg1, arg2);
         }
 
 
@@ -1374,7 +1379,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_MixedReadElementContentAs", resourceCulture);
+                return "ReadElementContentAs() methods cannot be called on an element that has child elements.";
             }
         }
 
@@ -1387,7 +1392,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_MixingReadValueChunkWithBinary", resourceCulture);
+                return "ReadValueChunk calls cannot be mixed with ReadContentAsBase64 or ReadContentAsBinHex.";
             }
         }
 
@@ -1400,7 +1405,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_MixingBinaryContentMethods", resourceCulture);
+                return "ReadContentAsBase64 and ReadContentAsBinHex method calls cannot be mixed with calls to ReadElementContentAsBase64 and ReadElementContentAsBinHex.";
             }
         }
 
@@ -1413,7 +1418,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_MixingV1StreamingWithV2Binary", resourceCulture);
+                return "ReadContentAsBase64 and ReadContentAsBinHex method calls cannot be mixed with calls to ReadChars, ReadBase64, and ReadBinHex.";
             }
         }
 
@@ -1426,14 +1431,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidReadValueChunk", resourceCulture);
+                return "The ReadValueAsChunk method is not supported on node type {0}.";
             }
         }
 
 
         internal static string FormatXml_InvalidReadValueChunk(object arg1)
         {
-            return string.Format(Xml_InvalidReadValueChunk, arg1);
+            return string.Format("The ReadValueAsChunk method is not supported on node type {0}.", arg1);
         }
 
 
@@ -1444,14 +1449,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ReadContentAsFormatException", resourceCulture);
+                return "Content cannot be converted to the type {0}.";
             }
         }
 
 
         internal static string FormatXml_ReadContentAsFormatException(object arg1)
         {
-            return string.Format(Xml_ReadContentAsFormatException, arg1);
+            return string.Format("Content cannot be converted to the type {0}.", arg1);
         }
 
 
@@ -1462,7 +1467,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_DoubleBaseUri", resourceCulture);
+                return "BaseUri must be specified either as an argument of XmlReader.Create or on the XmlParserContext. If it is specified on both, it must be the same base URI.";
             }
         }
 
@@ -1475,7 +1480,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_NotEnoughSpaceForSurrogatePair", resourceCulture);
+                return "The buffer is not large enough to fit a surrogate pair. Please provide a buffer of size at least 2 characters.";
             }
         }
 
@@ -1488,14 +1493,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_UnexpectedNodeInSimpleContent", resourceCulture);
+                return "Unexpected node type {0}. {1} method can only be called on elements with simple or empty content.";
             }
         }
 
 
         internal static string FormatXml_UnexpectedNodeInSimpleContent(object arg1, object arg2)
         {
-            return string.Format(Xml_UnexpectedNodeInSimpleContent, arg1, arg2);
+            return string.Format("Unexpected node type {0}. {1} method can only be called on elements with simple or empty content.", arg1, arg2);
         }
 
 
@@ -1506,14 +1511,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidWhitespaceCharacter", resourceCulture);
+                return "The Whitespace or SignificantWhitespace node can contain only XML whitespace characters. '{0}' is not an XML white space character.";
             }
         }
 
 
         internal static string FormatXml_InvalidWhitespaceCharacter(object arg1)
         {
-            return string.Format(Xml_InvalidWhitespaceCharacter, arg1);
+            return string.Format("The Whitespace or SignificantWhitespace node can contain only XML whitespace characters. '{0}' is not an XML white space character.", arg1);
         }
 
 
@@ -1524,14 +1529,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_IncompatibleConformanceLevel", resourceCulture);
+                return "Cannot change conformance checking to {0}. Make sure the ConformanceLevel in XmlReaderSettings is set to Auto for wrapping scenarios.";
             }
         }
 
 
         internal static string FormatXml_IncompatibleConformanceLevel(object arg1)
         {
-            return string.Format(Xml_IncompatibleConformanceLevel, arg1);
+            return string.Format("Cannot change conformance checking to {0}. Make sure the ConformanceLevel in XmlReaderSettings is set to Auto for wrapping scenarios.", arg1);
         }
 
 
@@ -1542,14 +1547,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_LimitExceeded", resourceCulture);
+                return "The input document has exceeded a limit set by {0}.";
             }
         }
 
 
         internal static string FormatXml_LimitExceeded(object arg1)
         {
-            return string.Format(Xml_LimitExceeded, arg1);
+            return string.Format("The input document has exceeded a limit set by {0}.", arg1);
         }
 
 
@@ -1560,7 +1565,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ClosedOrErrorReader", resourceCulture);
+                return "The XmlReader is closed or in error state.";
             }
         }
 
@@ -1573,7 +1578,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_CharEntityOverflow", resourceCulture);
+                return "Invalid value of a character entity reference.";
             }
         }
 
@@ -1586,14 +1591,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_BadNameCharWithPos", resourceCulture);
+                return "The '{0}' character, hexadecimal value {1}, at position {2} within the name, cannot be included in a name.";
             }
         }
 
 
         internal static string FormatXml_BadNameCharWithPos(object arg1, object arg2, object arg3)
         {
-            return string.Format(Xml_BadNameCharWithPos, arg1, arg2, arg3);
+            return string.Format("The '{0}' character, hexadecimal value {1}, at position {2} within the name, cannot be included in a name.", arg1, arg2, arg3);
         }
 
 
@@ -1604,7 +1609,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_XmlnsBelongsToReservedNs", resourceCulture);
+                return "The 'xmlns' attribute is bound to the reserved namespace 'http://www.w3.org/2000/xmlns/'.";
             }
         }
 
@@ -1617,14 +1622,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_UndeclaredParEntity", resourceCulture);
+                return "Reference to undeclared parameter entity '{0}'.";
             }
         }
 
 
         internal static string FormatXml_UndeclaredParEntity(object arg1)
         {
-            return string.Format(Xml_UndeclaredParEntity, arg1);
+            return string.Format("Reference to undeclared parameter entity '{0}'.", arg1);
         }
 
 
@@ -1635,14 +1640,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidXmlDocument", resourceCulture);
+                return "Invalid XML document. {0}";
             }
         }
 
 
         internal static string FormatXml_InvalidXmlDocument(object arg1)
         {
-            return string.Format(Xml_InvalidXmlDocument, arg1);
+            return string.Format("Invalid XML document. {0}", arg1);
         }
 
 
@@ -1653,7 +1658,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_NoDTDPresent", resourceCulture);
+                return "No DTD found.";
             }
         }
 
@@ -1666,7 +1671,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_MultipleValidationTypes", resourceCulture);
+                return "Unsupported combination of validation types.";
             }
         }
 
@@ -1679,7 +1684,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_NoValidation", resourceCulture);
+                return "No validation occurred.";
             }
         }
 
@@ -1692,7 +1697,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_WhitespaceHandling", resourceCulture);
+                return "Expected WhitespaceHandling.None, or WhitespaceHandling.All, or WhitespaceHandling.Significant.";
             }
         }
 
@@ -1705,7 +1710,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidResetStateCall", resourceCulture);
+                return "Cannot call ResetState when parsing an XML fragment.";
             }
         }
 
@@ -1718,7 +1723,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_EntityHandling", resourceCulture);
+                return "Expected EntityHandling.ExpandEntities or EntityHandling.ExpandCharEntities.";
             }
         }
 
@@ -1731,14 +1736,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_AttlistDuplEnumValue", resourceCulture);
+                return "'{0}' is a duplicate enumeration value.";
             }
         }
 
 
         internal static string FormatXml_AttlistDuplEnumValue(object arg1)
         {
-            return string.Format(Xml_AttlistDuplEnumValue, arg1);
+            return string.Format("'{0}' is a duplicate enumeration value.", arg1);
         }
 
 
@@ -1749,14 +1754,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_AttlistDuplNotationValue", resourceCulture);
+                return "'{0}' is a duplicate notation value.";
             }
         }
 
 
         internal static string FormatXml_AttlistDuplNotationValue(object arg1)
         {
-            return string.Format(Xml_AttlistDuplNotationValue, arg1);
+            return string.Format("'{0}' is a duplicate notation value.", arg1);
         }
 
 
@@ -1767,14 +1772,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_EncodingSwitchAfterResetState", resourceCulture);
+                return "'{0}' is an invalid value for the 'encoding' attribute. The encoding cannot be switched after a call to ResetState.";
             }
         }
 
 
         internal static string FormatXml_EncodingSwitchAfterResetState(object arg1)
         {
-            return string.Format(Xml_EncodingSwitchAfterResetState, arg1);
+            return string.Format("'{0}' is an invalid value for the 'encoding' attribute. The encoding cannot be switched after a call to ResetState.", arg1);
         }
 
 
@@ -1785,14 +1790,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_UnexpectedNodeType", resourceCulture);
+                return "Unexpected XmlNodeType: '{0}'.";
             }
         }
 
 
         internal static string FormatXml_UnexpectedNodeType(object arg1)
         {
-            return string.Format(Xml_UnexpectedNodeType, arg1);
+            return string.Format("Unexpected XmlNodeType: '{0}'.", arg1);
         }
 
 
@@ -1803,7 +1808,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidConditionalSection", resourceCulture);
+                return "A conditional section is not allowed in an internal subset.";
             }
         }
 
@@ -1816,7 +1821,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_UnexpectedCDataEnd", resourceCulture);
+                return "']]>' is not expected.";
             }
         }
 
@@ -1829,7 +1834,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_UnclosedConditionalSection", resourceCulture);
+                return "There is an unclosed conditional section.";
             }
         }
 
@@ -1842,7 +1847,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ExpectDtdMarkup", resourceCulture);
+                return "Expected DTD markup was not found.";
             }
         }
 
@@ -1855,7 +1860,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_IncompleteDtdContent", resourceCulture);
+                return "Incomplete DTD content.";
             }
         }
 
@@ -1868,7 +1873,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_EnumerationRequired", resourceCulture);
+                return "Enumeration data type required.";
             }
         }
 
@@ -1881,7 +1886,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidContentModel", resourceCulture);
+                return "Invalid content model.";
             }
         }
 
@@ -1894,14 +1899,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_FragmentId", resourceCulture);
+                return "Fragment identifier '{0}' cannot be part of the system identifier '{1}'.";
             }
         }
 
 
         internal static string FormatXml_FragmentId(object arg1, object arg2)
         {
-            return string.Format(Xml_FragmentId, arg1, arg2);
+            return string.Format("Fragment identifier '{0}' cannot be part of the system identifier '{1}'.", arg1, arg2);
         }
 
 
@@ -1912,7 +1917,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ExpectPcData", resourceCulture);
+                return "Expecting 'PCDATA'.";
             }
         }
 
@@ -1925,7 +1930,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ExpectNoWhitespace", resourceCulture);
+                return "Whitespace not allowed before '?', '*', or '+'.";
             }
         }
 
@@ -1938,7 +1943,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ExpectOp", resourceCulture);
+                return "Expecting '?', '*', or '+'.";
             }
         }
 
@@ -1951,14 +1956,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidAttributeType", resourceCulture);
+                return "'{0}' is an invalid attribute type.";
             }
         }
 
 
         internal static string FormatXml_InvalidAttributeType(object arg1)
         {
-            return string.Format(Xml_InvalidAttributeType, arg1);
+            return string.Format("'{0}' is an invalid attribute type.", arg1);
         }
 
 
@@ -1969,7 +1974,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidAttributeType1", resourceCulture);
+                return "Invalid attribute type.";
             }
         }
 
@@ -1982,7 +1987,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ExpectAttType", resourceCulture);
+                return "Expecting an attribute type.";
             }
         }
 
@@ -1995,14 +2000,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ColonInLocalName", resourceCulture);
+                return "'{0}' is an unqualified name and cannot contain the character ':'.";
             }
         }
 
 
         internal static string FormatXml_ColonInLocalName(object arg1)
         {
-            return string.Format(Xml_ColonInLocalName, arg1);
+            return string.Format("'{0}' is an unqualified name and cannot contain the character ':'.", arg1);
         }
 
 
@@ -2013,7 +2018,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidParEntityRef", resourceCulture);
+                return "A parameter entity reference is not allowed in internal markup.";
             }
         }
 
@@ -2026,7 +2031,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ExpectSubOrClose", resourceCulture);
+                return "Expecting an internal subset or the end of the DOCTYPE declaration.";
             }
         }
 
@@ -2039,7 +2044,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ExpectExternalOrPublicId", resourceCulture);
+                return "Expecting a system identifier or a public identifier.";
             }
         }
 
@@ -2052,7 +2057,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ExpectExternalIdOrEntityValue", resourceCulture);
+                return "Expecting an external identifier or an entity value.";
             }
         }
 
@@ -2065,7 +2070,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ExpectIgnoreOrInclude", resourceCulture);
+                return "Conditional sections must specify the keyword 'IGNORE' or 'INCLUDE'.";
             }
         }
 
@@ -2078,7 +2083,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_UnsupportedClass", resourceCulture);
+                return "Object type is not supported.";
             }
         }
 
@@ -2091,14 +2096,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_NullResolver", resourceCulture);
+                return "Resolving of external URIs was prohibited. Attempted access to: {0}";
             }
         }
 
 
         internal static string FormatXml_NullResolver(object arg1)
         {
-            return string.Format(Xml_NullResolver, arg1);
+            return string.Format("Resolving of external URIs was prohibited. Attempted access to: {0}", arg1);
         }
 
 
@@ -2109,7 +2114,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_RelativeUriNotSupported", resourceCulture);
+                return "Relative URIs are not supported.";
             }
         }
 
@@ -2122,7 +2127,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_WriterAsyncNotSetException", resourceCulture);
+                return "Set XmlWriterSettings.Async to true if you want to use Async Methods.";
             }
         }
 
@@ -2135,7 +2140,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_PrefixForEmptyNs", resourceCulture);
+                return "Cannot use a prefix with an empty namespace.";
             }
         }
 
@@ -2148,7 +2153,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidCommentChars", resourceCulture);
+                return "An XML comment cannot contain '--', and '-' cannot be the last character.";
             }
         }
 
@@ -2161,14 +2166,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_UndefNamespace", resourceCulture);
+                return "The '{0}' namespace is not defined.";
             }
         }
 
 
         internal static string FormatXml_UndefNamespace(object arg1)
         {
-            return string.Format(Xml_UndefNamespace, arg1);
+            return string.Format("The '{0}' namespace is not defined.", arg1);
         }
 
 
@@ -2179,7 +2184,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_EmptyName", resourceCulture);
+                return "The empty string '' is not a valid name.";
             }
         }
 
@@ -2192,7 +2197,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_EmptyLocalName", resourceCulture);
+                return "The empty string '' is not a valid local name.";
             }
         }
 
@@ -2205,14 +2210,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidNameCharsDetail", resourceCulture);
+                return "Invalid name character in '{0}'. The '{1}' character, hexadecimal value {2}, cannot be included in a name.";
             }
         }
 
 
         internal static string FormatXml_InvalidNameCharsDetail(object arg1, object arg2, object arg3)
         {
-            return string.Format(Xml_InvalidNameCharsDetail, arg1, arg2, arg3);
+            return string.Format("Invalid name character in '{0}'. The '{1}' character, hexadecimal value {2}, cannot be included in a name.", arg1, arg2, arg3);
         }
 
 
@@ -2223,7 +2228,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_NoStartTag", resourceCulture);
+                return "There was no XML start tag open.";
             }
         }
 
@@ -2236,7 +2241,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ClosedOrError", resourceCulture);
+                return "The Writer is closed or in error state.";
             }
         }
 
@@ -2249,14 +2254,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_WrongToken", resourceCulture);
+                return "Token {0} in state {1} would result in an invalid XML document.";
             }
         }
 
 
         internal static string FormatXml_WrongToken(object arg1, object arg2)
         {
-            return string.Format(Xml_WrongToken, arg1, arg2);
+            return string.Format("Token {0} in state {1} would result in an invalid XML document.", arg1, arg2);
         }
 
 
@@ -2267,7 +2272,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_XmlPrefix", resourceCulture);
+                return "Prefix \"xml\" is reserved for use by XML and can be mapped only to namespace name \"http://www.w3.org/XML/1998/namespace\".";
             }
         }
 
@@ -2280,7 +2285,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_XmlnsPrefix", resourceCulture);
+                return "Prefix \"xmlns\" is reserved for use by XML.";
             }
         }
 
@@ -2293,14 +2298,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_NamespaceDeclXmlXmlns", resourceCulture);
+                return "Prefix '{0}' cannot be mapped to namespace name reserved for \"xml\" or \"xmlns\".";
             }
         }
 
 
         internal static string FormatXml_NamespaceDeclXmlXmlns(object arg1)
         {
-            return string.Format(Xml_NamespaceDeclXmlXmlns, arg1);
+            return string.Format("Prefix '{0}' cannot be mapped to namespace name reserved for \"xml\" or \"xmlns\".", arg1);
         }
 
 
@@ -2311,7 +2316,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_NonWhitespace", resourceCulture);
+                return "Only whitespace characters should be used.";
             }
         }
 
@@ -2324,7 +2329,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_DupXmlDecl", resourceCulture);
+                return "Cannot write XML declaration. WriteStartDocument method has already written it.";
             }
         }
 
@@ -2337,7 +2342,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_CannotWriteXmlDecl", resourceCulture);
+                return "Cannot write XML declaration. XML declaration can be only at the beginning of the document.";
             }
         }
 
@@ -2350,7 +2355,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_NoRoot", resourceCulture);
+                return "Document does not have a root element.";
             }
         }
 
@@ -2363,7 +2368,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidPosition", resourceCulture);
+                return "The current position on the Reader is neither an element nor an attribute.";
             }
         }
 
@@ -2376,7 +2381,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_IncompleteEntity", resourceCulture);
+                return "Incomplete entity contents.";
             }
         }
 
@@ -2389,14 +2394,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidSurrogateHighChar", resourceCulture);
+                return "Invalid high surrogate character (0x{0}). A high surrogate character must have a value from range (0xD800 - 0xDBFF).";
             }
         }
 
 
         internal static string FormatXml_InvalidSurrogateHighChar(object arg1)
         {
-            return string.Format(Xml_InvalidSurrogateHighChar, arg1);
+            return string.Format("Invalid high surrogate character (0x{0}). A high surrogate character must have a value from range (0xD800 - 0xDBFF).", arg1);
         }
 
 
@@ -2407,7 +2412,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidSurrogateMissingLowChar", resourceCulture);
+                return "The surrogate pair is invalid. Missing a low surrogate character.";
             }
         }
 
@@ -2420,14 +2425,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidSurrogatePairWithArgs", resourceCulture);
+                return "The surrogate pair (0x{0}, 0x{1}) is invalid. A high surrogate character (0xD800 - 0xDBFF) must always be paired with a low surrogate character (0xDC00 - 0xDFFF).";
             }
         }
 
 
         internal static string FormatXml_InvalidSurrogatePairWithArgs(object arg1, object arg2)
         {
-            return string.Format(Xml_InvalidSurrogatePairWithArgs, arg1, arg2);
+            return string.Format("The surrogate pair (0x{0}, 0x{1}) is invalid. A high surrogate character (0xD800 - 0xDBFF) must always be paired with a low surrogate character (0xDC00 - 0xDFFF).", arg1, arg2);
         }
 
 
@@ -2438,14 +2443,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_RedefinePrefix", resourceCulture);
+                return "The prefix '{0}' cannot be redefined from '{1}' to '{2}' within the same start element tag.";
             }
         }
 
 
         internal static string FormatXml_RedefinePrefix(object arg1, object arg2, object arg3)
         {
-            return string.Format(Xml_RedefinePrefix, arg1, arg2, arg3);
+            return string.Format("The prefix '{0}' cannot be redefined from '{1}' to '{2}' within the same start element tag.", arg1, arg2, arg3);
         }
 
 
@@ -2456,7 +2461,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_DtdAlreadyWritten", resourceCulture);
+                return "The DTD has already been written out.";
             }
         }
 
@@ -2469,14 +2474,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidCharsInIndent", resourceCulture);
+                return "XmlWriterSettings.{0} can contain only valid XML text content characters when XmlWriterSettings.CheckCharacters is true. {1}";
             }
         }
 
 
         internal static string FormatXml_InvalidCharsInIndent(object arg1, object arg2)
         {
-            return string.Format(Xml_InvalidCharsInIndent, arg1, arg2);
+            return string.Format("XmlWriterSettings.{0} can contain only valid XML text content characters when XmlWriterSettings.CheckCharacters is true. {1}", arg1, arg2);
         }
 
 
@@ -2487,14 +2492,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_IndentCharsNotWhitespace", resourceCulture);
+                return "XmlWriterSettings.{0} can contain only valid XML whitespace characters when XmlWriterSettings.CheckCharacters and XmlWriterSettings.NewLineOnAttributes are true.";
             }
         }
 
 
         internal static string FormatXml_IndentCharsNotWhitespace(object arg1)
         {
-            return string.Format(Xml_IndentCharsNotWhitespace, arg1);
+            return string.Format("XmlWriterSettings.{0} can contain only valid XML whitespace characters when XmlWriterSettings.CheckCharacters and XmlWriterSettings.NewLineOnAttributes are true.", arg1);
         }
 
 
@@ -2505,7 +2510,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ConformanceLevelFragment", resourceCulture);
+                return "Make sure that the ConformanceLevel setting is set to ConformanceLevel.Fragment or ConformanceLevel.Auto if you want to write an XML fragment. ";
             }
         }
 
@@ -2518,7 +2523,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidQuote", resourceCulture);
+                return "Invalid XML attribute quote character. Valid attribute quote characters are ' and \".";
             }
         }
 
@@ -2531,7 +2536,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_UndefPrefix", resourceCulture);
+                return "An undefined prefix is in use.";
             }
         }
 
@@ -2544,7 +2549,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_NoNamespaces", resourceCulture);
+                return "Cannot set the namespace if Namespaces is 'false'.";
             }
         }
 
@@ -2557,7 +2562,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidCDataChars", resourceCulture);
+                return "Cannot have ']]>' inside an XML CDATA block.";
             }
         }
 
@@ -2570,7 +2575,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_NotTheFirst", resourceCulture);
+                return "WriteStartDocument needs to be the first call.";
             }
         }
 
@@ -2583,7 +2588,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidPiChars", resourceCulture);
+                return "Cannot have '?>' inside an XML processing instruction.";
             }
         }
 
@@ -2596,14 +2601,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidNameChars", resourceCulture);
+                return "Invalid name character in '{0}'.";
             }
         }
 
 
         internal static string FormatXml_InvalidNameChars(object arg1)
         {
-            return string.Format(Xml_InvalidNameChars, arg1);
+            return string.Format("Invalid name character in '{0}'.", arg1);
         }
 
 
@@ -2614,7 +2619,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_Closed", resourceCulture);
+                return "The Writer is closed.";
             }
         }
 
@@ -2627,7 +2632,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidPrefix", resourceCulture);
+                return "Prefixes beginning with \"xml\" (regardless of whether the characters are uppercase, lowercase, or some combination thereof) are reserved for use by XML.";
             }
         }
 
@@ -2640,7 +2645,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_NotInWriteState", resourceCulture);
+                return "NotInWriteState.";
             }
         }
 
@@ -2653,7 +2658,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_SurrogatePairSplit", resourceCulture);
+                return "The second character surrogate pair is not in the input buffer to be written.";
             }
         }
 
@@ -2666,7 +2671,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_NoMultipleRoots", resourceCulture);
+                return "Document cannot have multiple document elements.";
             }
         }
 
@@ -2679,14 +2684,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlBadName", resourceCulture);
+                return "A node of type '{0}' cannot have the name '{1}'.";
             }
         }
 
 
         internal static string FormatXmlBadName(object arg1, object arg2)
         {
-            return string.Format(XmlBadName, arg1, arg2);
+            return string.Format("A node of type '{0}' cannot have the name '{1}'.", arg1, arg2);
         }
 
 
@@ -2697,14 +2702,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlNoNameAllowed", resourceCulture);
+                return "A node of type '{0}' cannot have a name.";
             }
         }
 
 
         internal static string FormatXmlNoNameAllowed(object arg1)
         {
-            return string.Format(XmlNoNameAllowed, arg1);
+            return string.Format("A node of type '{0}' cannot have a name.", arg1);
         }
 
 
@@ -2715,7 +2720,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlConvert_BadUri", resourceCulture);
+                return "The string was not recognized as a valid Uri.";
             }
         }
 
@@ -2728,14 +2733,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlConvert_BadFormat", resourceCulture);
+                return "The string '{0}' is not a valid {1} value.";
             }
         }
 
 
         internal static string FormatXmlConvert_BadFormat(object arg1, object arg2)
         {
-            return string.Format(XmlConvert_BadFormat, arg1, arg2);
+            return string.Format("The string '{0}' is not a valid {1} value.", arg1, arg2);
         }
 
 
@@ -2746,14 +2751,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlConvert_Overflow", resourceCulture);
+                return "Value '{0}' was either too large or too small for {1}.";
             }
         }
 
 
         internal static string FormatXmlConvert_Overflow(object arg1, object arg2)
         {
-            return string.Format(XmlConvert_Overflow, arg1, arg2);
+            return string.Format("Value '{0}' was either too large or too small for {1}.", arg1, arg2);
         }
 
 
@@ -2764,14 +2769,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlConvert_TypeBadMapping", resourceCulture);
+                return "Xml type '{0}' does not support Clr type '{1}'.";
             }
         }
 
 
         internal static string FormatXmlConvert_TypeBadMapping(object arg1, object arg2)
         {
-            return string.Format(XmlConvert_TypeBadMapping, arg1, arg2);
+            return string.Format("Xml type '{0}' does not support Clr type '{1}'.", arg1, arg2);
         }
 
 
@@ -2782,14 +2787,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlConvert_TypeBadMapping2", resourceCulture);
+                return "Xml type '{0}' does not support a conversion from Clr type '{1}' to Clr type '{2}'.";
             }
         }
 
 
         internal static string FormatXmlConvert_TypeBadMapping2(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlConvert_TypeBadMapping2, arg1, arg2, arg3);
+            return string.Format("Xml type '{0}' does not support a conversion from Clr type '{1}' to Clr type '{2}'.", arg1, arg2, arg3);
         }
 
 
@@ -2800,14 +2805,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlConvert_TypeListBadMapping", resourceCulture);
+                return "Xml type 'List of {0}' does not support Clr type '{1}'.";
             }
         }
 
 
         internal static string FormatXmlConvert_TypeListBadMapping(object arg1, object arg2)
         {
-            return string.Format(XmlConvert_TypeListBadMapping, arg1, arg2);
+            return string.Format("Xml type 'List of {0}' does not support Clr type '{1}'.", arg1, arg2);
         }
 
 
@@ -2818,14 +2823,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlConvert_TypeListBadMapping2", resourceCulture);
+                return "Xml type 'List of {0}' does not support a conversion from Clr type '{1}' to Clr type '{2}'.";
             }
         }
 
 
         internal static string FormatXmlConvert_TypeListBadMapping2(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlConvert_TypeListBadMapping2, arg1, arg2, arg3);
+            return string.Format("Xml type 'List of {0}' does not support a conversion from Clr type '{1}' to Clr type '{2}'.", arg1, arg2, arg3);
         }
 
 
@@ -2836,14 +2841,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlConvert_TypeToString", resourceCulture);
+                return "Xml type '{0}' cannot convert from Clr type '{1}' unless the destination type is String or XmlAtomicValue.";
             }
         }
 
 
         internal static string FormatXmlConvert_TypeToString(object arg1, object arg2)
         {
-            return string.Format(XmlConvert_TypeToString, arg1, arg2);
+            return string.Format("Xml type '{0}' cannot convert from Clr type '{1}' unless the destination type is String or XmlAtomicValue.", arg1, arg2);
         }
 
 
@@ -2854,14 +2859,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlConvert_TypeFromString", resourceCulture);
+                return "Xml type '{0}' cannot convert to Clr type '{1}' unless the source value is a String or an XmlAtomicValue.";
             }
         }
 
 
         internal static string FormatXmlConvert_TypeFromString(object arg1, object arg2)
         {
-            return string.Format(XmlConvert_TypeFromString, arg1, arg2);
+            return string.Format("Xml type '{0}' cannot convert to Clr type '{1}' unless the source value is a String or an XmlAtomicValue.", arg1, arg2);
         }
 
 
@@ -2872,14 +2877,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlConvert_TypeNoPrefix", resourceCulture);
+                return "The QName '{0}' cannot be represented as a String.  A prefix for namespace '{1}' cannot be found.";
             }
         }
 
 
         internal static string FormatXmlConvert_TypeNoPrefix(object arg1, object arg2)
         {
-            return string.Format(XmlConvert_TypeNoPrefix, arg1, arg2);
+            return string.Format("The QName '{0}' cannot be represented as a String.  A prefix for namespace '{1}' cannot be found.", arg1, arg2);
         }
 
 
@@ -2890,14 +2895,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlConvert_TypeNoNamespace", resourceCulture);
+                return "The String '{0}' cannot be represented as an XmlQualifiedName.  A namespace for prefix '{1}' cannot be found.";
             }
         }
 
 
         internal static string FormatXmlConvert_TypeNoNamespace(object arg1, object arg2)
         {
-            return string.Format(XmlConvert_TypeNoNamespace, arg1, arg2);
+            return string.Format("The String '{0}' cannot be represented as an XmlQualifiedName.  A namespace for prefix '{1}' cannot be found.", arg1, arg2);
         }
 
 
@@ -2908,7 +2913,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlConvert_NotOneCharString", resourceCulture);
+                return "String must be exactly one character long.";
             }
         }
 
@@ -2921,7 +2926,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ParEntityRefNesting", resourceCulture);
+                return "The parameter entity replacement text must nest properly within markup declarations.";
             }
         }
 
@@ -2934,27 +2939,27 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_NotTokenString", resourceCulture);
+                return "line-feed (#xA) or tab (#x9) characters, leading or trailing spaces and sequences of one or more spaces (#x20) are not allowed in 'xs:token'.";
             }
         }
 
 
 
         /// <summary>
-        /// The '{0}' value for the '{1}' parameter is not an allowed value for the 'XmlDateTimeSerializationMode' enumeration.
+        /// The '{0}' value for the 'dateTimeOption' parameter is not an allowed value for the 'XmlDateTimeSerializationMode' enumeration.
         /// </summary>
         internal static string Sch_InvalidDateTimeOption
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidDateTimeOption", resourceCulture);
+                return "The '{0}' value for the 'dateTimeOption' parameter is not an allowed value for the 'XmlDateTimeSerializationMode' enumeration.";
             }
         }
 
 
-        internal static string FormatSch_InvalidDateTimeOption(object arg1, object arg2)
+        internal static string FormatSch_InvalidDateTimeOption(object arg1)
         {
-            return string.Format(Sch_InvalidDateTimeOption, arg1, arg2);
+            return string.Format("The '{0}' value for the 'dateTimeOption' parameter is not an allowed value for the 'XmlDateTimeSerializationMode' enumeration.", arg1);
         }
 
 
@@ -2965,14 +2970,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_StandAloneNormalization", resourceCulture);
+                return "StandAlone is 'yes' and the value of the attribute '{0}' contains a definition in an external document that changes on normalization.";
             }
         }
 
 
         internal static string FormatSch_StandAloneNormalization(object arg1)
         {
-            return string.Format(Sch_StandAloneNormalization, arg1);
+            return string.Format("StandAlone is 'yes' and the value of the attribute '{0}' contains a definition in an external document that changes on normalization.", arg1);
         }
 
 
@@ -2983,14 +2988,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UnSpecifiedDefaultAttributeInExternalStandalone", resourceCulture);
+                return "Markup for unspecified default attribute '{0}' is external and standalone='yes'.";
             }
         }
 
 
         internal static string FormatSch_UnSpecifiedDefaultAttributeInExternalStandalone(object arg1)
         {
-            return string.Format(Sch_UnSpecifiedDefaultAttributeInExternalStandalone, arg1);
+            return string.Format("Markup for unspecified default attribute '{0}' is external and standalone='yes'.", arg1);
         }
 
 
@@ -3001,7 +3006,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DefaultException", resourceCulture);
+                return "A schema error occurred.";
             }
         }
 
@@ -3014,14 +3019,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupElementDecl", resourceCulture);
+                return "The '{0}' element has already been declared.";
             }
         }
 
 
         internal static string FormatSch_DupElementDecl(object arg1)
         {
-            return string.Format(Sch_DupElementDecl, arg1);
+            return string.Format("The '{0}' element has already been declared.", arg1);
         }
 
 
@@ -3032,14 +3037,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_IdAttrDeclared", resourceCulture);
+                return "The attribute of type ID is already declared on the '{0}' element.";
             }
         }
 
 
         internal static string FormatSch_IdAttrDeclared(object arg1)
         {
-            return string.Format(Sch_IdAttrDeclared, arg1);
+            return string.Format("The attribute of type ID is already declared on the '{0}' element.", arg1);
         }
 
 
@@ -3050,7 +3055,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_RootMatchDocType", resourceCulture);
+                return "Root element name must match the DocType name.";
             }
         }
 
@@ -3063,14 +3068,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupId", resourceCulture);
+                return "'{0}' is already used as an ID.";
             }
         }
 
 
         internal static string FormatSch_DupId(object arg1)
         {
-            return string.Format(Sch_DupId, arg1);
+            return string.Format("'{0}' is already used as an ID.", arg1);
         }
 
 
@@ -3081,14 +3086,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UndeclaredElement", resourceCulture);
+                return "The '{0}' element is not declared.";
             }
         }
 
 
         internal static string FormatSch_UndeclaredElement(object arg1)
         {
-            return string.Format(Sch_UndeclaredElement, arg1);
+            return string.Format("The '{0}' element is not declared.", arg1);
         }
 
 
@@ -3099,14 +3104,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UndeclaredAttribute", resourceCulture);
+                return "The '{0}' attribute is not declared.";
             }
         }
 
 
         internal static string FormatSch_UndeclaredAttribute(object arg1)
         {
-            return string.Format(Sch_UndeclaredAttribute, arg1);
+            return string.Format("The '{0}' attribute is not declared.", arg1);
         }
 
 
@@ -3117,14 +3122,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UndeclaredNotation", resourceCulture);
+                return "The '{0}' notation is not declared.";
             }
         }
 
 
         internal static string FormatSch_UndeclaredNotation(object arg1)
         {
-            return string.Format(Sch_UndeclaredNotation, arg1);
+            return string.Format("The '{0}' notation is not declared.", arg1);
         }
 
 
@@ -3135,14 +3140,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UndeclaredId", resourceCulture);
+                return "Reference to undeclared ID is '{0}'.";
             }
         }
 
 
         internal static string FormatSch_UndeclaredId(object arg1)
         {
-            return string.Format(Sch_UndeclaredId, arg1);
+            return string.Format("Reference to undeclared ID is '{0}'.", arg1);
         }
 
 
@@ -3153,7 +3158,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_SchemaRootExpected", resourceCulture);
+                return "Expected schema root. Make sure the root element is <schema> and the namespace is 'http://www.w3.org/2001/XMLSchema' for an XSD schema or 'urn:schemas-microsoft-com:xml-data' for an XDR schema.";
             }
         }
 
@@ -3166,7 +3171,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_XSDSchemaRootExpected", resourceCulture);
+                return "The root element of a W3C XML Schema should be <schema> and its namespace should be 'http://www.w3.org/2001/XMLSchema'.";
             }
         }
 
@@ -3179,14 +3184,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UnsupportedAttribute", resourceCulture);
+                return "The '{0}' attribute is not supported in this context.";
             }
         }
 
 
         internal static string FormatSch_UnsupportedAttribute(object arg1)
         {
-            return string.Format(Sch_UnsupportedAttribute, arg1);
+            return string.Format("The '{0}' attribute is not supported in this context.", arg1);
         }
 
 
@@ -3197,14 +3202,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UnsupportedElement", resourceCulture);
+                return "The '{0}' element is not supported in this context.";
             }
         }
 
 
         internal static string FormatSch_UnsupportedElement(object arg1)
         {
-            return string.Format(Sch_UnsupportedElement, arg1);
+            return string.Format("The '{0}' element is not supported in this context.", arg1);
         }
 
 
@@ -3215,14 +3220,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MissAttribute", resourceCulture);
+                return "The '{0}' attribute is either invalid or missing.";
             }
         }
 
 
         internal static string FormatSch_MissAttribute(object arg1)
         {
-            return string.Format(Sch_MissAttribute, arg1);
+            return string.Format("The '{0}' attribute is either invalid or missing.", arg1);
         }
 
 
@@ -3233,7 +3238,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_AnnotationLocation", resourceCulture);
+                return "The 'annotation' element cannot appear at this location.";
             }
         }
 
@@ -3246,7 +3251,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DataTypeTextOnly", resourceCulture);
+                return "Content must be \"textOnly\" when using DataType on an ElementType.";
             }
         }
 
@@ -3259,14 +3264,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UnknownModel", resourceCulture);
+                return "The model attribute must have a value of open or closed, not '{0}'.";
             }
         }
 
 
         internal static string FormatSch_UnknownModel(object arg1)
         {
-            return string.Format(Sch_UnknownModel, arg1);
+            return string.Format("The model attribute must have a value of open or closed, not '{0}'.", arg1);
         }
 
 
@@ -3277,14 +3282,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UnknownOrder", resourceCulture);
+                return "The order attribute must have a value of 'seq', 'one', or 'many', not '{0}'.";
             }
         }
 
 
         internal static string FormatSch_UnknownOrder(object arg1)
         {
-            return string.Format(Sch_UnknownOrder, arg1);
+            return string.Format("The order attribute must have a value of 'seq', 'one', or 'many', not '{0}'.", arg1);
         }
 
 
@@ -3295,14 +3300,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UnknownContent", resourceCulture);
+                return "The content attribute must have a value of 'textOnly', 'eltOnly', 'mixed', or 'empty', not '{0}'.";
             }
         }
 
 
         internal static string FormatSch_UnknownContent(object arg1)
         {
-            return string.Format(Sch_UnknownContent, arg1);
+            return string.Format("The content attribute must have a value of 'textOnly', 'eltOnly', 'mixed', or 'empty', not '{0}'.", arg1);
         }
 
 
@@ -3313,7 +3318,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UnknownRequired", resourceCulture);
+                return "The required attribute must have a value of yes or no.";
             }
         }
 
@@ -3326,14 +3331,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UnknownDtType", resourceCulture);
+                return "Reference to an unknown data type, '{0}'.";
             }
         }
 
 
         internal static string FormatSch_UnknownDtType(object arg1)
         {
-            return string.Format(Sch_UnknownDtType, arg1);
+            return string.Format("Reference to an unknown data type, '{0}'.", arg1);
         }
 
 
@@ -3344,7 +3349,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MixedMany", resourceCulture);
+                return "The order must be many when content is mixed.";
             }
         }
 
@@ -3357,7 +3362,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_GroupDisabled", resourceCulture);
+                return "The group is not allowed when ElementType has empty or textOnly content.";
             }
         }
 
@@ -3370,7 +3375,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MissDtvalue", resourceCulture);
+                return "The DataType value cannot be empty.";
             }
         }
 
@@ -3383,7 +3388,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MissDtvaluesAttribute", resourceCulture);
+                return "The dt:values attribute is missing.";
             }
         }
 
@@ -3396,7 +3401,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupDtType", resourceCulture);
+                return "Data type has already been declared.";
             }
         }
 
@@ -3409,14 +3414,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupAttribute", resourceCulture);
+                return "The '{0}' attribute has already been declared for this ElementType.";
             }
         }
 
 
         internal static string FormatSch_DupAttribute(object arg1)
         {
-            return string.Format(Sch_DupAttribute, arg1);
+            return string.Format("The '{0}' attribute has already been declared for this ElementType.", arg1);
         }
 
 
@@ -3427,7 +3432,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_RequireEnumeration", resourceCulture);
+                return "Data type should be enumeration when the values attribute is present.";
             }
         }
 
@@ -3440,7 +3445,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DefaultIdValue", resourceCulture);
+                return "An attribute or element of type xs:ID or derived from xs:ID, should not have a value constraint.";
             }
         }
 
@@ -3453,7 +3458,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ElementNotAllowed", resourceCulture);
+                return "Element is not allowed when the content is empty or textOnly.";
             }
         }
 
@@ -3466,7 +3471,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ElementMissing", resourceCulture);
+                return "There is a missing element.";
             }
         }
 
@@ -3479,7 +3484,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ManyMaxOccurs", resourceCulture);
+                return "When the order is many, the maxOccurs attribute must have a value of '*'.";
             }
         }
 
@@ -3492,7 +3497,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MaxOccursInvalid", resourceCulture);
+                return "The maxOccurs attribute must have a value of 1 or *.";
             }
         }
 
@@ -3505,7 +3510,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MinOccursInvalid", resourceCulture);
+                return "The minOccurs attribute must have a value of 0 or 1.";
             }
         }
 
@@ -3518,14 +3523,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DtMaxLengthInvalid", resourceCulture);
+                return "The value '{0}' is invalid for dt:maxLength.";
             }
         }
 
 
         internal static string FormatSch_DtMaxLengthInvalid(object arg1)
         {
-            return string.Format(Sch_DtMaxLengthInvalid, arg1);
+            return string.Format("The value '{0}' is invalid for dt:maxLength.", arg1);
         }
 
 
@@ -3536,14 +3541,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DtMinLengthInvalid", resourceCulture);
+                return "The value '{0}' is invalid for dt:minLength.";
             }
         }
 
 
         internal static string FormatSch_DtMinLengthInvalid(object arg1)
         {
-            return string.Format(Sch_DtMinLengthInvalid, arg1);
+            return string.Format("The value '{0}' is invalid for dt:minLength.", arg1);
         }
 
 
@@ -3554,7 +3559,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupDtMaxLength", resourceCulture);
+                return "The value of maxLength has already been declared.";
             }
         }
 
@@ -3567,7 +3572,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupDtMinLength", resourceCulture);
+                return "The value of minLength has already been declared.";
             }
         }
 
@@ -3580,7 +3585,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DtMinMaxLength", resourceCulture);
+                return "The maxLength value must be equal to or greater than the minLength value.";
             }
         }
 
@@ -3593,14 +3598,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupElement", resourceCulture);
+                return "The '{0}' element already exists in the content model.";
             }
         }
 
 
         internal static string FormatSch_DupElement(object arg1)
         {
-            return string.Format(Sch_DupElement, arg1);
+            return string.Format("The '{0}' element already exists in the content model.", arg1);
         }
 
 
@@ -3611,7 +3616,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupGroupParticle", resourceCulture);
+                return "The content model can only have one of the following; 'all', 'choice', or 'sequence'.";
             }
         }
 
@@ -3624,14 +3629,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidValue", resourceCulture);
+                return "The value '{0}' is invalid according to its data type.";
             }
         }
 
 
         internal static string FormatSch_InvalidValue(object arg1)
         {
-            return string.Format(Sch_InvalidValue, arg1);
+            return string.Format("The value '{0}' is invalid according to its data type.", arg1);
         }
 
 
@@ -3642,14 +3647,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidValueDetailed", resourceCulture);
+                return "The value '{0}' is invalid according to its schema type '{1}' - {2}";
             }
         }
 
 
         internal static string FormatSch_InvalidValueDetailed(object arg1, object arg2, object arg3)
         {
-            return string.Format(Sch_InvalidValueDetailed, arg1, arg2, arg3);
+            return string.Format("The value '{0}' is invalid according to its schema type '{1}' - {2}", arg1, arg2, arg3);
         }
 
 
@@ -3660,14 +3665,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidValueDetailedAttribute", resourceCulture);
+                return "The attribute '{0}' has an invalid value '{1}' according to its schema type '{2}' - {3}";
             }
         }
 
 
         internal static string FormatSch_InvalidValueDetailedAttribute(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(Sch_InvalidValueDetailedAttribute, arg1, arg2, arg3, arg4);
+            return string.Format("The attribute '{0}' has an invalid value '{1}' according to its schema type '{2}' - {3}", arg1, arg2, arg3, arg4);
         }
 
 
@@ -3678,14 +3683,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MissRequiredAttribute", resourceCulture);
+                return "The required attribute '{0}' is missing.";
             }
         }
 
 
         internal static string FormatSch_MissRequiredAttribute(object arg1)
         {
-            return string.Format(Sch_MissRequiredAttribute, arg1);
+            return string.Format("The required attribute '{0}' is missing.", arg1);
         }
 
 
@@ -3696,14 +3701,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_FixedAttributeValue", resourceCulture);
+                return "The value of the '{0}' attribute does not equal its fixed value.";
             }
         }
 
 
         internal static string FormatSch_FixedAttributeValue(object arg1)
         {
-            return string.Format(Sch_FixedAttributeValue, arg1);
+            return string.Format("The value of the '{0}' attribute does not equal its fixed value.", arg1);
         }
 
 
@@ -3714,14 +3719,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_FixedElementValue", resourceCulture);
+                return "The value of the '{0}' element does not equal its fixed value.";
             }
         }
 
 
         internal static string FormatSch_FixedElementValue(object arg1)
         {
-            return string.Format(Sch_FixedElementValue, arg1);
+            return string.Format("The value of the '{0}' element does not equal its fixed value.", arg1);
         }
 
 
@@ -3732,14 +3737,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_AttributeValueDataTypeDetailed", resourceCulture);
+                return "The '{0}' attribute is invalid - The value '{1}' is invalid according to its datatype '{2}' - {3}";
             }
         }
 
 
         internal static string FormatSch_AttributeValueDataTypeDetailed(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(Sch_AttributeValueDataTypeDetailed, arg1, arg2, arg3, arg4);
+            return string.Format("The '{0}' attribute is invalid - The value '{1}' is invalid according to its datatype '{2}' - {3}", arg1, arg2, arg3, arg4);
         }
 
 
@@ -3750,14 +3755,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_AttributeDefaultDataType", resourceCulture);
+                return "The default value of '{0}' attribute is invalid according to its datatype.";
             }
         }
 
 
         internal static string FormatSch_AttributeDefaultDataType(object arg1)
         {
-            return string.Format(Sch_AttributeDefaultDataType, arg1);
+            return string.Format("The default value of '{0}' attribute is invalid according to its datatype.", arg1);
         }
 
 
@@ -3768,7 +3773,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_IncludeLocation", resourceCulture);
+                return "The 'include' element cannot appear at this location.";
             }
         }
 
@@ -3781,7 +3786,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ImportLocation", resourceCulture);
+                return "The 'import' element cannot appear at this location.";
             }
         }
 
@@ -3794,7 +3799,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_RedefineLocation", resourceCulture);
+                return "The 'redefine' element cannot appear at this location.";
             }
         }
 
@@ -3807,7 +3812,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidBlockDefaultValue", resourceCulture);
+                return "The values 'list' and 'union' are invalid for the blockDefault attribute.";
             }
         }
 
@@ -3820,7 +3825,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidFinalDefaultValue", resourceCulture);
+                return "The value 'substitution' is invalid for the finalDefault attribute.";
             }
         }
 
@@ -3833,7 +3838,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidElementBlockValue", resourceCulture);
+                return "The values 'list' and 'union' are invalid for the block attribute on element.";
             }
         }
 
@@ -3846,7 +3851,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidElementFinalValue", resourceCulture);
+                return "The values 'substitution', 'list', and 'union' are invalid for the final attribute on element.";
             }
         }
 
@@ -3859,7 +3864,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidSimpleTypeFinalValue", resourceCulture);
+                return "The values 'substitution' and 'extension' are invalid for the final attribute on simpleType.";
             }
         }
 
@@ -3872,7 +3877,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidComplexTypeBlockValue", resourceCulture);
+                return "The values 'substitution', 'list', and 'union' are invalid for the block attribute on complexType.";
             }
         }
 
@@ -3885,7 +3890,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidComplexTypeFinalValue", resourceCulture);
+                return "The values 'substitution', 'list', and 'union' are invalid for the final attribute on complexType.";
             }
         }
 
@@ -3898,14 +3903,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupIdentityConstraint", resourceCulture);
+                return "The identity constraint '{0}' has already been declared.";
             }
         }
 
 
         internal static string FormatSch_DupIdentityConstraint(object arg1)
         {
-            return string.Format(Sch_DupIdentityConstraint, arg1);
+            return string.Format("The identity constraint '{0}' has already been declared.", arg1);
         }
 
 
@@ -3916,14 +3921,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupGlobalElement", resourceCulture);
+                return "The global element '{0}' has already been declared.";
             }
         }
 
 
         internal static string FormatSch_DupGlobalElement(object arg1)
         {
-            return string.Format(Sch_DupGlobalElement, arg1);
+            return string.Format("The global element '{0}' has already been declared.", arg1);
         }
 
 
@@ -3934,14 +3939,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupGlobalAttribute", resourceCulture);
+                return "The global attribute '{0}' has already been declared.";
             }
         }
 
 
         internal static string FormatSch_DupGlobalAttribute(object arg1)
         {
-            return string.Format(Sch_DupGlobalAttribute, arg1);
+            return string.Format("The global attribute '{0}' has already been declared.", arg1);
         }
 
 
@@ -3952,14 +3957,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupSimpleType", resourceCulture);
+                return "The simpleType '{0}' has already been declared.";
             }
         }
 
 
         internal static string FormatSch_DupSimpleType(object arg1)
         {
-            return string.Format(Sch_DupSimpleType, arg1);
+            return string.Format("The simpleType '{0}' has already been declared.", arg1);
         }
 
 
@@ -3970,14 +3975,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupComplexType", resourceCulture);
+                return "The complexType '{0}' has already been declared.";
             }
         }
 
 
         internal static string FormatSch_DupComplexType(object arg1)
         {
-            return string.Format(Sch_DupComplexType, arg1);
+            return string.Format("The complexType '{0}' has already been declared.", arg1);
         }
 
 
@@ -3988,14 +3993,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupGroup", resourceCulture);
+                return "The group '{0}' has already been declared.";
             }
         }
 
 
         internal static string FormatSch_DupGroup(object arg1)
         {
-            return string.Format(Sch_DupGroup, arg1);
+            return string.Format("The group '{0}' has already been declared.", arg1);
         }
 
 
@@ -4006,14 +4011,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupAttributeGroup", resourceCulture);
+                return "The attributeGroup '{0}' has already been declared.";
             }
         }
 
 
         internal static string FormatSch_DupAttributeGroup(object arg1)
         {
-            return string.Format(Sch_DupAttributeGroup, arg1);
+            return string.Format("The attributeGroup '{0}' has already been declared.", arg1);
         }
 
 
@@ -4024,14 +4029,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupNotation", resourceCulture);
+                return "The notation '{0}' has already been declared.";
             }
         }
 
 
         internal static string FormatSch_DupNotation(object arg1)
         {
-            return string.Format(Sch_DupNotation, arg1);
+            return string.Format("The notation '{0}' has already been declared.", arg1);
         }
 
 
@@ -4042,7 +4047,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DefaultFixedAttributes", resourceCulture);
+                return "The fixed and default attributes cannot both be present.";
             }
         }
 
@@ -4055,14 +4060,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_FixedInRef", resourceCulture);
+                return "The fixed value constraint on the '{0}' attribute reference must match the fixed value constraint on the declaration.";
             }
         }
 
 
         internal static string FormatSch_FixedInRef(object arg1)
         {
-            return string.Format(Sch_FixedInRef, arg1);
+            return string.Format("The fixed value constraint on the '{0}' attribute reference must match the fixed value constraint on the declaration.", arg1);
         }
 
 
@@ -4073,14 +4078,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_FixedDefaultInRef", resourceCulture);
+                return "The default value constraint cannot be present on the '{0}' attribute reference if the fixed value constraint is present on the declaration.";
             }
         }
 
 
         internal static string FormatSch_FixedDefaultInRef(object arg1)
         {
-            return string.Format(Sch_FixedDefaultInRef, arg1);
+            return string.Format("The default value constraint cannot be present on the '{0}' attribute reference if the fixed value constraint is present on the declaration.", arg1);
         }
 
 
@@ -4091,14 +4096,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupXsdElement", resourceCulture);
+                return "'{0}' is a duplicate XSD element.";
             }
         }
 
 
         internal static string FormatSch_DupXsdElement(object arg1)
         {
-            return string.Format(Sch_DupXsdElement, arg1);
+            return string.Format("'{0}' is a duplicate XSD element.", arg1);
         }
 
 
@@ -4109,14 +4114,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ForbiddenAttribute", resourceCulture);
+                return "The '{0}' attribute cannot be present.";
             }
         }
 
 
         internal static string FormatSch_ForbiddenAttribute(object arg1)
         {
-            return string.Format(Sch_ForbiddenAttribute, arg1);
+            return string.Format("The '{0}' attribute cannot be present.", arg1);
         }
 
 
@@ -4127,14 +4132,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_AttributeIgnored", resourceCulture);
+                return "The '{0}' attribute is ignored, because the value of 'prohibited' for attribute use only prevents inheritance of an identically named attribute from the base type definition.";
             }
         }
 
 
         internal static string FormatSch_AttributeIgnored(object arg1)
         {
-            return string.Format(Sch_AttributeIgnored, arg1);
+            return string.Format("The '{0}' attribute is ignored, because the value of 'prohibited' for attribute use only prevents inheritance of an identically named attribute from the base type definition.", arg1);
         }
 
 
@@ -4145,7 +4150,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ElementRef", resourceCulture);
+                return "When the ref attribute is present, the type attribute and complexType, simpleType, key, keyref, and unique elements cannot be present.";
             }
         }
 
@@ -4158,7 +4163,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_TypeMutualExclusive", resourceCulture);
+                return "The type attribute cannot be present with either simpleType or complexType.";
             }
         }
 
@@ -4171,7 +4176,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ElementNameRef", resourceCulture);
+                return "For element declaration, either the name or the ref attribute must be present.";
             }
         }
 
@@ -4184,14 +4189,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_AttributeNameRef", resourceCulture);
+                return "For attribute '{0}', either the name or the ref attribute must be present, but not both.";
             }
         }
 
 
         internal static string FormatSch_AttributeNameRef(object arg1)
         {
-            return string.Format(Sch_AttributeNameRef, arg1);
+            return string.Format("For attribute '{0}', either the name or the ref attribute must be present, but not both.", arg1);
         }
 
 
@@ -4202,14 +4207,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_TextNotAllowed", resourceCulture);
+                return "The following text is not allowed in this context: '{0}'.";
             }
         }
 
 
         internal static string FormatSch_TextNotAllowed(object arg1)
         {
-            return string.Format(Sch_TextNotAllowed, arg1);
+            return string.Format("The following text is not allowed in this context: '{0}'.", arg1);
         }
 
 
@@ -4220,14 +4225,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UndeclaredType", resourceCulture);
+                return "Type '{0}' is not declared.";
             }
         }
 
 
         internal static string FormatSch_UndeclaredType(object arg1)
         {
-            return string.Format(Sch_UndeclaredType, arg1);
+            return string.Format("Type '{0}' is not declared.", arg1);
         }
 
 
@@ -4238,14 +4243,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UndeclaredSimpleType", resourceCulture);
+                return "Type '{0}' is not declared, or is not a simple type.";
             }
         }
 
 
         internal static string FormatSch_UndeclaredSimpleType(object arg1)
         {
-            return string.Format(Sch_UndeclaredSimpleType, arg1);
+            return string.Format("Type '{0}' is not declared, or is not a simple type.", arg1);
         }
 
 
@@ -4256,14 +4261,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UndeclaredEquivClass", resourceCulture);
+                return "Substitution group refers to '{0}', an undeclared element.";
             }
         }
 
 
         internal static string FormatSch_UndeclaredEquivClass(object arg1)
         {
-            return string.Format(Sch_UndeclaredEquivClass, arg1);
+            return string.Format("Substitution group refers to '{0}', an undeclared element.", arg1);
         }
 
 
@@ -4274,7 +4279,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_AttListPresence", resourceCulture);
+                return "An attribute of type ID must have a declared default of either #IMPLIED or #REQUIRED.";
             }
         }
 
@@ -4287,14 +4292,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_NotationValue", resourceCulture);
+                return "'{0}' is not in the notation list.";
             }
         }
 
 
         internal static string FormatSch_NotationValue(object arg1)
         {
-            return string.Format(Sch_NotationValue, arg1);
+            return string.Format("'{0}' is not in the notation list.", arg1);
         }
 
 
@@ -4305,14 +4310,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_EnumerationValue", resourceCulture);
+                return "'{0}' is not in the enumeration list.";
             }
         }
 
 
         internal static string FormatSch_EnumerationValue(object arg1)
         {
-            return string.Format(Sch_EnumerationValue, arg1);
+            return string.Format("'{0}' is not in the enumeration list.", arg1);
         }
 
 
@@ -4323,7 +4328,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_EmptyAttributeValue", resourceCulture);
+                return "The attribute value cannot be empty.";
             }
         }
 
@@ -4336,14 +4341,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidLanguageId", resourceCulture);
+                return "'{0}' is an invalid language identifier.";
             }
         }
 
 
         internal static string FormatSch_InvalidLanguageId(object arg1)
         {
-            return string.Format(Sch_InvalidLanguageId, arg1);
+            return string.Format("'{0}' is an invalid language identifier.", arg1);
         }
 
 
@@ -4354,7 +4359,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_XmlSpace", resourceCulture);
+                return "Invalid xml:space syntax.";
             }
         }
 
@@ -4367,14 +4372,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidXsdAttributeValue", resourceCulture);
+                return "'{1}' is an invalid value for the '{0}' attribute.";
             }
         }
 
 
         internal static string FormatSch_InvalidXsdAttributeValue(object arg1, object arg2)
         {
-            return string.Format(Sch_InvalidXsdAttributeValue, arg1, arg2);
+            return string.Format("'{1}' is an invalid value for the '{0}' attribute.", arg1, arg2);
         }
 
 
@@ -4385,14 +4390,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidXsdAttributeDatatypeValue", resourceCulture);
+                return "The value for the '{0}' attribute is invalid - {1}";
             }
         }
 
 
         internal static string FormatSch_InvalidXsdAttributeDatatypeValue(object arg1, object arg2)
         {
-            return string.Format(Sch_InvalidXsdAttributeDatatypeValue, arg1, arg2);
+            return string.Format("The value for the '{0}' attribute is invalid - {1}", arg1, arg2);
         }
 
 
@@ -4403,14 +4408,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ElementValueDataTypeDetailed", resourceCulture);
+                return "The '{0}' element is invalid - The value '{1}' is invalid according to its datatype '{2}' - {3}";
             }
         }
 
 
         internal static string FormatSch_ElementValueDataTypeDetailed(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(Sch_ElementValueDataTypeDetailed, arg1, arg2, arg3, arg4);
+            return string.Format("The '{0}' element is invalid - The value '{1}' is invalid according to its datatype '{2}' - {3}", arg1, arg2, arg3, arg4);
         }
 
 
@@ -4421,14 +4426,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidElementDefaultValue", resourceCulture);
+                return "The default value '{0}' of element '{1}' is invalid according to the type specified by xsi:type.";
             }
         }
 
 
         internal static string FormatSch_InvalidElementDefaultValue(object arg1, object arg2)
         {
-            return string.Format(Sch_InvalidElementDefaultValue, arg1, arg2);
+            return string.Format("The default value '{0}' of element '{1}' is invalid according to the type specified by xsi:type.", arg1, arg2);
         }
 
 
@@ -4439,14 +4444,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_NonDeterministic", resourceCulture);
+                return "Multiple definition of element '{0}' causes the content model to become ambiguous. A content model must be formed such that during validation of an element information item sequence, the particle contained directly, indirectly or implicitly therein with which to attempt to validate each item in the sequence in turn can be uniquely determined without examining the content or attributes of that item, and without any information about the items in the remainder of the sequence.";
             }
         }
 
 
         internal static string FormatSch_NonDeterministic(object arg1)
         {
-            return string.Format(Sch_NonDeterministic, arg1);
+            return string.Format("Multiple definition of element '{0}' causes the content model to become ambiguous. A content model must be formed such that during validation of an element information item sequence, the particle contained directly, indirectly or implicitly therein with which to attempt to validate each item in the sequence in turn can be uniquely determined without examining the content or attributes of that item, and without any information about the items in the remainder of the sequence.", arg1);
         }
 
 
@@ -4457,14 +4462,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_NonDeterministicAnyEx", resourceCulture);
+                return "Wildcard '{0}' allows element '{1}', and causes the content model to become ambiguous. A content model must be formed such that during validation of an element information item sequence, the particle contained directly, indirectly or implicitly therein with which to attempt to validate each item in the sequence in turn can be uniquely determined without examining the content or attributes of that item, and without any information about the items in the remainder of the sequence.";
             }
         }
 
 
         internal static string FormatSch_NonDeterministicAnyEx(object arg1, object arg2)
         {
-            return string.Format(Sch_NonDeterministicAnyEx, arg1, arg2);
+            return string.Format("Wildcard '{0}' allows element '{1}', and causes the content model to become ambiguous. A content model must be formed such that during validation of an element information item sequence, the particle contained directly, indirectly or implicitly therein with which to attempt to validate each item in the sequence in turn can be uniquely determined without examining the content or attributes of that item, and without any information about the items in the remainder of the sequence.", arg1, arg2);
         }
 
 
@@ -4475,14 +4480,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_NonDeterministicAnyAny", resourceCulture);
+                return "Wildcards '{0}' and '{1}' have not empty intersection, and causes the content model to become ambiguous. A content model must be formed such that during validation of an element information item sequence, the particle contained directly, indirectly or implicitly therein with which to attempt to validate each item in the sequence in turn can be uniquely determined without examining the content or attributes of that item, and without any information about the items in the remainder of the sequence.";
             }
         }
 
 
         internal static string FormatSch_NonDeterministicAnyAny(object arg1, object arg2)
         {
-            return string.Format(Sch_NonDeterministicAnyAny, arg1, arg2);
+            return string.Format("Wildcards '{0}' and '{1}' have not empty intersection, and causes the content model to become ambiguous. A content model must be formed such that during validation of an element information item sequence, the particle contained directly, indirectly or implicitly therein with which to attempt to validate each item in the sequence in turn can be uniquely determined without examining the content or attributes of that item, and without any information about the items in the remainder of the sequence.", arg1, arg2);
         }
 
 
@@ -4493,7 +4498,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_StandAlone", resourceCulture);
+                return "The standalone document declaration must have a value of 'no'.";
             }
         }
 
@@ -4506,7 +4511,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_XmlNsAttribute", resourceCulture);
+                return "The value 'xmlns' cannot be used as the name of an attribute declaration.";
             }
         }
 
@@ -4519,14 +4524,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_AllElement", resourceCulture);
+                return "Element '{0}' cannot appear more than once if content model type is \"all\".";
             }
         }
 
 
         internal static string FormatSch_AllElement(object arg1)
         {
-            return string.Format(Sch_AllElement, arg1);
+            return string.Format("Element '{0}' cannot appear more than once if content model type is \"all\".", arg1);
         }
 
 
@@ -4537,14 +4542,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MismatchTargetNamespaceInclude", resourceCulture);
+                return "The targetNamespace '{0}' of included/redefined schema should be the same as the targetNamespace '{1}' of the including schema.";
             }
         }
 
 
         internal static string FormatSch_MismatchTargetNamespaceInclude(object arg1, object arg2)
         {
-            return string.Format(Sch_MismatchTargetNamespaceInclude, arg1, arg2);
+            return string.Format("The targetNamespace '{0}' of included/redefined schema should be the same as the targetNamespace '{1}' of the including schema.", arg1, arg2);
         }
 
 
@@ -4555,14 +4560,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MismatchTargetNamespaceImport", resourceCulture);
+                return "The namespace attribute '{0}' of an import should be the same value as the targetNamespace '{1}' of the imported schema.";
             }
         }
 
 
         internal static string FormatSch_MismatchTargetNamespaceImport(object arg1, object arg2)
         {
-            return string.Format(Sch_MismatchTargetNamespaceImport, arg1, arg2);
+            return string.Format("The namespace attribute '{0}' of an import should be the same value as the targetNamespace '{1}' of the imported schema.", arg1, arg2);
         }
 
 
@@ -4573,14 +4578,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MismatchTargetNamespaceEx", resourceCulture);
+                return "The targetNamespace parameter '{0}' should be the same value as the targetNamespace '{1}' of the schema.";
             }
         }
 
 
         internal static string FormatSch_MismatchTargetNamespaceEx(object arg1, object arg2)
         {
-            return string.Format(Sch_MismatchTargetNamespaceEx, arg1, arg2);
+            return string.Format("The targetNamespace parameter '{0}' should be the same value as the targetNamespace '{1}' of the schema.", arg1, arg2);
         }
 
 
@@ -4591,14 +4596,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_XsiTypeNotFound", resourceCulture);
+                return "This is an invalid xsi:type '{0}'.";
             }
         }
 
 
         internal static string FormatSch_XsiTypeNotFound(object arg1)
         {
-            return string.Format(Sch_XsiTypeNotFound, arg1);
+            return string.Format("This is an invalid xsi:type '{0}'.", arg1);
         }
 
 
@@ -4609,14 +4614,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_XsiTypeAbstract", resourceCulture);
+                return "The xsi:type '{0}' cannot be abstract.";
             }
         }
 
 
         internal static string FormatSch_XsiTypeAbstract(object arg1)
         {
-            return string.Format(Sch_XsiTypeAbstract, arg1);
+            return string.Format("The xsi:type '{0}' cannot be abstract.", arg1);
         }
 
 
@@ -4627,7 +4632,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ListFromNonatomic", resourceCulture);
+                return "A list data type must be derived from an atomic or union data type.";
             }
         }
 
@@ -4640,7 +4645,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UnionFromUnion", resourceCulture);
+                return "It is an error if a union type has a member with variety union and this member cannot be substituted with its own members. This may be due to the fact that the union member is a restriction of a union with facets.";
             }
         }
 
@@ -4653,7 +4658,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupLengthFacet", resourceCulture);
+                return "This is a duplicate Length constraining facet.";
             }
         }
 
@@ -4666,7 +4671,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupMinLengthFacet", resourceCulture);
+                return "This is a duplicate MinLength constraining facet.";
             }
         }
 
@@ -4679,7 +4684,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupMaxLengthFacet", resourceCulture);
+                return "This is a duplicate MaxLength constraining facet.";
             }
         }
 
@@ -4692,7 +4697,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupWhiteSpaceFacet", resourceCulture);
+                return "This is a duplicate WhiteSpace constraining facet.";
             }
         }
 
@@ -4705,7 +4710,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupMaxInclusiveFacet", resourceCulture);
+                return "This is a duplicate MaxInclusive constraining facet.";
             }
         }
 
@@ -4718,7 +4723,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupMaxExclusiveFacet", resourceCulture);
+                return "This is a duplicate MaxExclusive constraining facet.";
             }
         }
 
@@ -4731,7 +4736,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupMinInclusiveFacet", resourceCulture);
+                return "This is a duplicate MinInclusive constraining facet.";
             }
         }
 
@@ -4744,7 +4749,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupMinExclusiveFacet", resourceCulture);
+                return "This is a duplicate MinExclusive constraining facet.";
             }
         }
 
@@ -4757,7 +4762,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupTotalDigitsFacet", resourceCulture);
+                return "This is a duplicate TotalDigits constraining facet.";
             }
         }
 
@@ -4770,7 +4775,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupFractionDigitsFacet", resourceCulture);
+                return "This is a duplicate FractionDigits constraining facet.";
             }
         }
 
@@ -4783,14 +4788,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_LengthFacetProhibited", resourceCulture);
+                return "The length constraining facet is prohibited for '{0}'.";
             }
         }
 
 
         internal static string FormatSch_LengthFacetProhibited(object arg1)
         {
-            return string.Format(Sch_LengthFacetProhibited, arg1);
+            return string.Format("The length constraining facet is prohibited for '{0}'.", arg1);
         }
 
 
@@ -4801,14 +4806,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MinLengthFacetProhibited", resourceCulture);
+                return "The MinLength constraining facet is prohibited for '{0}'.";
             }
         }
 
 
         internal static string FormatSch_MinLengthFacetProhibited(object arg1)
         {
-            return string.Format(Sch_MinLengthFacetProhibited, arg1);
+            return string.Format("The MinLength constraining facet is prohibited for '{0}'.", arg1);
         }
 
 
@@ -4819,14 +4824,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MaxLengthFacetProhibited", resourceCulture);
+                return "The MaxLength constraining facet is prohibited for '{0}'.";
             }
         }
 
 
         internal static string FormatSch_MaxLengthFacetProhibited(object arg1)
         {
-            return string.Format(Sch_MaxLengthFacetProhibited, arg1);
+            return string.Format("The MaxLength constraining facet is prohibited for '{0}'.", arg1);
         }
 
 
@@ -4837,14 +4842,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_PatternFacetProhibited", resourceCulture);
+                return "The Pattern constraining facet is prohibited for '{0}'.";
             }
         }
 
 
         internal static string FormatSch_PatternFacetProhibited(object arg1)
         {
-            return string.Format(Sch_PatternFacetProhibited, arg1);
+            return string.Format("The Pattern constraining facet is prohibited for '{0}'.", arg1);
         }
 
 
@@ -4855,14 +4860,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_EnumerationFacetProhibited", resourceCulture);
+                return "The Enumeration constraining facet is prohibited for '{0}'.";
             }
         }
 
 
         internal static string FormatSch_EnumerationFacetProhibited(object arg1)
         {
-            return string.Format(Sch_EnumerationFacetProhibited, arg1);
+            return string.Format("The Enumeration constraining facet is prohibited for '{0}'.", arg1);
         }
 
 
@@ -4873,14 +4878,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_WhiteSpaceFacetProhibited", resourceCulture);
+                return "The WhiteSpace constraining facet is prohibited for '{0}'.";
             }
         }
 
 
         internal static string FormatSch_WhiteSpaceFacetProhibited(object arg1)
         {
-            return string.Format(Sch_WhiteSpaceFacetProhibited, arg1);
+            return string.Format("The WhiteSpace constraining facet is prohibited for '{0}'.", arg1);
         }
 
 
@@ -4891,14 +4896,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MaxInclusiveFacetProhibited", resourceCulture);
+                return "The MaxInclusive constraining facet is prohibited for '{0}'.";
             }
         }
 
 
         internal static string FormatSch_MaxInclusiveFacetProhibited(object arg1)
         {
-            return string.Format(Sch_MaxInclusiveFacetProhibited, arg1);
+            return string.Format("The MaxInclusive constraining facet is prohibited for '{0}'.", arg1);
         }
 
 
@@ -4909,14 +4914,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MaxExclusiveFacetProhibited", resourceCulture);
+                return "The MaxExclusive constraining facet is prohibited for '{0}'.";
             }
         }
 
 
         internal static string FormatSch_MaxExclusiveFacetProhibited(object arg1)
         {
-            return string.Format(Sch_MaxExclusiveFacetProhibited, arg1);
+            return string.Format("The MaxExclusive constraining facet is prohibited for '{0}'.", arg1);
         }
 
 
@@ -4927,14 +4932,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MinInclusiveFacetProhibited", resourceCulture);
+                return "The MinInclusive constraining facet is prohibited for '{0}'.";
             }
         }
 
 
         internal static string FormatSch_MinInclusiveFacetProhibited(object arg1)
         {
-            return string.Format(Sch_MinInclusiveFacetProhibited, arg1);
+            return string.Format("The MinInclusive constraining facet is prohibited for '{0}'.", arg1);
         }
 
 
@@ -4945,14 +4950,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MinExclusiveFacetProhibited", resourceCulture);
+                return "The MinExclusive constraining facet is prohibited for '{0}'.";
             }
         }
 
 
         internal static string FormatSch_MinExclusiveFacetProhibited(object arg1)
         {
-            return string.Format(Sch_MinExclusiveFacetProhibited, arg1);
+            return string.Format("The MinExclusive constraining facet is prohibited for '{0}'.", arg1);
         }
 
 
@@ -4963,14 +4968,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_TotalDigitsFacetProhibited", resourceCulture);
+                return "The TotalDigits constraining facet is prohibited for '{0}'.";
             }
         }
 
 
         internal static string FormatSch_TotalDigitsFacetProhibited(object arg1)
         {
-            return string.Format(Sch_TotalDigitsFacetProhibited, arg1);
+            return string.Format("The TotalDigits constraining facet is prohibited for '{0}'.", arg1);
         }
 
 
@@ -4981,14 +4986,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_FractionDigitsFacetProhibited", resourceCulture);
+                return "The FractionDigits constraining facet is prohibited for '{0}'.";
             }
         }
 
 
         internal static string FormatSch_FractionDigitsFacetProhibited(object arg1)
         {
-            return string.Format(Sch_FractionDigitsFacetProhibited, arg1);
+            return string.Format("The FractionDigits constraining facet is prohibited for '{0}'.", arg1);
         }
 
 
@@ -4999,14 +5004,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_LengthFacetInvalid", resourceCulture);
+                return "The Length constraining facet is invalid - {0}";
             }
         }
 
 
         internal static string FormatSch_LengthFacetInvalid(object arg1)
         {
-            return string.Format(Sch_LengthFacetInvalid, arg1);
+            return string.Format("The Length constraining facet is invalid - {0}", arg1);
         }
 
 
@@ -5017,14 +5022,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MinLengthFacetInvalid", resourceCulture);
+                return "The MinLength constraining facet is invalid - {0}";
             }
         }
 
 
         internal static string FormatSch_MinLengthFacetInvalid(object arg1)
         {
-            return string.Format(Sch_MinLengthFacetInvalid, arg1);
+            return string.Format("The MinLength constraining facet is invalid - {0}", arg1);
         }
 
 
@@ -5035,14 +5040,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MaxLengthFacetInvalid", resourceCulture);
+                return "The MaxLength constraining facet is invalid - {0}";
             }
         }
 
 
         internal static string FormatSch_MaxLengthFacetInvalid(object arg1)
         {
-            return string.Format(Sch_MaxLengthFacetInvalid, arg1);
+            return string.Format("The MaxLength constraining facet is invalid - {0}", arg1);
         }
 
 
@@ -5053,14 +5058,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MaxInclusiveFacetInvalid", resourceCulture);
+                return "The MaxInclusive constraining facet is invalid - {0}";
             }
         }
 
 
         internal static string FormatSch_MaxInclusiveFacetInvalid(object arg1)
         {
-            return string.Format(Sch_MaxInclusiveFacetInvalid, arg1);
+            return string.Format("The MaxInclusive constraining facet is invalid - {0}", arg1);
         }
 
 
@@ -5071,14 +5076,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MaxExclusiveFacetInvalid", resourceCulture);
+                return "The MaxExclusive constraining facet is invalid - {0}";
             }
         }
 
 
         internal static string FormatSch_MaxExclusiveFacetInvalid(object arg1)
         {
-            return string.Format(Sch_MaxExclusiveFacetInvalid, arg1);
+            return string.Format("The MaxExclusive constraining facet is invalid - {0}", arg1);
         }
 
 
@@ -5089,14 +5094,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MinInclusiveFacetInvalid", resourceCulture);
+                return "The MinInclusive constraining facet is invalid - {0}";
             }
         }
 
 
         internal static string FormatSch_MinInclusiveFacetInvalid(object arg1)
         {
-            return string.Format(Sch_MinInclusiveFacetInvalid, arg1);
+            return string.Format("The MinInclusive constraining facet is invalid - {0}", arg1);
         }
 
 
@@ -5107,14 +5112,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MinExclusiveFacetInvalid", resourceCulture);
+                return "The MinExclusive constraining facet is invalid - {0}";
             }
         }
 
 
         internal static string FormatSch_MinExclusiveFacetInvalid(object arg1)
         {
-            return string.Format(Sch_MinExclusiveFacetInvalid, arg1);
+            return string.Format("The MinExclusive constraining facet is invalid - {0}", arg1);
         }
 
 
@@ -5125,14 +5130,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_TotalDigitsFacetInvalid", resourceCulture);
+                return "The TotalDigits constraining facet is invalid - {0}";
             }
         }
 
 
         internal static string FormatSch_TotalDigitsFacetInvalid(object arg1)
         {
-            return string.Format(Sch_TotalDigitsFacetInvalid, arg1);
+            return string.Format("The TotalDigits constraining facet is invalid - {0}", arg1);
         }
 
 
@@ -5143,14 +5148,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_FractionDigitsFacetInvalid", resourceCulture);
+                return "The FractionDigits constraining facet is invalid - {0}";
             }
         }
 
 
         internal static string FormatSch_FractionDigitsFacetInvalid(object arg1)
         {
-            return string.Format(Sch_FractionDigitsFacetInvalid, arg1);
+            return string.Format("The FractionDigits constraining facet is invalid - {0}", arg1);
         }
 
 
@@ -5161,14 +5166,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_PatternFacetInvalid", resourceCulture);
+                return "The Pattern constraining facet is invalid - {0}";
             }
         }
 
 
         internal static string FormatSch_PatternFacetInvalid(object arg1)
         {
-            return string.Format(Sch_PatternFacetInvalid, arg1);
+            return string.Format("The Pattern constraining facet is invalid - {0}", arg1);
         }
 
 
@@ -5179,14 +5184,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_EnumerationFacetInvalid", resourceCulture);
+                return "The Enumeration constraining facet is invalid - {0}";
             }
         }
 
 
         internal static string FormatSch_EnumerationFacetInvalid(object arg1)
         {
-            return string.Format(Sch_EnumerationFacetInvalid, arg1);
+            return string.Format("The Enumeration constraining facet is invalid - {0}", arg1);
         }
 
 
@@ -5197,14 +5202,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidWhiteSpace", resourceCulture);
+                return "The whitespace character, '{0}', is invalid.";
             }
         }
 
 
         internal static string FormatSch_InvalidWhiteSpace(object arg1)
         {
-            return string.Format(Sch_InvalidWhiteSpace, arg1);
+            return string.Format("The whitespace character, '{0}', is invalid.", arg1);
         }
 
 
@@ -5215,7 +5220,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UnknownFacet", resourceCulture);
+                return "This is an unknown facet.";
             }
         }
 
@@ -5228,7 +5233,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_LengthAndMinMax", resourceCulture);
+                return "It is an error for both length and minLength or maxLength to be present.";
             }
         }
 
@@ -5241,7 +5246,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MinLengthGtMaxLength", resourceCulture);
+                return "minLength is greater than maxLength.";
             }
         }
 
@@ -5254,7 +5259,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_FractionDigitsGtTotalDigits", resourceCulture);
+                return "FractionDigits is greater than TotalDigits.";
             }
         }
 
@@ -5267,7 +5272,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_LengthConstraintFailed", resourceCulture);
+                return "The actual length is not equal to the specified length.";
             }
         }
 
@@ -5280,7 +5285,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MinLengthConstraintFailed", resourceCulture);
+                return "The actual length is less than the MinLength value.";
             }
         }
 
@@ -5293,7 +5298,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MaxLengthConstraintFailed", resourceCulture);
+                return "The actual length is greater than the MaxLength value.";
             }
         }
 
@@ -5306,7 +5311,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_PatternConstraintFailed", resourceCulture);
+                return "The Pattern constraint failed.";
             }
         }
 
@@ -5319,7 +5324,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_EnumerationConstraintFailed", resourceCulture);
+                return "The Enumeration constraint failed.";
             }
         }
 
@@ -5332,7 +5337,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MaxInclusiveConstraintFailed", resourceCulture);
+                return "The MaxInclusive constraint failed.";
             }
         }
 
@@ -5345,7 +5350,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MaxExclusiveConstraintFailed", resourceCulture);
+                return "The MaxExclusive constraint failed.";
             }
         }
 
@@ -5358,7 +5363,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MinInclusiveConstraintFailed", resourceCulture);
+                return "The MinInclusive constraint failed.";
             }
         }
 
@@ -5371,7 +5376,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MinExclusiveConstraintFailed", resourceCulture);
+                return "The MinExclusive constraint failed.";
             }
         }
 
@@ -5384,7 +5389,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_TotalDigitsConstraintFailed", resourceCulture);
+                return "The TotalDigits constraint failed.";
             }
         }
 
@@ -5397,7 +5402,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_FractionDigitsConstraintFailed", resourceCulture);
+                return "The FractionDigits constraint failed.";
             }
         }
 
@@ -5410,14 +5415,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UnionFailedEx", resourceCulture);
+                return "The value '{0}' is not valid according to any of the memberTypes of the union.";
             }
         }
 
 
         internal static string FormatSch_UnionFailedEx(object arg1)
         {
-            return string.Format(Sch_UnionFailedEx, arg1);
+            return string.Format("The value '{0}' is not valid according to any of the memberTypes of the union.", arg1);
         }
 
 
@@ -5428,7 +5433,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_NotationRequired", resourceCulture);
+                return "NOTATION cannot be used directly in a schema; only data types derived from NOTATION by specifying an enumeration value can be used in a schema. All enumeration facet values must match the name of a notation declared in the current schema.";
             }
         }
 
@@ -5441,7 +5446,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupNotationAttribute", resourceCulture);
+                return "No element type can have more than one NOTATION attribute specified.";
             }
         }
 
@@ -5454,7 +5459,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MissingPublicSystemAttribute", resourceCulture);
+                return "NOTATION must have either the Public or System attribute present.";
             }
         }
 
@@ -5467,7 +5472,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_NotationAttributeOnEmptyElement", resourceCulture);
+                return "An attribute of type NOTATION must not be declared on an element declared EMPTY.";
             }
         }
 
@@ -5480,14 +5485,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_RefNotInScope", resourceCulture);
+                return "The Keyref '{0}' cannot find the referred key or unique in scope.";
             }
         }
 
 
         internal static string FormatSch_RefNotInScope(object arg1)
         {
-            return string.Format(Sch_RefNotInScope, arg1);
+            return string.Format("The Keyref '{0}' cannot find the referred key or unique in scope.", arg1);
         }
 
 
@@ -5498,14 +5503,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UndeclaredIdentityConstraint", resourceCulture);
+                return "The '{0}' identity constraint is not declared.";
             }
         }
 
 
         internal static string FormatSch_UndeclaredIdentityConstraint(object arg1)
         {
-            return string.Format(Sch_UndeclaredIdentityConstraint, arg1);
+            return string.Format("The '{0}' identity constraint is not declared.", arg1);
         }
 
 
@@ -5516,14 +5521,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_RefInvalidIdentityConstraint", resourceCulture);
+                return "Reference to an invalid identity constraint, '{0}'.";
             }
         }
 
 
         internal static string FormatSch_RefInvalidIdentityConstraint(object arg1)
         {
-            return string.Format(Sch_RefInvalidIdentityConstraint, arg1);
+            return string.Format("Reference to an invalid identity constraint, '{0}'.", arg1);
         }
 
 
@@ -5534,14 +5539,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_RefInvalidCardin", resourceCulture);
+                return "Keyref '{0}' has different cardinality as the referred key or unique element.";
             }
         }
 
 
         internal static string FormatSch_RefInvalidCardin(object arg1)
         {
-            return string.Format(Sch_RefInvalidCardin, arg1);
+            return string.Format("Keyref '{0}' has different cardinality as the referred key or unique element.", arg1);
         }
 
 
@@ -5552,14 +5557,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ReftoKeyref", resourceCulture);
+                return "The '{0}' Keyref can refer to key or unique only.";
             }
         }
 
 
         internal static string FormatSch_ReftoKeyref(object arg1)
         {
-            return string.Format(Sch_ReftoKeyref, arg1);
+            return string.Format("The '{0}' Keyref can refer to key or unique only.", arg1);
         }
 
 
@@ -5570,7 +5575,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_EmptyXPath", resourceCulture);
+                return "The XPath for selector or field cannot be empty.";
             }
         }
 
@@ -5583,14 +5588,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UnresolvedPrefix", resourceCulture);
+                return "The prefix '{0}' in XPath cannot be resolved.";
             }
         }
 
 
         internal static string FormatSch_UnresolvedPrefix(object arg1)
         {
-            return string.Format(Sch_UnresolvedPrefix, arg1);
+            return string.Format("The prefix '{0}' in XPath cannot be resolved.", arg1);
         }
 
 
@@ -5601,14 +5606,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UnresolvedKeyref", resourceCulture);
+                return "The key sequence '{0}' in '{1}' Keyref fails to refer to some key.";
             }
         }
 
 
         internal static string FormatSch_UnresolvedKeyref(object arg1, object arg2)
         {
-            return string.Format(Sch_UnresolvedKeyref, arg1, arg2);
+            return string.Format("The key sequence '{0}' in '{1}' Keyref fails to refer to some key.", arg1, arg2);
         }
 
 
@@ -5619,14 +5624,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ICXpathError", resourceCulture);
+                return "'{0}' is an invalid XPath for selector or field.";
             }
         }
 
 
         internal static string FormatSch_ICXpathError(object arg1)
         {
-            return string.Format(Sch_ICXpathError, arg1);
+            return string.Format("'{0}' is an invalid XPath for selector or field.", arg1);
         }
 
 
@@ -5637,14 +5642,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_SelectorAttr", resourceCulture);
+                return "'{0}' is an invalid XPath for selector. Selector cannot have an XPath selection with an attribute node.";
             }
         }
 
 
         internal static string FormatSch_SelectorAttr(object arg1)
         {
-            return string.Format(Sch_SelectorAttr, arg1);
+            return string.Format("'{0}' is an invalid XPath for selector. Selector cannot have an XPath selection with an attribute node.", arg1);
         }
 
 
@@ -5655,14 +5660,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_FieldSimpleTypeExpected", resourceCulture);
+                return "The field '{0}' is expecting an element or attribute with simple type or simple content.";
             }
         }
 
 
         internal static string FormatSch_FieldSimpleTypeExpected(object arg1)
         {
-            return string.Format(Sch_FieldSimpleTypeExpected, arg1);
+            return string.Format("The field '{0}' is expecting an element or attribute with simple type or simple content.", arg1);
         }
 
 
@@ -5673,14 +5678,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_FieldSingleValueExpected", resourceCulture);
+                return "The field '{0}' is expecting at the most one value.";
             }
         }
 
 
         internal static string FormatSch_FieldSingleValueExpected(object arg1)
         {
-            return string.Format(Sch_FieldSingleValueExpected, arg1);
+            return string.Format("The field '{0}' is expecting at the most one value.", arg1);
         }
 
 
@@ -5691,14 +5696,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MissingKey", resourceCulture);
+                return "The identity constraint '{0}' validation has failed. Either a key is missing or the existing key has an empty node.";
             }
         }
 
 
         internal static string FormatSch_MissingKey(object arg1)
         {
-            return string.Format(Sch_MissingKey, arg1);
+            return string.Format("The identity constraint '{0}' validation has failed. Either a key is missing or the existing key has an empty node.", arg1);
         }
 
 
@@ -5709,14 +5714,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DuplicateKey", resourceCulture);
+                return "There is a duplicate key sequence '{0}' for the '{1}' key or unique identity constraint.";
             }
         }
 
 
         internal static string FormatSch_DuplicateKey(object arg1, object arg2)
         {
-            return string.Format(Sch_DuplicateKey, arg1, arg2);
+            return string.Format("There is a duplicate key sequence '{0}' for the '{1}' key or unique identity constraint.", arg1, arg2);
         }
 
 
@@ -5727,7 +5732,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_TargetNamespaceXsi", resourceCulture);
+                return "The target namespace of an attribute declaration, whether local or global, must not match http://www.w3.org/2001/XMLSchema-instance.";
             }
         }
 
@@ -5740,14 +5745,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UndeclaredEntity", resourceCulture);
+                return "Reference to an undeclared entity, '{0}'.";
             }
         }
 
 
         internal static string FormatSch_UndeclaredEntity(object arg1)
         {
-            return string.Format(Sch_UndeclaredEntity, arg1);
+            return string.Format("Reference to an undeclared entity, '{0}'.", arg1);
         }
 
 
@@ -5758,14 +5763,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UnparsedEntityRef", resourceCulture);
+                return "Reference to an unparsed entity, '{0}'.";
             }
         }
 
 
         internal static string FormatSch_UnparsedEntityRef(object arg1)
         {
-            return string.Format(Sch_UnparsedEntityRef, arg1);
+            return string.Format("Reference to an unparsed entity, '{0}'.", arg1);
         }
 
 
@@ -5776,7 +5781,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MaxOccursInvalidXsd", resourceCulture);
+                return "The value for the 'maxOccurs' attribute must be xsd:nonNegativeInteger or 'unbounded'.";
             }
         }
 
@@ -5789,7 +5794,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MinOccursInvalidXsd", resourceCulture);
+                return "The value for the 'minOccurs' attribute must be xsd:nonNegativeInteger.";
             }
         }
 
@@ -5802,7 +5807,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MaxInclusiveExclusive", resourceCulture);
+                return "'maxInclusive' and 'maxExclusive' cannot both be specified for the same data type.";
             }
         }
 
@@ -5815,7 +5820,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MinInclusiveExclusive", resourceCulture);
+                return "'minInclusive' and 'minExclusive' cannot both be specified for the same data type.";
             }
         }
 
@@ -5828,7 +5833,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MinInclusiveGtMaxInclusive", resourceCulture);
+                return "The value specified for 'minInclusive' cannot be greater than the value specified for 'maxInclusive' for the same data type.";
             }
         }
 
@@ -5841,7 +5846,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MinExclusiveGtMaxExclusive", resourceCulture);
+                return "The value specified for 'minExclusive' cannot be greater than the value specified for 'maxExclusive' for the same data type.";
             }
         }
 
@@ -5854,7 +5859,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MinInclusiveGtMaxExclusive", resourceCulture);
+                return "The value specified for 'minInclusive' cannot be greater than the value specified for 'maxExclusive' for the same data type.";
             }
         }
 
@@ -5867,7 +5872,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MinExclusiveGtMaxInclusive", resourceCulture);
+                return "The value specified for 'minExclusive' cannot be greater than the value specified for 'maxInclusive' for the same data type.";
             }
         }
 
@@ -5880,7 +5885,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_SimpleTypeRestriction", resourceCulture);
+                return "'simpleType' should be the first child of restriction.";
             }
         }
 
@@ -5893,7 +5898,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidFacetPosition", resourceCulture);
+                return "Facet should go before 'attribute', 'attributeGroup', or 'anyAttribute'.";
             }
         }
 
@@ -5906,14 +5911,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_AttributeMutuallyExclusive", resourceCulture);
+                return "'{0}' and content model are mutually exclusive.";
             }
         }
 
 
         internal static string FormatSch_AttributeMutuallyExclusive(object arg1)
         {
-            return string.Format(Sch_AttributeMutuallyExclusive, arg1);
+            return string.Format("'{0}' and content model are mutually exclusive.", arg1);
         }
 
 
@@ -5924,7 +5929,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_AnyAttributeLastChild", resourceCulture);
+                return "'anyAttribute' must be the last child.";
             }
         }
 
@@ -5937,7 +5942,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ComplexTypeContentModel", resourceCulture);
+                return "The content model of a complex type must consist of 'annotation' (if present); followed by zero or one of the following: 'simpleContent', 'complexContent', 'group', 'choice', 'sequence', or 'all'; followed by zero or more 'attribute' or 'attributeGroup'; followed by zero or one 'anyAttribute'.";
             }
         }
 
@@ -5950,7 +5955,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ComplexContentContentModel", resourceCulture);
+                return "Complex content restriction or extension should consist of zero or one of 'group', 'choice', 'sequence', or 'all'; followed by zero or more 'attribute' or 'attributeGroup'; followed by zero or one 'anyAttribute'.";
             }
         }
 
@@ -5963,7 +5968,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_NotNormalizedString", resourceCulture);
+                return "Carriage return (#xD), line feed (#xA), and tab (#x9) characters are not allowed in xs:normalizedString.";
             }
         }
 
@@ -5976,7 +5981,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_FractionDigitsNotOnDecimal", resourceCulture);
+                return "FractionDigits should be equal to 0 on types other then decimal.";
             }
         }
 
@@ -5989,14 +5994,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ContentInNill", resourceCulture);
+                return "Element '{0}' must have no character or element children.";
             }
         }
 
 
         internal static string FormatSch_ContentInNill(object arg1)
         {
-            return string.Format(Sch_ContentInNill, arg1);
+            return string.Format("Element '{0}' must have no character or element children.", arg1);
         }
 
 
@@ -6007,14 +6012,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_NoElementSchemaFound", resourceCulture);
+                return "Could not find schema information for the element '{0}'.";
             }
         }
 
 
         internal static string FormatSch_NoElementSchemaFound(object arg1)
         {
-            return string.Format(Sch_NoElementSchemaFound, arg1);
+            return string.Format("Could not find schema information for the element '{0}'.", arg1);
         }
 
 
@@ -6025,14 +6030,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_NoAttributeSchemaFound", resourceCulture);
+                return "Could not find schema information for the attribute '{0}'.";
             }
         }
 
 
         internal static string FormatSch_NoAttributeSchemaFound(object arg1)
         {
-            return string.Format(Sch_NoAttributeSchemaFound, arg1);
+            return string.Format("Could not find schema information for the attribute '{0}'.", arg1);
         }
 
 
@@ -6043,14 +6048,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidNamespace", resourceCulture);
+                return "The Namespace '{0}' is an invalid URI.";
             }
         }
 
 
         internal static string FormatSch_InvalidNamespace(object arg1)
         {
-            return string.Format(Sch_InvalidNamespace, arg1);
+            return string.Format("The Namespace '{0}' is an invalid URI.", arg1);
         }
 
 
@@ -6061,7 +6066,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidTargetNamespaceAttribute", resourceCulture);
+                return "The targetNamespace attribute cannot have empty string as its value.";
             }
         }
 
@@ -6074,7 +6079,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidNamespaceAttribute", resourceCulture);
+                return "The namespace attribute cannot have empty string as its value.";
             }
         }
 
@@ -6087,14 +6092,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidSchemaLocation", resourceCulture);
+                return "The SchemaLocation '{0}' is an invalid URI.";
             }
         }
 
 
         internal static string FormatSch_InvalidSchemaLocation(object arg1)
         {
-            return string.Format(Sch_InvalidSchemaLocation, arg1);
+            return string.Format("The SchemaLocation '{0}' is an invalid URI.", arg1);
         }
 
 
@@ -6105,7 +6110,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ImportTargetNamespace", resourceCulture);
+                return "Namespace attribute of an import must not match the real value of the enclosing targetNamespace of the <schema>.";
             }
         }
 
@@ -6118,7 +6123,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ImportTargetNamespaceNull", resourceCulture);
+                return "The enclosing <schema> must have a targetNamespace, if the Namespace attribute is absent on the import element.";
             }
         }
 
@@ -6131,7 +6136,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_GroupDoubleRedefine", resourceCulture);
+                return "Double redefine for group.";
             }
         }
 
@@ -6144,14 +6149,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ComponentRedefineNotFound", resourceCulture);
+                return "Cannot find a {0} with name '{1}' to redefine.";
             }
         }
 
 
         internal static string FormatSch_ComponentRedefineNotFound(object arg1, object arg2)
         {
-            return string.Format(Sch_ComponentRedefineNotFound, arg1, arg2);
+            return string.Format("Cannot find a {0} with name '{1}' to redefine.", arg1, arg2);
         }
 
 
@@ -6162,7 +6167,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_GroupRedefineNotFound", resourceCulture);
+                return "No group to redefine.";
             }
         }
 
@@ -6175,7 +6180,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_AttrGroupDoubleRedefine", resourceCulture);
+                return "Double redefine for attribute group.";
             }
         }
 
@@ -6188,7 +6193,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_AttrGroupRedefineNotFound", resourceCulture);
+                return "No attribute group to redefine.";
             }
         }
 
@@ -6201,7 +6206,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ComplexTypeDoubleRedefine", resourceCulture);
+                return "Double redefine for complex type.";
             }
         }
 
@@ -6214,7 +6219,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ComplexTypeRedefineNotFound", resourceCulture);
+                return "No complex type to redefine.";
             }
         }
 
@@ -6227,7 +6232,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_SimpleToComplexTypeRedefine", resourceCulture);
+                return "Cannot redefine a simple type as complex type.";
             }
         }
 
@@ -6240,7 +6245,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_SimpleTypeDoubleRedefine", resourceCulture);
+                return "Double redefine for simple type.";
             }
         }
 
@@ -6253,7 +6258,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ComplexToSimpleTypeRedefine", resourceCulture);
+                return "Cannot redefine a complex type as simple type.";
             }
         }
 
@@ -6266,7 +6271,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_SimpleTypeRedefineNotFound", resourceCulture);
+                return "No simple type to redefine.";
             }
         }
 
@@ -6279,7 +6284,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MinMaxGroupRedefine", resourceCulture);
+                return "When group is redefined, the real value of both minOccurs and maxOccurs attribute must be 1 (or absent).";
             }
         }
 
@@ -6292,7 +6297,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MultipleGroupSelfRef", resourceCulture);
+                return "Multiple self-reference within a group is redefined.";
             }
         }
 
@@ -6305,7 +6310,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MultipleAttrGroupSelfRef", resourceCulture);
+                return "Multiple self-reference within an attribute group is redefined.";
             }
         }
 
@@ -6318,7 +6323,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidTypeRedefine", resourceCulture);
+                return "If type is being redefined, the base type has to be self-referenced.";
             }
         }
 
@@ -6331,7 +6336,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidElementRef", resourceCulture);
+                return "If ref is present, all of <complexType>, <simpleType>, <key>, <keyref>, <unique>, nillable, default, fixed, form, block, and type must be absent.";
             }
         }
 
@@ -6344,7 +6349,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MinGtMax", resourceCulture);
+                return "minOccurs value cannot be greater than maxOccurs value.";
             }
         }
 
@@ -6357,7 +6362,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupSelector", resourceCulture);
+                return "Selector cannot appear twice in one identity constraint.";
             }
         }
 
@@ -6370,7 +6375,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_IdConstraintNoSelector", resourceCulture);
+                return "Selector must be present.";
             }
         }
 
@@ -6383,7 +6388,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_IdConstraintNoFields", resourceCulture);
+                return "At least one field must be present.";
             }
         }
 
@@ -6396,7 +6401,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_IdConstraintNoRefer", resourceCulture);
+                return "The referring attribute must be present.";
             }
         }
 
@@ -6409,7 +6414,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_SelectorBeforeFields", resourceCulture);
+                return "Cannot define fields before selector.";
             }
         }
 
@@ -6422,7 +6427,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_NoSimpleTypeContent", resourceCulture);
+                return "SimpleType content is missing.";
             }
         }
 
@@ -6435,7 +6440,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_SimpleTypeRestRefBase", resourceCulture);
+                return "SimpleType restriction should have either the base attribute or a simpleType child, but not both.";
             }
         }
 
@@ -6448,7 +6453,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_SimpleTypeRestRefBaseNone", resourceCulture);
+                return "SimpleType restriction should have either the base attribute or a simpleType child to indicate the base type for the derivation.";
             }
         }
 
@@ -6461,7 +6466,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_SimpleTypeListRefBase", resourceCulture);
+                return "SimpleType list should have either the itemType attribute or a simpleType child, but not both.";
             }
         }
 
@@ -6474,7 +6479,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_SimpleTypeListRefBaseNone", resourceCulture);
+                return "SimpleType list should have either the itemType attribute or a simpleType child to indicate the itemType of the list. ";
             }
         }
 
@@ -6487,7 +6492,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_SimpleTypeUnionNoBase", resourceCulture);
+                return "Either the memberTypes attribute must be non-empty or there must be at least one simpleType child.";
             }
         }
 
@@ -6500,14 +6505,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_NoRestOrExtQName", resourceCulture);
+                return "'restriction' or 'extension' child is required for complexType '{0}' in namespace '{1}', because it has a simpleContent or complexContent child.";
             }
         }
 
 
         internal static string FormatSch_NoRestOrExtQName(object arg1, object arg2)
         {
-            return string.Format(Sch_NoRestOrExtQName, arg1, arg2);
+            return string.Format("'restriction' or 'extension' child is required for complexType '{0}' in namespace '{1}', because it has a simpleContent or complexContent child.", arg1, arg2);
         }
 
 
@@ -6518,7 +6523,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_NoRestOrExt", resourceCulture);
+                return "'restriction' or 'extension' child is required for complexType with simpleContent or complexContent child.";
             }
         }
 
@@ -6531,7 +6536,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_NoGroupParticle", resourceCulture);
+                return "'sequence', 'choice', or 'all' child is required.";
             }
         }
 
@@ -6544,7 +6549,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidAllMin", resourceCulture);
+                return "'all' must have 'minOccurs' value of 0 or 1.";
             }
         }
 
@@ -6557,7 +6562,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidAllMax", resourceCulture);
+                return "'all' must have a 'maxOccurs' value of 1.";
             }
         }
 
@@ -6570,7 +6575,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidFacet", resourceCulture);
+                return "The 'value' attribute must be present in facet.";
             }
         }
 
@@ -6583,14 +6588,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_AbstractElement", resourceCulture);
+                return "The element '{0}' is abstract or its type is abstract.";
             }
         }
 
 
         internal static string FormatSch_AbstractElement(object arg1)
         {
-            return string.Format(Sch_AbstractElement, arg1);
+            return string.Format("The element '{0}' is abstract or its type is abstract.", arg1);
         }
 
 
@@ -6601,14 +6606,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_XsiTypeBlockedEx", resourceCulture);
+                return "The xsi:type attribute value '{0}' is not valid for the element '{1}', either because it is not a type validly derived from the type in the schema, or because it has xsi:type derivation blocked.";
             }
         }
 
 
         internal static string FormatSch_XsiTypeBlockedEx(object arg1, object arg2)
         {
-            return string.Format(Sch_XsiTypeBlockedEx, arg1, arg2);
+            return string.Format("The xsi:type attribute value '{0}' is not valid for the element '{1}', either because it is not a type validly derived from the type in the schema, or because it has xsi:type derivation blocked.", arg1, arg2);
         }
 
 
@@ -6619,7 +6624,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidXsiNill", resourceCulture);
+                return "If the 'nillable' attribute is false in the schema, the 'xsi:nil' attribute must not be present in the instance.";
             }
         }
 
@@ -6632,14 +6637,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_SubstitutionNotAllowed", resourceCulture);
+                return "Element '{0}' cannot substitute in place of head element '{1}' because it has block='substitution'.";
             }
         }
 
 
         internal static string FormatSch_SubstitutionNotAllowed(object arg1, object arg2)
         {
-            return string.Format(Sch_SubstitutionNotAllowed, arg1, arg2);
+            return string.Format("Element '{0}' cannot substitute in place of head element '{1}' because it has block='substitution'.", arg1, arg2);
         }
 
 
@@ -6650,14 +6655,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_SubstitutionBlocked", resourceCulture);
+                return "Member element {0}'s type cannot be derived by restriction or extension from head element {1}'s type, because it has block='restriction' or 'extension'.";
             }
         }
 
 
         internal static string FormatSch_SubstitutionBlocked(object arg1, object arg2)
         {
-            return string.Format(Sch_SubstitutionBlocked, arg1, arg2);
+            return string.Format("Member element {0}'s type cannot be derived by restriction or extension from head element {1}'s type, because it has block='restriction' or 'extension'.", arg1, arg2);
         }
 
 
@@ -6668,14 +6673,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidElementInEmptyEx", resourceCulture);
+                return "The element '{0}' cannot contain child element '{1}' because the parent element's content model is empty.";
             }
         }
 
 
         internal static string FormatSch_InvalidElementInEmptyEx(object arg1, object arg2)
         {
-            return string.Format(Sch_InvalidElementInEmptyEx, arg1, arg2);
+            return string.Format("The element '{0}' cannot contain child element '{1}' because the parent element's content model is empty.", arg1, arg2);
         }
 
 
@@ -6686,14 +6691,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidElementInTextOnlyEx", resourceCulture);
+                return "The element '{0}' cannot contain child element '{1}' because the parent element's content model is text only.";
             }
         }
 
 
         internal static string FormatSch_InvalidElementInTextOnlyEx(object arg1, object arg2)
         {
-            return string.Format(Sch_InvalidElementInTextOnlyEx, arg1, arg2);
+            return string.Format("The element '{0}' cannot contain child element '{1}' because the parent element's content model is text only.", arg1, arg2);
         }
 
 
@@ -6704,14 +6709,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidTextInElement", resourceCulture);
+                return "The element {0} cannot contain text.";
             }
         }
 
 
         internal static string FormatSch_InvalidTextInElement(object arg1)
         {
-            return string.Format(Sch_InvalidTextInElement, arg1);
+            return string.Format("The element {0} cannot contain text.", arg1);
         }
 
 
@@ -6722,14 +6727,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidElementContent", resourceCulture);
+                return "The element {0} has invalid child element {1}.";
             }
         }
 
 
         internal static string FormatSch_InvalidElementContent(object arg1, object arg2)
         {
-            return string.Format(Sch_InvalidElementContent, arg1, arg2);
+            return string.Format("The element {0} has invalid child element {1}.", arg1, arg2);
         }
 
 
@@ -6740,14 +6745,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidElementContentComplex", resourceCulture);
+                return "The element {0} has invalid child element {1} - {2}";
             }
         }
 
 
         internal static string FormatSch_InvalidElementContentComplex(object arg1, object arg2, object arg3)
         {
-            return string.Format(Sch_InvalidElementContentComplex, arg1, arg2, arg3);
+            return string.Format("The element {0} has invalid child element {1} - {2}", arg1, arg2, arg3);
         }
 
 
@@ -6758,14 +6763,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_IncompleteContent", resourceCulture);
+                return "The element {0} has incomplete content.";
             }
         }
 
 
         internal static string FormatSch_IncompleteContent(object arg1)
         {
-            return string.Format(Sch_IncompleteContent, arg1);
+            return string.Format("The element {0} has incomplete content.", arg1);
         }
 
 
@@ -6776,14 +6781,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_IncompleteContentComplex", resourceCulture);
+                return "The element {0} has incomplete content - {2}";
             }
         }
 
 
         internal static string FormatSch_IncompleteContentComplex(object arg1, object arg2)
         {
-            return string.Format(Sch_IncompleteContentComplex, arg1, arg2);
+            return string.Format("The element {0} has incomplete content - {2}", arg1, arg2);
         }
 
 
@@ -6794,14 +6799,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidTextInElementExpecting", resourceCulture);
+                return "The element {0} cannot contain text. List of possible elements expected: {1}.";
             }
         }
 
 
         internal static string FormatSch_InvalidTextInElementExpecting(object arg1, object arg2)
         {
-            return string.Format(Sch_InvalidTextInElementExpecting, arg1, arg2);
+            return string.Format("The element {0} cannot contain text. List of possible elements expected: {1}.", arg1, arg2);
         }
 
 
@@ -6812,14 +6817,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidElementContentExpecting", resourceCulture);
+                return "The element {0} has invalid child element {1}. List of possible elements expected: {2}.";
             }
         }
 
 
         internal static string FormatSch_InvalidElementContentExpecting(object arg1, object arg2, object arg3)
         {
-            return string.Format(Sch_InvalidElementContentExpecting, arg1, arg2, arg3);
+            return string.Format("The element {0} has invalid child element {1}. List of possible elements expected: {2}.", arg1, arg2, arg3);
         }
 
 
@@ -6830,14 +6835,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidElementContentExpectingComplex", resourceCulture);
+                return "The element {0} has invalid child element {1}. List of possible elements expected: {2}. {3}";
             }
         }
 
 
         internal static string FormatSch_InvalidElementContentExpectingComplex(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(Sch_InvalidElementContentExpectingComplex, arg1, arg2, arg3, arg4);
+            return string.Format("The element {0} has invalid child element {1}. List of possible elements expected: {2}. {3}", arg1, arg2, arg3, arg4);
         }
 
 
@@ -6848,14 +6853,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_IncompleteContentExpecting", resourceCulture);
+                return "The element {0} has incomplete content. List of possible elements expected: {1}.";
             }
         }
 
 
         internal static string FormatSch_IncompleteContentExpecting(object arg1, object arg2)
         {
-            return string.Format(Sch_IncompleteContentExpecting, arg1, arg2);
+            return string.Format("The element {0} has incomplete content. List of possible elements expected: {1}.", arg1, arg2);
         }
 
 
@@ -6866,14 +6871,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_IncompleteContentExpectingComplex", resourceCulture);
+                return "The element {0} has incomplete content. List of possible elements expected: {1}. {2}";
             }
         }
 
 
         internal static string FormatSch_IncompleteContentExpectingComplex(object arg1, object arg2, object arg3)
         {
-            return string.Format(Sch_IncompleteContentExpectingComplex, arg1, arg2, arg3);
+            return string.Format("The element {0} has incomplete content. List of possible elements expected: {1}. {2}", arg1, arg2, arg3);
         }
 
 
@@ -6884,14 +6889,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidElementSubstitution", resourceCulture);
+                return "The element {0} cannot substitute for a local element {1} expected in that position.";
             }
         }
 
 
         internal static string FormatSch_InvalidElementSubstitution(object arg1, object arg2)
         {
-            return string.Format(Sch_InvalidElementSubstitution, arg1, arg2);
+            return string.Format("The element {0} cannot substitute for a local element {1} expected in that position.", arg1, arg2);
         }
 
 
@@ -6902,14 +6907,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ElementNameAndNamespace", resourceCulture);
+                return "'{0}' in namespace '{1}'";
             }
         }
 
 
         internal static string FormatSch_ElementNameAndNamespace(object arg1, object arg2)
         {
-            return string.Format(Sch_ElementNameAndNamespace, arg1, arg2);
+            return string.Format("'{0}' in namespace '{1}'", arg1, arg2);
         }
 
 
@@ -6920,14 +6925,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ElementName", resourceCulture);
+                return "'{0}'";
             }
         }
 
 
         internal static string FormatSch_ElementName(object arg1)
         {
-            return string.Format(Sch_ElementName, arg1);
+            return string.Format("'{0}'", arg1);
         }
 
 
@@ -6938,14 +6943,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ContinuationString", resourceCulture);
+                return "{0}as well as ";
             }
         }
 
 
         internal static string FormatSch_ContinuationString(object arg1)
         {
-            return string.Format(Sch_ContinuationString, arg1);
+            return string.Format("{0}as well as ", arg1);
         }
 
 
@@ -6956,14 +6961,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_AnyElementNS", resourceCulture);
+                return "any element in namespace '{0}'";
             }
         }
 
 
         internal static string FormatSch_AnyElementNS(object arg1)
         {
-            return string.Format(Sch_AnyElementNS, arg1);
+            return string.Format("any element in namespace '{0}'", arg1);
         }
 
 
@@ -6974,7 +6979,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_AnyElement", resourceCulture);
+                return "any element";
             }
         }
 
@@ -6987,7 +6992,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidTextInEmpty", resourceCulture);
+                return "The element cannot contain text. Content model is empty.";
             }
         }
 
@@ -7000,7 +7005,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidWhitespaceInEmpty", resourceCulture);
+                return "The element cannot contain whitespace. Content model is empty.";
             }
         }
 
@@ -7013,7 +7018,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidPIComment", resourceCulture);
+                return "The element cannot contain comment or processing instruction. Content model is empty.";
             }
         }
 
@@ -7026,7 +7031,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidAttributeRef", resourceCulture);
+                return "If ref is present, all of 'simpleType', 'form', 'type', and 'use' must be absent.";
             }
         }
 
@@ -7039,7 +7044,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_OptionalDefaultAttribute", resourceCulture);
+                return "The 'use' attribute must be optional (or absent) if the default attribute is present.";
             }
         }
 
@@ -7052,7 +7057,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_AttributeCircularRef", resourceCulture);
+                return "Circular attribute reference.";
             }
         }
 
@@ -7065,7 +7070,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_IdentityConstraintCircularRef", resourceCulture);
+                return "Circular identity constraint reference.";
             }
         }
 
@@ -7078,7 +7083,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_SubstitutionCircularRef", resourceCulture);
+                return "Circular substitution group affiliation.";
             }
         }
 
@@ -7091,7 +7096,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidAnyAttribute", resourceCulture);
+                return "Invalid namespace in 'anyAttribute'.";
             }
         }
 
@@ -7104,7 +7109,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupIdAttribute", resourceCulture);
+                return "Duplicate ID attribute.";
             }
         }
 
@@ -7117,7 +7122,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidAllElementMax", resourceCulture);
+                return "The 'maxOccurs' attribute of all the particles of an 'all' group must be 0 or 1.";
             }
         }
 
@@ -7130,7 +7135,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidAny", resourceCulture);
+                return "Invalid namespace in 'any'.";
             }
         }
 
@@ -7143,14 +7148,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidAnyDetailed", resourceCulture);
+                return "The value of the namespace attribute of the element or attribute wildcard is invalid - {0}";
             }
         }
 
 
         internal static string FormatSch_InvalidAnyDetailed(object arg1)
         {
-            return string.Format(Sch_InvalidAnyDetailed, arg1);
+            return string.Format("The value of the namespace attribute of the element or attribute wildcard is invalid - {0}", arg1);
         }
 
 
@@ -7161,14 +7166,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidExamplar", resourceCulture);
+                return "Element '{0}' cannot be nominated as the 'substitutionGroup' of any other declaration.";
             }
         }
 
 
         internal static string FormatSch_InvalidExamplar(object arg1)
         {
-            return string.Format(Sch_InvalidExamplar, arg1);
+            return string.Format("Element '{0}' cannot be nominated as the 'substitutionGroup' of any other declaration.", arg1);
         }
 
 
@@ -7179,7 +7184,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_NoExamplar", resourceCulture);
+                return "Reference to undeclared substitution group affiliation.";
             }
         }
 
@@ -7192,14 +7197,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidSubstitutionMember", resourceCulture);
+                return "'{0}' cannot be a member of substitution group with head element '{1}'.";
             }
         }
 
 
         internal static string FormatSch_InvalidSubstitutionMember(object arg1, object arg2)
         {
-            return string.Format(Sch_InvalidSubstitutionMember, arg1, arg2);
+            return string.Format("'{0}' cannot be a member of substitution group with head element '{1}'.", arg1, arg2);
         }
 
 
@@ -7210,7 +7215,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_RedefineNoSchema", resourceCulture);
+                return "'SchemaLocation' must successfully resolve if <redefine> contains any child other than <annotation>.";
             }
         }
 
@@ -7223,14 +7228,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ProhibitedAttribute", resourceCulture);
+                return "The '{0}' attribute is not allowed.";
             }
         }
 
 
         internal static string FormatSch_ProhibitedAttribute(object arg1)
         {
-            return string.Format(Sch_ProhibitedAttribute, arg1);
+            return string.Format("The '{0}' attribute is not allowed.", arg1);
         }
 
 
@@ -7241,7 +7246,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_TypeCircularRef", resourceCulture);
+                return "Circular type reference.";
             }
         }
 
@@ -7254,7 +7259,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_TwoIdAttrUses", resourceCulture);
+                return "Two distinct members of the attribute uses must not have type definitions which are both xs:ID or are derived from xs:ID.";
             }
         }
 
@@ -7267,7 +7272,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_AttrUseAndWildId", resourceCulture);
+                return "It is an error if there is a member of the attribute uses of a type definition with type xs:ID or derived from xs:ID and another attribute with type xs:ID matches an attribute wildcard.";
             }
         }
 
@@ -7280,7 +7285,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MoreThanOneWildId", resourceCulture);
+                return "It is an error if more than one attribute whose type is xs:ID or is derived from xs:ID, matches an attribute wildcard on an element.";
             }
         }
 
@@ -7293,7 +7298,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_BaseFinalExtension", resourceCulture);
+                return "The base type is the final extension.";
             }
         }
 
@@ -7306,7 +7311,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_NotSimpleContent", resourceCulture);
+                return "The content type of the base type must be a simple type definition or it must be mixed, and simpleType child must be present.";
             }
         }
 
@@ -7319,7 +7324,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_NotComplexContent", resourceCulture);
+                return "The content type of the base type must not be a simple type definition.";
             }
         }
 
@@ -7332,7 +7337,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_BaseFinalRestriction", resourceCulture);
+                return "The base type is final restriction.";
             }
         }
 
@@ -7345,7 +7350,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_BaseFinalList", resourceCulture);
+                return "The base type is the final list.";
             }
         }
 
@@ -7358,7 +7363,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_BaseFinalUnion", resourceCulture);
+                return "The base type is the final union.";
             }
         }
 
@@ -7371,14 +7376,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UndefBaseRestriction", resourceCulture);
+                return "Undefined complexType '{0}' is used as a base for complex type restriction.";
             }
         }
 
 
         internal static string FormatSch_UndefBaseRestriction(object arg1)
         {
-            return string.Format(Sch_UndefBaseRestriction, arg1);
+            return string.Format("Undefined complexType '{0}' is used as a base for complex type restriction.", arg1);
         }
 
 
@@ -7389,14 +7394,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UndefBaseExtension", resourceCulture);
+                return "Undefined complexType '{0}' is used as a base for complex type extension.";
             }
         }
 
 
         internal static string FormatSch_UndefBaseExtension(object arg1)
         {
-            return string.Format(Sch_UndefBaseExtension, arg1);
+            return string.Format("Undefined complexType '{0}' is used as a base for complex type extension.", arg1);
         }
 
 
@@ -7407,7 +7412,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DifContentType", resourceCulture);
+                return "The derived type and the base type must have the same content type.";
             }
         }
 
@@ -7420,7 +7425,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidContentRestriction", resourceCulture);
+                return "Invalid content type derivation by restriction.";
             }
         }
 
@@ -7433,14 +7438,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidContentRestrictionDetailed", resourceCulture);
+                return "Invalid content type derivation by restriction. {0}";
             }
         }
 
 
         internal static string FormatSch_InvalidContentRestrictionDetailed(object arg1)
         {
-            return string.Format(Sch_InvalidContentRestrictionDetailed, arg1);
+            return string.Format("Invalid content type derivation by restriction. {0}", arg1);
         }
 
 
@@ -7451,7 +7456,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidBaseToEmpty", resourceCulture);
+                return "If the derived content type is Empty, then the base content type should also be Empty or Mixed with Emptiable particle according to rule 5.3 of Schema Component Constraint: Derivation Valid (Restriction, Complex).";
             }
         }
 
@@ -7464,7 +7469,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidBaseToMixed", resourceCulture);
+                return "If the derived content type is Mixed, then the base content type should also be Mixed according to rule 5.4 of Schema Component Constraint: Derivation Valid (Restriction, Complex).";
             }
         }
 
@@ -7477,14 +7482,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupAttributeUse", resourceCulture);
+                return "The attribute '{0}' already exists.";
             }
         }
 
 
         internal static string FormatSch_DupAttributeUse(object arg1)
         {
-            return string.Format(Sch_DupAttributeUse, arg1);
+            return string.Format("The attribute '{0}' already exists.", arg1);
         }
 
 
@@ -7495,7 +7500,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidParticleRestriction", resourceCulture);
+                return "Invalid particle derivation by restriction.";
             }
         }
 
@@ -7508,14 +7513,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidParticleRestrictionDetailed", resourceCulture);
+                return "Invalid particle derivation by restriction - '{0}'.";
             }
         }
 
 
         internal static string FormatSch_InvalidParticleRestrictionDetailed(object arg1)
         {
-            return string.Format(Sch_InvalidParticleRestrictionDetailed, arg1);
+            return string.Format("Invalid particle derivation by restriction - '{0}'.", arg1);
         }
 
 
@@ -7526,7 +7531,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ForbiddenDerivedParticleForAll", resourceCulture);
+                return "'Choice' or 'any' is forbidden as derived particle when the base particle is 'all'.";
             }
         }
 
@@ -7539,7 +7544,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ForbiddenDerivedParticleForElem", resourceCulture);
+                return "Only 'element' is valid as derived particle when the base particle is 'element'.";
             }
         }
 
@@ -7552,7 +7557,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ForbiddenDerivedParticleForChoice", resourceCulture);
+                return "'All' or 'any' is forbidden as derived particle when the base particle is 'choice'.";
             }
         }
 
@@ -7565,7 +7570,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ForbiddenDerivedParticleForSeq", resourceCulture);
+                return "'All', 'any', and 'choice' are forbidden as derived particles when the base particle is 'sequence'.";
             }
         }
 
@@ -7578,14 +7583,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ElementFromElement", resourceCulture);
+                return "Derived element '{0}' is not a valid restriction of base element '{1}' according to Elt:Elt -- NameAndTypeOK.";
             }
         }
 
 
         internal static string FormatSch_ElementFromElement(object arg1, object arg2)
         {
-            return string.Format(Sch_ElementFromElement, arg1, arg2);
+            return string.Format("Derived element '{0}' is not a valid restriction of base element '{1}' according to Elt:Elt -- NameAndTypeOK.", arg1, arg2);
         }
 
 
@@ -7596,14 +7601,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ElementFromAnyRule1", resourceCulture);
+                return "The namespace of element '{0}'is not valid with respect to the wildcard's namespace constraint in the base, Elt:Any -- NSCompat Rule 1.";
             }
         }
 
 
         internal static string FormatSch_ElementFromAnyRule1(object arg1)
         {
-            return string.Format(Sch_ElementFromAnyRule1, arg1);
+            return string.Format("The namespace of element '{0}'is not valid with respect to the wildcard's namespace constraint in the base, Elt:Any -- NSCompat Rule 1.", arg1);
         }
 
 
@@ -7614,14 +7619,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ElementFromAnyRule2", resourceCulture);
+                return "The occurrence range of element '{0}'is not a valid restriction of the wildcard's occurrence range in the base, Elt:Any -- NSCompat Rule2.";
             }
         }
 
 
         internal static string FormatSch_ElementFromAnyRule2(object arg1)
         {
-            return string.Format(Sch_ElementFromAnyRule2, arg1);
+            return string.Format("The occurrence range of element '{0}'is not a valid restriction of the wildcard's occurrence range in the base, Elt:Any -- NSCompat Rule2.", arg1);
         }
 
 
@@ -7632,7 +7637,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_AnyFromAnyRule1", resourceCulture);
+                return "The derived wildcard's occurrence range is not a valid restriction of the base wildcard's occurrence range, Any:Any -- NSSubset Rule 1.";
             }
         }
 
@@ -7645,7 +7650,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_AnyFromAnyRule2", resourceCulture);
+                return "The derived wildcard's namespace constraint must be an intensional subset of the base wildcard's namespace constraint, Any:Any -- NSSubset Rule2.";
             }
         }
 
@@ -7658,7 +7663,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_AnyFromAnyRule3", resourceCulture);
+                return "The derived wildcard's 'processContents' must be identical to or stronger than the base wildcard's 'processContents', where 'strict' is stronger than 'lax' and 'lax' is stronger than 'skip', Any:Any -- NSSubset Rule 3.";
             }
         }
 
@@ -7671,7 +7676,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_GroupBaseFromAny1", resourceCulture);
+                return "Every member of the derived group particle must be a valid restriction of the base wildcard, NSRecurseCheckCardinality Rule 1.";
             }
         }
 
@@ -7684,14 +7689,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_GroupBaseFromAny2", resourceCulture);
+                return "The derived particle's occurrence range at ({0}, {1}) is not a valid restriction of the base wildcard's occurrence range at ({2}, {3}), NSRecurseCheckCardinality Rule 2.";
             }
         }
 
 
         internal static string FormatSch_GroupBaseFromAny2(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(Sch_GroupBaseFromAny2, arg1, arg2, arg3, arg4);
+            return string.Format("The derived particle's occurrence range at ({0}, {1}) is not a valid restriction of the base wildcard's occurrence range at ({2}, {3}), NSRecurseCheckCardinality Rule 2.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -7702,14 +7707,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ElementFromGroupBase1", resourceCulture);
+                return "The derived element {0} at ({1}, {2}) is not a valid restriction of the base sequence particle at ({3}, {4}) according to Elt:All/Choice/Sequence -- RecurseAsIfGroup.";
             }
         }
 
 
         internal static string FormatSch_ElementFromGroupBase1(object arg1, object arg2, object arg3, object arg4, object arg5)
         {
-            return string.Format(Sch_ElementFromGroupBase1, arg1, arg2, arg3, arg4, arg5);
+            return string.Format("The derived element {0} at ({1}, {2}) is not a valid restriction of the base sequence particle at ({3}, {4}) according to Elt:All/Choice/Sequence -- RecurseAsIfGroup.", arg1, arg2, arg3, arg4, arg5);
         }
 
 
@@ -7720,14 +7725,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ElementFromGroupBase2", resourceCulture);
+                return "The derived element {0} at ({1}, {2}) is not a valid restriction of the base choice particle at ({3}, {4}) according to Elt:All/Choice/Sequence -- RecurseAsIfGroup.";
             }
         }
 
 
         internal static string FormatSch_ElementFromGroupBase2(object arg1, object arg2, object arg3, object arg4, object arg5)
         {
-            return string.Format(Sch_ElementFromGroupBase2, arg1, arg2, arg3, arg4, arg5);
+            return string.Format("The derived element {0} at ({1}, {2}) is not a valid restriction of the base choice particle at ({3}, {4}) according to Elt:All/Choice/Sequence -- RecurseAsIfGroup.", arg1, arg2, arg3, arg4, arg5);
         }
 
 
@@ -7738,14 +7743,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ElementFromGroupBase3", resourceCulture);
+                return "The derived element {0} at ({1}, {2}) is not a valid restriction of the base all particle at ({3}, {4}) according to Elt:All/Choice/Sequence -- RecurseAsIfGroup.";
             }
         }
 
 
         internal static string FormatSch_ElementFromGroupBase3(object arg1, object arg2, object arg3, object arg4, object arg5)
         {
-            return string.Format(Sch_ElementFromGroupBase3, arg1, arg2, arg3, arg4, arg5);
+            return string.Format("The derived element {0} at ({1}, {2}) is not a valid restriction of the base all particle at ({3}, {4}) according to Elt:All/Choice/Sequence -- RecurseAsIfGroup.", arg1, arg2, arg3, arg4, arg5);
         }
 
 
@@ -7756,7 +7761,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_GroupBaseRestRangeInvalid", resourceCulture);
+                return "The derived particle's range is not a valid restriction of the base particle's range according to All:All,Sequence:Sequence -- Recurse Rule 1 or Choice:Choice -- RecurseLax.";
             }
         }
 
@@ -7769,7 +7774,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_GroupBaseRestNoMap", resourceCulture);
+                return "The derived particle cannot have more members than the base particle - All:All,Sequence:Sequence -- Recurse Rule 2 / Choice:Choice -- RecurseLax.";
             }
         }
 
@@ -7782,7 +7787,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_GroupBaseRestNotEmptiable", resourceCulture);
+                return "All particles in the particles of the base particle which are not mapped to by any particle in the particles of the derived particle should be emptiable - All:All,Sequence:Sequence -- Recurse Rule 2 / Choice:Choice -- RecurseLax.";
             }
         }
 
@@ -7795,14 +7800,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_SeqFromAll", resourceCulture);
+                return "The derived sequence particle at ({0}, {1}) is not a valid restriction of the base all particle at ({2}, {3}) according to Sequence:All -- RecurseUnordered.";
             }
         }
 
 
         internal static string FormatSch_SeqFromAll(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(Sch_SeqFromAll, arg1, arg2, arg3, arg4);
+            return string.Format("The derived sequence particle at ({0}, {1}) is not a valid restriction of the base all particle at ({2}, {3}) according to Sequence:All -- RecurseUnordered.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -7813,14 +7818,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_SeqFromChoice", resourceCulture);
+                return "The derived sequence particle at ({0}, {1}) is not a valid restriction of the base choice particle at ({2}, {3}) according to Sequence:Choice -- MapAndSum.";
             }
         }
 
 
         internal static string FormatSch_SeqFromChoice(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(Sch_SeqFromChoice, arg1, arg2, arg3, arg4);
+            return string.Format("The derived sequence particle at ({0}, {1}) is not a valid restriction of the base choice particle at ({2}, {3}) according to Sequence:Choice -- MapAndSum.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -7831,14 +7836,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UndefGroupRef", resourceCulture);
+                return "Reference to undeclared model group '{0}'.";
             }
         }
 
 
         internal static string FormatSch_UndefGroupRef(object arg1)
         {
-            return string.Format(Sch_UndefGroupRef, arg1);
+            return string.Format("Reference to undeclared model group '{0}'.", arg1);
         }
 
 
@@ -7849,7 +7854,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_GroupCircularRef", resourceCulture);
+                return "Circular group reference.";
             }
         }
 
@@ -7862,7 +7867,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_AllRefNotRoot", resourceCulture);
+                return "The group ref to 'all' is not the root particle, or it is being used as an extension.";
             }
         }
 
@@ -7875,7 +7880,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_AllRefMinMax", resourceCulture);
+                return "The group ref to 'all' must have 'minOccurs' = 0 or 1 and 'maxOccurs' = 1.";
             }
         }
 
@@ -7888,7 +7893,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_NotAllAlone", resourceCulture);
+                return "'all' is not the only particle in a group, or is being used as an extension.";
             }
         }
 
@@ -7901,7 +7906,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_AttributeGroupCircularRef", resourceCulture);
+                return "Circular attribute group reference.";
             }
         }
 
@@ -7914,14 +7919,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UndefAttributeGroupRef", resourceCulture);
+                return "Reference to undeclared attribute group '{0}'.";
             }
         }
 
 
         internal static string FormatSch_UndefAttributeGroupRef(object arg1)
         {
-            return string.Format(Sch_UndefAttributeGroupRef, arg1);
+            return string.Format("Reference to undeclared attribute group '{0}'.", arg1);
         }
 
 
@@ -7932,7 +7937,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidAttributeExtension", resourceCulture);
+                return "Invalid attribute extension.";
             }
         }
 
@@ -7945,7 +7950,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidAnyAttributeRestriction", resourceCulture);
+                return "The base any attribute must be a superset of the derived 'anyAttribute'.";
             }
         }
 
@@ -7958,7 +7963,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_AttributeRestrictionProhibited", resourceCulture);
+                return "Invalid attribute restriction. Attribute restriction is prohibited in base type.";
             }
         }
 
@@ -7971,7 +7976,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_AttributeRestrictionInvalid", resourceCulture);
+                return "Invalid attribute restriction. Derived attribute's type is not a valid restriction of the base attribute's type.";
             }
         }
 
@@ -7984,7 +7989,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_AttributeFixedInvalid", resourceCulture);
+                return "Invalid attribute restriction. Derived attribute's fixed value must be the same as the base attribute's fixed value. ";
             }
         }
 
@@ -7997,7 +8002,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_AttributeUseInvalid", resourceCulture);
+                return "Derived attribute's use has to be required if base attribute's use is required.";
             }
         }
 
@@ -8010,7 +8015,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_AttributeRestrictionInvalidFromWildcard", resourceCulture);
+                return "The base type definition must have an attribute wildcard and the target namespace of the attribute declaration in the 'redefine' must be valid with respect to that wildcard.";
             }
         }
 
@@ -8023,14 +8028,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_NoDerivedAttribute", resourceCulture);
+                return "The base attribute '{0}' whose use = 'required' does not have a corresponding derived attribute while redefining attribute group '{1}'.";
             }
         }
 
 
         internal static string FormatSch_NoDerivedAttribute(object arg1, object arg2)
         {
-            return string.Format(Sch_NoDerivedAttribute, arg1, arg2);
+            return string.Format("The base attribute '{0}' whose use = 'required' does not have a corresponding derived attribute while redefining attribute group '{1}'.", arg1, arg2);
         }
 
 
@@ -8041,7 +8046,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UnexpressibleAnyAttribute", resourceCulture);
+                return "The 'anyAttribute' is not expressible.";
             }
         }
 
@@ -8054,14 +8059,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_RefInvalidAttribute", resourceCulture);
+                return "Reference to invalid attribute '{0}'.";
             }
         }
 
 
         internal static string FormatSch_RefInvalidAttribute(object arg1)
         {
-            return string.Format(Sch_RefInvalidAttribute, arg1);
+            return string.Format("Reference to invalid attribute '{0}'.", arg1);
         }
 
 
@@ -8072,7 +8077,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ElementCircularRef", resourceCulture);
+                return "Circular element reference.";
             }
         }
 
@@ -8085,14 +8090,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_RefInvalidElement", resourceCulture);
+                return "Reference to invalid element '{0}'.";
             }
         }
 
 
         internal static string FormatSch_RefInvalidElement(object arg1)
         {
-            return string.Format(Sch_RefInvalidElement, arg1);
+            return string.Format("Reference to invalid element '{0}'.", arg1);
         }
 
 
@@ -8103,7 +8108,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ElementCannotHaveValue", resourceCulture);
+                return "Element's type does not allow fixed or default value constraint.";
             }
         }
 
@@ -8116,14 +8121,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ElementInMixedWithFixed", resourceCulture);
+                return "Although the '{0}' element's content type is mixed, it cannot have element children, because it has a fixed value constraint in the schema.";
             }
         }
 
 
         internal static string FormatSch_ElementInMixedWithFixed(object arg1)
         {
-            return string.Format(Sch_ElementInMixedWithFixed, arg1);
+            return string.Format("Although the '{0}' element's content type is mixed, it cannot have element children, because it has a fixed value constraint in the schema.", arg1);
         }
 
 
@@ -8134,7 +8139,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ElementTypeCollision", resourceCulture);
+                return "Elements with the same name and in the same scope must have the same type.";
             }
         }
 
@@ -8147,7 +8152,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidIncludeLocation", resourceCulture);
+                return "Cannot resolve the 'schemaLocation' attribute.";
             }
         }
 
@@ -8160,14 +8165,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_CannotLoadSchema", resourceCulture);
+                return "Cannot load the schema for the namespace '{0}' - {1}";
             }
         }
 
 
         internal static string FormatSch_CannotLoadSchema(object arg1, object arg2)
         {
-            return string.Format(Sch_CannotLoadSchema, arg1, arg2);
+            return string.Format("Cannot load the schema for the namespace '{0}' - {1}", arg1, arg2);
         }
 
 
@@ -8178,14 +8183,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_CannotLoadSchemaLocation", resourceCulture);
+                return "Cannot load the schema from the location '{0}' - {1}";
             }
         }
 
 
         internal static string FormatSch_CannotLoadSchemaLocation(object arg1, object arg2)
         {
-            return string.Format(Sch_CannotLoadSchemaLocation, arg1, arg2);
+            return string.Format("Cannot load the schema from the location '{0}' - {1}", arg1, arg2);
         }
 
 
@@ -8196,7 +8201,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_LengthGtBaseLength", resourceCulture);
+                return "It is an error if 'length' is among the members of the facets of the base type definition and its value is greater than the value of the parent 'length'.";
             }
         }
 
@@ -8209,7 +8214,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MinLengthGtBaseMinLength", resourceCulture);
+                return "It is an error if 'minLength' is among the members of the facets of the base type definition and its value is less than the value of the parent 'minLength'.";
             }
         }
 
@@ -8222,7 +8227,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MaxLengthGtBaseMaxLength", resourceCulture);
+                return "It is an error if 'maxLength' is among the members of the facets of the base type definition and its value is greater than the value of the parent 'maxLength'.";
             }
         }
 
@@ -8235,7 +8240,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MaxMinLengthBaseLength", resourceCulture);
+                return "It is an error for both 'length' and either 'minLength' or 'maxLength' to be members of facets, unless they are specified in different derivation steps. In which case the following must be true: the value of 'minLength' <= the value of 'length' <= the value of 'maxLength'.";
             }
         }
 
@@ -8248,7 +8253,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MaxInclusiveMismatch", resourceCulture);
+                return "It is an error if the derived 'maxInclusive' facet value is greater than the parent 'maxInclusive' facet value.";
             }
         }
 
@@ -8261,7 +8266,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MaxExclusiveMismatch", resourceCulture);
+                return "It is an error if the derived 'maxExclusive' facet value is greater than the parent 'maxExclusive' facet value.";
             }
         }
 
@@ -8274,7 +8279,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MinInclusiveMismatch", resourceCulture);
+                return "It is an error if the derived 'minInclusive' facet value is less than the parent 'minInclusive' facet value.";
             }
         }
 
@@ -8287,7 +8292,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MinExclusiveMismatch", resourceCulture);
+                return "It is an error if the derived 'minExclusive' facet value is less than the parent 'minExclusive' facet value.";
             }
         }
 
@@ -8300,7 +8305,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MinExlIncMismatch", resourceCulture);
+                return "It is an error if the derived 'minExclusive' facet value is less than or equal to the parent 'minInclusive' facet value.";
             }
         }
 
@@ -8313,7 +8318,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MinExlMaxExlMismatch", resourceCulture);
+                return "It is an error if the derived 'minExclusive' facet value is greater than or equal to the parent 'maxExclusive' facet value.";
             }
         }
 
@@ -8326,7 +8331,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MinIncMaxExlMismatch", resourceCulture);
+                return "It is an error if the derived 'minInclusive' facet value is greater than or equal to the parent 'maxExclusive' facet value.";
             }
         }
 
@@ -8339,7 +8344,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MinIncExlMismatch", resourceCulture);
+                return "It is an error if the derived 'minInclusive' facet value is less than or equal to the parent 'minExclusive' facet value.";
             }
         }
 
@@ -8352,7 +8357,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MaxIncExlMismatch", resourceCulture);
+                return "It is an error if the derived 'maxInclusive' facet value is greater than or equal to the parent 'maxExclusive' facet value.";
             }
         }
 
@@ -8365,7 +8370,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MaxExlIncMismatch", resourceCulture);
+                return "It is an error if the derived 'maxExclusive' facet value is greater than or equal to the parent 'maxInclusive' facet value.";
             }
         }
 
@@ -8378,7 +8383,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_TotalDigitsMismatch", resourceCulture);
+                return "It is an error if the derived 'totalDigits' facet value is greater than the parent 'totalDigits' facet value.";
             }
         }
 
@@ -8391,7 +8396,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_FractionDigitsMismatch", resourceCulture);
+                return "It is an error if the derived 'fractionDigits' facet value is greater than the parent 'fractionDigits' facet value.";
             }
         }
 
@@ -8404,7 +8409,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_FacetBaseFixed", resourceCulture);
+                return "Values that are declared with fixed='true' in a base type can not be changed in a derived type.";
             }
         }
 
@@ -8417,7 +8422,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_WhiteSpaceRestriction1", resourceCulture);
+                return "It is an error if 'whiteSpace' is among the facets of the type definition, its value is 'replace' or 'preserve', and the value of the parent 'whiteSpace' is 'collapse'.";
             }
         }
 
@@ -8430,7 +8435,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_WhiteSpaceRestriction2", resourceCulture);
+                return "It is an error if 'whiteSpace' is among the facets of the type definition, its value is 'preserve', and the value of the parent 'whiteSpace' is 'replace'.";
             }
         }
 
@@ -8443,7 +8448,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_XsiNilAndFixed", resourceCulture);
+                return "There must be no fixed value when an attribute is 'xsi:nil' and has a value of 'true'.";
             }
         }
 
@@ -8456,7 +8461,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MixSchemaTypes", resourceCulture);
+                return "Different schema types cannot be mixed.";
             }
         }
 
@@ -8469,7 +8474,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_XSDSchemaOnly", resourceCulture);
+                return "'XmlSchemaSet' can load only W3C XML Schemas.";
             }
         }
 
@@ -8482,14 +8487,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidPublicAttribute", resourceCulture);
+                return "Public attribute '{0}' is an invalid URI.";
             }
         }
 
 
         internal static string FormatSch_InvalidPublicAttribute(object arg1)
         {
-            return string.Format(Sch_InvalidPublicAttribute, arg1);
+            return string.Format("Public attribute '{0}' is an invalid URI.", arg1);
         }
 
 
@@ -8500,14 +8505,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidSystemAttribute", resourceCulture);
+                return "System attribute '{0}' is an invalid URI.";
             }
         }
 
 
         internal static string FormatSch_InvalidSystemAttribute(object arg1)
         {
-            return string.Format(Sch_InvalidSystemAttribute, arg1);
+            return string.Format("System attribute '{0}' is an invalid URI.", arg1);
         }
 
 
@@ -8518,7 +8523,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_TypeAfterConstraints", resourceCulture);
+                return "'simpleType' or 'complexType' cannot follow 'unique', 'key' or 'keyref'.";
             }
         }
 
@@ -8531,7 +8536,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_XsiNilAndType", resourceCulture);
+                return "There can be no type value when attribute is 'xsi:nil' and has value 'true'.";
             }
         }
 
@@ -8544,7 +8549,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DupSimpleTypeChild", resourceCulture);
+                return "'simpleType' should have only one child 'union', 'list', or 'restriction'.";
             }
         }
 
@@ -8557,14 +8562,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidIdAttribute", resourceCulture);
+                return "Invalid 'id' attribute value: {0}";
             }
         }
 
 
         internal static string FormatSch_InvalidIdAttribute(object arg1)
         {
-            return string.Format(Sch_InvalidIdAttribute, arg1);
+            return string.Format("Invalid 'id' attribute value: {0}", arg1);
         }
 
 
@@ -8575,14 +8580,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidNameAttributeEx", resourceCulture);
+                return "Invalid 'name' attribute value '{0}': '{1}'.";
             }
         }
 
 
         internal static string FormatSch_InvalidNameAttributeEx(object arg1, object arg2)
         {
-            return string.Format(Sch_InvalidNameAttributeEx, arg1, arg2);
+            return string.Format("Invalid 'name' attribute value '{0}': '{1}'.", arg1, arg2);
         }
 
 
@@ -8593,14 +8598,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidAttribute", resourceCulture);
+                return "Invalid '{0}' attribute: '{1}'.";
             }
         }
 
 
         internal static string FormatSch_InvalidAttribute(object arg1, object arg2)
         {
-            return string.Format(Sch_InvalidAttribute, arg1, arg2);
+            return string.Format("Invalid '{0}' attribute: '{1}'.", arg1, arg2);
         }
 
 
@@ -8611,7 +8616,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_EmptyChoice", resourceCulture);
+                return "Empty choice cannot be satisfied if 'minOccurs' is not equal to 0.";
             }
         }
 
@@ -8624,7 +8629,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DerivedNotFromBase", resourceCulture);
+                return "The data type of the simple content is not a valid restriction of the base complex type.";
             }
         }
 
@@ -8637,7 +8642,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_NeedSimpleTypeChild", resourceCulture);
+                return "Simple content restriction must have a simple type child if the content type of the base type is not a simple type definition.";
             }
         }
 
@@ -8650,7 +8655,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidCollection", resourceCulture);
+                return "The schema items collection cannot contain an object of type 'XmlSchemaInclude', 'XmlSchemaImport', or 'XmlSchemaRedefine'.";
             }
         }
 
@@ -8663,14 +8668,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_UnrefNS", resourceCulture);
+                return "Namespace '{0}' is not available to be referenced in this schema.";
             }
         }
 
 
         internal static string FormatSch_UnrefNS(object arg1)
         {
-            return string.Format(Sch_UnrefNS, arg1);
+            return string.Format("Namespace '{0}' is not available to be referenced in this schema.", arg1);
         }
 
 
@@ -8681,7 +8686,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidSimpleTypeRestriction", resourceCulture);
+                return "Restriction of 'anySimpleType' is not allowed.";
             }
         }
 
@@ -8694,7 +8699,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_MultipleRedefine", resourceCulture);
+                return "Multiple redefines of the same schema will be ignored.";
             }
         }
 
@@ -8707,7 +8712,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_NullValue", resourceCulture);
+                return "Value cannot be null.";
             }
         }
 
@@ -8720,7 +8725,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ComplexContentModel", resourceCulture);
+                return "Content model validation resulted in a large number of states, possibly due to large occurrence ranges. Therefore, content model may not be validated accurately.";
             }
         }
 
@@ -8733,7 +8738,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_SchemaNotPreprocessed", resourceCulture);
+                return "All schemas in the set should be successfully preprocessed prior to compilation.";
             }
         }
 
@@ -8746,7 +8751,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_SchemaNotRemoved", resourceCulture);
+                return "The schema could not be removed because other schemas in the set have dependencies on this schema or its imports.";
             }
         }
 
@@ -8759,14 +8764,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ComponentAlreadySeenForNS", resourceCulture);
+                return "An element or attribute information item has already been validated from the '{0}' namespace. It is an error if 'xsi:schemaLocation', 'xsi:noNamespaceSchemaLocation', or an inline schema occurs for that namespace.";
             }
         }
 
 
         internal static string FormatSch_ComponentAlreadySeenForNS(object arg1)
         {
-            return string.Format(Sch_ComponentAlreadySeenForNS, arg1);
+            return string.Format("An element or attribute information item has already been validated from the '{0}' namespace. It is an error if 'xsi:schemaLocation', 'xsi:noNamespaceSchemaLocation', or an inline schema occurs for that namespace.", arg1);
         }
 
 
@@ -8777,14 +8782,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DefaultAttributeNotApplied", resourceCulture);
+                return "Default attribute '{0}' for element '{1}' could not be applied as the attribute namespace is not mapped to a prefix in the instance document.";
             }
         }
 
 
         internal static string FormatSch_DefaultAttributeNotApplied(object arg1, object arg2)
         {
-            return string.Format(Sch_DefaultAttributeNotApplied, arg1, arg2);
+            return string.Format("Default attribute '{0}' for element '{1}' could not be applied as the attribute namespace is not mapped to a prefix in the instance document.", arg1, arg2);
         }
 
 
@@ -8795,14 +8800,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_NotXsiAttribute", resourceCulture);
+                return "The attribute '{0}' does not match one of the four allowed attributes in the 'xsi' namespace.";
             }
         }
 
 
         internal static string FormatSch_NotXsiAttribute(object arg1)
         {
-            return string.Format(Sch_NotXsiAttribute, arg1);
+            return string.Format("The attribute '{0}' does not match one of the four allowed attributes in the 'xsi' namespace.", arg1);
         }
 
 
@@ -8813,7 +8818,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_SchemaDoesNotExist", resourceCulture);
+                return "Schema does not exist in the set.";
             }
         }
 
@@ -8826,7 +8831,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlDocument_ValidateInvalidNodeType", resourceCulture);
+                return "Validate method can be called only on nodes of type Document, DocumentFragment, Element, or Attribute.";
             }
         }
 
@@ -8839,14 +8844,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlDocument_NodeNotFromDocument", resourceCulture);
+                return "Cannot validate '{0}' because its owner document is not the current document. ";
             }
         }
 
 
         internal static string FormatXmlDocument_NodeNotFromDocument(object arg1)
         {
-            return string.Format(XmlDocument_NodeNotFromDocument, arg1);
+            return string.Format("Cannot validate '{0}' because its owner document is not the current document. ", arg1);
         }
 
 
@@ -8857,7 +8862,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlDocument_NoNodeSchemaInfo", resourceCulture);
+                return "Schema information could not be found for the node passed into Validate. The node may be invalid in its current position. Navigate to the ancestor that has schema information, then call Validate again.";
             }
         }
 
@@ -8870,7 +8875,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlDocument_NoSchemaInfo", resourceCulture);
+                return "The XmlSchemaSet on the document is either null or has no schemas in it. Provide schema information before calling Validate.";
             }
         }
 
@@ -8883,14 +8888,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidStartTransition", resourceCulture);
+                return "It is invalid to call the '{0}' method in the current state of the validator. The '{1}' method must be called before proceeding with validation.";
             }
         }
 
 
         internal static string FormatSch_InvalidStartTransition(object arg1, object arg2)
         {
-            return string.Format(Sch_InvalidStartTransition, arg1, arg2);
+            return string.Format("It is invalid to call the '{0}' method in the current state of the validator. The '{1}' method must be called before proceeding with validation.", arg1, arg2);
         }
 
 
@@ -8901,14 +8906,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidStateTransition", resourceCulture);
+                return "The transition from the '{0}' method to the '{1}' method is not allowed.";
             }
         }
 
 
         internal static string FormatSch_InvalidStateTransition(object arg1, object arg2)
         {
-            return string.Format(Sch_InvalidStateTransition, arg1, arg2);
+            return string.Format("The transition from the '{0}' method to the '{1}' method is not allowed.", arg1, arg2);
         }
 
 
@@ -8919,7 +8924,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidEndValidation", resourceCulture);
+                return "The 'EndValidation' method cannot not be called when all the elements have not been validated. 'ValidateEndElement' calls corresponding to 'ValidateElement' calls might be missing.";
             }
         }
 
@@ -8932,7 +8937,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidEndElementCall", resourceCulture);
+                return "It is invalid to call the 'ValidateEndElement' overload that takes in a 'typedValue' after 'ValidateText' or 'ValidateWhitespace' methods have been called.";
             }
         }
 
@@ -8945,7 +8950,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidEndElementCallTyped", resourceCulture);
+                return "It is invalid to call the 'ValidateEndElement' overload that takes in a 'typedValue' for elements with complex content.";
             }
         }
 
@@ -8958,14 +8963,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidEndElementMultiple", resourceCulture);
+                return "The call to the '{0}' method does not match a corresponding call to 'ValidateElement' method.";
             }
         }
 
 
         internal static string FormatSch_InvalidEndElementMultiple(object arg1)
         {
-            return string.Format(Sch_InvalidEndElementMultiple, arg1);
+            return string.Format("The call to the '{0}' method does not match a corresponding call to 'ValidateElement' method.", arg1);
         }
 
 
@@ -8976,14 +8981,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_DuplicateAttribute", resourceCulture);
+                return "The '{0}' attribute has already been validated and is a duplicate attribute.";
             }
         }
 
 
         internal static string FormatSch_DuplicateAttribute(object arg1)
         {
-            return string.Format(Sch_DuplicateAttribute, arg1);
+            return string.Format("The '{0}' attribute has already been validated and is a duplicate attribute.", arg1);
         }
 
 
@@ -8994,7 +8999,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_InvalidPartialValidationType", resourceCulture);
+                return "The partial validation type has to be 'XmlSchemaElement', 'XmlSchemaAttribute', or 'XmlSchemaType'.";
             }
         }
 
@@ -9007,14 +9012,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_SchemaElementNameMismatch", resourceCulture);
+                return "The element name '{0}' does not match the name '{1}' of the 'XmlSchemaElement' set as a partial validation type. ";
             }
         }
 
 
         internal static string FormatSch_SchemaElementNameMismatch(object arg1, object arg2)
         {
-            return string.Format(Sch_SchemaElementNameMismatch, arg1, arg2);
+            return string.Format("The element name '{0}' does not match the name '{1}' of the 'XmlSchemaElement' set as a partial validation type. ", arg1, arg2);
         }
 
 
@@ -9025,14 +9030,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_SchemaAttributeNameMismatch", resourceCulture);
+                return "The attribute name '{0}' does not match the name '{1}' of the 'XmlSchemaAttribute' set as a partial validation type. ";
             }
         }
 
 
         internal static string FormatSch_SchemaAttributeNameMismatch(object arg1, object arg2)
         {
-            return string.Format(Sch_SchemaAttributeNameMismatch, arg1, arg2);
+            return string.Format("The attribute name '{0}' does not match the name '{1}' of the 'XmlSchemaAttribute' set as a partial validation type. ", arg1, arg2);
         }
 
 
@@ -9043,7 +9048,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ValidateAttributeInvalidCall", resourceCulture);
+                return "If the partial validation type is 'XmlSchemaElement' or 'XmlSchemaType', the 'ValidateAttribute' method cannot be called.";
             }
         }
 
@@ -9056,7 +9061,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ValidateElementInvalidCall", resourceCulture);
+                return "If the partial validation type is 'XmlSchemaAttribute', the 'ValidateElement' method cannot be called.";
             }
         }
 
@@ -9069,7 +9074,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_EnumNotStarted", resourceCulture);
+                return "Enumeration has not started. Call MoveNext.";
             }
         }
 
@@ -9082,7 +9087,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_EnumFinished", resourceCulture);
+                return "Enumeration has already finished.";
             }
         }
 
@@ -9095,7 +9100,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SchInf_schema", resourceCulture);
+                return "The supplied xml instance is a schema or contains an inline schema. This class cannot infer a schema for a schema.";
             }
         }
 
@@ -9108,7 +9113,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SchInf_entity", resourceCulture);
+                return "Inference cannot handle entity references. Pass in an 'XmlReader' that expands entities.";
             }
         }
 
@@ -9121,7 +9126,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SchInf_simplecontent", resourceCulture);
+                return "Expected simple content. Schema was not created using this tool.";
             }
         }
 
@@ -9134,7 +9139,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SchInf_extension", resourceCulture);
+                return "Expected 'Extension' within 'SimpleContent'. Schema was not created using this tool.";
             }
         }
 
@@ -9147,7 +9152,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SchInf_particle", resourceCulture);
+                return "Particle cannot exist along with 'ContentModel'.";
             }
         }
 
@@ -9160,7 +9165,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SchInf_ct", resourceCulture);
+                return "Complex type expected to exist with at least one 'Element' at this point.";
             }
         }
 
@@ -9173,7 +9178,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SchInf_seq", resourceCulture);
+                return "sequence expected to contain elements only. Schema was not created using this tool.";
             }
         }
 
@@ -9186,7 +9191,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SchInf_noseq", resourceCulture);
+                return "The supplied schema contains particles other than Sequence and Choice. Only schemas generated by this tool are supported.";
             }
         }
 
@@ -9199,7 +9204,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SchInf_noct", resourceCulture);
+                return "Expected ComplexType. Schema was not generated using this tool.";
             }
         }
 
@@ -9212,7 +9217,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SchInf_UnknownParticle", resourceCulture);
+                return "Expected Element. Schema was not generated using this tool.";
             }
         }
 
@@ -9225,7 +9230,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SchInf_schematype", resourceCulture);
+                return "Inference can only handle simple built-in types for 'SchemaType'.";
             }
         }
 
@@ -9238,7 +9243,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SchInf_NoElement", resourceCulture);
+                return "There is no element to infer schema.";
             }
         }
 
@@ -9251,7 +9256,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xp_UnclosedString", resourceCulture);
+                return "This is an unclosed string.";
             }
         }
 
@@ -9264,14 +9269,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xp_ExprExpected", resourceCulture);
+                return "'{0}' is an invalid expression.";
             }
         }
 
 
         internal static string FormatXp_ExprExpected(object arg1)
         {
-            return string.Format(Xp_ExprExpected, arg1);
+            return string.Format("'{0}' is an invalid expression.", arg1);
         }
 
 
@@ -9282,14 +9287,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xp_InvalidArgumentType", resourceCulture);
+                return "The argument to function '{0}' in '{1}' cannot be converted to a node-set.";
             }
         }
 
 
         internal static string FormatXp_InvalidArgumentType(object arg1, object arg2)
         {
-            return string.Format(Xp_InvalidArgumentType, arg1, arg2);
+            return string.Format("The argument to function '{0}' in '{1}' cannot be converted to a node-set.", arg1, arg2);
         }
 
 
@@ -9300,14 +9305,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xp_InvalidNumArgs", resourceCulture);
+                return "Function '{0}' in '{1}' has an invalid number of arguments.";
             }
         }
 
 
         internal static string FormatXp_InvalidNumArgs(object arg1, object arg2)
         {
-            return string.Format(Xp_InvalidNumArgs, arg1, arg2);
+            return string.Format("Function '{0}' in '{1}' has an invalid number of arguments.", arg1, arg2);
         }
 
 
@@ -9318,14 +9323,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xp_InvalidName", resourceCulture);
+                return "'{0}' has an invalid qualified name.";
             }
         }
 
 
         internal static string FormatXp_InvalidName(object arg1)
         {
-            return string.Format(Xp_InvalidName, arg1);
+            return string.Format("'{0}' has an invalid qualified name.", arg1);
         }
 
 
@@ -9336,14 +9341,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xp_InvalidToken", resourceCulture);
+                return "'{0}' has an invalid token.";
             }
         }
 
 
         internal static string FormatXp_InvalidToken(object arg1)
         {
-            return string.Format(Xp_InvalidToken, arg1);
+            return string.Format("'{0}' has an invalid token.", arg1);
         }
 
 
@@ -9354,7 +9359,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xp_NodeSetExpected", resourceCulture);
+                return "Expression must evaluate to a node-set.";
             }
         }
 
@@ -9367,14 +9372,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xp_NotSupported", resourceCulture);
+                return "The XPath query '{0}' is not supported.";
             }
         }
 
 
         internal static string FormatXp_NotSupported(object arg1)
         {
-            return string.Format(Xp_NotSupported, arg1);
+            return string.Format("The XPath query '{0}' is not supported.", arg1);
         }
 
 
@@ -9385,14 +9390,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xp_InvalidPattern", resourceCulture);
+                return "'{0}' is an invalid XSLT pattern.";
             }
         }
 
 
         internal static string FormatXp_InvalidPattern(object arg1)
         {
-            return string.Format(Xp_InvalidPattern, arg1);
+            return string.Format("'{0}' is an invalid XSLT pattern.", arg1);
         }
 
 
@@ -9403,14 +9408,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xp_InvalidKeyPattern", resourceCulture);
+                return "'{0}' is an invalid key pattern. It either contains a variable reference or 'key()' function.";
             }
         }
 
 
         internal static string FormatXp_InvalidKeyPattern(object arg1)
         {
-            return string.Format(Xp_InvalidKeyPattern, arg1);
+            return string.Format("'{0}' is an invalid key pattern. It either contains a variable reference or 'key()' function.", arg1);
         }
 
 
@@ -9421,7 +9426,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xp_BadQueryObject", resourceCulture);
+                return "This is an invalid object. Only objects returned from Compile() can be passed as input.";
             }
         }
 
@@ -9434,7 +9439,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xp_UndefinedXsltContext", resourceCulture);
+                return "XsltContext is needed for this query because of an unknown function.";
             }
         }
 
@@ -9447,7 +9452,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xp_NoContext", resourceCulture);
+                return "Namespace Manager or XsltContext needed. This query has a prefix, variable, or user-defined function.";
             }
         }
 
@@ -9460,14 +9465,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xp_UndefVar", resourceCulture);
+                return "The variable '{0}' is undefined.";
             }
         }
 
 
         internal static string FormatXp_UndefVar(object arg1)
         {
-            return string.Format(Xp_UndefVar, arg1);
+            return string.Format("The variable '{0}' is undefined.", arg1);
         }
 
 
@@ -9478,14 +9483,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xp_UndefFunc", resourceCulture);
+                return "The function '{0}()' is undefined.";
             }
         }
 
 
         internal static string FormatXp_UndefFunc(object arg1)
         {
-            return string.Format(Xp_UndefFunc, arg1);
+            return string.Format("The function '{0}()' is undefined.", arg1);
         }
 
 
@@ -9496,14 +9501,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xp_FunctionFailed", resourceCulture);
+                return "Function '{0}()' has failed.";
             }
         }
 
 
         internal static string FormatXp_FunctionFailed(object arg1)
         {
-            return string.Format(Xp_FunctionFailed, arg1);
+            return string.Format("Function '{0}()' has failed.", arg1);
         }
 
 
@@ -9514,7 +9519,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xp_CurrentNotAllowed", resourceCulture);
+                return "The 'current()' function cannot be used in a pattern.";
             }
         }
 
@@ -9527,7 +9532,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xp_QueryTooComplex", resourceCulture);
+                return "The xpath query is too complex.";
             }
         }
 
@@ -9540,7 +9545,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_DualDocumentTypeNode", resourceCulture);
+                return "This document already has a 'DocumentType' node.";
             }
         }
 
@@ -9553,7 +9558,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_DualDocumentElementNode", resourceCulture);
+                return "This document already has a 'DocumentElement' node.";
             }
         }
 
@@ -9566,7 +9571,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_DualDeclarationNode", resourceCulture);
+                return "This document already has an 'XmlDeclaration' node.";
             }
         }
 
@@ -9579,14 +9584,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_Import", resourceCulture);
+                return "Cannot import nodes of type '{0}'.";
             }
         }
 
 
         internal static string FormatXdom_Import(object arg1)
         {
-            return string.Format(Xdom_Import, arg1);
+            return string.Format("Cannot import nodes of type '{0}'.", arg1);
         }
 
 
@@ -9597,7 +9602,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_Import_NullNode", resourceCulture);
+                return "Cannot import a null node.";
             }
         }
 
@@ -9610,7 +9615,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_NoRootEle", resourceCulture);
+                return "The document does not have a root element.";
             }
         }
 
@@ -9623,7 +9628,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_Attr_Name", resourceCulture);
+                return "The attribute local name cannot be empty.";
             }
         }
 
@@ -9636,7 +9641,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_AttrCol_Object", resourceCulture);
+                return "An 'Attributes' collection can only contain 'Attribute' objects.";
             }
         }
 
@@ -9649,7 +9654,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_AttrCol_Insert", resourceCulture);
+                return "The reference node must be a child of the current node.";
             }
         }
 
@@ -9662,7 +9667,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_NamedNode_Context", resourceCulture);
+                return "The named node is from a different document context.";
             }
         }
 
@@ -9675,7 +9680,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_Version", resourceCulture);
+                return "Wrong XML version information. The XML must match production \"VersionNum ::= '1.' [0-9]+\".";
             }
         }
 
@@ -9688,14 +9693,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_standalone", resourceCulture);
+                return "Wrong value for the XML declaration standalone attribute of '{0}'.";
             }
         }
 
 
         internal static string FormatXdom_standalone(object arg1)
         {
-            return string.Format(Xdom_standalone, arg1);
+            return string.Format("Wrong value for the XML declaration standalone attribute of '{0}'.", arg1);
         }
 
 
@@ -9706,7 +9711,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_Ent_Innertext", resourceCulture);
+                return "The 'InnerText' of an 'Entity' node is read-only and cannot be set.";
             }
         }
 
@@ -9719,7 +9724,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_EntRef_SetVal", resourceCulture);
+                return "'EntityReference' nodes have no support for setting value.";
             }
         }
 
@@ -9732,7 +9737,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_WS_Char", resourceCulture);
+                return "The string for whitespace contains an invalid character.";
             }
         }
 
@@ -9745,14 +9750,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_Node_SetVal", resourceCulture);
+                return "Cannot set a value on node type '{0}'.";
             }
         }
 
 
         internal static string FormatXdom_Node_SetVal(object arg1)
         {
-            return string.Format(Xdom_Node_SetVal, arg1);
+            return string.Format("Cannot set a value on node type '{0}'.", arg1);
         }
 
 
@@ -9763,7 +9768,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_Empty_LocalName", resourceCulture);
+                return "The local name for elements or attributes cannot be null or an empty string.";
             }
         }
 
@@ -9776,7 +9781,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_Set_InnerXml", resourceCulture);
+                return "Cannot set the 'InnerXml' for the current node because it is either read-only or cannot have children.";
             }
         }
 
@@ -9789,7 +9794,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_Attr_InUse", resourceCulture);
+                return "The 'Attribute' node cannot be inserted because it is already an attribute of another element.";
             }
         }
 
@@ -9802,7 +9807,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_Enum_ElementList", resourceCulture);
+                return "The element list has changed. The enumeration operation failed to continue.";
             }
         }
 
@@ -9815,14 +9820,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_Invalid_NT_String", resourceCulture);
+                return "'{0}' does not represent any 'XmlNodeType'.";
             }
         }
 
 
         internal static string FormatXdom_Invalid_NT_String(object arg1)
         {
-            return string.Format(Xdom_Invalid_NT_String, arg1);
+            return string.Format("'{0}' does not represent any 'XmlNodeType'.", arg1);
         }
 
 
@@ -9833,7 +9838,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_InvalidCharacter_EntityReference", resourceCulture);
+                return "Cannot create an 'EntityReference' node with a name starting with '#'.";
             }
         }
 
@@ -9846,7 +9851,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_IndexOutOfRange", resourceCulture);
+                return "The index being passed in is out of range.";
             }
         }
 
@@ -9859,7 +9864,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_Document_Innertext", resourceCulture);
+                return "The 'InnerText' of a 'Document' node is read-only and cannot be set.";
             }
         }
 
@@ -9872,7 +9877,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xpn_BadPosition", resourceCulture);
+                return "Operation is not valid due to the current position of the navigator.";
             }
         }
 
@@ -9885,7 +9890,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xpn_MissingParent", resourceCulture);
+                return "The current position of the navigator is missing a valid parent.";
             }
         }
 
@@ -9898,7 +9903,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xpn_NoContent", resourceCulture);
+                return "No content generated as the result of the operation.";
             }
         }
 
@@ -9911,7 +9916,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_Load_NoDocument", resourceCulture);
+                return "The document to be loaded could not be found.";
             }
         }
 
@@ -9924,7 +9929,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_Load_NoReader", resourceCulture);
+                return "There is no reader from which to load the document.";
             }
         }
 
@@ -9937,7 +9942,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_Node_Null_Doc", resourceCulture);
+                return "Cannot create a node without an owner document.";
             }
         }
 
@@ -9950,7 +9955,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_Node_Insert_Child", resourceCulture);
+                return "Cannot insert a node or any ancestor of that node as a child of itself.";
             }
         }
 
@@ -9963,7 +9968,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_Node_Insert_Contain", resourceCulture);
+                return "The current node cannot contain other nodes.";
             }
         }
 
@@ -9976,7 +9981,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_Node_Insert_Path", resourceCulture);
+                return "The reference node is not a child of this node.";
             }
         }
 
@@ -9989,7 +9994,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_Node_Insert_Context", resourceCulture);
+                return "The node to be inserted is from a different document context.";
             }
         }
 
@@ -10002,7 +10007,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_Node_Insert_Location", resourceCulture);
+                return "Cannot insert the node in the specified location.";
             }
         }
 
@@ -10015,7 +10020,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_Node_Insert_TypeConflict", resourceCulture);
+                return "The specified node cannot be inserted as the valid child of this node, because the specified node is the wrong type.";
             }
         }
 
@@ -10028,7 +10033,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_Node_Remove_Contain", resourceCulture);
+                return "The current node cannot contain other nodes, so the node to be removed is not its child.";
             }
         }
 
@@ -10041,7 +10046,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_Node_Remove_Child", resourceCulture);
+                return "The node to be removed is not a child of this node.";
             }
         }
 
@@ -10054,7 +10059,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_Node_Modify_ReadOnly", resourceCulture);
+                return "This node is read-only. It cannot be modified.";
             }
         }
 
@@ -10067,7 +10072,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_TextNode_SplitText", resourceCulture);
+                return "The 'Text' node is not connected in the DOM live tree. No 'SplitText' operation could be performed.";
             }
         }
 
@@ -10080,14 +10085,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_Attr_Reserved_XmlNS", resourceCulture);
+                return "The namespace declaration attribute has an incorrect 'namespaceURI': '{0}'.";
             }
         }
 
 
         internal static string FormatXdom_Attr_Reserved_XmlNS(object arg1)
         {
-            return string.Format(Xdom_Attr_Reserved_XmlNS, arg1);
+            return string.Format("The namespace declaration attribute has an incorrect 'namespaceURI': '{0}'.", arg1);
         }
 
 
@@ -10098,7 +10103,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xdom_Node_Cloning", resourceCulture);
+                return "'Entity' and 'Notation' nodes cannot be cloned.";
             }
         }
 
@@ -10111,7 +10116,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xnr_ResolveEntity", resourceCulture);
+                return "The node is not an expandable 'EntityReference' node.";
             }
         }
 
@@ -10124,7 +10129,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XPathDocument_MissingSchemas", resourceCulture);
+                return "An XmlSchemaSet must be provided to validate the document.";
             }
         }
 
@@ -10137,7 +10142,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XPathDocument_NotEnoughSchemaInfo", resourceCulture);
+                return "Element should have prior schema information to call this method.";
             }
         }
 
@@ -10150,7 +10155,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XPathDocument_ValidateInvalidNodeType", resourceCulture);
+                return "Validate and CheckValidity are only allowed on Root or Element nodes.";
             }
         }
 
@@ -10163,7 +10168,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XPathDocument_SchemaSetNotAllowed", resourceCulture);
+                return "An XmlSchemaSet is only allowed as a parameter on the Root node.";
             }
         }
 
@@ -10176,7 +10181,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlBin_MissingEndCDATA", resourceCulture);
+                return "CDATA end token is missing.";
             }
         }
 
@@ -10189,7 +10194,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlBin_InvalidQNameID", resourceCulture);
+                return "Invalid QName ID.";
             }
         }
 
@@ -10202,7 +10207,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlBinary_UnexpectedToken", resourceCulture);
+                return "Unexpected BinaryXml token.";
             }
         }
 
@@ -10215,7 +10220,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlBinary_InvalidSqlDecimal", resourceCulture);
+                return "Unable to parse data as SQL_DECIMAL.";
             }
         }
 
@@ -10228,7 +10233,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlBinary_InvalidSignature", resourceCulture);
+                return "Invalid BinaryXml signature.";
             }
         }
 
@@ -10241,7 +10246,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlBinary_InvalidProtocolVersion", resourceCulture);
+                return "Invalid BinaryXml protocol version.";
             }
         }
 
@@ -10254,7 +10259,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlBinary_UnsupportedCodePage", resourceCulture);
+                return "Unsupported BinaryXml codepage.";
             }
         }
 
@@ -10267,7 +10272,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlBinary_InvalidStandalone", resourceCulture);
+                return "Invalid BinaryXml standalone token.";
             }
         }
 
@@ -10280,7 +10285,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlBinary_NoParserContext", resourceCulture);
+                return "BinaryXml Parser does not support initialization with XmlParserContext.";
             }
         }
 
@@ -10293,7 +10298,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlBinary_ListsOfValuesNotSupported", resourceCulture);
+                return "Lists of BinaryXml value tokens not supported.";
             }
         }
 
@@ -10306,14 +10311,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlBinary_CastNotSupported", resourceCulture);
+                return "Token '{0}' does not support a conversion to Clr type '{1}'.";
             }
         }
 
 
         internal static string FormatXmlBinary_CastNotSupported(object arg1, object arg2)
         {
-            return string.Format(XmlBinary_CastNotSupported, arg1, arg2);
+            return string.Format("Token '{0}' does not support a conversion to Clr type '{1}'.", arg1, arg2);
         }
 
 
@@ -10324,14 +10329,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlBinary_NoRemapPrefix", resourceCulture);
+                return "Prefix '{0}' is already assigned to namespace '{1}' and cannot be reassigned to '{2}' on this tag.";
             }
         }
 
 
         internal static string FormatXmlBinary_NoRemapPrefix(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlBinary_NoRemapPrefix, arg1, arg2, arg3);
+            return string.Format("Prefix '{0}' is already assigned to namespace '{1}' and cannot be reassigned to '{2}' on this tag.", arg1, arg2, arg3);
         }
 
 
@@ -10342,14 +10347,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlBinary_AttrWithNsNoPrefix", resourceCulture);
+                return "Attribute '{0}' has namespace '{1}' but no prefix.";
             }
         }
 
 
         internal static string FormatXmlBinary_AttrWithNsNoPrefix(object arg1, object arg2)
         {
-            return string.Format(XmlBinary_AttrWithNsNoPrefix, arg1, arg2);
+            return string.Format("Attribute '{0}' has namespace '{1}' but no prefix.", arg1, arg2);
         }
 
 
@@ -10360,7 +10365,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlBinary_ValueTooBig", resourceCulture);
+                return "The value is too big to fit into an Int32. The arithmetic operation resulted in an overflow.";
             }
         }
 
@@ -10373,7 +10378,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlTypes_ArithOverflow", resourceCulture);
+                return "Arithmetic Overflow.";
             }
         }
 
@@ -10386,14 +10391,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlMissingType", resourceCulture);
+                return "Invalid serialization assembly: Required type {0} cannot be found in the generated assembly '{1}'.";
             }
         }
 
 
         internal static string FormatXmlMissingType(object arg1, object arg2)
         {
-            return string.Format(XmlMissingType, arg1, arg2);
+            return string.Format("Invalid serialization assembly: Required type {0} cannot be found in the generated assembly '{1}'.", arg1, arg2);
         }
 
 
@@ -10404,14 +10409,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlSerializerUnsupportedType", resourceCulture);
+                return "{0} is an unsupported type. Please use [XmlIgnore] attribute to exclude members of this type from serialization graph.";
             }
         }
 
 
         internal static string FormatXmlSerializerUnsupportedType(object arg1)
         {
-            return string.Format(XmlSerializerUnsupportedType, arg1);
+            return string.Format("{0} is an unsupported type. Please use [XmlIgnore] attribute to exclude members of this type from serialization graph.", arg1);
         }
 
 
@@ -10422,14 +10427,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlSerializerUnsupportedMember", resourceCulture);
+                return "Cannot serialize member '{0}' of type '{1}', see inner exception for more details.";
             }
         }
 
 
         internal static string FormatXmlSerializerUnsupportedMember(object arg1, object arg2)
         {
-            return string.Format(XmlSerializerUnsupportedMember, arg1, arg2);
+            return string.Format("Cannot serialize member '{0}' of type '{1}', see inner exception for more details.", arg1, arg2);
         }
 
 
@@ -10440,14 +10445,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlUnsupportedTypeKind", resourceCulture);
+                return "The type {0} may not be serialized.";
             }
         }
 
 
         internal static string FormatXmlUnsupportedTypeKind(object arg1)
         {
-            return string.Format(XmlUnsupportedTypeKind, arg1);
+            return string.Format("The type {0} may not be serialized.", arg1);
         }
 
 
@@ -10458,14 +10463,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlUnsupportedSoapTypeKind", resourceCulture);
+                return "The type {0} may not be serialized with SOAP-encoded messages. Set the Use for your message to Literal.";
             }
         }
 
 
         internal static string FormatXmlUnsupportedSoapTypeKind(object arg1)
         {
-            return string.Format(XmlUnsupportedSoapTypeKind, arg1);
+            return string.Format("The type {0} may not be serialized with SOAP-encoded messages. Set the Use for your message to Literal.", arg1);
         }
 
 
@@ -10476,14 +10481,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlObsoleteIsError", resourceCulture);
+                return "Cannot serialize member with [Obsolete(IsError=true)]: {0}";
             }
         }
 
 
         internal static string FormatXmlObsoleteIsError(object arg1)
         {
-            return string.Format(XmlObsoleteIsError, arg1);
+            return string.Format("Cannot serialize member with [Obsolete(IsError=true)]: {0}", arg1);
         }
 
 
@@ -10494,14 +10499,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlUnsupportedIDictionary", resourceCulture);
+                return "The type {0} is not supported because it implements IDictionary.";
             }
         }
 
 
         internal static string FormatXmlUnsupportedIDictionary(object arg1)
         {
-            return string.Format(XmlUnsupportedIDictionary, arg1);
+            return string.Format("The type {0} is not supported because it implements IDictionary.", arg1);
         }
 
 
@@ -10512,14 +10517,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlUnsupportedIDictionaryDetails", resourceCulture);
+                return "Cannot serialize member {0} of type {1}, because it implements IDictionary.";
             }
         }
 
 
         internal static string FormatXmlUnsupportedIDictionaryDetails(object arg1, object arg2)
         {
-            return string.Format(XmlUnsupportedIDictionaryDetails, arg1, arg2);
+            return string.Format("Cannot serialize member {0} of type {1}, because it implements IDictionary.", arg1, arg2);
         }
 
 
@@ -10530,14 +10535,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlDuplicateTypeName", resourceCulture);
+                return "A type with the name {0} has already been added in namespace {1}.";
             }
         }
 
 
         internal static string FormatXmlDuplicateTypeName(object arg1, object arg2)
         {
-            return string.Format(XmlDuplicateTypeName, arg1, arg2);
+            return string.Format("A type with the name {0} has already been added in namespace {1}.", arg1, arg2);
         }
 
 
@@ -10548,14 +10553,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlSerializableNameMissing1", resourceCulture);
+                return "Schema Id is missing. The schema returned from {0}.GetSchema() must have an Id.";
             }
         }
 
 
         internal static string FormatXmlSerializableNameMissing1(object arg1)
         {
-            return string.Format(XmlSerializableNameMissing1, arg1);
+            return string.Format("Schema Id is missing. The schema returned from {0}.GetSchema() must have an Id.", arg1);
         }
 
 
@@ -10566,14 +10571,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlConstructorInaccessible", resourceCulture);
+                return "{0} cannot be serialized because it does not have a parameterless constructor.";
             }
         }
 
 
         internal static string FormatXmlConstructorInaccessible(object arg1)
         {
-            return string.Format(XmlConstructorInaccessible, arg1);
+            return string.Format("{0} cannot be serialized because it does not have a parameterless constructor.", arg1);
         }
 
 
@@ -10584,14 +10589,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlTypeInaccessible", resourceCulture);
+                return "{0} is inaccessible due to its protection level. Only public types can be processed.";
             }
         }
 
 
         internal static string FormatXmlTypeInaccessible(object arg1)
         {
-            return string.Format(XmlTypeInaccessible, arg1);
+            return string.Format("{0} is inaccessible due to its protection level. Only public types can be processed.", arg1);
         }
 
 
@@ -10602,14 +10607,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlTypeStatic", resourceCulture);
+                return "{0} cannot be serialized. Static types cannot be used as parameters or return types.";
             }
         }
 
 
         internal static string FormatXmlTypeStatic(object arg1)
         {
-            return string.Format(XmlTypeStatic, arg1);
+            return string.Format("{0} cannot be serialized. Static types cannot be used as parameters or return types.", arg1);
         }
 
 
@@ -10620,14 +10625,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlNoDefaultAccessors", resourceCulture);
+                return "You must implement a default accessor on {0} because it inherits from ICollection.";
             }
         }
 
 
         internal static string FormatXmlNoDefaultAccessors(object arg1)
         {
-            return string.Format(XmlNoDefaultAccessors, arg1);
+            return string.Format("You must implement a default accessor on {0} because it inherits from ICollection.", arg1);
         }
 
 
@@ -10638,14 +10643,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlNoAddMethod", resourceCulture);
+                return "To be XML serializable, types which inherit from {2} must have an implementation of Add({1}) at all levels of their inheritance hierarchy. {0} does not implement Add({1}).";
             }
         }
 
 
         internal static string FormatXmlNoAddMethod(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(XmlNoAddMethod, arg1, arg2, arg3, arg4);
+            return string.Format("To be XML serializable, types which inherit from {2} must have an implementation of Add({1}) at all levels of their inheritance hierarchy. {0} does not implement Add({1}).", arg1, arg2, arg3, arg4);
         }
 
 
@@ -10656,14 +10661,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlReadOnlyPropertyError", resourceCulture);
+                return "Cannot deserialize type '{0}' because it contains property '{1}' which has no public setter.";
             }
         }
 
 
         internal static string FormatXmlReadOnlyPropertyError(object arg1, object arg2)
         {
-            return string.Format(XmlReadOnlyPropertyError, arg1, arg2);
+            return string.Format("Cannot deserialize type '{0}' because it contains property '{1}' which has no public setter.", arg1, arg2);
         }
 
 
@@ -10674,14 +10679,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlAttributeSetAgain", resourceCulture);
+                return "'{0}.{1}' already has attributes.";
             }
         }
 
 
         internal static string FormatXmlAttributeSetAgain(object arg1, object arg2)
         {
-            return string.Format(XmlAttributeSetAgain, arg1, arg2);
+            return string.Format("'{0}.{1}' already has attributes.", arg1, arg2);
         }
 
 
@@ -10692,7 +10697,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIllegalWildcard", resourceCulture);
+                return "Cannot use wildcards at the top level of a schema.";
             }
         }
 
@@ -10705,14 +10710,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIllegalArrayElement", resourceCulture);
+                return "An element declared at the top level of a schema cannot have maxOccurs > 1. Provide a wrapper element for '{0}' by using XmlArray or XmlArrayItem instead of XmlElementAttribute, or by using the Wrapped parameter style.";
             }
         }
 
 
         internal static string FormatXmlIllegalArrayElement(object arg1)
         {
-            return string.Format(XmlIllegalArrayElement, arg1);
+            return string.Format("An element declared at the top level of a schema cannot have maxOccurs > 1. Provide a wrapper element for '{0}' by using XmlArray or XmlArrayItem instead of XmlElementAttribute, or by using the Wrapped parameter style.", arg1);
         }
 
 
@@ -10723,14 +10728,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIllegalForm", resourceCulture);
+                return "There was an error exporting '{0}': elements declared at the top level of a schema cannot be unqualified.";
             }
         }
 
 
         internal static string FormatXmlIllegalForm(object arg1)
         {
-            return string.Format(XmlIllegalForm, arg1);
+            return string.Format("There was an error exporting '{0}': elements declared at the top level of a schema cannot be unqualified.", arg1);
         }
 
 
@@ -10741,14 +10746,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlBareTextMember", resourceCulture);
+                return "There was an error exporting '{0}': bare members cannot contain text content.";
             }
         }
 
 
         internal static string FormatXmlBareTextMember(object arg1)
         {
-            return string.Format(XmlBareTextMember, arg1);
+            return string.Format("There was an error exporting '{0}': bare members cannot contain text content.", arg1);
         }
 
 
@@ -10759,14 +10764,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlBareAttributeMember", resourceCulture);
+                return "There was an error exporting '{0}': bare members cannot be attributes.";
             }
         }
 
 
         internal static string FormatXmlBareAttributeMember(object arg1)
         {
-            return string.Format(XmlBareAttributeMember, arg1);
+            return string.Format("There was an error exporting '{0}': bare members cannot be attributes.", arg1);
         }
 
 
@@ -10777,14 +10782,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlReflectionError", resourceCulture);
+                return "There was an error reflecting '{0}'.";
             }
         }
 
 
         internal static string FormatXmlReflectionError(object arg1)
         {
-            return string.Format(XmlReflectionError, arg1);
+            return string.Format("There was an error reflecting '{0}'.", arg1);
         }
 
 
@@ -10795,14 +10800,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlTypeReflectionError", resourceCulture);
+                return "There was an error reflecting type '{0}'.";
             }
         }
 
 
         internal static string FormatXmlTypeReflectionError(object arg1)
         {
-            return string.Format(XmlTypeReflectionError, arg1);
+            return string.Format("There was an error reflecting type '{0}'.", arg1);
         }
 
 
@@ -10813,14 +10818,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlPropertyReflectionError", resourceCulture);
+                return "There was an error reflecting property '{0}'.";
             }
         }
 
 
         internal static string FormatXmlPropertyReflectionError(object arg1)
         {
-            return string.Format(XmlPropertyReflectionError, arg1);
+            return string.Format("There was an error reflecting property '{0}'.", arg1);
         }
 
 
@@ -10831,14 +10836,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlFieldReflectionError", resourceCulture);
+                return "There was an error reflecting field '{0}'.";
             }
         }
 
 
         internal static string FormatXmlFieldReflectionError(object arg1)
         {
-            return string.Format(XmlFieldReflectionError, arg1);
+            return string.Format("There was an error reflecting field '{0}'.", arg1);
         }
 
 
@@ -10849,14 +10854,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidDataTypeUsage", resourceCulture);
+                return "'{0}' is an invalid value for the {1} property. The property may only be specified for primitive types.";
             }
         }
 
 
         internal static string FormatXmlInvalidDataTypeUsage(object arg1, object arg2)
         {
-            return string.Format(XmlInvalidDataTypeUsage, arg1, arg2);
+            return string.Format("'{0}' is an invalid value for the {1} property. The property may only be specified for primitive types.", arg1, arg2);
         }
 
 
@@ -10867,14 +10872,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidXsdDataType", resourceCulture);
+                return "Value '{0}' cannot be used for the {1} property. The datatype '{2}' is missing.";
             }
         }
 
 
         internal static string FormatXmlInvalidXsdDataType(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlInvalidXsdDataType, arg1, arg2, arg3);
+            return string.Format("Value '{0}' cannot be used for the {1} property. The datatype '{2}' is missing.", arg1, arg2, arg3);
         }
 
 
@@ -10885,14 +10890,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlDataTypeMismatch", resourceCulture);
+                return "'{0}' is an invalid value for the {1} property. {0} cannot be converted to {2}.";
             }
         }
 
 
         internal static string FormatXmlDataTypeMismatch(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(XmlDataTypeMismatch, arg1, arg2, arg3, arg4);
+            return string.Format("'{0}' is an invalid value for the {1} property. {0} cannot be converted to {2}.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -10903,14 +10908,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIllegalTypeContext", resourceCulture);
+                return "{0} cannot be used as: 'xml {1}'.";
             }
         }
 
 
         internal static string FormatXmlIllegalTypeContext(object arg1, object arg2)
         {
-            return string.Format(XmlIllegalTypeContext, arg1, arg2);
+            return string.Format("{0} cannot be used as: 'xml {1}'.", arg1, arg2);
         }
 
 
@@ -10921,14 +10926,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlUdeclaredXsdType", resourceCulture);
+                return "The type, {0}, is undeclared.";
             }
         }
 
 
         internal static string FormatXmlUdeclaredXsdType(object arg1)
         {
-            return string.Format(XmlUdeclaredXsdType, arg1);
+            return string.Format("The type, {0}, is undeclared.", arg1);
         }
 
 
@@ -10939,7 +10944,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidConstantAttribute", resourceCulture);
+                return "Only XmlEnum may be used on enumerated constants.";
             }
         }
 
@@ -10952,7 +10957,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIllegalAttributesArrayAttribute", resourceCulture);
+                return "XmlAttribute and XmlAnyAttribute cannot be used in conjunction with XmlElement, XmlText, XmlAnyElement, XmlArray, or XmlArrayItem.";
             }
         }
 
@@ -10965,7 +10970,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIllegalElementsArrayAttribute", resourceCulture);
+                return "XmlElement, XmlText, and XmlAnyElement cannot be used in conjunction with XmlAttribute, XmlAnyAttribute, XmlArray, or XmlArrayItem.";
             }
         }
 
@@ -10978,7 +10983,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIllegalArrayArrayAttribute", resourceCulture);
+                return "XmlArray and XmlArrayItem cannot be used in conjunction with XmlAttribute, XmlAnyAttribute, XmlElement, XmlText, or XmlAnyElement.";
             }
         }
 
@@ -10991,7 +10996,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIllegalAttribute", resourceCulture);
+                return "For non-array types, you may use the following attributes: XmlAttribute, XmlText, XmlElement, or XmlAnyElement.";
             }
         }
 
@@ -11004,14 +11009,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIllegalType", resourceCulture);
+                return "The type for {0} may not be specified for primitive types.";
             }
         }
 
 
         internal static string FormatXmlIllegalType(object arg1)
         {
-            return string.Format(XmlIllegalType, arg1);
+            return string.Format("The type for {0} may not be specified for primitive types.", arg1);
         }
 
 
@@ -11022,14 +11027,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIllegalAttrOrText", resourceCulture);
+                return "Cannot serialize member '{0}' of type {1}. XmlAttribute/XmlText cannot be used to encode complex types.";
             }
         }
 
 
         internal static string FormatXmlIllegalAttrOrText(object arg1, object arg2)
         {
-            return string.Format(XmlIllegalAttrOrText, arg1, arg2);
+            return string.Format("Cannot serialize member '{0}' of type {1}. XmlAttribute/XmlText cannot be used to encode complex types.", arg1, arg2);
         }
 
 
@@ -11040,14 +11045,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIllegalSoapAttribute", resourceCulture);
+                return "Cannot serialize member '{0}' of type {1}. SoapAttribute cannot be used to encode complex types.";
             }
         }
 
 
         internal static string FormatXmlIllegalSoapAttribute(object arg1, object arg2)
         {
-            return string.Format(XmlIllegalSoapAttribute, arg1, arg2);
+            return string.Format("Cannot serialize member '{0}' of type {1}. SoapAttribute cannot be used to encode complex types.", arg1, arg2);
         }
 
 
@@ -11058,32 +11063,32 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIllegalAttrOrTextInterface", resourceCulture);
+                return "Cannot serialize member '{0}' of type {1}. XmlAttribute/XmlText cannot be used to encode types implementing {2}.";
             }
         }
 
 
         internal static string FormatXmlIllegalAttrOrTextInterface(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlIllegalAttrOrTextInterface, arg1, arg2, arg3);
+            return string.Format("Cannot serialize member '{0}' of type {1}. XmlAttribute/XmlText cannot be used to encode types implementing {2}.", arg1, arg2, arg3);
         }
 
 
         /// <summary>
-        /// XmlAttribute cannot be used to encode array of {0}, because it is marked with FlagsAttribute.
+        /// XmlAttribute cannot be used to encode array of {1}, because it is marked with FlagsAttribute.
         /// </summary>
         internal static string XmlIllegalAttributeFlagsArray
         {
             get
             {
-                return ResourceManager.GetString("XmlIllegalAttributeFlagsArray", resourceCulture);
+                return "XmlAttribute cannot be used to encode array of {1}, because it is marked with FlagsAttribute.";
             }
         }
 
 
         internal static string FormatXmlIllegalAttributeFlagsArray(object arg1)
         {
-            return string.Format(XmlIllegalAttributeFlagsArray, arg1);
+            return string.Format("XmlAttribute cannot be used to encode array of {1}, because it is marked with FlagsAttribute.", arg1);
         }
 
 
@@ -11094,14 +11099,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIllegalAnyElement", resourceCulture);
+                return "Cannot serialize member of type {0}: XmlAnyElement can only be used with classes of type XmlNode or a type deriving from XmlNode.";
             }
         }
 
 
         internal static string FormatXmlIllegalAnyElement(object arg1)
         {
-            return string.Format(XmlIllegalAnyElement, arg1);
+            return string.Format("Cannot serialize member of type {0}: XmlAnyElement can only be used with classes of type XmlNode or a type deriving from XmlNode.", arg1);
         }
 
 
@@ -11112,14 +11117,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidIsNullable", resourceCulture);
+                return "IsNullable may not be 'true' for value type {0}.  Please consider using Nullable<{0}> instead.";
             }
         }
 
 
         internal static string FormatXmlInvalidIsNullable(object arg1, object arg2)
         {
-            return string.Format(XmlInvalidIsNullable, arg1, arg2);
+            return string.Format("IsNullable may not be 'true' for value type {0}.  Please consider using Nullable<{0}> instead.", arg1, arg2);
         }
 
 
@@ -11130,14 +11135,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidNotNullable", resourceCulture);
+                return "IsNullable may not be set to 'false' for a Nullable<{0}> type. Consider using '{0}' type or removing the IsNullable property from the {1} attribute.";
             }
         }
 
 
         internal static string FormatXmlInvalidNotNullable(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlInvalidNotNullable, arg1, arg2, arg3);
+            return string.Format("IsNullable may not be set to 'false' for a Nullable<{0}> type. Consider using '{0}' type or removing the IsNullable property from the {1} attribute.", arg1, arg2, arg3);
         }
 
 
@@ -11148,7 +11153,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidFormUnqualified", resourceCulture);
+                return "The Form property may not be 'Unqualified' when an explicit Namespace property is present.";
             }
         }
 
@@ -11161,14 +11166,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlDuplicateNamespace", resourceCulture);
+                return "The namespace, {0}, is a duplicate.";
             }
         }
 
 
         internal static string FormatXmlDuplicateNamespace(object arg1)
         {
-            return string.Format(XmlDuplicateNamespace, arg1);
+            return string.Format("The namespace, {0}, is a duplicate.", arg1);
         }
 
 
@@ -11179,14 +11184,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlElementHasNoName", resourceCulture);
+                return "This element has no name. Please review schema type '{0}' from namespace '{1}'.";
             }
         }
 
 
         internal static string FormatXmlElementHasNoName(object arg1, object arg2)
         {
-            return string.Format(XmlElementHasNoName, arg1, arg2);
+            return string.Format("This element has no name. Please review schema type '{0}' from namespace '{1}'.", arg1, arg2);
         }
 
 
@@ -11197,7 +11202,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlAttributeHasNoName", resourceCulture);
+                return "This attribute has no name.";
             }
         }
 
@@ -11210,14 +11215,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlElementImportedTwice", resourceCulture);
+                return "The element, {0}, from namespace, {1}, was imported in two different contexts: ({2}, {3}).";
             }
         }
 
 
         internal static string FormatXmlElementImportedTwice(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(XmlElementImportedTwice, arg1, arg2, arg3, arg4);
+            return string.Format("The element, {0}, from namespace, {1}, was imported in two different contexts: ({2}, {3}).", arg1, arg2, arg3, arg4);
         }
 
 
@@ -11228,14 +11233,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlHiddenMember", resourceCulture);
+                return "Member {0}.{1} of type {2} hides base class member {3}.{4} of type {5}. Use XmlElementAttribute or XmlAttributeAttribute to specify a new name.";
             }
         }
 
 
         internal static string FormatXmlHiddenMember(object arg1, object arg2, object arg3, object arg4, object arg5, object arg6)
         {
-            return string.Format(XmlHiddenMember, arg1, arg2, arg3, arg4, arg5, arg6);
+            return string.Format("Member {0}.{1} of type {2} hides base class member {3}.{4} of type {5}. Use XmlElementAttribute or XmlAttributeAttribute to specify a new name.", arg1, arg2, arg3, arg4, arg5, arg6);
         }
 
 
@@ -11246,14 +11251,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidXmlOverride", resourceCulture);
+                return "Member '{0}.{1}' hides inherited member '{2}.{3}', but has different custom attributes.";
             }
         }
 
 
         internal static string FormatXmlInvalidXmlOverride(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(XmlInvalidXmlOverride, arg1, arg2, arg3, arg4);
+            return string.Format("Member '{0}.{1}' hides inherited member '{2}.{3}', but has different custom attributes.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -11264,7 +11269,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlMembersDeriveError", resourceCulture);
+                return "These members may not be derived.";
             }
         }
 
@@ -11277,14 +11282,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlTypeUsedTwice", resourceCulture);
+                return "The type '{0}' from namespace '{1}' was used in two different ways.";
             }
         }
 
 
         internal static string FormatXmlTypeUsedTwice(object arg1, object arg2)
         {
-            return string.Format(XmlTypeUsedTwice, arg1, arg2);
+            return string.Format("The type '{0}' from namespace '{1}' was used in two different ways.", arg1, arg2);
         }
 
 
@@ -11295,14 +11300,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlMissingGroup", resourceCulture);
+                return "Group {0} is missing.";
             }
         }
 
 
         internal static string FormatXmlMissingGroup(object arg1)
         {
-            return string.Format(XmlMissingGroup, arg1);
+            return string.Format("Group {0} is missing.", arg1);
         }
 
 
@@ -11313,14 +11318,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlMissingAttributeGroup", resourceCulture);
+                return "The attribute group {0} is missing.";
             }
         }
 
 
         internal static string FormatXmlMissingAttributeGroup(object arg1)
         {
-            return string.Format(XmlMissingAttributeGroup, arg1);
+            return string.Format("The attribute group {0} is missing.", arg1);
         }
 
 
@@ -11331,14 +11336,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlMissingDataType", resourceCulture);
+                return "The datatype '{0}' is missing.";
             }
         }
 
 
         internal static string FormatXmlMissingDataType(object arg1)
         {
-            return string.Format(XmlMissingDataType, arg1);
+            return string.Format("The datatype '{0}' is missing.", arg1);
         }
 
 
@@ -11349,14 +11354,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidEncoding", resourceCulture);
+                return "Referenced type '{0}' is only valid for encoded SOAP.";
             }
         }
 
 
         internal static string FormatXmlInvalidEncoding(object arg1)
         {
-            return string.Format(XmlInvalidEncoding, arg1);
+            return string.Format("Referenced type '{0}' is only valid for encoded SOAP.", arg1);
         }
 
 
@@ -11367,14 +11372,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlMissingElement", resourceCulture);
+                return "The element '{0}' is missing.";
             }
         }
 
 
         internal static string FormatXmlMissingElement(object arg1)
         {
-            return string.Format(XmlMissingElement, arg1);
+            return string.Format("The element '{0}' is missing.", arg1);
         }
 
 
@@ -11385,14 +11390,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlMissingAttribute", resourceCulture);
+                return "The attribute {0} is missing.";
             }
         }
 
 
         internal static string FormatXmlMissingAttribute(object arg1)
         {
-            return string.Format(XmlMissingAttribute, arg1);
+            return string.Format("The attribute {0} is missing.", arg1);
         }
 
 
@@ -11403,14 +11408,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlMissingMethodEnum", resourceCulture);
+                return "The method for enum {0} is missing.";
             }
         }
 
 
         internal static string FormatXmlMissingMethodEnum(object arg1)
         {
-            return string.Format(XmlMissingMethodEnum, arg1);
+            return string.Format("The method for enum {0} is missing.", arg1);
         }
 
 
@@ -11421,7 +11426,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlNoAttributeHere", resourceCulture);
+                return "Cannot write a node of type XmlAttribute as an element value. Use XmlAnyAttributeAttribute with an array of XmlNode or XmlAttribute to write the node as an attribute.";
             }
         }
 
@@ -11434,7 +11439,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlNeedAttributeHere", resourceCulture);
+                return "The node must be either type XmlAttribute or a derived type.";
             }
         }
 
@@ -11447,14 +11452,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlElementNameMismatch", resourceCulture);
+                return "This element was named '{0}' from namespace '{1}' but should have been named '{2}' from namespace '{3}'.";
             }
         }
 
 
         internal static string FormatXmlElementNameMismatch(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(XmlElementNameMismatch, arg1, arg2, arg3, arg4);
+            return string.Format("This element was named '{0}' from namespace '{1}' but should have been named '{2}' from namespace '{3}'.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -11465,14 +11470,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlUnsupportedDefaultType", resourceCulture);
+                return "The default value type, {0}, is unsupported.";
             }
         }
 
 
         internal static string FormatXmlUnsupportedDefaultType(object arg1)
         {
-            return string.Format(XmlUnsupportedDefaultType, arg1);
+            return string.Format("The default value type, {0}, is unsupported.", arg1);
         }
 
 
@@ -11483,14 +11488,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlUnsupportedDefaultValue", resourceCulture);
+                return "The formatter {0} cannot be used for default values.";
             }
         }
 
 
         internal static string FormatXmlUnsupportedDefaultValue(object arg1)
         {
-            return string.Format(XmlUnsupportedDefaultValue, arg1);
+            return string.Format("The formatter {0} cannot be used for default values.", arg1);
         }
 
 
@@ -11501,14 +11506,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidDefaultValue", resourceCulture);
+                return "Value '{0}' cannot be converted to {1}.";
             }
         }
 
 
         internal static string FormatXmlInvalidDefaultValue(object arg1, object arg2)
         {
-            return string.Format(XmlInvalidDefaultValue, arg1, arg2);
+            return string.Format("Value '{0}' cannot be converted to {1}.", arg1, arg2);
         }
 
 
@@ -11519,14 +11524,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidDefaultEnumValue", resourceCulture);
+                return "Enum {0} cannot be converted to {1}.";
             }
         }
 
 
         internal static string FormatXmlInvalidDefaultEnumValue(object arg1, object arg2)
         {
-            return string.Format(XmlInvalidDefaultEnumValue, arg1, arg2);
+            return string.Format("Enum {0} cannot be converted to {1}.", arg1, arg2);
         }
 
 
@@ -11537,14 +11542,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlUnknownNode", resourceCulture);
+                return "{0} was not expected.";
             }
         }
 
 
         internal static string FormatXmlUnknownNode(object arg1)
         {
-            return string.Format(XmlUnknownNode, arg1);
+            return string.Format("{0} was not expected.", arg1);
         }
 
 
@@ -11555,14 +11560,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlUnknownConstant", resourceCulture);
+                return "Instance validation error: '{0}' is not a valid value for {1}.";
             }
         }
 
 
         internal static string FormatXmlUnknownConstant(object arg1, object arg2)
         {
-            return string.Format(XmlUnknownConstant, arg1, arg2);
+            return string.Format("Instance validation error: '{0}' is not a valid value for {1}.", arg1, arg2);
         }
 
 
@@ -11573,7 +11578,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlSerializeError", resourceCulture);
+                return "There is an error in the XML document.";
             }
         }
 
@@ -11586,14 +11591,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlSerializeErrorDetails", resourceCulture);
+                return "There is an error in XML document ({0}, {1}).";
             }
         }
 
 
         internal static string FormatXmlSerializeErrorDetails(object arg1, object arg2)
         {
-            return string.Format(XmlSerializeErrorDetails, arg1, arg2);
+            return string.Format("There is an error in XML document ({0}, {1}).", arg1, arg2);
         }
 
 
@@ -11604,14 +11609,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlSchemaDuplicateNamespace", resourceCulture);
+                return "There are more then one schema with targetNamespace='{0}'.";
             }
         }
 
 
         internal static string FormatXmlSchemaDuplicateNamespace(object arg1)
         {
-            return string.Format(XmlSchemaDuplicateNamespace, arg1);
+            return string.Format("There are more then one schema with targetNamespace='{0}'.", arg1);
         }
 
 
@@ -11622,7 +11627,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlSchemaCompiled", resourceCulture);
+                return "Cannot add schema to compiled schemas collection.";
             }
         }
 
@@ -11635,14 +11640,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidArrayDimentions", resourceCulture);
+                return "SOAP-ENC:arrayType with multidimensional array found at {0}. Only single-dimensional arrays are supported. Consider using an array of arrays instead.";
             }
         }
 
 
         internal static string FormatXmlInvalidArrayDimentions(object arg1)
         {
-            return string.Format(XmlInvalidArrayDimentions, arg1);
+            return string.Format("SOAP-ENC:arrayType with multidimensional array found at {0}. Only single-dimensional arrays are supported. Consider using an array of arrays instead.", arg1);
         }
 
 
@@ -11653,14 +11658,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidArrayTypeName", resourceCulture);
+                return "The SOAP-ENC:arrayType references type is named '{0}'; a type named '{1}' was expected at {2}.";
             }
         }
 
 
         internal static string FormatXmlInvalidArrayTypeName(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlInvalidArrayTypeName, arg1, arg2, arg3);
+            return string.Format("The SOAP-ENC:arrayType references type is named '{0}'; a type named '{1}' was expected at {2}.", arg1, arg2, arg3);
         }
 
 
@@ -11671,14 +11676,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidArrayTypeNamespace", resourceCulture);
+                return "The SOAP-ENC:arrayType references type is from namespace '{0}'; the namespace '{1}' was expected at {2}.";
             }
         }
 
 
         internal static string FormatXmlInvalidArrayTypeNamespace(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlInvalidArrayTypeNamespace, arg1, arg2, arg3);
+            return string.Format("The SOAP-ENC:arrayType references type is from namespace '{0}'; the namespace '{1}' was expected at {2}.", arg1, arg2, arg3);
         }
 
 
@@ -11689,14 +11694,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlMissingArrayType", resourceCulture);
+                return "SOAP-ENC:arrayType was missing at {0}.";
             }
         }
 
 
         internal static string FormatXmlMissingArrayType(object arg1)
         {
-            return string.Format(XmlMissingArrayType, arg1);
+            return string.Format("SOAP-ENC:arrayType was missing at {0}.", arg1);
         }
 
 
@@ -11707,14 +11712,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlEmptyArrayType", resourceCulture);
+                return "SOAP-ENC:arrayType was empty at {0}.";
             }
         }
 
 
         internal static string FormatXmlEmptyArrayType(object arg1)
         {
-            return string.Format(XmlEmptyArrayType, arg1);
+            return string.Format("SOAP-ENC:arrayType was empty at {0}.", arg1);
         }
 
 
@@ -11725,7 +11730,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidArraySyntax", resourceCulture);
+                return "SOAP-ENC:arrayType must end with a ']' character.";
             }
         }
 
@@ -11738,14 +11743,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidArrayTypeSyntax", resourceCulture);
+                return "Invalid wsd:arrayType syntax: '{0}'.";
             }
         }
 
 
         internal static string FormatXmlInvalidArrayTypeSyntax(object arg1)
         {
-            return string.Format(XmlInvalidArrayTypeSyntax, arg1);
+            return string.Format("Invalid wsd:arrayType syntax: '{0}'.", arg1);
         }
 
 
@@ -11756,27 +11761,27 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlMismatchedArrayBrackets", resourceCulture);
+                return "SOAP-ENC:arrayType has mismatched brackets.";
             }
         }
 
 
 
         /// <summary>
-        /// SOAP-ENC:arrayType could not handle '{0}' as the length of the array.
+        /// SOAP-ENC:arrayType could not handle '{1}' as the length of the array.
         /// </summary>
         internal static string XmlInvalidArrayLength
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidArrayLength", resourceCulture);
+                return "SOAP-ENC:arrayType could not handle '{1}' as the length of the array.";
             }
         }
 
 
         internal static string FormatXmlInvalidArrayLength(object arg1)
         {
-            return string.Format(XmlInvalidArrayLength, arg1);
+            return string.Format("SOAP-ENC:arrayType could not handle '{1}' as the length of the array.", arg1);
         }
 
 
@@ -11787,14 +11792,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlMissingHref", resourceCulture);
+                return "The referenced element with ID '{0}' is located outside the current document and cannot be retrieved.";
             }
         }
 
 
         internal static string FormatXmlMissingHref(object arg1)
         {
-            return string.Format(XmlMissingHref, arg1);
+            return string.Format("The referenced element with ID '{0}' is located outside the current document and cannot be retrieved.", arg1);
         }
 
 
@@ -11805,14 +11810,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidHref", resourceCulture);
+                return "The referenced element with ID '{0}' was not found in the document.";
             }
         }
 
 
         internal static string FormatXmlInvalidHref(object arg1)
         {
-            return string.Format(XmlInvalidHref, arg1);
+            return string.Format("The referenced element with ID '{0}' was not found in the document.", arg1);
         }
 
 
@@ -11823,14 +11828,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlUnknownType", resourceCulture);
+                return "The specified type was not recognized: name='{0}', namespace='{1}', at {2}.";
             }
         }
 
 
         internal static string FormatXmlUnknownType(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlUnknownType, arg1, arg2, arg3);
+            return string.Format("The specified type was not recognized: name='{0}', namespace='{1}', at {2}.", arg1, arg2, arg3);
         }
 
 
@@ -11841,14 +11846,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlAbstractType", resourceCulture);
+                return "The specified type is abstract: name='{0}', namespace='{1}', at {2}.";
             }
         }
 
 
         internal static string FormatXmlAbstractType(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlAbstractType, arg1, arg2, arg3);
+            return string.Format("The specified type is abstract: name='{0}', namespace='{1}', at {2}.", arg1, arg2, arg3);
         }
 
 
@@ -11859,7 +11864,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlMappingsScopeMismatch", resourceCulture);
+                return "Exported mappings must come from the same importer.";
             }
         }
 
@@ -11872,14 +11877,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlMethodTypeNameConflict", resourceCulture);
+                return "The XML element '{0}' from namespace '{1}' references a method and a type. Change the method's message name using WebMethodAttribute or change the type's root element using the XmlRootAttribute.";
             }
         }
 
 
         internal static string FormatXmlMethodTypeNameConflict(object arg1, object arg2)
         {
-            return string.Format(XmlMethodTypeNameConflict, arg1, arg2);
+            return string.Format("The XML element '{0}' from namespace '{1}' references a method and a type. Change the method's message name using WebMethodAttribute or change the type's root element using the XmlRootAttribute.", arg1, arg2);
         }
 
 
@@ -11890,14 +11895,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlCannotReconcileAccessor", resourceCulture);
+                return "The top XML element '{0}' from namespace '{1}' references distinct types {2} and {3}. Use XML attributes to specify another XML name or namespace for the element or types.";
             }
         }
 
 
         internal static string FormatXmlCannotReconcileAccessor(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(XmlCannotReconcileAccessor, arg1, arg2, arg3, arg4);
+            return string.Format("The top XML element '{0}' from namespace '{1}' references distinct types {2} and {3}. Use XML attributes to specify another XML name or namespace for the element or types.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -11908,14 +11913,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlCannotReconcileAttributeAccessor", resourceCulture);
+                return "The global XML attribute '{0}' from namespace '{1}' references distinct types {2} and {3}. Use XML attributes to specify another XML name or namespace for the attribute or types.";
             }
         }
 
 
         internal static string FormatXmlCannotReconcileAttributeAccessor(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(XmlCannotReconcileAttributeAccessor, arg1, arg2, arg3, arg4);
+            return string.Format("The global XML attribute '{0}' from namespace '{1}' references distinct types {2} and {3}. Use XML attributes to specify another XML name or namespace for the attribute or types.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -11926,14 +11931,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlCannotReconcileAccessorDefault", resourceCulture);
+                return "The global XML item '{0}' from namespace '{1}' has mismatch default value attributes: '{2}' and '{3}' and cannot be mapped to the same schema item. Use XML attributes to specify another XML name or namespace for one of the items, or make sure that the default values match.";
             }
         }
 
 
         internal static string FormatXmlCannotReconcileAccessorDefault(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(XmlCannotReconcileAccessorDefault, arg1, arg2, arg3, arg4);
+            return string.Format("The global XML item '{0}' from namespace '{1}' has mismatch default value attributes: '{2}' and '{3}' and cannot be mapped to the same schema item. Use XML attributes to specify another XML name or namespace for one of the items, or make sure that the default values match.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -11944,14 +11949,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidTypeAttributes", resourceCulture);
+                return "XmlRoot and XmlType attributes may not be specified for the type {0}.";
             }
         }
 
 
         internal static string FormatXmlInvalidTypeAttributes(object arg1)
         {
-            return string.Format(XmlInvalidTypeAttributes, arg1);
+            return string.Format("XmlRoot and XmlType attributes may not be specified for the type {0}.", arg1);
         }
 
 
@@ -11962,14 +11967,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidAttributeUse", resourceCulture);
+                return "XML attributes may not be specified for the type {0}.";
             }
         }
 
 
         internal static string FormatXmlInvalidAttributeUse(object arg1)
         {
-            return string.Format(XmlInvalidAttributeUse, arg1);
+            return string.Format("XML attributes may not be specified for the type {0}.", arg1);
         }
 
 
@@ -11980,14 +11985,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlTypesDuplicate", resourceCulture);
+                return "Types '{0}' and '{1}' both use the XML type name, '{2}', from namespace '{3}'. Use XML attributes to specify a unique XML name and/or namespace for the type.";
             }
         }
 
 
         internal static string FormatXmlTypesDuplicate(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(XmlTypesDuplicate, arg1, arg2, arg3, arg4);
+            return string.Format("Types '{0}' and '{1}' both use the XML type name, '{2}', from namespace '{3}'. Use XML attributes to specify a unique XML name and/or namespace for the type.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -11998,14 +12003,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidSoapArray", resourceCulture);
+                return "An array of type {0} may not be used with XmlArrayType.Soap.";
             }
         }
 
 
         internal static string FormatXmlInvalidSoapArray(object arg1)
         {
-            return string.Format(XmlInvalidSoapArray, arg1);
+            return string.Format("An array of type {0} may not be used with XmlArrayType.Soap.", arg1);
         }
 
 
@@ -12016,14 +12021,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlCannotIncludeInSchema", resourceCulture);
+                return "The type {0} may not be exported to a schema because the IncludeInSchema property of the XmlType attribute is 'false'.";
             }
         }
 
 
         internal static string FormatXmlCannotIncludeInSchema(object arg1)
         {
-            return string.Format(XmlCannotIncludeInSchema, arg1);
+            return string.Format("The type {0} may not be exported to a schema because the IncludeInSchema property of the XmlType attribute is 'false'.", arg1);
         }
 
 
@@ -12034,14 +12039,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidSerializable", resourceCulture);
+                return "The type {0} may not be used in this context. To use {0} as a parameter, return type, or member of a class or struct, the parameter, return type, or member must be declared as type {0} (it cannot be object). Objects of type {0} may not be used in un-typed collections, such as ArrayLists.";
             }
         }
 
 
         internal static string FormatXmlInvalidSerializable(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(XmlInvalidSerializable, arg1, arg2, arg3, arg4);
+            return string.Format("The type {0} may not be used in this context. To use {0} as a parameter, return type, or member of a class or struct, the parameter, return type, or member must be declared as type {0} (it cannot be object). Objects of type {0} may not be used in un-typed collections, such as ArrayLists.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -12052,14 +12057,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidUseOfType", resourceCulture);
+                return "The type {0} may not be used in this context.";
             }
         }
 
 
         internal static string FormatXmlInvalidUseOfType(object arg1)
         {
-            return string.Format(XmlInvalidUseOfType, arg1);
+            return string.Format("The type {0} may not be used in this context.", arg1);
         }
 
 
@@ -12070,14 +12075,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlUnxpectedType", resourceCulture);
+                return "The type {0} was not expected. Use the XmlInclude or SoapInclude attribute to specify types that are not known statically.";
             }
         }
 
 
         internal static string FormatXmlUnxpectedType(object arg1)
         {
-            return string.Format(XmlUnxpectedType, arg1);
+            return string.Format("The type {0} was not expected. Use the XmlInclude or SoapInclude attribute to specify types that are not known statically.", arg1);
         }
 
 
@@ -12088,14 +12093,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlUnknownAnyElement", resourceCulture);
+                return "The XML element '{0}' from namespace '{1}' was not expected. The XML element name and namespace must match those provided via XmlAnyElementAttribute(s).";
             }
         }
 
 
         internal static string FormatXmlUnknownAnyElement(object arg1, object arg2)
         {
-            return string.Format(XmlUnknownAnyElement, arg1, arg2);
+            return string.Format("The XML element '{0}' from namespace '{1}' was not expected. The XML element name and namespace must match those provided via XmlAnyElementAttribute(s).", arg1, arg2);
         }
 
 
@@ -12106,14 +12111,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlMultipleAttributeOverrides", resourceCulture);
+                return "{0}. {1} already has attributes.";
             }
         }
 
 
         internal static string FormatXmlMultipleAttributeOverrides(object arg1, object arg2)
         {
-            return string.Format(XmlMultipleAttributeOverrides, arg1, arg2);
+            return string.Format("{0}. {1} already has attributes.", arg1, arg2);
         }
 
 
@@ -12124,7 +12129,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidEnumAttribute", resourceCulture);
+                return "Only SoapEnum may be used on enum constants.";
             }
         }
 
@@ -12137,7 +12142,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidReturnPosition", resourceCulture);
+                return "The return value must be the first member.";
             }
         }
 
@@ -12150,7 +12155,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidElementAttribute", resourceCulture);
+                return "Only SoapElementAttribute or SoapAttributeAttribute may be used on members.";
             }
         }
 
@@ -12163,7 +12168,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidVoid", resourceCulture);
+                return "The type Void is not valid in this context.";
             }
         }
 
@@ -12176,14 +12181,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidContent", resourceCulture);
+                return "Invalid content {0}.";
             }
         }
 
 
         internal static string FormatXmlInvalidContent(object arg1)
         {
-            return string.Format(XmlInvalidContent, arg1);
+            return string.Format("Invalid content {0}.", arg1);
         }
 
 
@@ -12194,14 +12199,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidAttributeType", resourceCulture);
+                return "{0} may not be used on parameters or return values when they are not wrapped.";
             }
         }
 
 
         internal static string FormatXmlInvalidAttributeType(object arg1)
         {
-            return string.Format(XmlInvalidAttributeType, arg1);
+            return string.Format("{0} may not be used on parameters or return values when they are not wrapped.", arg1);
         }
 
 
@@ -12212,14 +12217,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidBaseType", resourceCulture);
+                return "Type {0} cannot derive from {1} because it already has base type {2}.";
             }
         }
 
 
         internal static string FormatXmlInvalidBaseType(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlInvalidBaseType, arg1, arg2, arg3);
+            return string.Format("Type {0} cannot derive from {1} because it already has base type {2}.", arg1, arg2, arg3);
         }
 
 
@@ -12230,14 +12235,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidIdentifier", resourceCulture);
+                return "Identifier '{0}' is not CLS-compliant.";
             }
         }
 
 
         internal static string FormatXmlInvalidIdentifier(object arg1)
         {
-            return string.Format(XmlInvalidIdentifier, arg1);
+            return string.Format("Identifier '{0}' is not CLS-compliant.", arg1);
         }
 
 
@@ -12248,7 +12253,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlGenError", resourceCulture);
+                return "There was an error generating the XML document.";
             }
         }
 
@@ -12261,14 +12266,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidXmlns", resourceCulture);
+                return "Invalid namespace attribute: xmlns:{0}=\"\".";
             }
         }
 
 
         internal static string FormatXmlInvalidXmlns(object arg1)
         {
-            return string.Format(XmlInvalidXmlns, arg1);
+            return string.Format("Invalid namespace attribute: xmlns:{0}=\"\".", arg1);
         }
 
 
@@ -12279,14 +12284,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlCircularReference", resourceCulture);
+                return "A circular reference was detected while serializing an object of type {0}.";
             }
         }
 
 
         internal static string FormatXmlCircularReference(object arg1)
         {
-            return string.Format(XmlCircularReference, arg1);
+            return string.Format("A circular reference was detected while serializing an object of type {0}.", arg1);
         }
 
 
@@ -12297,14 +12302,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlCircularReference2", resourceCulture);
+                return "A circular type reference was detected in anonymous type '{0}'.  Please change '{0}' to be a named type by setting {1}={2} in the type definition.";
             }
         }
 
 
         internal static string FormatXmlCircularReference2(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(XmlCircularReference2, arg1, arg2, arg3, arg4);
+            return string.Format("A circular type reference was detected in anonymous type '{0}'.  Please change '{0}' to be a named type by setting {1}={2} in the type definition.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -12315,14 +12320,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlAnonymousBaseType", resourceCulture);
+                return "Illegal type derivation: Type '{0}' derives from anonymous type '{1}'. Please change '{1}' to be a named type by setting {2}={3} in the type definition.";
             }
         }
 
 
         internal static string FormatXmlAnonymousBaseType(object arg1, object arg2, object arg3, object arg4, object arg5)
         {
-            return string.Format(XmlAnonymousBaseType, arg1, arg2, arg3, arg4, arg5);
+            return string.Format("Illegal type derivation: Type '{0}' derives from anonymous type '{1}'. Please change '{1}' to be a named type by setting {2}={3} in the type definition.", arg1, arg2, arg3, arg4, arg5);
         }
 
 
@@ -12333,14 +12338,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlMissingSchema", resourceCulture);
+                return "Missing schema targetNamespace=\"{0}\".";
             }
         }
 
 
         internal static string FormatXmlMissingSchema(object arg1)
         {
-            return string.Format(XmlMissingSchema, arg1);
+            return string.Format("Missing schema targetNamespace=\"{0}\".", arg1);
         }
 
 
@@ -12351,14 +12356,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlNoSerializableMembers", resourceCulture);
+                return "Cannot serialize object of type '{0}'. The object does not have serializable members.";
             }
         }
 
 
         internal static string FormatXmlNoSerializableMembers(object arg1)
         {
-            return string.Format(XmlNoSerializableMembers, arg1);
+            return string.Format("Cannot serialize object of type '{0}'. The object does not have serializable members.", arg1);
         }
 
 
@@ -12369,14 +12374,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIllegalOverride", resourceCulture);
+                return "Error: Type '{0}' could not be imported because it redefines inherited member '{1}' with a different type. '{1}' is declared as type '{3}' on '{0}', but as type '{2}' on base class '{4}'.";
             }
         }
 
 
         internal static string FormatXmlIllegalOverride(object arg1, object arg2, object arg3, object arg4, object arg5, object arg6, object arg7)
         {
-            return string.Format(XmlIllegalOverride, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+            return string.Format("Error: Type '{0}' could not be imported because it redefines inherited member '{1}' with a different type. '{1}' is declared as type '{3}' on '{0}', but as type '{2}' on base class '{4}'.", arg1, arg2, arg3, arg4, arg5, arg6, arg7);
         }
 
 
@@ -12387,14 +12392,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlReadOnlyCollection", resourceCulture);
+                return "Could not deserialize {0}. Parameterless constructor is required for collections and enumerators.";
             }
         }
 
 
         internal static string FormatXmlReadOnlyCollection(object arg1)
         {
-            return string.Format(XmlReadOnlyCollection, arg1);
+            return string.Format("Could not deserialize {0}. Parameterless constructor is required for collections and enumerators.", arg1);
         }
 
 
@@ -12405,14 +12410,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlRpcNestedValueType", resourceCulture);
+                return "Cannot serialize {0}. Nested structs are not supported with encoded SOAP.";
             }
         }
 
 
         internal static string FormatXmlRpcNestedValueType(object arg1)
         {
-            return string.Format(XmlRpcNestedValueType, arg1);
+            return string.Format("Cannot serialize {0}. Nested structs are not supported with encoded SOAP.", arg1);
         }
 
 
@@ -12423,14 +12428,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlRpcRefsInValueType", resourceCulture);
+                return "Cannot serialize {0}. References in structs are not supported with encoded SOAP.";
             }
         }
 
 
         internal static string FormatXmlRpcRefsInValueType(object arg1)
         {
-            return string.Format(XmlRpcRefsInValueType, arg1);
+            return string.Format("Cannot serialize {0}. References in structs are not supported with encoded SOAP.", arg1);
         }
 
 
@@ -12441,14 +12446,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlRpcArrayOfValueTypes", resourceCulture);
+                return "Cannot serialize {0}. Arrays of structs are not supported with encoded SOAP.";
             }
         }
 
 
         internal static string FormatXmlRpcArrayOfValueTypes(object arg1)
         {
-            return string.Format(XmlRpcArrayOfValueTypes, arg1);
+            return string.Format("Cannot serialize {0}. Arrays of structs are not supported with encoded SOAP.", arg1);
         }
 
 
@@ -12459,14 +12464,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlDuplicateElementName", resourceCulture);
+                return "The XML element '{0}' from namespace '{1}' is already present in the current scope. Use XML attributes to specify another XML name or namespace for the element.";
             }
         }
 
 
         internal static string FormatXmlDuplicateElementName(object arg1, object arg2)
         {
-            return string.Format(XmlDuplicateElementName, arg1, arg2);
+            return string.Format("The XML element '{0}' from namespace '{1}' is already present in the current scope. Use XML attributes to specify another XML name or namespace for the element.", arg1, arg2);
         }
 
 
@@ -12477,14 +12482,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlDuplicateAttributeName", resourceCulture);
+                return "The XML attribute '{0}' from namespace '{1}' is already present in the current scope. Use XML attributes to specify another XML name or namespace for the attribute.";
             }
         }
 
 
         internal static string FormatXmlDuplicateAttributeName(object arg1, object arg2)
         {
-            return string.Format(XmlDuplicateAttributeName, arg1, arg2);
+            return string.Format("The XML attribute '{0}' from namespace '{1}' is already present in the current scope. Use XML attributes to specify another XML name or namespace for the attribute.", arg1, arg2);
         }
 
 
@@ -12495,14 +12500,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlBadBaseElement", resourceCulture);
+                return "Element '{0}' from namespace '{1}' is not a complex type and cannot be used as a {2}.";
             }
         }
 
 
         internal static string FormatXmlBadBaseElement(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlBadBaseElement, arg1, arg2, arg3);
+            return string.Format("Element '{0}' from namespace '{1}' is not a complex type and cannot be used as a {2}.", arg1, arg2, arg3);
         }
 
 
@@ -12513,14 +12518,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlBadBaseType", resourceCulture);
+                return "Type '{0}' from namespace '{1}' is not a complex type and cannot be used as a {2}.";
             }
         }
 
 
         internal static string FormatXmlBadBaseType(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlBadBaseType, arg1, arg2, arg3);
+            return string.Format("Type '{0}' from namespace '{1}' is not a complex type and cannot be used as a {2}.", arg1, arg2, arg3);
         }
 
 
@@ -12531,14 +12536,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlUndefinedAlias", resourceCulture);
+                return "Namespace prefix '{0}' is not defined.";
             }
         }
 
 
         internal static string FormatXmlUndefinedAlias(object arg1)
         {
-            return string.Format(XmlUndefinedAlias, arg1);
+            return string.Format("Namespace prefix '{0}' is not defined.", arg1);
         }
 
 
@@ -12549,14 +12554,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlChoiceIdentifierType", resourceCulture);
+                return "Type of choice identifier '{0}' is inconsistent with type of '{1}'. Please use {2}.";
             }
         }
 
 
         internal static string FormatXmlChoiceIdentifierType(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlChoiceIdentifierType, arg1, arg2, arg3);
+            return string.Format("Type of choice identifier '{0}' is inconsistent with type of '{1}'. Please use {2}.", arg1, arg2, arg3);
         }
 
 
@@ -12567,14 +12572,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlChoiceIdentifierArrayType", resourceCulture);
+                return "Type of choice identifier '{0}' is inconsistent with type of '{1}'. Please use array of {2}.";
             }
         }
 
 
         internal static string FormatXmlChoiceIdentifierArrayType(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlChoiceIdentifierArrayType, arg1, arg2, arg3);
+            return string.Format("Type of choice identifier '{0}' is inconsistent with type of '{1}'. Please use array of {2}.", arg1, arg2, arg3);
         }
 
 
@@ -12585,14 +12590,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlChoiceIdentifierTypeEnum", resourceCulture);
+                return "Choice identifier '{0}' must be an enum.";
             }
         }
 
 
         internal static string FormatXmlChoiceIdentifierTypeEnum(object arg1)
         {
-            return string.Format(XmlChoiceIdentifierTypeEnum, arg1);
+            return string.Format("Choice identifier '{0}' must be an enum.", arg1);
         }
 
 
@@ -12603,14 +12608,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlChoiceIdentifierMemberMissing", resourceCulture);
+                return "Missing '{0}' member needed for serialization of choice '{1}'.";
             }
         }
 
 
         internal static string FormatXmlChoiceIdentifierMemberMissing(object arg1, object arg2)
         {
-            return string.Format(XmlChoiceIdentifierMemberMissing, arg1, arg2);
+            return string.Format("Missing '{0}' member needed for serialization of choice '{1}'.", arg1, arg2);
         }
 
 
@@ -12621,14 +12626,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlChoiceIdentifierAmbiguous", resourceCulture);
+                return "Ambiguous choice identifier. There are several members named '{0}'.";
             }
         }
 
 
         internal static string FormatXmlChoiceIdentifierAmbiguous(object arg1)
         {
-            return string.Format(XmlChoiceIdentifierAmbiguous, arg1);
+            return string.Format("Ambiguous choice identifier. There are several members named '{0}'.", arg1);
         }
 
 
@@ -12639,14 +12644,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlChoiceIdentifierMissing", resourceCulture);
+                return "You need to add {0} to the '{1}' member.";
             }
         }
 
 
         internal static string FormatXmlChoiceIdentifierMissing(object arg1, object arg2)
         {
-            return string.Format(XmlChoiceIdentifierMissing, arg1, arg2);
+            return string.Format("You need to add {0} to the '{1}' member.", arg1, arg2);
         }
 
 
@@ -12657,14 +12662,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlChoiceMissingValue", resourceCulture);
+                return "Type {0} is missing enumeration value '{1}' for element '{2}' from namespace '{3}'.";
             }
         }
 
 
         internal static string FormatXmlChoiceMissingValue(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(XmlChoiceMissingValue, arg1, arg2, arg3, arg4);
+            return string.Format("Type {0} is missing enumeration value '{1}' for element '{2}' from namespace '{3}'.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -12675,14 +12680,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlChoiceMissingAnyValue", resourceCulture);
+                return "Type {0} is missing enumeration value '##any:' corresponding to XmlAnyElementAttribute.";
             }
         }
 
 
         internal static string FormatXmlChoiceMissingAnyValue(object arg1)
         {
-            return string.Format(XmlChoiceMissingAnyValue, arg1);
+            return string.Format("Type {0} is missing enumeration value '##any:' corresponding to XmlAnyElementAttribute.", arg1);
         }
 
 
@@ -12693,14 +12698,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlChoiceMismatchChoiceException", resourceCulture);
+                return "Value of {0} mismatches the type of {1}; you need to set it to {2}.";
             }
         }
 
 
         internal static string FormatXmlChoiceMismatchChoiceException(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlChoiceMismatchChoiceException, arg1, arg2, arg3);
+            return string.Format("Value of {0} mismatches the type of {1}; you need to set it to {2}.", arg1, arg2, arg3);
         }
 
 
@@ -12711,14 +12716,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlArrayItemAmbiguousTypes", resourceCulture);
+                return "Ambiguous types specified for member '{0}'.  Items '{1}' and '{2}' have the same type.  Please consider using {3} with {4} instead.";
             }
         }
 
 
         internal static string FormatXmlArrayItemAmbiguousTypes(object arg1, object arg2, object arg3, object arg4, object arg5)
         {
-            return string.Format(XmlArrayItemAmbiguousTypes, arg1, arg2, arg3, arg4, arg5);
+            return string.Format("Ambiguous types specified for member '{0}'.  Items '{1}' and '{2}' have the same type.  Please consider using {3} with {4} instead.", arg1, arg2, arg3, arg4, arg5);
         }
 
 
@@ -12729,14 +12734,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlUnsupportedInterface", resourceCulture);
+                return "Cannot serialize interface {0}.";
             }
         }
 
 
         internal static string FormatXmlUnsupportedInterface(object arg1)
         {
-            return string.Format(XmlUnsupportedInterface, arg1);
+            return string.Format("Cannot serialize interface {0}.", arg1);
         }
 
 
@@ -12747,14 +12752,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlUnsupportedInterfaceDetails", resourceCulture);
+                return "Cannot serialize member {0} of type {1} because it is an interface.";
             }
         }
 
 
         internal static string FormatXmlUnsupportedInterfaceDetails(object arg1, object arg2)
         {
-            return string.Format(XmlUnsupportedInterfaceDetails, arg1, arg2);
+            return string.Format("Cannot serialize member {0} of type {1} because it is an interface.", arg1, arg2);
         }
 
 
@@ -12765,14 +12770,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlUnsupportedRank", resourceCulture);
+                return "Cannot serialize object of type {0}. Multidimensional arrays are not supported.";
             }
         }
 
 
         internal static string FormatXmlUnsupportedRank(object arg1)
         {
-            return string.Format(XmlUnsupportedRank, arg1);
+            return string.Format("Cannot serialize object of type {0}. Multidimensional arrays are not supported.", arg1);
         }
 
 
@@ -12783,14 +12788,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlUnsupportedInheritance", resourceCulture);
+                return "Using {0} as a base type for a class is not supported by XmlSerializer.";
             }
         }
 
 
         internal static string FormatXmlUnsupportedInheritance(object arg1)
         {
-            return string.Format(XmlUnsupportedInheritance, arg1);
+            return string.Format("Using {0} as a base type for a class is not supported by XmlSerializer.", arg1);
         }
 
 
@@ -12801,14 +12806,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIllegalMultipleText", resourceCulture);
+                return "Cannot serialize object of type '{0}' because it has multiple XmlText attributes. Consider using an array of strings with XmlTextAttribute for serialization of a mixed complex type.";
             }
         }
 
 
         internal static string FormatXmlIllegalMultipleText(object arg1)
         {
-            return string.Format(XmlIllegalMultipleText, arg1);
+            return string.Format("Cannot serialize object of type '{0}' because it has multiple XmlText attributes. Consider using an array of strings with XmlTextAttribute for serialization of a mixed complex type.", arg1);
         }
 
 
@@ -12819,7 +12824,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIllegalMultipleTextMembers", resourceCulture);
+                return "XmlText may not be used on multiple parameters or return values.";
             }
         }
 
@@ -12832,14 +12837,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIllegalArrayTextAttribute", resourceCulture);
+                return "Member '{0}' cannot be encoded using the XmlText attribute. You may use the XmlText attribute to encode primitives, enumerations, arrays of strings, or arrays of XmlNode.";
             }
         }
 
 
         internal static string FormatXmlIllegalArrayTextAttribute(object arg1)
         {
-            return string.Format(XmlIllegalArrayTextAttribute, arg1);
+            return string.Format("Member '{0}' cannot be encoded using the XmlText attribute. You may use the XmlText attribute to encode primitives, enumerations, arrays of strings, or arrays of XmlNode.", arg1);
         }
 
 
@@ -12850,14 +12855,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIllegalTypedTextAttribute", resourceCulture);
+                return "Cannot serialize object of type '{0}'. Consider changing type of XmlText member '{0}.{1}' from {2} to string or string array.";
             }
         }
 
 
         internal static string FormatXmlIllegalTypedTextAttribute(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(XmlIllegalTypedTextAttribute, arg1, arg2, arg3, arg4);
+            return string.Format("Cannot serialize object of type '{0}'. Consider changing type of XmlText member '{0}.{1}' from {2} to string or string array.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -12868,14 +12873,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIllegalSimpleContentExtension", resourceCulture);
+                return "Cannot serialize object of type '{0}'. Base type '{1}' has simpleContent and can only be extended by adding XmlAttribute elements. Please consider changing XmlText member of the base class to string array.";
             }
         }
 
 
         internal static string FormatXmlIllegalSimpleContentExtension(object arg1, object arg2)
         {
-            return string.Format(XmlIllegalSimpleContentExtension, arg1, arg2);
+            return string.Format("Cannot serialize object of type '{0}'. Base type '{1}' has simpleContent and can only be extended by adding XmlAttribute elements. Please consider changing XmlText member of the base class to string array.", arg1, arg2);
         }
 
 
@@ -12886,14 +12891,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidCast", resourceCulture);
+                return "Cannot assign object of type {0} to an object of type {1}.";
             }
         }
 
 
         internal static string FormatXmlInvalidCast(object arg1, object arg2)
         {
-            return string.Format(XmlInvalidCast, arg1, arg2);
+            return string.Format("Cannot assign object of type {0} to an object of type {1}.", arg1, arg2);
         }
 
 
@@ -12904,14 +12909,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidCastWithId", resourceCulture);
+                return "Cannot assign object of type {0} to an object of type {1}. The error occurred while reading node with id='{2}'.";
             }
         }
 
 
         internal static string FormatXmlInvalidCastWithId(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlInvalidCastWithId, arg1, arg2, arg3);
+            return string.Format("Cannot assign object of type {0} to an object of type {1}. The error occurred while reading node with id='{2}'.", arg1, arg2, arg3);
         }
 
 
@@ -12922,32 +12927,32 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidArrayRef", resourceCulture);
+                return "Invalid reference id='{0}'. Object of type {1} cannot be stored in an array of this type. Details: array index={2}.";
             }
         }
 
 
         internal static string FormatXmlInvalidArrayRef(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlInvalidArrayRef, arg1, arg2, arg3);
+            return string.Format("Invalid reference id='{0}'. Object of type {1} cannot be stored in an array of this type. Details: array index={2}.", arg1, arg2, arg3);
         }
 
 
         /// <summary>
-        /// Cannot assign null value to an object of type {0}.
+        /// Cannot assign null value to an object of type {1}.
         /// </summary>
         internal static string XmlInvalidNullCast
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidNullCast", resourceCulture);
+                return "Cannot assign null value to an object of type {1}.";
             }
         }
 
 
         internal static string FormatXmlInvalidNullCast(object arg1)
         {
-            return string.Format(XmlInvalidNullCast, arg1);
+            return string.Format("Cannot assign null value to an object of type {1}.", arg1);
         }
 
 
@@ -12958,14 +12963,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlMultipleXmlns", resourceCulture);
+                return "Cannot serialize object of type '{0}' because it has multiple XmlNamespaceDeclarations attributes.";
             }
         }
 
 
         internal static string FormatXmlMultipleXmlns(object arg1)
         {
-            return string.Format(XmlMultipleXmlns, arg1);
+            return string.Format("Cannot serialize object of type '{0}' because it has multiple XmlNamespaceDeclarations attributes.", arg1);
         }
 
 
@@ -12976,7 +12981,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlMultipleXmlnsMembers", resourceCulture);
+                return "XmlNamespaceDeclarations may not be used on multiple parameters or return values.";
             }
         }
 
@@ -12989,14 +12994,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlXmlnsInvalidType", resourceCulture);
+                return "Cannot use XmlNamespaceDeclarations attribute on member '{0}' of type {1}.  This attribute is only valid on members of type {2}.";
             }
         }
 
 
         internal static string FormatXmlXmlnsInvalidType(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlXmlnsInvalidType, arg1, arg2, arg3);
+            return string.Format("Cannot use XmlNamespaceDeclarations attribute on member '{0}' of type {1}.  This attribute is only valid on members of type {2}.", arg1, arg2, arg3);
         }
 
 
@@ -13007,7 +13012,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlSoleXmlnsAttribute", resourceCulture);
+                return "XmlNamespaceDeclarations attribute cannot be used in conjunction with any other custom attributes.";
             }
         }
 
@@ -13020,14 +13025,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlConstructorHasSecurityAttributes", resourceCulture);
+                return "The type '{0}' cannot be serialized because its parameterless constructor is decorated with declarative security permission attributes. Consider using imperative asserts or demands in the constructor.";
             }
         }
 
 
         internal static string FormatXmlConstructorHasSecurityAttributes(object arg1)
         {
-            return string.Format(XmlConstructorHasSecurityAttributes, arg1);
+            return string.Format("The type '{0}' cannot be serialized because its parameterless constructor is decorated with declarative security permission attributes. Consider using imperative asserts or demands in the constructor.", arg1);
         }
 
 
@@ -13038,14 +13043,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidChoiceIdentifierValue", resourceCulture);
+                return "Invalid or missing value of the choice identifier '{1}' of type '{0}[]'.";
             }
         }
 
 
         internal static string FormatXmlInvalidChoiceIdentifierValue(object arg1, object arg2)
         {
-            return string.Format(XmlInvalidChoiceIdentifierValue, arg1, arg2);
+            return string.Format("Invalid or missing value of the choice identifier '{1}' of type '{0}[]'.", arg1, arg2);
         }
 
 
@@ -13056,14 +13061,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlAnyElementDuplicate", resourceCulture);
+                return "The element '{0}' has been attributed with duplicate XmlAnyElementAttribute(Name=\"{1}\", Namespace=\"{2}\").";
             }
         }
 
 
         internal static string FormatXmlAnyElementDuplicate(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlAnyElementDuplicate, arg1, arg2, arg3);
+            return string.Format("The element '{0}' has been attributed with duplicate XmlAnyElementAttribute(Name=\"{1}\", Namespace=\"{2}\").", arg1, arg2, arg3);
         }
 
 
@@ -13074,14 +13079,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlChoiceIdDuplicate", resourceCulture);
+                return "Enum values in the XmlChoiceIdentifier '{0}' have to be unique.  Value '{1}' already present.";
             }
         }
 
 
         internal static string FormatXmlChoiceIdDuplicate(object arg1, object arg2)
         {
-            return string.Format(XmlChoiceIdDuplicate, arg1, arg2);
+            return string.Format("Enum values in the XmlChoiceIdentifier '{0}' have to be unique.  Value '{1}' already present.", arg1, arg2);
         }
 
 
@@ -13092,14 +13097,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlChoiceIdentifierMismatch", resourceCulture);
+                return "Value '{0}' of the choice identifier '{1}' does not match element '{2}' from namespace '{3}'.";
             }
         }
 
 
         internal static string FormatXmlChoiceIdentifierMismatch(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(XmlChoiceIdentifierMismatch, arg1, arg2, arg3, arg4);
+            return string.Format("Value '{0}' of the choice identifier '{1}' does not match element '{2}' from namespace '{3}'.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -13110,14 +13115,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlUnsupportedRedefine", resourceCulture);
+                return "Cannot import schema for type '{0}' from namespace '{1}'. Redefine not supported.";
             }
         }
 
 
         internal static string FormatXmlUnsupportedRedefine(object arg1, object arg2)
         {
-            return string.Format(XmlUnsupportedRedefine, arg1, arg2);
+            return string.Format("Cannot import schema for type '{0}' from namespace '{1}'. Redefine not supported.", arg1, arg2);
         }
 
 
@@ -13128,14 +13133,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlDuplicateElementInScope", resourceCulture);
+                return "The XML element named '{0}' from namespace '{1}' is already present in the current scope.";
             }
         }
 
 
         internal static string FormatXmlDuplicateElementInScope(object arg1, object arg2)
         {
-            return string.Format(XmlDuplicateElementInScope, arg1, arg2);
+            return string.Format("The XML element named '{0}' from namespace '{1}' is already present in the current scope.", arg1, arg2);
         }
 
 
@@ -13146,14 +13151,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlDuplicateElementInScope1", resourceCulture);
+                return "The XML element named '{0}' from namespace '{1}' is already present in the current scope. Elements with the same name in the same scope must have the same type.";
             }
         }
 
 
         internal static string FormatXmlDuplicateElementInScope1(object arg1, object arg2)
         {
-            return string.Format(XmlDuplicateElementInScope1, arg1, arg2);
+            return string.Format("The XML element named '{0}' from namespace '{1}' is already present in the current scope. Elements with the same name in the same scope must have the same type.", arg1, arg2);
         }
 
 
@@ -13164,7 +13169,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlNoPartialTrust", resourceCulture);
+                return "One or more assemblies referenced by the XmlSerializer cannot be called from partially trusted code.";
             }
         }
 
@@ -13177,14 +13182,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidEncodingNotEncoded1", resourceCulture);
+                return "The encoding style '{0}' is not valid for this call because this XmlSerializer instance does not support encoding. Use the SoapReflectionImporter to initialize an XmlSerializer that supports encoding.";
             }
         }
 
 
         internal static string FormatXmlInvalidEncodingNotEncoded1(object arg1)
         {
-            return string.Format(XmlInvalidEncodingNotEncoded1, arg1);
+            return string.Format("The encoding style '{0}' is not valid for this call because this XmlSerializer instance does not support encoding. Use the SoapReflectionImporter to initialize an XmlSerializer that supports encoding.", arg1);
         }
 
 
@@ -13195,14 +13200,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidEncoding3", resourceCulture);
+                return "The encoding style '{0}' is not valid for this call. Valid values are '{1}' for SOAP 1.1 encoding or '{2}' for SOAP 1.2 encoding.";
             }
         }
 
 
         internal static string FormatXmlInvalidEncoding3(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlInvalidEncoding3, arg1, arg2, arg3);
+            return string.Format("The encoding style '{0}' is not valid for this call. Valid values are '{1}' for SOAP 1.1 encoding or '{2}' for SOAP 1.2 encoding.", arg1, arg2, arg3);
         }
 
 
@@ -13213,14 +13218,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidSpecifiedType", resourceCulture);
+                return "Member '{0}' of type {1} cannot be serialized.  Members with names ending on 'Specified' suffix have special meaning to the XmlSerializer: they control serialization of optional ValueType members and have to be of type {2}.";
             }
         }
 
 
         internal static string FormatXmlInvalidSpecifiedType(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlInvalidSpecifiedType, arg1, arg2, arg3);
+            return string.Format("Member '{0}' of type {1} cannot be serialized.  Members with names ending on 'Specified' suffix have special meaning to the XmlSerializer: they control serialization of optional ValueType members and have to be of type {2}.", arg1, arg2, arg3);
         }
 
 
@@ -13231,14 +13236,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlUnsupportedOpenGenericType", resourceCulture);
+                return "Type {0} is not supported because it has unbound generic parameters.  Only instantiated generic types can be serialized.";
             }
         }
 
 
         internal static string FormatXmlUnsupportedOpenGenericType(object arg1)
         {
-            return string.Format(XmlUnsupportedOpenGenericType, arg1);
+            return string.Format("Type {0} is not supported because it has unbound generic parameters.  Only instantiated generic types can be serialized.", arg1);
         }
 
 
@@ -13249,14 +13254,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlMismatchSchemaObjects", resourceCulture);
+                return "Warning: Cannot share {0} named '{1}' from '{2}' namespace. Several mismatched schema declarations were found.";
             }
         }
 
 
         internal static string FormatXmlMismatchSchemaObjects(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlMismatchSchemaObjects, arg1, arg2, arg3);
+            return string.Format("Warning: Cannot share {0} named '{1}' from '{2}' namespace. Several mismatched schema declarations were found.", arg1, arg2, arg3);
         }
 
 
@@ -13267,14 +13272,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlCircularTypeReference", resourceCulture);
+                return "Type '{0}' from targetNamespace='{1}' has invalid definition: Circular type reference.";
             }
         }
 
 
         internal static string FormatXmlCircularTypeReference(object arg1, object arg2)
         {
-            return string.Format(XmlCircularTypeReference, arg1, arg2);
+            return string.Format("Type '{0}' from targetNamespace='{1}' has invalid definition: Circular type reference.", arg1, arg2);
         }
 
 
@@ -13285,14 +13290,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlCircularGroupReference", resourceCulture);
+                return "Group '{0}' from targetNamespace='{1}' has invalid definition: Circular group reference.";
             }
         }
 
 
         internal static string FormatXmlCircularGroupReference(object arg1, object arg2)
         {
-            return string.Format(XmlCircularGroupReference, arg1, arg2);
+            return string.Format("Group '{0}' from targetNamespace='{1}' has invalid definition: Circular group reference.", arg1, arg2);
         }
 
 
@@ -13303,14 +13308,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlRpcLitElementNamespace", resourceCulture);
+                return "{0}='{1}' is not supported with rpc\\literal SOAP. The wrapper element has to be unqualified.";
             }
         }
 
 
         internal static string FormatXmlRpcLitElementNamespace(object arg1, object arg2)
         {
-            return string.Format(XmlRpcLitElementNamespace, arg1, arg2);
+            return string.Format("{0}='{1}' is not supported with rpc\\literal SOAP. The wrapper element has to be unqualified.", arg1, arg2);
         }
 
 
@@ -13321,14 +13326,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlRpcLitElementNullable", resourceCulture);
+                return "{0}='{1}' is not supported with rpc\\literal SOAP. The wrapper element cannot be nullable.";
             }
         }
 
 
         internal static string FormatXmlRpcLitElementNullable(object arg1, object arg2)
         {
-            return string.Format(XmlRpcLitElementNullable, arg1, arg2);
+            return string.Format("{0}='{1}' is not supported with rpc\\literal SOAP. The wrapper element cannot be nullable.", arg1, arg2);
         }
 
 
@@ -13339,7 +13344,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlRpcLitElements", resourceCulture);
+                return "Multiple accessors are not supported with rpc\\literal SOAP, you may use the following attributes: XmlArray, XmlArrayItem, or single XmlElement.";
             }
         }
 
@@ -13352,14 +13357,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlRpcLitArrayElement", resourceCulture);
+                return "Input or output values of an rpc\\literal method cannot have maxOccurs > 1. Provide a wrapper element for '{0}' by using XmlArray or XmlArrayItem instead of XmlElement attribute.";
             }
         }
 
 
         internal static string FormatXmlRpcLitArrayElement(object arg1)
         {
-            return string.Format(XmlRpcLitArrayElement, arg1);
+            return string.Format("Input or output values of an rpc\\literal method cannot have maxOccurs > 1. Provide a wrapper element for '{0}' by using XmlArray or XmlArrayItem instead of XmlElement attribute.", arg1);
         }
 
 
@@ -13370,7 +13375,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlRpcLitAttributeAttributes", resourceCulture);
+                return "XmlAttribute and XmlAnyAttribute cannot be used with rpc\\literal SOAP, you may use the following attributes: XmlArray, XmlArrayItem, or single XmlElement.";
             }
         }
 
@@ -13383,7 +13388,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlRpcLitAttributes", resourceCulture);
+                return "XmlText, XmlAnyElement, or XmlChoiceIdentifier cannot be used with rpc\\literal SOAP, you may use the following attributes: XmlArray, XmlArrayItem, or single XmlElement.";
             }
         }
 
@@ -13396,14 +13401,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlSequenceMembers", resourceCulture);
+                return "Explicit sequencing may not be used on parameters or return values.  Please remove {0} property from custom attributes.";
             }
         }
 
 
         internal static string FormatXmlSequenceMembers(object arg1)
         {
-            return string.Format(XmlSequenceMembers, arg1);
+            return string.Format("Explicit sequencing may not be used on parameters or return values.  Please remove {0} property from custom attributes.", arg1);
         }
 
 
@@ -13414,14 +13419,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlRpcLitXmlns", resourceCulture);
+                return "Input or output values of an rpc\\literal method cannot have an XmlNamespaceDeclarations attribute (member '{0}').";
             }
         }
 
 
         internal static string FormatXmlRpcLitXmlns(object arg1)
         {
-            return string.Format(XmlRpcLitXmlns, arg1);
+            return string.Format("Input or output values of an rpc\\literal method cannot have an XmlNamespaceDeclarations attribute (member '{0}').", arg1);
         }
 
 
@@ -13432,14 +13437,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlDuplicateNs", resourceCulture);
+                return "Illegal namespace declaration xmlns:{0}='{1}'. Namespace alias '{0}' already defined in the current scope.";
             }
         }
 
 
         internal static string FormatXmlDuplicateNs(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlDuplicateNs, arg1, arg2, arg3);
+            return string.Format("Illegal namespace declaration xmlns:{0}='{1}'. Namespace alias '{0}' already defined in the current scope.", arg1, arg2, arg3);
         }
 
 
@@ -13450,14 +13455,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlAnonymousInclude", resourceCulture);
+                return "Cannot include anonymous type '{0}'.";
             }
         }
 
 
         internal static string FormatXmlAnonymousInclude(object arg1)
         {
-            return string.Format(XmlAnonymousInclude, arg1);
+            return string.Format("Cannot include anonymous type '{0}'.", arg1);
         }
 
 
@@ -13468,14 +13473,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlSchemaIncludeLocation", resourceCulture);
+                return "Schema attribute schemaLocation='{1}' is not supported on objects of type {0}.  Please set {0}.Schema property.";
             }
         }
 
 
         internal static string FormatXmlSchemaIncludeLocation(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlSchemaIncludeLocation, arg1, arg2, arg3);
+            return string.Format("Schema attribute schemaLocation='{1}' is not supported on objects of type {0}.  Please set {0}.Schema property.", arg1, arg2, arg3);
         }
 
 
@@ -13486,14 +13491,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlSerializableSchemaError", resourceCulture);
+                return "Schema type information provided by {0} is invalid: {1}";
             }
         }
 
 
         internal static string FormatXmlSerializableSchemaError(object arg1, object arg2)
         {
-            return string.Format(XmlSerializableSchemaError, arg1, arg2);
+            return string.Format("Schema type information provided by {0} is invalid: {1}", arg1, arg2);
         }
 
 
@@ -13504,14 +13509,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlGetSchemaMethodName", resourceCulture);
+                return "'{0}' is an invalid language identifier.";
             }
         }
 
 
         internal static string FormatXmlGetSchemaMethodName(object arg1)
         {
-            return string.Format(XmlGetSchemaMethodName, arg1);
+            return string.Format("'{0}' is an invalid language identifier.", arg1);
         }
 
 
@@ -13522,14 +13527,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlGetSchemaMethodMissing", resourceCulture);
+                return "You must implement public static {0}({1}) method on {2}.";
             }
         }
 
 
         internal static string FormatXmlGetSchemaMethodMissing(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlGetSchemaMethodMissing, arg1, arg2, arg3);
+            return string.Format("You must implement public static {0}({1}) method on {2}.", arg1, arg2, arg3);
         }
 
 
@@ -13540,14 +13545,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlGetSchemaMethodReturnType", resourceCulture);
+                return "Method {0}.{1}() specified by {2} has invalid signature: return type must be compatible with {3}.";
             }
         }
 
 
         internal static string FormatXmlGetSchemaMethodReturnType(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(XmlGetSchemaMethodReturnType, arg1, arg2, arg3, arg4);
+            return string.Format("Method {0}.{1}() specified by {2} has invalid signature: return type must be compatible with {3}.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -13558,14 +13563,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlGetSchemaEmptyTypeName", resourceCulture);
+                return "{0}.{1}() must return a valid type name.";
             }
         }
 
 
         internal static string FormatXmlGetSchemaEmptyTypeName(object arg1, object arg2)
         {
-            return string.Format(XmlGetSchemaEmptyTypeName, arg1, arg2);
+            return string.Format("{0}.{1}() must return a valid type name.", arg1, arg2);
         }
 
 
@@ -13576,14 +13581,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlGetSchemaTypeMissing", resourceCulture);
+                return "{0}.{1}() must return a valid type name. Type '{2}' cannot be found in the targetNamespace='{3}'.";
             }
         }
 
 
         internal static string FormatXmlGetSchemaTypeMissing(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(XmlGetSchemaTypeMissing, arg1, arg2, arg3, arg4);
+            return string.Format("{0}.{1}() must return a valid type name. Type '{2}' cannot be found in the targetNamespace='{3}'.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -13594,14 +13599,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlGetSchemaInclude", resourceCulture);
+                return "Multiple schemas with targetNamespace='{0}' returned by {1}.{2}().  Please use only the main (parent) schema, and add the others to the schema Includes.";
             }
         }
 
 
         internal static string FormatXmlGetSchemaInclude(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlGetSchemaInclude, arg1, arg2, arg3);
+            return string.Format("Multiple schemas with targetNamespace='{0}' returned by {1}.{2}().  Please use only the main (parent) schema, and add the others to the schema Includes.", arg1, arg2, arg3);
         }
 
 
@@ -13612,14 +13617,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlSerializableAttributes", resourceCulture);
+                return "Only XmlRoot attribute may be specified for the type {0}. Please use {1} to specify schema type.";
             }
         }
 
 
         internal static string FormatXmlSerializableAttributes(object arg1, object arg2)
         {
-            return string.Format(XmlSerializableAttributes, arg1, arg2);
+            return string.Format("Only XmlRoot attribute may be specified for the type {0}. Please use {1} to specify schema type.", arg1, arg2);
         }
 
 
@@ -13630,14 +13635,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlSerializableMergeItem", resourceCulture);
+                return "Cannot merge schemas with targetNamespace='{0}'. Several mismatched declarations were found: {1}";
             }
         }
 
 
         internal static string FormatXmlSerializableMergeItem(object arg1, object arg2)
         {
-            return string.Format(XmlSerializableMergeItem, arg1, arg2);
+            return string.Format("Cannot merge schemas with targetNamespace='{0}'. Several mismatched declarations were found: {1}", arg1, arg2);
         }
 
 
@@ -13648,14 +13653,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlSerializableBadDerivation", resourceCulture);
+                return "Type '{0}' from namespace '{1}' declared as derivation of type '{2}' from namespace '{3}, but corresponding CLR types are not compatible.  Cannot convert type '{4}' to '{5}'.";
             }
         }
 
 
         internal static string FormatXmlSerializableBadDerivation(object arg1, object arg2, object arg3, object arg4, object arg5, object arg6)
         {
-            return string.Format(XmlSerializableBadDerivation, arg1, arg2, arg3, arg4, arg5, arg6);
+            return string.Format("Type '{0}' from namespace '{1}' declared as derivation of type '{2}' from namespace '{3}, but corresponding CLR types are not compatible.  Cannot convert type '{4}' to '{5}'.", arg1, arg2, arg3, arg4, arg5, arg6);
         }
 
 
@@ -13666,14 +13671,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlSerializableMissingClrType", resourceCulture);
+                return "Type '{0}' from namespace '{1}' does not have corresponding IXmlSerializable type. Please consider adding {2} to '{3}'.";
             }
         }
 
 
         internal static string FormatXmlSerializableMissingClrType(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(XmlSerializableMissingClrType, arg1, arg2, arg3, arg4);
+            return string.Format("Type '{0}' from namespace '{1}' does not have corresponding IXmlSerializable type. Please consider adding {2} to '{3}'.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -13684,14 +13689,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlCircularDerivation", resourceCulture);
+                return "Circular reference in derivation of IXmlSerializable type '{0}'.";
             }
         }
 
 
         internal static string FormatXmlCircularDerivation(object arg1)
         {
-            return string.Format(XmlCircularDerivation, arg1);
+            return string.Format("Circular reference in derivation of IXmlSerializable type '{0}'.", arg1);
         }
 
 
@@ -13702,7 +13707,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlMelformMapping", resourceCulture);
+                return "This mapping was not crated by reflection importer and cannot be used in this context.";
             }
         }
 
@@ -13715,14 +13720,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlSchemaSyntaxErrorDetails", resourceCulture);
+                return "Schema with targetNamespace='{0}' has invalid syntax. {1} Line {2}, position {3}.";
             }
         }
 
 
         internal static string FormatXmlSchemaSyntaxErrorDetails(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(XmlSchemaSyntaxErrorDetails, arg1, arg2, arg3, arg4);
+            return string.Format("Schema with targetNamespace='{0}' has invalid syntax. {1} Line {2}, position {3}.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -13733,14 +13738,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlSchemaElementReference", resourceCulture);
+                return "Element reference '{0}' declared in schema type '{1}' from namespace '{2}'.";
             }
         }
 
 
         internal static string FormatXmlSchemaElementReference(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlSchemaElementReference, arg1, arg2, arg3);
+            return string.Format("Element reference '{0}' declared in schema type '{1}' from namespace '{2}'.", arg1, arg2, arg3);
         }
 
 
@@ -13751,14 +13756,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlSchemaAttributeReference", resourceCulture);
+                return "Attribute reference '{0}' declared in schema type '{1}' from namespace '{2}'.";
             }
         }
 
 
         internal static string FormatXmlSchemaAttributeReference(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlSchemaAttributeReference, arg1, arg2, arg3);
+            return string.Format("Attribute reference '{0}' declared in schema type '{1}' from namespace '{2}'.", arg1, arg2, arg3);
         }
 
 
@@ -13769,14 +13774,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlSchemaItem", resourceCulture);
+                return "Schema item '{1}' from namespace '{0}'. {2}";
             }
         }
 
 
         internal static string FormatXmlSchemaItem(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlSchemaItem, arg1, arg2, arg3);
+            return string.Format("Schema item '{1}' from namespace '{0}'. {2}", arg1, arg2, arg3);
         }
 
 
@@ -13787,14 +13792,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlSchemaNamedItem", resourceCulture);
+                return "Schema item '{1}' named '{2}' from namespace '{0}'. {3}";
             }
         }
 
 
         internal static string FormatXmlSchemaNamedItem(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(XmlSchemaNamedItem, arg1, arg2, arg3, arg4);
+            return string.Format("Schema item '{1}' named '{2}' from namespace '{0}'. {3}", arg1, arg2, arg3, arg4);
         }
 
 
@@ -13805,14 +13810,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlSchemaContentDef", resourceCulture);
+                return "Check content definition of schema type '{0}' from namespace '{1}'. {2}";
             }
         }
 
 
         internal static string FormatXmlSchemaContentDef(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlSchemaContentDef, arg1, arg2, arg3);
+            return string.Format("Check content definition of schema type '{0}' from namespace '{1}'. {2}", arg1, arg2, arg3);
         }
 
 
@@ -13823,14 +13828,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlSchema", resourceCulture);
+                return "Schema with targetNamespace='{0}' has invalid syntax. {1}";
             }
         }
 
 
         internal static string FormatXmlSchema(object arg1, object arg2)
         {
-            return string.Format(XmlSchema, arg1, arg2);
+            return string.Format("Schema with targetNamespace='{0}' has invalid syntax. {1}", arg1, arg2);
         }
 
 
@@ -13841,14 +13846,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlSerializableRootDupName", resourceCulture);
+                return "Cannot reconcile schema for '{0}'. Please use [XmlRoot] attribute to change default name or namespace of the top-level element to avoid duplicate element declarations: element name='{1}' namespace='{2}'.";
             }
         }
 
 
         internal static string FormatXmlSerializableRootDupName(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlSerializableRootDupName, arg1, arg2, arg3);
+            return string.Format("Cannot reconcile schema for '{0}'. Please use [XmlRoot] attribute to change default name or namespace of the top-level element to avoid duplicate element declarations: element name='{1}' namespace='{2}'.", arg1, arg2, arg3);
         }
 
 
@@ -13859,14 +13864,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlNotSerializable", resourceCulture);
+                return "Type '{0}' is not serializable.";
             }
         }
 
 
         internal static string FormatXmlNotSerializable(object arg1)
         {
-            return string.Format(XmlNotSerializable, arg1);
+            return string.Format("Type '{0}' is not serializable.", arg1);
         }
 
 
@@ -13877,14 +13882,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlTypeInBadLoadContext", resourceCulture);
+                return "Type '{0}' is from an AssemblyLoadContext which is incompatible with that which contains this XmlSerializer.";
             }
         }
 
 
         internal static string FormatXmlTypeInBadLoadContext(object arg1)
         {
-            return string.Format(XmlTypeInBadLoadContext, arg1);
+            return string.Format("Type '{0}' is from an AssemblyLoadContext which is incompatible with that which contains this XmlSerializer.", arg1);
         }
 
 
@@ -13895,14 +13900,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlPregenInvalidXmlSerializerAssemblyAttribute", resourceCulture);
+                return "Invalid XmlSerializerAssemblyAttribute usage. Please use {0} property or {1} property.";
             }
         }
 
 
         internal static string FormatXmlPregenInvalidXmlSerializerAssemblyAttribute(object arg1, object arg2)
         {
-            return string.Format(XmlPregenInvalidXmlSerializerAssemblyAttribute, arg1, arg2);
+            return string.Format("Invalid XmlSerializerAssemblyAttribute usage. Please use {0} property or {1} property.", arg1, arg2);
         }
 
 
@@ -13913,14 +13918,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlSequenceInconsistent", resourceCulture);
+                return "Inconsistent sequencing: if used on one of the class's members, the '{0}' property is required on all particle-like members, please explicitly set '{0}' using XmlElement, XmlAnyElement or XmlArray custom attribute on class member '{1}'.";
             }
         }
 
 
         internal static string FormatXmlSequenceInconsistent(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlSequenceInconsistent, arg1, arg2, arg3);
+            return string.Format("Inconsistent sequencing: if used on one of the class's members, the '{0}' property is required on all particle-like members, please explicitly set '{0}' using XmlElement, XmlAnyElement or XmlArray custom attribute on class member '{1}'.", arg1, arg2, arg3);
         }
 
 
@@ -13931,14 +13936,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlSequenceUnique", resourceCulture);
+                return "'{1}' values must be unique within the same scope. Value '{0}' is in use. Please change '{1}' property on '{2}'.";
             }
         }
 
 
         internal static string FormatXmlSequenceUnique(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(XmlSequenceUnique, arg1, arg2, arg3, arg4);
+            return string.Format("'{1}' values must be unique within the same scope. Value '{0}' is in use. Please change '{1}' property on '{2}'.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -13949,14 +13954,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlSequenceHierarchy", resourceCulture);
+                return "There was an error processing type '{0}'. Type member '{1}' declared in '{2}' is missing required '{3}' property. If one class in the class hierarchy uses explicit sequencing feature ({3}), then its base class and all derived classes have to do the same.";
             }
         }
 
 
         internal static string FormatXmlSequenceHierarchy(object arg1, object arg2, object arg3, object arg4, object arg5)
         {
-            return string.Format(XmlSequenceHierarchy, arg1, arg2, arg3, arg4, arg5);
+            return string.Format("There was an error processing type '{0}'. Type member '{1}' declared in '{2}' is missing required '{3}' property. If one class in the class hierarchy uses explicit sequencing feature ({3}), then its base class and all derived classes have to do the same.", arg1, arg2, arg3, arg4, arg5);
         }
 
 
@@ -13967,14 +13972,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlSequenceMatch", resourceCulture);
+                return "If multiple custom attributes specified on a single member only one of them have to have explicit '{0}' property, however if more that one attribute has the explicit '{0}', all values have to match.";
             }
         }
 
 
         internal static string FormatXmlSequenceMatch(object arg1, object arg2)
         {
-            return string.Format(XmlSequenceMatch, arg1, arg2);
+            return string.Format("If multiple custom attributes specified on a single member only one of them have to have explicit '{0}' property, however if more that one attribute has the explicit '{0}', all values have to match.", arg1, arg2);
         }
 
 
@@ -13985,7 +13990,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlDisallowNegativeValues", resourceCulture);
+                return "Negative values are prohibited.";
             }
         }
 
@@ -13998,14 +14003,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_UnexpectedToken", resourceCulture);
+                return "This is an unexpected token. The expected token is '{0}'.";
             }
         }
 
 
         internal static string FormatXml_UnexpectedToken(object arg1)
         {
-            return string.Format(Xml_UnexpectedToken, arg1);
+            return string.Format("This is an unexpected token. The expected token is '{0}'.", arg1);
         }
 
 
@@ -14016,14 +14021,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_AttributeValueDataType", resourceCulture);
+                return "The '{0}' attribute has an invalid value according to its data type.";
             }
         }
 
 
         internal static string FormatSch_AttributeValueDataType(object arg1)
         {
-            return string.Format(Sch_AttributeValueDataType, arg1);
+            return string.Format("The '{0}' attribute has an invalid value according to its data type.", arg1);
         }
 
 
@@ -14034,14 +14039,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Sch_ElementValueDataType", resourceCulture);
+                return "The '{0}' element has an invalid value according to its data type.";
             }
         }
 
 
         internal static string FormatSch_ElementValueDataType(object arg1)
         {
-            return string.Format(Sch_ElementValueDataType, arg1);
+            return string.Format("The '{0}' element has an invalid value according to its data type.", arg1);
         }
 
 
@@ -14052,7 +14057,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInternalError", resourceCulture);
+                return "Internal error.";
             }
         }
 
@@ -14065,14 +14070,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInternalErrorDetails", resourceCulture);
+                return "Internal error: {0}.";
             }
         }
 
 
         internal static string FormatXmlInternalErrorDetails(object arg1)
         {
-            return string.Format(XmlInternalErrorDetails, arg1);
+            return string.Format("Internal error: {0}.", arg1);
         }
 
 
@@ -14083,14 +14088,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInternalErrorMethod", resourceCulture);
+                return "Internal error: missing generated method for {0}.";
             }
         }
 
 
         internal static string FormatXmlInternalErrorMethod(object arg1)
         {
-            return string.Format(XmlInternalErrorMethod, arg1);
+            return string.Format("Internal error: missing generated method for {0}.", arg1);
         }
 
 
@@ -14101,7 +14106,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_NeverValueType", resourceCulture);
+                return "Only TypeKind.Root can be set for typeof(object) which is never value type.";
             }
         }
 
@@ -14114,14 +14119,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Enc_InvalidByteInEncoding", resourceCulture);
+                return "Invalid byte was found at index {0}.";
             }
         }
 
 
         internal static string FormatEnc_InvalidByteInEncoding(object arg1)
         {
-            return string.Format(Enc_InvalidByteInEncoding, arg1);
+            return string.Format("Invalid byte was found at index {0}.", arg1);
         }
 
 
@@ -14132,7 +14137,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_ExpectingXmlTextReader", resourceCulture);
+                return "The XmlReader passed in to construct this XmlValidatingReaderImpl must be an instance of a System.Xml.XmlTextReader.";
             }
         }
 
@@ -14145,14 +14150,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_CannotCreateNode", resourceCulture);
+                return "Cannot create node of type {0}.";
             }
         }
 
 
         internal static string FormatArg_CannotCreateNode(object arg1)
         {
-            return string.Format(Arg_CannotCreateNode, arg1);
+            return string.Format("Cannot create node of type {0}.", arg1);
         }
 
 
@@ -14163,7 +14168,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Arg_IncompatibleParamType", resourceCulture);
+                return "Type is incompatible.";
             }
         }
 
@@ -14176,7 +14181,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_EndOfInnerExceptionStack", resourceCulture);
+                return "--- End of inner exception stack trace ---";
             }
         }
 
@@ -14189,7 +14194,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XPath_UnclosedString", resourceCulture);
+                return "String literal was not closed.";
             }
         }
 
@@ -14202,7 +14207,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XPath_ScientificNotation", resourceCulture);
+                return "Scientific notation is not allowed.";
             }
         }
 
@@ -14215,14 +14220,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XPath_UnexpectedToken", resourceCulture);
+                return "Unexpected token '{0}' in the expression.";
             }
         }
 
 
         internal static string FormatXPath_UnexpectedToken(object arg1)
         {
-            return string.Format(XPath_UnexpectedToken, arg1);
+            return string.Format("Unexpected token '{0}' in the expression.", arg1);
         }
 
 
@@ -14233,14 +14238,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XPath_NodeTestExpected", resourceCulture);
+                return "Expected a node test, found '{0}'.";
             }
         }
 
 
         internal static string FormatXPath_NodeTestExpected(object arg1)
         {
-            return string.Format(XPath_NodeTestExpected, arg1);
+            return string.Format("Expected a node test, found '{0}'.", arg1);
         }
 
 
@@ -14251,14 +14256,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XPath_EofExpected", resourceCulture);
+                return "Expected end of the expression, found '{0}'.";
             }
         }
 
 
         internal static string FormatXPath_EofExpected(object arg1)
         {
-            return string.Format(XPath_EofExpected, arg1);
+            return string.Format("Expected end of the expression, found '{0}'.", arg1);
         }
 
 
@@ -14269,14 +14274,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XPath_TokenExpected", resourceCulture);
+                return "Expected token '{0}', found '{1}'.";
             }
         }
 
 
         internal static string FormatXPath_TokenExpected(object arg1, object arg2)
         {
-            return string.Format(XPath_TokenExpected, arg1, arg2);
+            return string.Format("Expected token '{0}', found '{1}'.", arg1, arg2);
         }
 
 
@@ -14287,7 +14292,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XPath_InvalidAxisInPattern", resourceCulture);
+                return "Only 'child' and 'attribute' axes are allowed in a pattern outside predicates.";
             }
         }
 
@@ -14300,7 +14305,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XPath_PredicateAfterDot", resourceCulture);
+                return "Abbreviated step '.' cannot be followed by a predicate. Use the full form 'self::node()[predicate]' instead.";
             }
         }
 
@@ -14313,7 +14318,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XPath_PredicateAfterDotDot", resourceCulture);
+                return "Abbreviated step '..' cannot be followed by a predicate. Use the full form 'parent::node()[predicate]' instead.";
             }
         }
 
@@ -14326,14 +14331,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XPath_NArgsExpected", resourceCulture);
+                return "Function '{0}()' must have {1} argument(s).";
             }
         }
 
 
         internal static string FormatXPath_NArgsExpected(object arg1, object arg2)
         {
-            return string.Format(XPath_NArgsExpected, arg1, arg2);
+            return string.Format("Function '{0}()' must have {1} argument(s).", arg1, arg2);
         }
 
 
@@ -14344,14 +14349,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XPath_NOrMArgsExpected", resourceCulture);
+                return "Function '{0}()' must have {1} or {2} argument(s).";
             }
         }
 
 
         internal static string FormatXPath_NOrMArgsExpected(object arg1, object arg2, object arg3)
         {
-            return string.Format(XPath_NOrMArgsExpected, arg1, arg2, arg3);
+            return string.Format("Function '{0}()' must have {1} or {2} argument(s).", arg1, arg2, arg3);
         }
 
 
@@ -14362,14 +14367,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XPath_AtLeastNArgsExpected", resourceCulture);
+                return "Function '{0}()' must have at least {1} argument(s).";
             }
         }
 
 
         internal static string FormatXPath_AtLeastNArgsExpected(object arg1, object arg2)
         {
-            return string.Format(XPath_AtLeastNArgsExpected, arg1, arg2);
+            return string.Format("Function '{0}()' must have at least {1} argument(s).", arg1, arg2);
         }
 
 
@@ -14380,14 +14385,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XPath_AtMostMArgsExpected", resourceCulture);
+                return "Function '{0}()' must have no more than {2} arguments.";
             }
         }
 
 
         internal static string FormatXPath_AtMostMArgsExpected(object arg1, object arg2)
         {
-            return string.Format(XPath_AtMostMArgsExpected, arg1, arg2);
+            return string.Format("Function '{0}()' must have no more than {2} arguments.", arg1, arg2);
         }
 
 
@@ -14398,14 +14403,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XPath_NodeSetArgumentExpected", resourceCulture);
+                return "Argument {1} of function '{0}()' cannot be converted to a node-set.";
             }
         }
 
 
         internal static string FormatXPath_NodeSetArgumentExpected(object arg1, object arg2)
         {
-            return string.Format(XPath_NodeSetArgumentExpected, arg1, arg2);
+            return string.Format("Argument {1} of function '{0}()' cannot be converted to a node-set.", arg1, arg2);
         }
 
 
@@ -14416,7 +14421,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XPath_NodeSetExpected", resourceCulture);
+                return "Expression must evaluate to a node-set.";
             }
         }
 
@@ -14429,7 +14434,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XPath_RtfInPathExpr", resourceCulture);
+                return "To use a result tree fragment in a path expression, first convert it to a node-set using the msxsl:node-set() function.";
             }
         }
 
@@ -14442,14 +14447,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_WarningAsError", resourceCulture);
+                return "Warning as Error: {0}";
             }
         }
 
 
         internal static string FormatXslt_WarningAsError(object arg1)
         {
-            return string.Format(Xslt_WarningAsError, arg1);
+            return string.Format("Warning as Error: {0}", arg1);
         }
 
 
@@ -14460,7 +14465,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_InputTooComplex", resourceCulture);
+                return "The stylesheet is too complex.";
             }
         }
 
@@ -14473,14 +14478,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_CannotLoadStylesheet", resourceCulture);
+                return "Cannot load the stylesheet object referenced by URI '{0}', because the provided XmlResolver returned an object of type '{1}'. One of Stream, XmlReader, and IXPathNavigable types was expected.";
             }
         }
 
 
         internal static string FormatXslt_CannotLoadStylesheet(object arg1, object arg2)
         {
-            return string.Format(Xslt_CannotLoadStylesheet, arg1, arg2);
+            return string.Format("Cannot load the stylesheet object referenced by URI '{0}', because the provided XmlResolver returned an object of type '{1}'. One of Stream, XmlReader, and IXPathNavigable types was expected.", arg1, arg2);
         }
 
 
@@ -14491,7 +14496,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_WrongStylesheetElement", resourceCulture);
+                return "Stylesheet must start either with an 'xsl:stylesheet' or an 'xsl:transform' element, or with a literal result element that has an 'xsl:version' attribute, where prefix 'xsl' denotes the 'http://www.w3.org/1999/XSL/Transform' namespace.";
             }
         }
 
@@ -14504,7 +14509,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_WdXslNamespace", resourceCulture);
+                return "The 'http://www.w3.org/TR/WD-xsl' namespace is no longer supported.";
             }
         }
 
@@ -14517,14 +14522,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_NotAtTop", resourceCulture);
+                return "'{0}' element children must precede all other children of the '{1}' element.";
             }
         }
 
 
         internal static string FormatXslt_NotAtTop(object arg1, object arg2)
         {
-            return string.Format(Xslt_NotAtTop, arg1, arg2);
+            return string.Format("'{0}' element children must precede all other children of the '{1}' element.", arg1, arg2);
         }
 
 
@@ -14535,14 +14540,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_UnexpectedElement", resourceCulture);
+                return "'{0}' cannot be a child of the '{1}' element.";
             }
         }
 
 
         internal static string FormatXslt_UnexpectedElement(object arg1, object arg2)
         {
-            return string.Format(Xslt_UnexpectedElement, arg1, arg2);
+            return string.Format("'{0}' cannot be a child of the '{1}' element.", arg1, arg2);
         }
 
 
@@ -14553,14 +14558,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_NullNsAtTopLevel", resourceCulture);
+                return "Top-level element '{0}' may not have a null namespace URI.";
             }
         }
 
 
         internal static string FormatXslt_NullNsAtTopLevel(object arg1)
         {
-            return string.Format(Xslt_NullNsAtTopLevel, arg1);
+            return string.Format("Top-level element '{0}' may not have a null namespace URI.", arg1);
         }
 
 
@@ -14571,14 +14576,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_TextNodesNotAllowed", resourceCulture);
+                return "'{0}' element cannot have text node children.";
             }
         }
 
 
         internal static string FormatXslt_TextNodesNotAllowed(object arg1)
         {
-            return string.Format(Xslt_TextNodesNotAllowed, arg1);
+            return string.Format("'{0}' element cannot have text node children.", arg1);
         }
 
 
@@ -14589,14 +14594,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_NotEmptyContents", resourceCulture);
+                return "The contents of '{0}' must be empty.";
             }
         }
 
 
         internal static string FormatXslt_NotEmptyContents(object arg1)
         {
-            return string.Format(Xslt_NotEmptyContents, arg1);
+            return string.Format("The contents of '{0}' must be empty.", arg1);
         }
 
 
@@ -14607,14 +14612,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_InvalidAttribute", resourceCulture);
+                return "'{0}' is an invalid attribute for the '{1}' element.";
             }
         }
 
 
         internal static string FormatXslt_InvalidAttribute(object arg1, object arg2)
         {
-            return string.Format(Xslt_InvalidAttribute, arg1, arg2);
+            return string.Format("'{0}' is an invalid attribute for the '{1}' element.", arg1, arg2);
         }
 
 
@@ -14625,14 +14630,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_MissingAttribute", resourceCulture);
+                return "Missing mandatory attribute '{0}'.";
             }
         }
 
 
         internal static string FormatXslt_MissingAttribute(object arg1)
         {
-            return string.Format(Xslt_MissingAttribute, arg1);
+            return string.Format("Missing mandatory attribute '{0}'.", arg1);
         }
 
 
@@ -14643,14 +14648,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_InvalidAttrValue", resourceCulture);
+                return "'{1}' is an invalid value for the '{0}' attribute.";
             }
         }
 
 
         internal static string FormatXslt_InvalidAttrValue(object arg1, object arg2)
         {
-            return string.Format(Xslt_InvalidAttrValue, arg1, arg2);
+            return string.Format("'{1}' is an invalid value for the '{0}' attribute.", arg1, arg2);
         }
 
 
@@ -14661,14 +14666,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_BistateAttribute", resourceCulture);
+                return "The value of the '{0}' attribute must be '{1}' or '{2}'.";
             }
         }
 
 
         internal static string FormatXslt_BistateAttribute(object arg1, object arg2, object arg3)
         {
-            return string.Format(Xslt_BistateAttribute, arg1, arg2, arg3);
+            return string.Format("The value of the '{0}' attribute must be '{1}' or '{2}'.", arg1, arg2, arg3);
         }
 
 
@@ -14679,14 +14684,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_CharAttribute", resourceCulture);
+                return "The value of the '{0}' attribute must be a single character.";
             }
         }
 
 
         internal static string FormatXslt_CharAttribute(object arg1)
         {
-            return string.Format(Xslt_CharAttribute, arg1);
+            return string.Format("The value of the '{0}' attribute must be a single character.", arg1);
         }
 
 
@@ -14697,14 +14702,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_CircularInclude", resourceCulture);
+                return "Stylesheet '{0}' cannot directly or indirectly include or import itself.";
             }
         }
 
 
         internal static string FormatXslt_CircularInclude(object arg1)
         {
-            return string.Format(Xslt_CircularInclude, arg1);
+            return string.Format("Stylesheet '{0}' cannot directly or indirectly include or import itself.", arg1);
         }
 
 
@@ -14715,14 +14720,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_SingleRightBraceInAvt", resourceCulture);
+                return "The right curly brace in an attribute value template '{0}' outside an expression must be doubled.";
             }
         }
 
 
         internal static string FormatXslt_SingleRightBraceInAvt(object arg1)
         {
-            return string.Format(Xslt_SingleRightBraceInAvt, arg1);
+            return string.Format("The right curly brace in an attribute value template '{0}' outside an expression must be doubled.", arg1);
         }
 
 
@@ -14733,14 +14738,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_VariableCntSel2", resourceCulture);
+                return "The variable or parameter '{0}' cannot have both a 'select' attribute and non-empty content.";
             }
         }
 
 
         internal static string FormatXslt_VariableCntSel2(object arg1)
         {
-            return string.Format(Xslt_VariableCntSel2, arg1);
+            return string.Format("The variable or parameter '{0}' cannot have both a 'select' attribute and non-empty content.", arg1);
         }
 
 
@@ -14751,7 +14756,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_KeyCntUse", resourceCulture);
+                return "'xsl:key' has a 'use' attribute and has non-empty content, or it has empty content and no 'use' attribute.";
             }
         }
 
@@ -14764,14 +14769,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_DupTemplateName", resourceCulture);
+                return "'{0}' is a duplicate template name.";
             }
         }
 
 
         internal static string FormatXslt_DupTemplateName(object arg1)
         {
-            return string.Format(Xslt_DupTemplateName, arg1);
+            return string.Format("'{0}' is a duplicate template name.", arg1);
         }
 
 
@@ -14782,7 +14787,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_BothMatchNameAbsent", resourceCulture);
+                return "'xsl:template' must have either a 'match' attribute or a 'name' attribute, or both.";
             }
         }
 
@@ -14795,14 +14800,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_InvalidVariable", resourceCulture);
+                return "The variable or parameter '{0}' is either not defined or it is out of scope.";
             }
         }
 
 
         internal static string FormatXslt_InvalidVariable(object arg1)
         {
-            return string.Format(Xslt_InvalidVariable, arg1);
+            return string.Format("The variable or parameter '{0}' is either not defined or it is out of scope.", arg1);
         }
 
 
@@ -14813,14 +14818,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_DupGlobalVariable", resourceCulture);
+                return "The variable or parameter '{0}' was duplicated with the same import precedence.";
             }
         }
 
 
         internal static string FormatXslt_DupGlobalVariable(object arg1)
         {
-            return string.Format(Xslt_DupGlobalVariable, arg1);
+            return string.Format("The variable or parameter '{0}' was duplicated with the same import precedence.", arg1);
         }
 
 
@@ -14831,14 +14836,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_DupLocalVariable", resourceCulture);
+                return "The variable or parameter '{0}' was duplicated within the same scope.";
             }
         }
 
 
         internal static string FormatXslt_DupLocalVariable(object arg1)
         {
-            return string.Format(Xslt_DupLocalVariable, arg1);
+            return string.Format("The variable or parameter '{0}' was duplicated within the same scope.", arg1);
         }
 
 
@@ -14849,14 +14854,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_DupNsAlias", resourceCulture);
+                return "Namespace URI '{0}' is declared to be an alias for multiple different namespace URIs with the same import precedence.";
             }
         }
 
 
         internal static string FormatXslt_DupNsAlias(object arg1)
         {
-            return string.Format(Xslt_DupNsAlias, arg1);
+            return string.Format("Namespace URI '{0}' is declared to be an alias for multiple different namespace URIs with the same import precedence.", arg1);
         }
 
 
@@ -14867,14 +14872,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_EmptyAttrValue", resourceCulture);
+                return "The value of the '{0}' attribute cannot be empty.";
             }
         }
 
 
         internal static string FormatXslt_EmptyAttrValue(object arg1)
         {
-            return string.Format(Xslt_EmptyAttrValue, arg1);
+            return string.Format("The value of the '{0}' attribute cannot be empty.", arg1);
         }
 
 
@@ -14885,14 +14890,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_EmptyNsAlias", resourceCulture);
+                return "The value of the '{0}' attribute cannot be empty. Use '#default' to specify the default namespace.";
             }
         }
 
 
         internal static string FormatXslt_EmptyNsAlias(object arg1)
         {
-            return string.Format(Xslt_EmptyNsAlias, arg1);
+            return string.Format("The value of the '{0}' attribute cannot be empty. Use '#default' to specify the default namespace.", arg1);
         }
 
 
@@ -14903,14 +14908,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_UnknownXsltFunction", resourceCulture);
+                return "'{0}()' is an unknown XSLT function.";
             }
         }
 
 
         internal static string FormatXslt_UnknownXsltFunction(object arg1)
         {
-            return string.Format(Xslt_UnknownXsltFunction, arg1);
+            return string.Format("'{0}()' is an unknown XSLT function.", arg1);
         }
 
 
@@ -14921,14 +14926,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_UnsupportedXsltFunction", resourceCulture);
+                return "'{0}()' is an unsupported XSLT function.";
             }
         }
 
 
         internal static string FormatXslt_UnsupportedXsltFunction(object arg1)
         {
-            return string.Format(Xslt_UnsupportedXsltFunction, arg1);
+            return string.Format("'{0}()' is an unsupported XSLT function.", arg1);
         }
 
 
@@ -14939,14 +14944,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_NoAttributeSet", resourceCulture);
+                return "A reference to attribute set '{0}' cannot be resolved. An 'xsl:attribute-set' of this name must be declared at the top level of the stylesheet.";
             }
         }
 
 
         internal static string FormatXslt_NoAttributeSet(object arg1)
         {
-            return string.Format(Xslt_NoAttributeSet, arg1);
+            return string.Format("A reference to attribute set '{0}' cannot be resolved. An 'xsl:attribute-set' of this name must be declared at the top level of the stylesheet.", arg1);
         }
 
 
@@ -14957,14 +14962,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_UndefinedKey", resourceCulture);
+                return "A reference to key '{0}' cannot be resolved. An 'xsl:key' of this name must be declared at the top level of the stylesheet.";
             }
         }
 
 
         internal static string FormatXslt_UndefinedKey(object arg1)
         {
-            return string.Format(Xslt_UndefinedKey, arg1);
+            return string.Format("A reference to key '{0}' cannot be resolved. An 'xsl:key' of this name must be declared at the top level of the stylesheet.", arg1);
         }
 
 
@@ -14975,14 +14980,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_CircularAttributeSet", resourceCulture);
+                return "Circular reference in the definition of attribute set '{0}'.";
             }
         }
 
 
         internal static string FormatXslt_CircularAttributeSet(object arg1)
         {
-            return string.Format(Xslt_CircularAttributeSet, arg1);
+            return string.Format("Circular reference in the definition of attribute set '{0}'.", arg1);
         }
 
 
@@ -14993,14 +14998,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_InvalidCallTemplate", resourceCulture);
+                return "The named template '{0}' does not exist.";
             }
         }
 
 
         internal static string FormatXslt_InvalidCallTemplate(object arg1)
         {
-            return string.Format(Xslt_InvalidCallTemplate, arg1);
+            return string.Format("The named template '{0}' does not exist.", arg1);
         }
 
 
@@ -15011,14 +15016,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_InvalidPrefix", resourceCulture);
+                return "Prefix '{0}' is not defined.";
             }
         }
 
 
         internal static string FormatXslt_InvalidPrefix(object arg1)
         {
-            return string.Format(Xslt_InvalidPrefix, arg1);
+            return string.Format("Prefix '{0}' is not defined.", arg1);
         }
 
 
@@ -15029,7 +15034,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_ScriptXsltNamespace", resourceCulture);
+                return "Script block cannot implement the XSLT namespace.";
             }
         }
 
@@ -15042,14 +15047,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_ScriptInvalidLanguage", resourceCulture);
+                return "Scripting language '{0}' is not supported.";
             }
         }
 
 
         internal static string FormatXslt_ScriptInvalidLanguage(object arg1)
         {
-            return string.Format(Xslt_ScriptInvalidLanguage, arg1);
+            return string.Format("Scripting language '{0}' is not supported.", arg1);
         }
 
 
@@ -15060,14 +15065,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_ScriptMixedLanguages", resourceCulture);
+                return "All script blocks implementing the namespace '{0}' must use the same language.";
             }
         }
 
 
         internal static string FormatXslt_ScriptMixedLanguages(object arg1)
         {
-            return string.Format(Xslt_ScriptMixedLanguages, arg1);
+            return string.Format("All script blocks implementing the namespace '{0}' must use the same language.", arg1);
         }
 
 
@@ -15078,14 +15083,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_ScriptAndExtensionClash", resourceCulture);
+                return "Cannot have both an extension object and a script implementing the same namespace '{0}'.";
             }
         }
 
 
         internal static string FormatXslt_ScriptAndExtensionClash(object arg1)
         {
-            return string.Format(Xslt_ScriptAndExtensionClash, arg1);
+            return string.Format("Cannot have both an extension object and a script implementing the same namespace '{0}'.", arg1);
         }
 
 
@@ -15096,14 +15101,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_NoDecimalFormat", resourceCulture);
+                return "Decimal format '{0}' is not defined.";
             }
         }
 
 
         internal static string FormatXslt_NoDecimalFormat(object arg1)
         {
-            return string.Format(Xslt_NoDecimalFormat, arg1);
+            return string.Format("Decimal format '{0}' is not defined.", arg1);
         }
 
 
@@ -15114,14 +15119,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_DecimalFormatSignsNotDistinct", resourceCulture);
+                return "The '{0}' and '{1}' attributes of 'xsl:decimal-format' must have distinct values.";
             }
         }
 
 
         internal static string FormatXslt_DecimalFormatSignsNotDistinct(object arg1, object arg2)
         {
-            return string.Format(Xslt_DecimalFormatSignsNotDistinct, arg1, arg2);
+            return string.Format("The '{0}' and '{1}' attributes of 'xsl:decimal-format' must have distinct values.", arg1, arg2);
         }
 
 
@@ -15132,14 +15137,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_DecimalFormatRedefined", resourceCulture);
+                return "The '{0}' attribute of 'xsl:decimal-format' cannot be redefined with a value of '{1}'.";
             }
         }
 
 
         internal static string FormatXslt_DecimalFormatRedefined(object arg1, object arg2)
         {
-            return string.Format(Xslt_DecimalFormatRedefined, arg1, arg2);
+            return string.Format("The '{0}' attribute of 'xsl:decimal-format' cannot be redefined with a value of '{1}'.", arg1, arg2);
         }
 
 
@@ -15150,14 +15155,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_UnknownExtensionElement", resourceCulture);
+                return "'{0}' is not a recognized extension element.";
             }
         }
 
 
         internal static string FormatXslt_UnknownExtensionElement(object arg1)
         {
-            return string.Format(Xslt_UnknownExtensionElement, arg1);
+            return string.Format("'{0}' is not a recognized extension element.", arg1);
         }
 
 
@@ -15168,7 +15173,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_ModeWithoutMatch", resourceCulture);
+                return "An 'xsl:template' element without a 'match' attribute cannot have a 'mode' attribute.";
             }
         }
 
@@ -15181,7 +15186,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_ModeListEmpty", resourceCulture);
+                return "List of modes in 'xsl:template' element can't be empty. ";
             }
         }
 
@@ -15194,14 +15199,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_ModeListDup", resourceCulture);
+                return "List of modes in 'xsl:template' element can't contain duplicates ('{0}'). ";
             }
         }
 
 
         internal static string FormatXslt_ModeListDup(object arg1)
         {
-            return string.Format(Xslt_ModeListDup, arg1);
+            return string.Format("List of modes in 'xsl:template' element can't contain duplicates ('{0}'). ", arg1);
         }
 
 
@@ -15212,7 +15217,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_ModeListAll", resourceCulture);
+                return "List of modes in 'xsl:template' element can't contain token '#all' together with any other value. ";
             }
         }
 
@@ -15225,7 +15230,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_PriorityWithoutMatch", resourceCulture);
+                return "An 'xsl:template' element without a 'match' attribute cannot have a 'priority' attribute.";
             }
         }
 
@@ -15238,7 +15243,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_InvalidApplyImports", resourceCulture);
+                return "An 'xsl:apply-imports' element can only occur within an 'xsl:template' element with a 'match' attribute, and cannot occur within an 'xsl:for-each' element.";
             }
         }
 
@@ -15251,14 +15256,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_DuplicateWithParam", resourceCulture);
+                return "Value of parameter '{0}' cannot be specified more than once within a single 'xsl:call-template' or 'xsl:apply-templates' element.";
             }
         }
 
 
         internal static string FormatXslt_DuplicateWithParam(object arg1)
         {
-            return string.Format(Xslt_DuplicateWithParam, arg1);
+            return string.Format("Value of parameter '{0}' cannot be specified more than once within a single 'xsl:call-template' or 'xsl:apply-templates' element.", arg1);
         }
 
 
@@ -15269,14 +15274,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_ReservedNS", resourceCulture);
+                return "Elements and attributes cannot belong to the reserved namespace '{0}'.";
             }
         }
 
 
         internal static string FormatXslt_ReservedNS(object arg1)
         {
-            return string.Format(Xslt_ReservedNS, arg1);
+            return string.Format("Elements and attributes cannot belong to the reserved namespace '{0}'.", arg1);
         }
 
 
@@ -15287,7 +15292,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_XmlnsAttr", resourceCulture);
+                return "An attribute with a local name 'xmlns' and a null namespace URI cannot be created.";
             }
         }
 
@@ -15300,7 +15305,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_NoWhen", resourceCulture);
+                return "An 'xsl:choose' element must have at least one 'xsl:when' child.";
             }
         }
 
@@ -15313,7 +15318,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_WhenAfterOtherwise", resourceCulture);
+                return "'xsl:when' must precede the 'xsl:otherwise' element.";
             }
         }
 
@@ -15326,7 +15331,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_DupOtherwise", resourceCulture);
+                return "An 'xsl:choose' element can have only one 'xsl:otherwise' child.";
             }
         }
 
@@ -15339,14 +15344,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_AttributeRedefinition", resourceCulture);
+                return "Attribute '{0}' of 'xsl:output' cannot be defined more than once with the same import precedence.";
             }
         }
 
 
         internal static string FormatXslt_AttributeRedefinition(object arg1)
         {
-            return string.Format(Xslt_AttributeRedefinition, arg1);
+            return string.Format("Attribute '{0}' of 'xsl:output' cannot be defined more than once with the same import precedence.", arg1);
         }
 
 
@@ -15357,14 +15362,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_InvalidMethod", resourceCulture);
+                return "'{0}' is not a supported output method. Supported methods are 'xml', 'html', and 'text'.";
             }
         }
 
 
         internal static string FormatXslt_InvalidMethod(object arg1)
         {
-            return string.Format(Xslt_InvalidMethod, arg1);
+            return string.Format("'{0}' is not a supported output method. Supported methods are 'xml', 'html', and 'text'.", arg1);
         }
 
 
@@ -15375,14 +15380,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_InvalidEncoding", resourceCulture);
+                return "'{0}' is not a supported encoding name.";
             }
         }
 
 
         internal static string FormatXslt_InvalidEncoding(object arg1)
         {
-            return string.Format(Xslt_InvalidEncoding, arg1);
+            return string.Format("'{0}' is not a supported encoding name.", arg1);
         }
 
 
@@ -15393,14 +15398,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_InvalidLanguage", resourceCulture);
+                return "'{0}' is not a supported language identifier.";
             }
         }
 
 
         internal static string FormatXslt_InvalidLanguage(object arg1)
         {
-            return string.Format(Xslt_InvalidLanguage, arg1);
+            return string.Format("'{0}' is not a supported language identifier.", arg1);
         }
 
 
@@ -15411,14 +15416,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_InvalidCompareOption", resourceCulture);
+                return "String comparison option(s) '{0}' are either invalid or cannot be used together.";
             }
         }
 
 
         internal static string FormatXslt_InvalidCompareOption(object arg1)
         {
-            return string.Format(Xslt_InvalidCompareOption, arg1);
+            return string.Format("String comparison option(s) '{0}' are either invalid or cannot be used together.", arg1);
         }
 
 
@@ -15429,7 +15434,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_KeyNotAllowed", resourceCulture);
+                return "The 'key()' function cannot be used in 'use' and 'match' attributes of 'xsl:key' element.";
             }
         }
 
@@ -15442,7 +15447,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_VariablesNotAllowed", resourceCulture);
+                return "Variables cannot be used within this expression.";
             }
         }
 
@@ -15455,7 +15460,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_CurrentNotAllowed", resourceCulture);
+                return "The 'current()' function cannot be used in a pattern.";
             }
         }
 
@@ -15468,7 +15473,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_DocumentFuncProhibited", resourceCulture);
+                return "Execution of the 'document()' function was prohibited. Use the XsltSettings.EnableDocumentFunction property to enable it.";
             }
         }
 
@@ -15481,7 +15486,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_ScriptsProhibited", resourceCulture);
+                return "Execution of scripts was prohibited. Use the XsltSettings.EnableScript property to enable it.";
             }
         }
 
@@ -15494,7 +15499,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_ItemNull", resourceCulture);
+                return "Extension functions cannot return null values.";
             }
         }
 
@@ -15507,7 +15512,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_NodeSetNotNode", resourceCulture);
+                return "Cannot convert a node-set which contains zero nodes or more than one node to a single node.";
             }
         }
 
@@ -15520,14 +15525,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_UnsupportedClrType", resourceCulture);
+                return "Extension function parameters or return values which have Clr type '{0}' are not supported.";
             }
         }
 
 
         internal static string FormatXslt_UnsupportedClrType(object arg1)
         {
-            return string.Format(Xslt_UnsupportedClrType, arg1);
+            return string.Format("Extension function parameters or return values which have Clr type '{0}' are not supported.", arg1);
         }
 
 
@@ -15538,14 +15543,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_NotYetImplemented", resourceCulture);
+                return "'{0}' is not yet implemented.";
             }
         }
 
 
         internal static string FormatXslt_NotYetImplemented(object arg1)
         {
-            return string.Format(Xslt_NotYetImplemented, arg1);
+            return string.Format("'{0}' is not yet implemented.", arg1);
         }
 
 
@@ -15556,14 +15561,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_SchemaDeclaration", resourceCulture);
+                return "'{0}' declaration is not permitted in non-schema aware processor.";
             }
         }
 
 
         internal static string FormatXslt_SchemaDeclaration(object arg1)
         {
-            return string.Format(Xslt_SchemaDeclaration, arg1);
+            return string.Format("'{0}' declaration is not permitted in non-schema aware processor.", arg1);
         }
 
 
@@ -15574,14 +15579,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_SchemaAttribute", resourceCulture);
+                return "Attribute '{0}' is not permitted in basic XSLT processor (http://www.w3.org/TR/xslt20/#dt-basic-xslt-processor).";
             }
         }
 
 
         internal static string FormatXslt_SchemaAttribute(object arg1)
         {
-            return string.Format(Xslt_SchemaAttribute, arg1);
+            return string.Format("Attribute '{0}' is not permitted in basic XSLT processor (http://www.w3.org/TR/xslt20/#dt-basic-xslt-processor).", arg1);
         }
 
 
@@ -15592,14 +15597,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_SchemaAttributeValue", resourceCulture);
+                return "Value '{1}' of attribute '{0}' is not permitted in basic XSLT processor (http://www.w3.org/TR/xslt20/#dt-basic-xslt-processor).";
             }
         }
 
 
         internal static string FormatXslt_SchemaAttributeValue(object arg1, object arg2)
         {
-            return string.Format(Xslt_SchemaAttributeValue, arg1, arg2);
+            return string.Format("Value '{1}' of attribute '{0}' is not permitted in basic XSLT processor (http://www.w3.org/TR/xslt20/#dt-basic-xslt-processor).", arg1, arg2);
         }
 
 
@@ -15610,14 +15615,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_ElementCntSel", resourceCulture);
+                return "The element '{0}' cannot have both a 'select' attribute and non-empty content.";
             }
         }
 
 
         internal static string FormatXslt_ElementCntSel(object arg1)
         {
-            return string.Format(Xslt_ElementCntSel, arg1);
+            return string.Format("The element '{0}' cannot have both a 'select' attribute and non-empty content.", arg1);
         }
 
 
@@ -15628,7 +15633,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_PerformSortCntSel", resourceCulture);
+                return "The element 'xsl:perform-sort' cannot have 'select' attribute any content other than 'xsl:sort' and 'xsl:fallback' instructions.";
             }
         }
 
@@ -15641,14 +15646,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_RequiredAndSelect", resourceCulture);
+                return "Mandatory parameter '{0}' must be empty and must not have a 'select' attribute.";
             }
         }
 
 
         internal static string FormatXslt_RequiredAndSelect(object arg1)
         {
-            return string.Format(Xslt_RequiredAndSelect, arg1);
+            return string.Format("Mandatory parameter '{0}' must be empty and must not have a 'select' attribute.", arg1);
         }
 
 
@@ -15659,14 +15664,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_NoSelectNoContent", resourceCulture);
+                return "Element '{0}' must have either 'select' attribute or non-empty content.";
             }
         }
 
 
         internal static string FormatXslt_NoSelectNoContent(object arg1)
         {
-            return string.Format(Xslt_NoSelectNoContent, arg1);
+            return string.Format("Element '{0}' must have either 'select' attribute or non-empty content.", arg1);
         }
 
 
@@ -15677,14 +15682,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_NonTemplateTunnel", resourceCulture);
+                return "Stylesheet or function parameter '{0}' cannot have attribute 'tunnel'.";
             }
         }
 
 
         internal static string FormatXslt_NonTemplateTunnel(object arg1)
         {
-            return string.Format(Xslt_NonTemplateTunnel, arg1);
+            return string.Format("Stylesheet or function parameter '{0}' cannot have attribute 'tunnel'.", arg1);
         }
 
 
@@ -15695,7 +15700,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_ExcludeDefault", resourceCulture);
+                return "Value '#default' is used within the 'exclude-result-prefixes' attribute and the parent element of this attribute has no default namespace.";
             }
         }
 
@@ -15708,7 +15713,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_CollationSyntax", resourceCulture);
+                return "The value of an 'default-collation' attribute contains no recognized collation URI.";
             }
         }
 
@@ -15721,14 +15726,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_AnalyzeStringDupChild", resourceCulture);
+                return "'xsl:analyze-string' cannot have second child with name '{0}'.";
             }
         }
 
 
         internal static string FormatXslt_AnalyzeStringDupChild(object arg1)
         {
-            return string.Format(Xslt_AnalyzeStringDupChild, arg1);
+            return string.Format("'xsl:analyze-string' cannot have second child with name '{0}'.", arg1);
         }
 
 
@@ -15739,7 +15744,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_AnalyzeStringChildOrder", resourceCulture);
+                return "When both 'xsl:matching-string' and 'xsl:non-matching-string' elements are present, 'xsl:matching-string' element must come first.";
             }
         }
 
@@ -15752,7 +15757,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_AnalyzeStringEmpty", resourceCulture);
+                return "'xsl:analyze-string' must contain either 'xsl:matching-string' or 'xsl:non-matching-string' elements or both.";
             }
         }
 
@@ -15765,7 +15770,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_SortStable", resourceCulture);
+                return "Only the first 'xsl:sort' element may have 'stable' attribute.";
             }
         }
 
@@ -15778,7 +15783,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_InputTypeAnnotations", resourceCulture);
+                return "It is an error if there is a stylesheet module in the stylesheet that specifies 'input-type-annotations'=\"strip\" and another stylesheet module that specifies 'input-type-annotations'=\"preserve\".";
             }
         }
 
@@ -15791,14 +15796,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Coll_BadOptFormat", resourceCulture);
+                return "Collation option '{0}' is invalid. Options must have the following format: <option-name>=<option-value>.";
             }
         }
 
 
         internal static string FormatColl_BadOptFormat(object arg1)
         {
-            return string.Format(Coll_BadOptFormat, arg1);
+            return string.Format("Collation option '{0}' is invalid. Options must have the following format: <option-name>=<option-value>.", arg1);
         }
 
 
@@ -15809,14 +15814,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Coll_Unsupported", resourceCulture);
+                return "The collation '{0}' is not supported.";
             }
         }
 
 
         internal static string FormatColl_Unsupported(object arg1)
         {
-            return string.Format(Coll_Unsupported, arg1);
+            return string.Format("The collation '{0}' is not supported.", arg1);
         }
 
 
@@ -15827,14 +15832,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Coll_UnsupportedLanguage", resourceCulture);
+                return "Collation language '{0}' is not supported.";
             }
         }
 
 
         internal static string FormatColl_UnsupportedLanguage(object arg1)
         {
-            return string.Format(Coll_UnsupportedLanguage, arg1);
+            return string.Format("Collation language '{0}' is not supported.", arg1);
         }
 
 
@@ -15845,14 +15850,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Coll_UnsupportedOpt", resourceCulture);
+                return "Unsupported option '{0}' in collation.";
             }
         }
 
 
         internal static string FormatColl_UnsupportedOpt(object arg1)
         {
-            return string.Format(Coll_UnsupportedOpt, arg1);
+            return string.Format("Unsupported option '{0}' in collation.", arg1);
         }
 
 
@@ -15863,14 +15868,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Coll_UnsupportedOptVal", resourceCulture);
+                return "Collation option '{0}' cannot have the value '{1}'.";
             }
         }
 
 
         internal static string FormatColl_UnsupportedOptVal(object arg1, object arg2)
         {
-            return string.Format(Coll_UnsupportedOptVal, arg1, arg2);
+            return string.Format("Collation option '{0}' cannot have the value '{1}'.", arg1, arg2);
         }
 
 
@@ -15881,14 +15886,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Coll_UnsupportedSortOpt", resourceCulture);
+                return "Unsupported sort option '{0}' in collation.";
             }
         }
 
 
         internal static string FormatColl_UnsupportedSortOpt(object arg1)
         {
-            return string.Format(Coll_UnsupportedSortOpt, arg1);
+            return string.Format("Unsupported sort option '{0}' in collation.", arg1);
         }
 
 
@@ -15899,14 +15904,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Qil_Validation", resourceCulture);
+                return "QIL Validation Error! '{0}'.";
             }
         }
 
 
         internal static string FormatQil_Validation(object arg1)
         {
-            return string.Format(Qil_Validation, arg1);
+            return string.Format("QIL Validation Error! '{0}'.", arg1);
         }
 
 
@@ -15917,7 +15922,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIl_TooManyParameters", resourceCulture);
+                return "Functions may not have more than 65535 parameters.";
             }
         }
 
@@ -15930,14 +15935,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIl_BadXmlState", resourceCulture);
+                return "An item of type '{0}' cannot be constructed within a node of type '{1}'.";
             }
         }
 
 
         internal static string FormatXmlIl_BadXmlState(object arg1, object arg2)
         {
-            return string.Format(XmlIl_BadXmlState, arg1, arg2);
+            return string.Format("An item of type '{0}' cannot be constructed within a node of type '{1}'.", arg1, arg2);
         }
 
 
@@ -15948,7 +15953,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIl_BadXmlStateAttr", resourceCulture);
+                return "Attribute and namespace nodes cannot be added to the parent element after a text, comment, pi, or sub-element node has already been added.";
             }
         }
 
@@ -15961,7 +15966,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIl_NmspAfterAttr", resourceCulture);
+                return "Namespace nodes cannot be added to the parent element after an attribute node has already been added.";
             }
         }
 
@@ -15974,14 +15979,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIl_NmspConflict", resourceCulture);
+                return "Cannot construct namespace declaration xmlns{0}{1}='{2}'. Prefix '{1}' is already mapped to namespace '{3}'.";
             }
         }
 
 
         internal static string FormatXmlIl_NmspConflict(object arg1, object arg2, object arg3, object arg4, object arg5)
         {
-            return string.Format(XmlIl_NmspConflict, arg1, arg2, arg3, arg4, arg5);
+            return string.Format("Cannot construct namespace declaration xmlns{0}{1}='{2}'. Prefix '{1}' is already mapped to namespace '{3}'.", arg1, arg2, arg3, arg4, arg5);
         }
 
 
@@ -15992,14 +15997,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIl_CantResolveEntity", resourceCulture);
+                return "Cannot query the data source object referenced by URI '{0}', because the provided XmlResolver returned an object of type '{1}'. Only Stream, XmlReader, and IXPathNavigable data source objects are currently supported.";
             }
         }
 
 
         internal static string FormatXmlIl_CantResolveEntity(object arg1, object arg2)
         {
-            return string.Format(XmlIl_CantResolveEntity, arg1, arg2);
+            return string.Format("Cannot query the data source object referenced by URI '{0}', because the provided XmlResolver returned an object of type '{1}'. Only Stream, XmlReader, and IXPathNavigable data source objects are currently supported.", arg1, arg2);
         }
 
 
@@ -16010,7 +16015,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIl_NoDefaultDocument", resourceCulture);
+                return "Query requires a default data source, but no default was supplied to the query engine.";
             }
         }
 
@@ -16023,14 +16028,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIl_UnknownDocument", resourceCulture);
+                return "Data source '{0}' cannot be located.";
             }
         }
 
 
         internal static string FormatXmlIl_UnknownDocument(object arg1)
         {
-            return string.Format(XmlIl_UnknownDocument, arg1);
+            return string.Format("Data source '{0}' cannot be located.", arg1);
         }
 
 
@@ -16041,14 +16046,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIl_UnknownParam", resourceCulture);
+                return "Supplied XsltArgumentList does not contain a parameter with local name '{0}' and namespace '{1}'.";
             }
         }
 
 
         internal static string FormatXmlIl_UnknownParam(object arg1, object arg2)
         {
-            return string.Format(XmlIl_UnknownParam, arg1, arg2);
+            return string.Format("Supplied XsltArgumentList does not contain a parameter with local name '{0}' and namespace '{1}'.", arg1, arg2);
         }
 
 
@@ -16059,14 +16064,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIl_UnknownExtObj", resourceCulture);
+                return "Cannot find a script or an extension object associated with namespace '{0}'.";
             }
         }
 
 
         internal static string FormatXmlIl_UnknownExtObj(object arg1)
         {
-            return string.Format(XmlIl_UnknownExtObj, arg1);
+            return string.Format("Cannot find a script or an extension object associated with namespace '{0}'.", arg1);
         }
 
 
@@ -16077,7 +16082,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIl_CantStripNav", resourceCulture);
+                return "Whitespace cannot be stripped from input documents that have already been loaded. Provide the input document as an XmlReader instead.";
             }
         }
 
@@ -16090,14 +16095,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIl_ExtensionError", resourceCulture);
+                return "An error occurred during a call to extension function '{0}'. See InnerException for a complete description of the error.";
             }
         }
 
 
         internal static string FormatXmlIl_ExtensionError(object arg1)
         {
-            return string.Format(XmlIl_ExtensionError, arg1);
+            return string.Format("An error occurred during a call to extension function '{0}'. See InnerException for a complete description of the error.", arg1);
         }
 
 
@@ -16108,7 +16113,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIl_TopLevelAttrNmsp", resourceCulture);
+                return "XmlWriter cannot process the sequence returned by the query, because it contains an attribute or namespace node.";
             }
         }
 
@@ -16121,14 +16126,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIl_NoExtensionMethod", resourceCulture);
+                return "Extension object '{0}' does not contain a matching '{1}' method that has {2} parameter(s).";
             }
         }
 
 
         internal static string FormatXmlIl_NoExtensionMethod(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlIl_NoExtensionMethod, arg1, arg2, arg3);
+            return string.Format("Extension object '{0}' does not contain a matching '{1}' method that has {2} parameter(s).", arg1, arg2, arg3);
         }
 
 
@@ -16139,14 +16144,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIl_AmbiguousExtensionMethod", resourceCulture);
+                return "Ambiguous method call. Extension object '{0}' contains multiple '{1}' methods that have {2} parameter(s).";
             }
         }
 
 
         internal static string FormatXmlIl_AmbiguousExtensionMethod(object arg1, object arg2, object arg3)
         {
-            return string.Format(XmlIl_AmbiguousExtensionMethod, arg1, arg2, arg3);
+            return string.Format("Ambiguous method call. Extension object '{0}' contains multiple '{1}' methods that have {2} parameter(s).", arg1, arg2, arg3);
         }
 
 
@@ -16157,14 +16162,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIl_NonPublicExtensionMethod", resourceCulture);
+                return "Method '{1}' of extension object '{0}' cannot be called because it is not public.";
             }
         }
 
 
         internal static string FormatXmlIl_NonPublicExtensionMethod(object arg1, object arg2)
         {
-            return string.Format(XmlIl_NonPublicExtensionMethod, arg1, arg2);
+            return string.Format("Method '{1}' of extension object '{0}' cannot be called because it is not public.", arg1, arg2);
         }
 
 
@@ -16175,14 +16180,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIl_GenericExtensionMethod", resourceCulture);
+                return "Method '{1}' of extension object '{0}' cannot be called because it is generic.";
             }
         }
 
 
         internal static string FormatXmlIl_GenericExtensionMethod(object arg1, object arg2)
         {
-            return string.Format(XmlIl_GenericExtensionMethod, arg1, arg2);
+            return string.Format("Method '{1}' of extension object '{0}' cannot be called because it is generic.", arg1, arg2);
         }
 
 
@@ -16193,14 +16198,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIl_ByRefType", resourceCulture);
+                return "Method '{1}' of extension object '{0}' cannot be called because it has one or more ByRef parameters.";
             }
         }
 
 
         internal static string FormatXmlIl_ByRefType(object arg1, object arg2)
         {
-            return string.Format(XmlIl_ByRefType, arg1, arg2);
+            return string.Format("Method '{1}' of extension object '{0}' cannot be called because it has one or more ByRef parameters.", arg1, arg2);
         }
 
 
@@ -16211,14 +16216,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlIl_DocumentLoadError", resourceCulture);
+                return "An error occurred while loading document '{0}'. See InnerException for a complete description of the error.";
             }
         }
 
 
         internal static string FormatXmlIl_DocumentLoadError(object arg1)
         {
-            return string.Format(XmlIl_DocumentLoadError, arg1);
+            return string.Format("An error occurred while loading document '{0}'. See InnerException for a complete description of the error.", arg1);
         }
 
 
@@ -16229,14 +16234,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_CompileError", resourceCulture);
+                return "XSLT compile error at {0}({1},{2}). See InnerException for details.";
             }
         }
 
 
         internal static string FormatXslt_CompileError(object arg1, object arg2, object arg3)
         {
-            return string.Format(Xslt_CompileError, arg1, arg2, arg3);
+            return string.Format("XSLT compile error at {0}({1},{2}). See InnerException for details.", arg1, arg2, arg3);
         }
 
 
@@ -16247,7 +16252,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_CompileError2", resourceCulture);
+                return "XSLT compile error.";
             }
         }
 
@@ -16260,14 +16265,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_UnsuppFunction", resourceCulture);
+                return "'{0}()' is an unsupported XSLT function.";
             }
         }
 
 
         internal static string FormatXslt_UnsuppFunction(object arg1)
         {
-            return string.Format(Xslt_UnsuppFunction, arg1);
+            return string.Format("'{0}()' is an unsupported XSLT function.", arg1);
         }
 
 
@@ -16278,7 +16283,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_NotFirstImport", resourceCulture);
+                return "'xsl:import' instructions must precede all other element children of an 'xsl:stylesheet' element.";
             }
         }
 
@@ -16291,14 +16296,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_UnexpectedKeyword", resourceCulture);
+                return "'{0}' cannot be a child of the '{1}' element.";
             }
         }
 
 
         internal static string FormatXslt_UnexpectedKeyword(object arg1, object arg2)
         {
-            return string.Format(Xslt_UnexpectedKeyword, arg1, arg2);
+            return string.Format("'{0}' cannot be a child of the '{1}' element.", arg1, arg2);
         }
 
 
@@ -16309,14 +16314,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_InvalidContents", resourceCulture);
+                return "The contents of '{0}' are invalid.";
             }
         }
 
 
         internal static string FormatXslt_InvalidContents(object arg1)
         {
-            return string.Format(Xslt_InvalidContents, arg1);
+            return string.Format("The contents of '{0}' are invalid.", arg1);
         }
 
 
@@ -16327,14 +16332,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_CantResolve", resourceCulture);
+                return "Cannot resolve the referenced document '{0}'.";
             }
         }
 
 
         internal static string FormatXslt_CantResolve(object arg1)
         {
-            return string.Format(Xslt_CantResolve, arg1);
+            return string.Format("Cannot resolve the referenced document '{0}'.", arg1);
         }
 
 
@@ -16345,14 +16350,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_SingleRightAvt", resourceCulture);
+                return "Right curly brace in the attribute value template '{0}' must be doubled.";
             }
         }
 
 
         internal static string FormatXslt_SingleRightAvt(object arg1)
         {
-            return string.Format(Xslt_SingleRightAvt, arg1);
+            return string.Format("Right curly brace in the attribute value template '{0}' must be doubled.", arg1);
         }
 
 
@@ -16363,14 +16368,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_OpenBracesAvt", resourceCulture);
+                return "The braces are not closed in AVT expression '{0}'.";
             }
         }
 
 
         internal static string FormatXslt_OpenBracesAvt(object arg1)
         {
-            return string.Format(Xslt_OpenBracesAvt, arg1);
+            return string.Format("The braces are not closed in AVT expression '{0}'.", arg1);
         }
 
 
@@ -16381,14 +16386,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_OpenLiteralAvt", resourceCulture);
+                return "The literal in AVT expression is not correctly closed '{0}'.";
             }
         }
 
 
         internal static string FormatXslt_OpenLiteralAvt(object arg1)
         {
-            return string.Format(Xslt_OpenLiteralAvt, arg1);
+            return string.Format("The literal in AVT expression is not correctly closed '{0}'.", arg1);
         }
 
 
@@ -16399,14 +16404,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_NestedAvt", resourceCulture);
+                return "AVT cannot be nested in AVT '{0}'.";
             }
         }
 
 
         internal static string FormatXslt_NestedAvt(object arg1)
         {
-            return string.Format(Xslt_NestedAvt, arg1);
+            return string.Format("AVT cannot be nested in AVT '{0}'.", arg1);
         }
 
 
@@ -16417,14 +16422,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_EmptyAvtExpr", resourceCulture);
+                return "XPath Expression in AVT cannot be empty: '{0}'.";
             }
         }
 
 
         internal static string FormatXslt_EmptyAvtExpr(object arg1)
         {
-            return string.Format(Xslt_EmptyAvtExpr, arg1);
+            return string.Format("XPath Expression in AVT cannot be empty: '{0}'.", arg1);
         }
 
 
@@ -16435,14 +16440,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_InvalidXPath", resourceCulture);
+                return "'{0}' is an invalid XPath expression.";
             }
         }
 
 
         internal static string FormatXslt_InvalidXPath(object arg1)
         {
-            return string.Format(Xslt_InvalidXPath, arg1);
+            return string.Format("'{0}' is an invalid XPath expression.", arg1);
         }
 
 
@@ -16453,14 +16458,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_InvalidQName", resourceCulture);
+                return "'{0}' is an invalid QName.";
             }
         }
 
 
         internal static string FormatXslt_InvalidQName(object arg1)
         {
-            return string.Format(Xslt_InvalidQName, arg1);
+            return string.Format("'{0}' is an invalid QName.", arg1);
         }
 
 
@@ -16471,7 +16476,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_TemplateNoAttrib", resourceCulture);
+                return "The 'xsl:template' instruction must have the 'match' and/or 'name' attribute present.";
             }
         }
 
@@ -16484,14 +16489,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_DupVarName", resourceCulture);
+                return "Variable or parameter '{0}' was duplicated within the same scope.";
             }
         }
 
 
         internal static string FormatXslt_DupVarName(object arg1)
         {
-            return string.Format(Xslt_DupVarName, arg1);
+            return string.Format("Variable or parameter '{0}' was duplicated within the same scope.", arg1);
         }
 
 
@@ -16502,14 +16507,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_WrongNumberArgs", resourceCulture);
+                return "XSLT function '{0}()' has the wrong number of arguments.";
             }
         }
 
 
         internal static string FormatXslt_WrongNumberArgs(object arg1)
         {
-            return string.Format(Xslt_WrongNumberArgs, arg1);
+            return string.Format("XSLT function '{0}()' has the wrong number of arguments.", arg1);
         }
 
 
@@ -16520,7 +16525,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_NoNodeSetConversion", resourceCulture);
+                return "Cannot convert the operand to a node-set.";
             }
         }
 
@@ -16533,7 +16538,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_NoNavigatorConversion", resourceCulture);
+                return "Cannot convert the operand to 'Result tree fragment'.";
             }
         }
 
@@ -16546,7 +16551,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_InvalidFormat", resourceCulture);
+                return "Format cannot be empty.";
             }
         }
 
@@ -16559,14 +16564,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_InvalidFormat1", resourceCulture);
+                return "Format '{0}' cannot have digit symbol after zero digit symbol before a decimal point.";
             }
         }
 
 
         internal static string FormatXslt_InvalidFormat1(object arg1)
         {
-            return string.Format(Xslt_InvalidFormat1, arg1);
+            return string.Format("Format '{0}' cannot have digit symbol after zero digit symbol before a decimal point.", arg1);
         }
 
 
@@ -16577,14 +16582,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_InvalidFormat2", resourceCulture);
+                return "Format '{0}' cannot have zero digit symbol after digit symbol after decimal point.";
             }
         }
 
 
         internal static string FormatXslt_InvalidFormat2(object arg1)
         {
-            return string.Format(Xslt_InvalidFormat2, arg1);
+            return string.Format("Format '{0}' cannot have zero digit symbol after digit symbol after decimal point.", arg1);
         }
 
 
@@ -16595,14 +16600,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_InvalidFormat3", resourceCulture);
+                return "Format '{0}' has two pattern separators.";
             }
         }
 
 
         internal static string FormatXslt_InvalidFormat3(object arg1)
         {
-            return string.Format(Xslt_InvalidFormat3, arg1);
+            return string.Format("Format '{0}' has two pattern separators.", arg1);
         }
 
 
@@ -16613,14 +16618,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_InvalidFormat5", resourceCulture);
+                return "Format '{0}' cannot have two decimal separators.";
             }
         }
 
 
         internal static string FormatXslt_InvalidFormat5(object arg1)
         {
-            return string.Format(Xslt_InvalidFormat5, arg1);
+            return string.Format("Format '{0}' cannot have two decimal separators.", arg1);
         }
 
 
@@ -16631,7 +16636,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_InvalidFormat8", resourceCulture);
+                return "Format string should have at least one digit or zero digit.";
             }
         }
 
@@ -16644,14 +16649,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_ScriptInvalidPrefix", resourceCulture);
+                return "Cannot find the script or external object that implements prefix '{0}'.";
             }
         }
 
 
         internal static string FormatXslt_ScriptInvalidPrefix(object arg1)
         {
-            return string.Format(Xslt_ScriptInvalidPrefix, arg1);
+            return string.Format("Cannot find the script or external object that implements prefix '{0}'.", arg1);
         }
 
 
@@ -16662,7 +16667,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_ScriptEmpty", resourceCulture);
+                return "The 'msxsl:script' element cannot be empty.";
             }
         }
 
@@ -16675,14 +16680,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_DupDecimalFormat", resourceCulture);
+                return "Decimal format '{0}' has a duplicate declaration.";
             }
         }
 
 
         internal static string FormatXslt_DupDecimalFormat(object arg1)
         {
-            return string.Format(Xslt_DupDecimalFormat, arg1);
+            return string.Format("Decimal format '{0}' has a duplicate declaration.", arg1);
         }
 
 
@@ -16693,14 +16698,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_CircularReference", resourceCulture);
+                return "Circular reference in the definition of variable '{0}'.";
             }
         }
 
 
         internal static string FormatXslt_CircularReference(object arg1)
         {
-            return string.Format(Xslt_CircularReference, arg1);
+            return string.Format("Circular reference in the definition of variable '{0}'.", arg1);
         }
 
 
@@ -16711,7 +16716,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_InvalidExtensionNamespace", resourceCulture);
+                return "Extension namespace cannot be 'null' or an XSLT namespace URI.";
             }
         }
 
@@ -16724,7 +16729,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_InvalidModeAttribute", resourceCulture);
+                return "An 'xsl:template' element without a 'match' attribute cannot have a 'mode' attribute.";
             }
         }
 
@@ -16737,7 +16742,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_MultipleRoots", resourceCulture);
+                return "There are multiple root elements in the output XML.";
             }
         }
 
@@ -16750,7 +16755,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_ApplyImports", resourceCulture);
+                return "The 'xsl:apply-imports' instruction cannot be included within the content of an 'xsl:for-each' instruction or within an 'xsl:template' instruction without the 'match' attribute.";
             }
         }
 
@@ -16763,14 +16768,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_Terminate", resourceCulture);
+                return "Transform terminated: '{0}'.";
             }
         }
 
 
         internal static string FormatXslt_Terminate(object arg1)
         {
-            return string.Format(Xslt_Terminate, arg1);
+            return string.Format("Transform terminated: '{0}'.", arg1);
         }
 
 
@@ -16781,14 +16786,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_InvalidPattern", resourceCulture);
+                return "'{0}' is an invalid XSLT pattern.";
             }
         }
 
 
         internal static string FormatXslt_InvalidPattern(object arg1)
         {
-            return string.Format(Xslt_InvalidPattern, arg1);
+            return string.Format("'{0}' is an invalid XSLT pattern.", arg1);
         }
 
 
@@ -16799,7 +16804,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlInvalidCharSchemaPrimitive", resourceCulture);
+                return "Char is not a valid schema primitive and should be treated as int in DataContract";
             }
         }
 
@@ -16812,14 +16817,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UnknownConstantType", resourceCulture);
+                return "Internal Error: Unrecognized constant type {0}.";
             }
         }
 
 
         internal static string FormatUnknownConstantType(object arg1)
         {
-            return string.Format(UnknownConstantType, arg1);
+            return string.Format("Internal Error: Unrecognized constant type {0}.", arg1);
         }
 
 
@@ -16830,14 +16835,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ArrayTypeIsNotSupported", resourceCulture);
+                return "Array of type {0} is not supported.";
             }
         }
 
 
         internal static string FormatArrayTypeIsNotSupported(object arg1)
         {
-            return string.Format(ArrayTypeIsNotSupported, arg1);
+            return string.Format("Array of type {0} is not supported.", arg1);
         }
 
 
@@ -16848,7 +16853,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xslt_UpperCaseFirstNotSupported", resourceCulture);
+                return "Uppercase-First sorting option is not supported.";
             }
         }
 
@@ -16861,14 +16866,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlPregenTypeDynamic", resourceCulture);
+                return "Cannot pre-generate serialization code for type '{0}'. Pre-generation of serialization assemblies is not supported for dynamic types. Save the assembly and load it from disk to use it with XmlSerialization.";
             }
         }
 
 
         internal static string FormatXmlPregenTypeDynamic(object arg1)
         {
-            return string.Format(XmlPregenTypeDynamic, arg1);
+            return string.Format("Cannot pre-generate serialization code for type '{0}'. Pre-generation of serialization assemblies is not supported for dynamic types. Save the assembly and load it from disk to use it with XmlSerialization.", arg1);
         }
 
 
@@ -16879,14 +16884,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("XmlPregenOrphanType", resourceCulture);
+                return "Cannot pre-generate serializer for multiple assemblies. Type '{0}' does not belong to assembly {1}.";
             }
         }
 
 
         internal static string FormatXmlPregenOrphanType(object arg1, object arg2)
         {
-            return string.Format(XmlPregenOrphanType, arg1, arg2);
+            return string.Format("Cannot pre-generate serializer for multiple assemblies. Type '{0}' does not belong to assembly {1}.", arg1, arg2);
         }
 
 
@@ -16897,14 +16902,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ErrSerializerExists", resourceCulture);
+                return "Cannot generate serialization code {0} because the code file already exists. Use /{1} to force an overwrite of the existing file.";
             }
         }
 
 
         internal static string FormatErrSerializerExists(object arg1, object arg2)
         {
-            return string.Format(ErrSerializerExists, arg1, arg2);
+            return string.Format("Cannot generate serialization code {0} because the code file already exists. Use /{1} to force an overwrite of the existing file.", arg1, arg2);
         }
 
 
@@ -16915,14 +16920,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ErrDirectoryExists", resourceCulture);
+                return "Cannot generate serialization code '{0}' because a directory with the same name already exists.";
             }
         }
 
 
         internal static string FormatErrDirectoryExists(object arg1)
         {
-            return string.Format(ErrDirectoryExists, arg1);
+            return string.Format("Cannot generate serialization code '{0}' because a directory with the same name already exists.", arg1);
         }
 
 
@@ -16933,14 +16938,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ErrDirectoryNotExists", resourceCulture);
+                return "Cannot generate serialization code because directory {0} doesn't exist.";
             }
         }
 
 
         internal static string FormatErrDirectoryNotExists(object arg1)
         {
-            return string.Format(ErrDirectoryNotExists, arg1);
+            return string.Format("Cannot generate serialization code because directory {0} doesn't exist.", arg1);
         }
 
 
@@ -16951,14 +16956,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ErrInvalidArgument", resourceCulture);
+                return "Ignoring invalid command line argument: '{0}'.";
             }
         }
 
 
         internal static string FormatErrInvalidArgument(object arg1)
         {
-            return string.Format(ErrInvalidArgument, arg1);
+            return string.Format("Ignoring invalid command line argument: '{0}'.", arg1);
         }
 
 
@@ -16969,14 +16974,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Warning", resourceCulture);
+                return "Warning: {0}.";
             }
         }
 
 
         internal static string FormatWarning(object arg1)
         {
-            return string.Format(Warning, arg1);
+            return string.Format("Warning: {0}.", arg1);
         }
 
 
@@ -16987,14 +16992,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ErrMissingRequiredArgument", resourceCulture);
+                return "Missing required command-line argument: {0}.";
             }
         }
 
 
         internal static string FormatErrMissingRequiredArgument(object arg1)
         {
-            return string.Format(ErrMissingRequiredArgument, arg1);
+            return string.Format("Missing required command-line argument: {0}.", arg1);
         }
 
 
@@ -17005,7 +17010,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ErrAssembly", resourceCulture);
+                return "The name of the source assembly.";
             }
         }
 
@@ -17018,14 +17023,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InfoGeneratedFile", resourceCulture);
+                return "Generated serialization code for assembly {0} --> '{1}'.";
             }
         }
 
 
         internal static string FormatInfoGeneratedFile(object arg1, object arg2)
         {
-            return string.Format(InfoGeneratedFile, arg1, arg2);
+            return string.Format("Generated serialization code for assembly {0} --> '{1}'.", arg1, arg2);
         }
 
 
@@ -17036,14 +17041,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InfoFileName", resourceCulture);
+                return "Serialization Code File Name: {0}.";
             }
         }
 
 
         internal static string FormatInfoFileName(object arg1)
         {
-            return string.Format(InfoFileName, arg1);
+            return string.Format("Serialization Code File Name: {0}.", arg1);
         }
 
 
@@ -17054,14 +17059,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ErrGenerationFailed", resourceCulture);
+                return "Sgen utility failed to pregenerate serialization code for {0}.";
             }
         }
 
 
         internal static string FormatErrGenerationFailed(object arg1)
         {
-            return string.Format(ErrGenerationFailed, arg1);
+            return string.Format("Sgen utility failed to pregenerate serialization code for {0}.", arg1);
         }
 
 
@@ -17072,14 +17077,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ErrorDetails", resourceCulture);
+                return "Error: {0}.";
             }
         }
 
 
         internal static string FormatErrorDetails(object arg1)
         {
-            return string.Format(ErrorDetails, arg1);
+            return string.Format("Error: {0}.", arg1);
         }
 
 
@@ -17090,14 +17095,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ErrLoadType", resourceCulture);
+                return "Type '{0}' was not found in the assembly '{1}'.";
             }
         }
 
 
         internal static string FormatErrLoadType(object arg1, object arg2)
         {
-            return string.Format(ErrLoadType, arg1, arg2);
+            return string.Format("Type '{0}' was not found in the assembly '{1}'.", arg1, arg2);
         }
 
 
@@ -17108,14 +17113,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DirectoryAccessDenied", resourceCulture);
+                return "Access to directory {0} is denied.  The process under which XmlSerializer is running does not have sufficient permission to access the directory.";
             }
         }
 
 
         internal static string FormatDirectoryAccessDenied(object arg1)
         {
-            return string.Format(DirectoryAccessDenied, arg1);
+            return string.Format("Access to directory {0} is denied.  The process under which XmlSerializer is running does not have sufficient permission to access the directory.", arg1);
         }
 
 
@@ -17126,14 +17131,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ErrLoadAssembly", resourceCulture);
+                return "File or assembly name '{0}', or one of its dependencies, was not found.";
             }
         }
 
 
         internal static string FormatErrLoadAssembly(object arg1)
         {
-            return string.Format(ErrLoadAssembly, arg1);
+            return string.Format("File or assembly name '{0}', or one of its dependencies, was not found.", arg1);
         }
 
 
@@ -17144,14 +17149,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InfoNoSerializableTypes", resourceCulture);
+                return "Assembly '{0}' does not contain any types that can be serialized using XmlSerializer.";
             }
         }
 
 
         internal static string FormatInfoNoSerializableTypes(object arg1)
         {
-            return string.Format(InfoNoSerializableTypes, arg1);
+            return string.Format("Assembly '{0}' does not contain any types that can be serialized using XmlSerializer.", arg1);
         }
 
 
@@ -17162,14 +17167,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("InfoIgnoreType", resourceCulture);
+                return "Ignoring '{0}'.";
             }
         }
 
 
         internal static string FormatInfoIgnoreType(object arg1)
         {
-            return string.Format(InfoIgnoreType, arg1);
+            return string.Format("Ignoring '{0}'.", arg1);
         }
 
 
@@ -17180,14 +17185,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FailLoadAssemblyUnderPregenMode", resourceCulture);
+                return "\"Fail to load assembly {0} or {0} doesn't exist under PreGen Mode.";
             }
         }
 
 
         internal static string FormatFailLoadAssemblyUnderPregenMode(object arg1, object arg2)
         {
-            return string.Format(FailLoadAssemblyUnderPregenMode, arg1, arg2);
+            return string.Format("\"Fail to load assembly {0} or {0} doesn't exist under PreGen Mode.", arg1, arg2);
         }
 
 
@@ -17200,7 +17205,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("HelpDescription", resourceCulture);
+                return "Generates serialization code for use with XmlSerializer.\nThe utility allows developers to pre-generate code for serialization\nbuilding and deploying the assemblies with the application.\n    ";
             }
         }
 
@@ -17213,14 +17218,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("HelpUsage", resourceCulture);
+                return "\nUsage: dotnet {0} [--assembly <assembly file path>] [--type <type name>]";
             }
         }
 
 
         internal static string FormatHelpUsage(object arg1)
         {
-            return string.Format(HelpUsage, arg1);
+            return string.Format("\nUsage: dotnet {0} [--assembly <assembly file path>] [--type <type name>]", arg1);
         }
 
 
@@ -17231,7 +17236,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("HelpDevOptions", resourceCulture);
+                return "\n  Developer options:";
             }
         }
 
@@ -17244,14 +17249,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("HelpAssembly", resourceCulture);
+                return "     {0}|{1}   Assembly location or display name.";
             }
         }
 
 
         internal static string FormatHelpAssembly(object arg1, object arg2)
         {
-            return string.Format(HelpAssembly, arg1, arg2);
+            return string.Format("     {0}|{1}   Assembly location or display name.", arg1, arg2);
         }
 
 
@@ -17262,14 +17267,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("HelpType", resourceCulture);
+                return "     {0}          Generate code for serialization/deserialization of the specified type from the input assembly.";
             }
         }
 
 
         internal static string FormatHelpType(object arg1)
         {
-            return string.Format(HelpType, arg1);
+            return string.Format("     {0}          Generate code for serialization/deserialization of the specified type from the input assembly.", arg1);
         }
 
 
@@ -17280,14 +17285,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("HelpForce", resourceCulture);
+                return "     {0}         Forces overwrite of a previously generated assembly.";
             }
         }
 
 
         internal static string FormatHelpForce(object arg1)
         {
-            return string.Format(HelpForce, arg1);
+            return string.Format("     {0}         Forces overwrite of a previously generated assembly.", arg1);
         }
 
 
@@ -17298,14 +17303,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("HelpProxy", resourceCulture);
+                return "     {0}    Generate serialization code only for proxy classes and web method parameters.";
             }
         }
 
 
         internal static string FormatHelpProxy(object arg1)
         {
-            return string.Format(HelpProxy, arg1);
+            return string.Format("     {0}    Generate serialization code only for proxy classes and web method parameters.", arg1);
         }
 
 
@@ -17316,14 +17321,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("HelpOut", resourceCulture);
+                return "     {0}|{1}        Output directory name (default: target assembly location).";
             }
         }
 
 
         internal static string FormatHelpOut(object arg1, object arg2)
         {
-            return string.Format(HelpOut, arg1, arg2);
+            return string.Format("     {0}|{1}        Output directory name (default: target assembly location).", arg1, arg2);
         }
 
 
@@ -17334,7 +17339,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("HelpMiscOptions", resourceCulture);
+                return "\n  Miscellaneous options:";
             }
         }
 
@@ -17347,14 +17352,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("HelpHelp", resourceCulture);
+                return "     {0}|{1}       Show help.";
             }
         }
 
 
         internal static string FormatHelpHelp(object arg1, object arg2)
         {
-            return string.Format(HelpHelp, arg1, arg2);
+            return string.Format("     {0}|{1}       Show help.", arg1, arg2);
         }
 
 
@@ -17365,7 +17370,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("GenerateSerializerNotFound", resourceCulture);
+                return "Method 'System.Xml.Serialization.XmlSerializer.GenerateSerializer' was not found. This is likely because you are using an older version of the framework. Please update to .NET Core v2.1 or later.";
             }
         }
 
@@ -17378,14 +17383,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CodeGenConvertError", resourceCulture);
+                return "CodeGenError({0}): Cannot convert source type [{1}] to target type [{2}].";
             }
         }
 
 
         internal static string FormatCodeGenConvertError(object arg1, object arg2, object arg3)
         {
-            return string.Format(CodeGenConvertError, arg1, arg2, arg3);
+            return string.Format("CodeGenError({0}): Cannot convert source type [{1}] to target type [{2}].", arg1, arg2, arg3);
         }
 
 
@@ -17396,7 +17401,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CompilingScriptsNotSupported", resourceCulture);
+                return "Compiling JScript/CSharp scripts is not supported";
             }
         }
 
@@ -17409,14 +17414,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ImportInfo", resourceCulture);
+                return "Importing {0} ({1}/{2})";
             }
         }
 
 
         internal static string FormatImportInfo(object arg1, object arg2, object arg3)
         {
-            return string.Format(ImportInfo, arg1, arg2, arg3);
+            return string.Format("Importing {0} ({1}/{2})", arg1, arg2, arg3);
         }
     }
 }

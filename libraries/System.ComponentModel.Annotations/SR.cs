@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.ComponentModel.Annotations", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,14 +70,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AllowedValuesAttribute_Invalid", resourceCulture);
+                return "The {0} field does not equal any of the values specified in AllowedValuesAttribute.";
             }
         }
 
 
         internal static string FormatAllowedValuesAttribute_Invalid(object arg1)
         {
-            return string.Format(AllowedValuesAttribute_Invalid, arg1);
+            return string.Format("The {0} field does not equal any of the values specified in AllowedValuesAttribute.", arg1);
         }
 
 
@@ -88,14 +88,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AssociatedMetadataTypeTypeDescriptor_MetadataTypeContainsUnknownProperties", resourceCulture);
+                return "The associated metadata type for type '{0}' contains the following unknown properties or fields: {1}. Please make sure that the names of these members match the names of the properties on the main type.";
             }
         }
 
 
         internal static string FormatAssociatedMetadataTypeTypeDescriptor_MetadataTypeContainsUnknownProperties(object arg1, object arg2)
         {
-            return string.Format(AssociatedMetadataTypeTypeDescriptor_MetadataTypeContainsUnknownProperties, arg1, arg2);
+            return string.Format("The associated metadata type for type '{0}' contains the following unknown properties or fields: {1}. Please make sure that the names of these members match the names of the properties on the main type.", arg1, arg2);
         }
 
 
@@ -106,14 +106,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("AttributeStore_Unknown_Property", resourceCulture);
+                return "The type '{0}' does not contain a public property named '{1}'.";
             }
         }
 
 
         internal static string FormatAttributeStore_Unknown_Property(object arg1, object arg2)
         {
-            return string.Format(AttributeStore_Unknown_Property, arg1, arg2);
+            return string.Format("The type '{0}' does not contain a public property named '{1}'.", arg1, arg2);
         }
 
 
@@ -124,14 +124,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Base64StringAttribute_Invalid", resourceCulture);
+                return "The {0} field is not a valid Base64 encoding.";
             }
         }
 
 
         internal static string FormatBase64StringAttribute_Invalid(object arg1)
         {
-            return string.Format(Base64StringAttribute_Invalid, arg1);
+            return string.Format("The {0} field is not a valid Base64 encoding.", arg1);
         }
 
 
@@ -142,14 +142,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Common_PropertyNotFound", resourceCulture);
+                return "The property {0}.{1} could not be found.";
             }
         }
 
 
         internal static string FormatCommon_PropertyNotFound(object arg1, object arg2)
         {
-            return string.Format(Common_PropertyNotFound, arg1, arg2);
+            return string.Format("The property {0}.{1} could not be found.", arg1, arg2);
         }
 
 
@@ -160,14 +160,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CompareAttribute_MustMatch", resourceCulture);
+                return "'{0}' and '{1}' do not match.";
             }
         }
 
 
         internal static string FormatCompareAttribute_MustMatch(object arg1, object arg2)
         {
-            return string.Format(CompareAttribute_MustMatch, arg1, arg2);
+            return string.Format("'{0}' and '{1}' do not match.", arg1, arg2);
         }
 
 
@@ -178,14 +178,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CompareAttribute_UnknownProperty", resourceCulture);
+                return "Could not find a property named {0}.";
             }
         }
 
 
         internal static string FormatCompareAttribute_UnknownProperty(object arg1)
         {
-            return string.Format(CompareAttribute_UnknownProperty, arg1);
+            return string.Format("Could not find a property named {0}.", arg1);
         }
 
 
@@ -196,14 +196,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CreditCardAttribute_Invalid", resourceCulture);
+                return "The {0} field is not a valid credit card number.";
             }
         }
 
 
         internal static string FormatCreditCardAttribute_Invalid(object arg1)
         {
-            return string.Format(CreditCardAttribute_Invalid, arg1);
+            return string.Format("The {0} field is not a valid credit card number.", arg1);
         }
 
 
@@ -214,14 +214,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CustomValidationAttribute_Method_Must_Return_ValidationResult", resourceCulture);
+                return "The CustomValidationAttribute method '{0}' in type '{1}' must return System.ComponentModel.DataAnnotations.ValidationResult.  Use System.ComponentModel.DataAnnotations.ValidationResult.Success to represent success.";
             }
         }
 
 
         internal static string FormatCustomValidationAttribute_Method_Must_Return_ValidationResult(object arg1, object arg2)
         {
-            return string.Format(CustomValidationAttribute_Method_Must_Return_ValidationResult, arg1, arg2);
+            return string.Format("The CustomValidationAttribute method '{0}' in type '{1}' must return System.ComponentModel.DataAnnotations.ValidationResult.  Use System.ComponentModel.DataAnnotations.ValidationResult.Success to represent success.", arg1, arg2);
         }
 
 
@@ -232,14 +232,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CustomValidationAttribute_Method_Not_Found", resourceCulture);
+                return "The CustomValidationAttribute method '{0}' does not exist in type '{1}' or is not public and static.";
             }
         }
 
 
         internal static string FormatCustomValidationAttribute_Method_Not_Found(object arg1, object arg2)
         {
-            return string.Format(CustomValidationAttribute_Method_Not_Found, arg1, arg2);
+            return string.Format("The CustomValidationAttribute method '{0}' does not exist in type '{1}' or is not public and static.", arg1, arg2);
         }
 
 
@@ -250,7 +250,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CustomValidationAttribute_Method_Required", resourceCulture);
+                return "The CustomValidationAttribute.Method was not specified.";
             }
         }
 
@@ -263,14 +263,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CustomValidationAttribute_Method_Signature", resourceCulture);
+                return "The CustomValidationAttribute method '{0}' in type '{1}' must match the expected signature: public static ValidationResult {0}(object value, ValidationContext context).  The value can be strongly typed.  The ValidationContext parameter is optional.";
             }
         }
 
 
         internal static string FormatCustomValidationAttribute_Method_Signature(object arg1, object arg2, object arg3)
         {
-            return string.Format(CustomValidationAttribute_Method_Signature, arg1, arg2, arg3);
+            return string.Format("The CustomValidationAttribute method '{0}' in type '{1}' must match the expected signature: public static ValidationResult {0}(object value, ValidationContext context).  The value can be strongly typed.  The ValidationContext parameter is optional.", arg1, arg2, arg3);
         }
 
 
@@ -281,14 +281,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CustomValidationAttribute_Type_Conversion_Failed", resourceCulture);
+                return "Could not convert the value of type '{0}' to '{1}' as expected by method {2}.{3}.";
             }
         }
 
 
         internal static string FormatCustomValidationAttribute_Type_Conversion_Failed(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(CustomValidationAttribute_Type_Conversion_Failed, arg1, arg2, arg3, arg4);
+            return string.Format("Could not convert the value of type '{0}' to '{1}' as expected by method {2}.{3}.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -299,14 +299,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CustomValidationAttribute_Type_Must_Be_Public", resourceCulture);
+                return "The custom validation type '{0}' must be public.";
             }
         }
 
 
         internal static string FormatCustomValidationAttribute_Type_Must_Be_Public(object arg1)
         {
-            return string.Format(CustomValidationAttribute_Type_Must_Be_Public, arg1);
+            return string.Format("The custom validation type '{0}' must be public.", arg1);
         }
 
 
@@ -317,14 +317,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CustomValidationAttribute_ValidationError", resourceCulture);
+                return "{0} is not valid.";
             }
         }
 
 
         internal static string FormatCustomValidationAttribute_ValidationError(object arg1)
         {
-            return string.Format(CustomValidationAttribute_ValidationError, arg1);
+            return string.Format("{0} is not valid.", arg1);
         }
 
 
@@ -335,7 +335,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("CustomValidationAttribute_ValidatorType_Required", resourceCulture);
+                return "The CustomValidationAttribute.ValidatorType was not specified.";
             }
         }
 
@@ -348,7 +348,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTypeAttribute_EmptyDataTypeString", resourceCulture);
+                return "The custom DataType string cannot be null or empty.";
             }
         }
 
@@ -361,14 +361,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DeniedValuesAttribute_Invalid", resourceCulture);
+                return "The {0} field equals one of the values specified in DeniedValuesAttribute.";
             }
         }
 
 
         internal static string FormatDeniedValuesAttribute_Invalid(object arg1)
         {
-            return string.Format(DeniedValuesAttribute_Invalid, arg1);
+            return string.Format("The {0} field equals one of the values specified in DeniedValuesAttribute.", arg1);
         }
 
 
@@ -379,14 +379,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DisplayAttribute_PropertyNotSet", resourceCulture);
+                return "The {0} property has not been set.  Use the {1} method to get the value.";
             }
         }
 
 
         internal static string FormatDisplayAttribute_PropertyNotSet(object arg1, object arg2)
         {
-            return string.Format(DisplayAttribute_PropertyNotSet, arg1, arg2);
+            return string.Format("The {0} property has not been set.  Use the {1} method to get the value.", arg1, arg2);
         }
 
 
@@ -397,14 +397,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("EmailAddressAttribute_Invalid", resourceCulture);
+                return "The {0} field is not a valid e-mail address.";
             }
         }
 
 
         internal static string FormatEmailAddressAttribute_Invalid(object arg1)
         {
-            return string.Format(EmailAddressAttribute_Invalid, arg1);
+            return string.Format("The {0} field is not a valid e-mail address.", arg1);
         }
 
 
@@ -415,7 +415,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("EnumDataTypeAttribute_TypeCannotBeNull", resourceCulture);
+                return "The type provided for EnumDataTypeAttribute cannot be null.";
             }
         }
 
@@ -428,14 +428,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("EnumDataTypeAttribute_TypeNeedsToBeAnEnum", resourceCulture);
+                return "The type '{0}' needs to represent an enumeration type.";
             }
         }
 
 
         internal static string FormatEnumDataTypeAttribute_TypeNeedsToBeAnEnum(object arg1)
         {
-            return string.Format(EnumDataTypeAttribute_TypeNeedsToBeAnEnum, arg1);
+            return string.Format("The type '{0}' needs to represent an enumeration type.", arg1);
         }
 
 
@@ -446,14 +446,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("FileExtensionsAttribute_Invalid", resourceCulture);
+                return "The {0} field only accepts files with the following extensions: {1}";
             }
         }
 
 
         internal static string FormatFileExtensionsAttribute_Invalid(object arg1, object arg2)
         {
-            return string.Format(FileExtensionsAttribute_Invalid, arg1, arg2);
+            return string.Format("The {0} field only accepts files with the following extensions: {1}", arg1, arg2);
         }
 
 
@@ -464,14 +464,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LocalizableString_LocalizationFailed", resourceCulture);
+                return "Cannot retrieve property '{0}' because localization failed.  Type '{1}' is not public or does not contain a public static string property with the name '{2}'.";
             }
         }
 
 
         internal static string FormatLocalizableString_LocalizationFailed(object arg1, object arg2, object arg3)
         {
-            return string.Format(LocalizableString_LocalizationFailed, arg1, arg2, arg3);
+            return string.Format("Cannot retrieve property '{0}' because localization failed.  Type '{1}' is not public or does not contain a public static string property with the name '{2}'.", arg1, arg2, arg3);
         }
 
 
@@ -482,7 +482,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MaxLengthAttribute_InvalidMaxLength", resourceCulture);
+                return "MaxLengthAttribute must have a Length value that is greater than zero. Use MaxLength() without parameters to indicate that the string or array can have the maximum allowable length.";
             }
         }
 
@@ -495,14 +495,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MaxLengthAttribute_ValidationError", resourceCulture);
+                return "The field {0} must be a string or array type with a maximum length of '{1}'.";
             }
         }
 
 
         internal static string FormatMaxLengthAttribute_ValidationError(object arg1, object arg2)
         {
-            return string.Format(MaxLengthAttribute_ValidationError, arg1, arg2);
+            return string.Format("The field {0} must be a string or array type with a maximum length of '{1}'.", arg1, arg2);
         }
 
 
@@ -513,7 +513,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MetadataTypeAttribute_TypeCannotBeNull", resourceCulture);
+                return "MetadataClassType cannot be null.";
             }
         }
 
@@ -526,7 +526,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MinLengthAttribute_InvalidMinLength", resourceCulture);
+                return "MinLengthAttribute must have a Length value that is zero or greater.";
             }
         }
 
@@ -539,14 +539,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("MinLengthAttribute_ValidationError", resourceCulture);
+                return "The field {0} must be a string or array type with a minimum length of '{1}'.";
             }
         }
 
 
         internal static string FormatMinLengthAttribute_ValidationError(object arg1, object arg2)
         {
-            return string.Format(MinLengthAttribute_ValidationError, arg1, arg2);
+            return string.Format("The field {0} must be a string or array type with a minimum length of '{1}'.", arg1, arg2);
         }
 
 
@@ -557,7 +557,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LengthAttribute_InvalidMinLength", resourceCulture);
+                return "LengthAttribute must have a MinimumLength value that is zero or greater.";
             }
         }
 
@@ -570,7 +570,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LengthAttribute_InvalidMaxLength", resourceCulture);
+                return "LengthAttribute must have a MaximumLength value that is greater than or equal to MinimumLength.";
             }
         }
 
@@ -583,14 +583,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LengthAttribute_ValidationError", resourceCulture);
+                return "The field {0} must be a string or collection type with a minimum length of '{1}' and maximum length of '{2}'.";
             }
         }
 
 
         internal static string FormatLengthAttribute_ValidationError(object arg1, object arg2, object arg3)
         {
-            return string.Format(LengthAttribute_ValidationError, arg1, arg2, arg3);
+            return string.Format("The field {0} must be a string or collection type with a minimum length of '{1}' and maximum length of '{2}'.", arg1, arg2, arg3);
         }
 
 
@@ -601,14 +601,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LengthAttribute_InvalidValueType", resourceCulture);
+                return "The field of type {0} must be a string, array or ICollection type.";
             }
         }
 
 
         internal static string FormatLengthAttribute_InvalidValueType(object arg1)
         {
-            return string.Format(LengthAttribute_InvalidValueType, arg1);
+            return string.Format("The field of type {0} must be a string, array or ICollection type.", arg1);
         }
 
 
@@ -619,14 +619,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("PhoneAttribute_Invalid", resourceCulture);
+                return "The {0} field is not a valid phone number.";
             }
         }
 
 
         internal static string FormatPhoneAttribute_Invalid(object arg1)
         {
-            return string.Format(PhoneAttribute_Invalid, arg1);
+            return string.Format("The {0} field is not a valid phone number.", arg1);
         }
 
 
@@ -637,14 +637,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("RangeAttribute_ArbitraryTypeNotIComparable", resourceCulture);
+                return "The type {0} must implement {1}.";
             }
         }
 
 
         internal static string FormatRangeAttribute_ArbitraryTypeNotIComparable(object arg1, object arg2)
         {
-            return string.Format(RangeAttribute_ArbitraryTypeNotIComparable, arg1, arg2);
+            return string.Format("The type {0} must implement {1}.", arg1, arg2);
         }
 
 
@@ -655,14 +655,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("RangeAttribute_MinGreaterThanMax", resourceCulture);
+                return "The maximum value '{0}' must be greater than or equal to the minimum value '{1}'.";
             }
         }
 
 
         internal static string FormatRangeAttribute_MinGreaterThanMax(object arg1, object arg2)
         {
-            return string.Format(RangeAttribute_MinGreaterThanMax, arg1, arg2);
+            return string.Format("The maximum value '{0}' must be greater than or equal to the minimum value '{1}'.", arg1, arg2);
         }
 
 
@@ -673,7 +673,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("RangeAttribute_CannotUseExclusiveBoundsWhenTheyAreEqual", resourceCulture);
+                return "Cannot use exclusive bounds when the maximum value is equal to the minimum value.";
             }
         }
 
@@ -686,7 +686,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("RangeAttribute_Must_Set_Min_And_Max", resourceCulture);
+                return "The minimum and maximum values must be set.";
             }
         }
 
@@ -699,7 +699,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("RangeAttribute_Must_Set_Operand_Type", resourceCulture);
+                return "The OperandType must be set when strings are used for minimum and maximum values.";
             }
         }
 
@@ -712,14 +712,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("RangeAttribute_ValidationError", resourceCulture);
+                return "The field {0} must be between {1} and {2}.";
             }
         }
 
 
         internal static string FormatRangeAttribute_ValidationError(object arg1, object arg2, object arg3)
         {
-            return string.Format(RangeAttribute_ValidationError, arg1, arg2, arg3);
+            return string.Format("The field {0} must be between {1} and {2}.", arg1, arg2, arg3);
         }
 
 
@@ -730,14 +730,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("RangeAttribute_ValidationError_MinExclusive", resourceCulture);
+                return "The field {0} must be between {1} exclusive and {2}.";
             }
         }
 
 
         internal static string FormatRangeAttribute_ValidationError_MinExclusive(object arg1, object arg2, object arg3)
         {
-            return string.Format(RangeAttribute_ValidationError_MinExclusive, arg1, arg2, arg3);
+            return string.Format("The field {0} must be between {1} exclusive and {2}.", arg1, arg2, arg3);
         }
 
 
@@ -748,14 +748,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("RangeAttribute_ValidationError_MaxExclusive", resourceCulture);
+                return "The field {0} must be between {1} and {2} exclusive.";
             }
         }
 
 
         internal static string FormatRangeAttribute_ValidationError_MaxExclusive(object arg1, object arg2, object arg3)
         {
-            return string.Format(RangeAttribute_ValidationError_MaxExclusive, arg1, arg2, arg3);
+            return string.Format("The field {0} must be between {1} and {2} exclusive.", arg1, arg2, arg3);
         }
 
 
@@ -766,14 +766,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("RangeAttribute_ValidationError_MinExclusive_MaxExclusive", resourceCulture);
+                return "The field {0} must be between {1} exclusive and {2} exclusive.";
             }
         }
 
 
         internal static string FormatRangeAttribute_ValidationError_MinExclusive_MaxExclusive(object arg1, object arg2, object arg3)
         {
-            return string.Format(RangeAttribute_ValidationError_MinExclusive_MaxExclusive, arg1, arg2, arg3);
+            return string.Format("The field {0} must be between {1} exclusive and {2} exclusive.", arg1, arg2, arg3);
         }
 
 
@@ -784,14 +784,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("RegexAttribute_ValidationError", resourceCulture);
+                return "The field {0} must match the regular expression '{1}'.";
             }
         }
 
 
         internal static string FormatRegexAttribute_ValidationError(object arg1, object arg2)
         {
-            return string.Format(RegexAttribute_ValidationError, arg1, arg2);
+            return string.Format("The field {0} must match the regular expression '{1}'.", arg1, arg2);
         }
 
 
@@ -802,7 +802,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("RegularExpressionAttribute_Empty_Pattern", resourceCulture);
+                return "The pattern must be set to a valid regular expression.";
             }
         }
 
@@ -815,14 +815,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("RequiredAttribute_ValidationError", resourceCulture);
+                return "The {0} field is required.";
             }
         }
 
 
         internal static string FormatRequiredAttribute_ValidationError(object arg1)
         {
-            return string.Format(RequiredAttribute_ValidationError, arg1);
+            return string.Format("The {0} field is required.", arg1);
         }
 
 
@@ -833,7 +833,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("StringLengthAttribute_InvalidMaxLength", resourceCulture);
+                return "The maximum length must be a nonnegative integer.";
             }
         }
 
@@ -846,14 +846,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("StringLengthAttribute_ValidationError", resourceCulture);
+                return "The field {0} must be a string with a maximum length of {1}.";
             }
         }
 
 
         internal static string FormatStringLengthAttribute_ValidationError(object arg1, object arg2)
         {
-            return string.Format(StringLengthAttribute_ValidationError, arg1, arg2);
+            return string.Format("The field {0} must be a string with a maximum length of {1}.", arg1, arg2);
         }
 
 
@@ -864,14 +864,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("StringLengthAttribute_ValidationErrorIncludingMinimum", resourceCulture);
+                return "The field {0} must be a string with a minimum length of {2} and a maximum length of {1}.";
             }
         }
 
 
         internal static string FormatStringLengthAttribute_ValidationErrorIncludingMinimum(object arg1, object arg2, object arg3)
         {
-            return string.Format(StringLengthAttribute_ValidationErrorIncludingMinimum, arg1, arg2, arg3);
+            return string.Format("The field {0} must be a string with a minimum length of {2} and a maximum length of {1}.", arg1, arg2, arg3);
         }
 
 
@@ -882,14 +882,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UIHintImplementation_ControlParameterKeyIsNotAString", resourceCulture);
+                return "The key parameter at position {0} with value '{1}' is not a string. Every key control parameter must be a string.";
             }
         }
 
 
         internal static string FormatUIHintImplementation_ControlParameterKeyIsNotAString(object arg1, object arg2)
         {
-            return string.Format(UIHintImplementation_ControlParameterKeyIsNotAString, arg1, arg2);
+            return string.Format("The key parameter at position {0} with value '{1}' is not a string. Every key control parameter must be a string.", arg1, arg2);
         }
 
 
@@ -900,14 +900,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UIHintImplementation_ControlParameterKeyIsNull", resourceCulture);
+                return "The key parameter at position {0} is null. Every key control parameter must be a string.";
             }
         }
 
 
         internal static string FormatUIHintImplementation_ControlParameterKeyIsNull(object arg1)
         {
-            return string.Format(UIHintImplementation_ControlParameterKeyIsNull, arg1);
+            return string.Format("The key parameter at position {0} is null. Every key control parameter must be a string.", arg1);
         }
 
 
@@ -918,14 +918,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UIHintImplementation_ControlParameterKeyOccursMoreThanOnce", resourceCulture);
+                return "The key parameter at position {0} with value '{1}' occurs more than once.";
             }
         }
 
 
         internal static string FormatUIHintImplementation_ControlParameterKeyOccursMoreThanOnce(object arg1, object arg2)
         {
-            return string.Format(UIHintImplementation_ControlParameterKeyOccursMoreThanOnce, arg1, arg2);
+            return string.Format("The key parameter at position {0} with value '{1}' occurs more than once.", arg1, arg2);
         }
 
 
@@ -936,7 +936,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UIHintImplementation_NeedEvenNumberOfControlParameters", resourceCulture);
+                return "The number of control parameters must be even.";
             }
         }
 
@@ -949,14 +949,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("UrlAttribute_Invalid", resourceCulture);
+                return "The {0} field is not a valid fully-qualified http, https, or ftp URL.";
             }
         }
 
 
         internal static string FormatUrlAttribute_Invalid(object arg1)
         {
-            return string.Format(UrlAttribute_Invalid, arg1);
+            return string.Format("The {0} field is not a valid fully-qualified http, https, or ftp URL.", arg1);
         }
 
 
@@ -967,7 +967,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ValidationAttribute_Cannot_Set_ErrorMessage_And_Resource", resourceCulture);
+                return "Either ErrorMessageString or ErrorMessageResourceName must be set, but not both.";
             }
         }
 
@@ -980,7 +980,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ValidationAttribute_IsValid_NotImplemented", resourceCulture);
+                return "IsValid(object value) has not been implemented by this class.  The preferred entry point is GetValidationResult() and classes should override IsValid(object value, ValidationContext context).";
             }
         }
 
@@ -993,7 +993,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ValidationAttribute_NeedBothResourceTypeAndResourceName", resourceCulture);
+                return "Both ErrorMessageResourceType and ErrorMessageResourceName need to be set on this attribute.";
             }
         }
 
@@ -1006,14 +1006,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ValidationAttribute_ResourcePropertyNotStringType", resourceCulture);
+                return "The property '{0}' on resource type '{1}' is not a string type.";
             }
         }
 
 
         internal static string FormatValidationAttribute_ResourcePropertyNotStringType(object arg1, object arg2)
         {
-            return string.Format(ValidationAttribute_ResourcePropertyNotStringType, arg1, arg2);
+            return string.Format("The property '{0}' on resource type '{1}' is not a string type.", arg1, arg2);
         }
 
 
@@ -1024,14 +1024,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ValidationAttribute_ResourceTypeDoesNotHaveProperty", resourceCulture);
+                return "The resource type '{0}' does not have an accessible static property named '{1}'.";
             }
         }
 
 
         internal static string FormatValidationAttribute_ResourceTypeDoesNotHaveProperty(object arg1, object arg2)
         {
-            return string.Format(ValidationAttribute_ResourceTypeDoesNotHaveProperty, arg1, arg2);
+            return string.Format("The resource type '{0}' does not have an accessible static property named '{1}'.", arg1, arg2);
         }
 
 
@@ -1042,14 +1042,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ValidationAttribute_ValidationError", resourceCulture);
+                return "The field {0} is invalid.";
             }
         }
 
 
         internal static string FormatValidationAttribute_ValidationError(object arg1)
         {
-            return string.Format(ValidationAttribute_ValidationError, arg1);
+            return string.Format("The field {0} is invalid.", arg1);
         }
 
 
@@ -1060,7 +1060,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Validator_InstanceMustMatchValidationContextInstance", resourceCulture);
+                return "The instance provided must match the ObjectInstance on the ValidationContext supplied.";
             }
         }
 
@@ -1073,14 +1073,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Validator_Property_Value_Wrong_Type", resourceCulture);
+                return "The value for property '{0}' must be of type '{1}'.";
             }
         }
 
 
         internal static string FormatValidator_Property_Value_Wrong_Type(object arg1, object arg2)
         {
-            return string.Format(Validator_Property_Value_Wrong_Type, arg1, arg2);
+            return string.Format("The value for property '{0}' must be of type '{1}'.", arg1, arg2);
         }
     }
 }

@@ -25,7 +25,7 @@ namespace System
     internal static partial class SR
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.Data.Common", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,14 +70,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_CollectionIndexString", resourceCulture);
+                return "An {0} with {1} '{2}' is not contained by this {3}.";
             }
         }
 
 
         internal static string FormatADP_CollectionIndexString(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(ADP_CollectionIndexString, arg1, arg2, arg3, arg4);
+            return string.Format("An {0} with {1} '{2}' is not contained by this {3}.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -88,14 +88,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_CollectionInvalidType", resourceCulture);
+                return "The {0} only accepts non-null {1} type objects, not {2} objects.";
             }
         }
 
 
         internal static string FormatADP_CollectionInvalidType(object arg1, object arg2, object arg3)
         {
-            return string.Format(ADP_CollectionInvalidType, arg1, arg2, arg3);
+            return string.Format("The {0} only accepts non-null {1} type objects, not {2} objects.", arg1, arg2, arg3);
         }
 
 
@@ -106,14 +106,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_CollectionIsNotParent", resourceCulture);
+                return "The {0} is already contained by another {1}.";
             }
         }
 
 
         internal static string FormatADP_CollectionIsNotParent(object arg1, object arg2)
         {
-            return string.Format(ADP_CollectionIsNotParent, arg1, arg2);
+            return string.Format("The {0} is already contained by another {1}.", arg1, arg2);
         }
 
 
@@ -124,14 +124,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_CollectionNullValue", resourceCulture);
+                return "The {0} only accepts non-null {1} type objects.";
             }
         }
 
 
         internal static string FormatADP_CollectionNullValue(object arg1, object arg2)
         {
-            return string.Format(ADP_CollectionNullValue, arg1, arg2);
+            return string.Format("The {0} only accepts non-null {1} type objects.", arg1, arg2);
         }
 
 
@@ -142,14 +142,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_CollectionRemoveInvalidObject", resourceCulture);
+                return "Attempted to remove an {0} that is not contained by this {1}.";
             }
         }
 
 
         internal static string FormatADP_CollectionRemoveInvalidObject(object arg1, object arg2)
         {
-            return string.Format(ADP_CollectionRemoveInvalidObject, arg1, arg2);
+            return string.Format("Attempted to remove an {0} that is not contained by this {1}.", arg1, arg2);
         }
 
 
@@ -160,14 +160,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_CollectionUniqueValue", resourceCulture);
+                return "The {0}.{1} is required to be unique, '{2}' already exists in the collection.";
             }
         }
 
 
         internal static string FormatADP_CollectionUniqueValue(object arg1, object arg2, object arg3)
         {
-            return string.Format(ADP_CollectionUniqueValue, arg1, arg2, arg3);
+            return string.Format("The {0}.{1} is required to be unique, '{2}' already exists in the collection.", arg1, arg2, arg3);
         }
 
 
@@ -178,7 +178,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_ConnectionStateMsg_Closed", resourceCulture);
+                return "The connection's current state is closed.";
             }
         }
 
@@ -191,7 +191,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_ConnectionStateMsg_Connecting", resourceCulture);
+                return "The connection's current state is connecting.";
             }
         }
 
@@ -204,7 +204,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_ConnectionStateMsg_Open", resourceCulture);
+                return "The connection's current state is open.";
             }
         }
 
@@ -217,7 +217,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_ConnectionStateMsg_OpenExecuting", resourceCulture);
+                return "The connection's current state is executing.";
             }
         }
 
@@ -230,7 +230,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_ConnectionStateMsg_OpenFetching", resourceCulture);
+                return "The connection's current state is fetching.";
             }
         }
 
@@ -243,14 +243,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_ConnectionStateMsg", resourceCulture);
+                return "The connection's current state: {0}.";
             }
         }
 
 
         internal static string FormatADP_ConnectionStateMsg(object arg1)
         {
-            return string.Format(ADP_ConnectionStateMsg, arg1);
+            return string.Format("The connection's current state: {0}.", arg1);
         }
 
 
@@ -261,14 +261,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_ConnectionStringSyntax", resourceCulture);
+                return "Format of the initialization string does not conform to specification starting at index {0}.";
             }
         }
 
 
         internal static string FormatADP_ConnectionStringSyntax(object arg1)
         {
-            return string.Format(ADP_ConnectionStringSyntax, arg1);
+            return string.Format("Format of the initialization string does not conform to specification starting at index {0}.", arg1);
         }
 
 
@@ -279,14 +279,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_DataReaderClosed", resourceCulture);
+                return "Invalid attempt to call {0} when reader is closed.";
             }
         }
 
 
         internal static string FormatADP_DataReaderClosed(object arg1)
         {
-            return string.Format(ADP_DataReaderClosed, arg1);
+            return string.Format("Invalid attempt to call {0} when reader is closed.", arg1);
         }
 
 
@@ -297,14 +297,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_EmptyString", resourceCulture);
+                return "Expecting non-empty string for '{0}' parameter.";
             }
         }
 
 
         internal static string FormatADP_EmptyString(object arg1)
         {
-            return string.Format(ADP_EmptyString, arg1);
+            return string.Format("Expecting non-empty string for '{0}' parameter.", arg1);
         }
 
 
@@ -315,14 +315,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_InvalidEnumerationValue", resourceCulture);
+                return "The {0} enumeration value, {1}, is invalid.";
             }
         }
 
 
         internal static string FormatADP_InvalidEnumerationValue(object arg1, object arg2)
         {
-            return string.Format(ADP_InvalidEnumerationValue, arg1, arg2);
+            return string.Format("The {0} enumeration value, {1}, is invalid.", arg1, arg2);
         }
 
 
@@ -333,7 +333,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_InvalidKey", resourceCulture);
+                return "Invalid keyword, contain one or more of 'no characters', 'control characters', 'leading or trailing whitespace' or 'leading semicolons'.";
             }
         }
 
@@ -346,7 +346,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_InvalidValue", resourceCulture);
+                return "The value contains embedded nulls (\\\\u0000).";
             }
         }
 
@@ -359,7 +359,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_SimpleTypeNotSupported", resourceCulture);
+                return "DataSet doesn't support 'union' or 'list' as simpleType.";
             }
         }
 
@@ -372,14 +372,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_MissingAttribute", resourceCulture);
+                return "Invalid {0} syntax: missing required '{1}' attribute.";
             }
         }
 
 
         internal static string FormatXml_MissingAttribute(object arg1, object arg2)
         {
-            return string.Format(Xml_MissingAttribute, arg1, arg2);
+            return string.Format("Invalid {0} syntax: missing required '{1}' attribute.", arg1, arg2);
         }
 
 
@@ -390,14 +390,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ValueOutOfRange", resourceCulture);
+                return "Value '{1}' is invalid for attribute '{0}'.";
             }
         }
 
 
         internal static string FormatXml_ValueOutOfRange(object arg1, object arg2)
         {
-            return string.Format(Xml_ValueOutOfRange, arg1, arg2);
+            return string.Format("Value '{1}' is invalid for attribute '{0}'.", arg1, arg2);
         }
 
 
@@ -408,14 +408,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_AttributeValues", resourceCulture);
+                return "The value of attribute '{0}' should be '{1}' or '{2}'.";
             }
         }
 
 
         internal static string FormatXml_AttributeValues(object arg1, object arg2, object arg3)
         {
-            return string.Format(Xml_AttributeValues, arg1, arg2, arg3);
+            return string.Format("The value of attribute '{0}' should be '{1}' or '{2}'.", arg1, arg2, arg3);
         }
 
 
@@ -426,14 +426,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_RelationParentNameMissing", resourceCulture);
+                return "Parent table name is missing in relation '{0}'.";
             }
         }
 
 
         internal static string FormatXml_RelationParentNameMissing(object arg1)
         {
-            return string.Format(Xml_RelationParentNameMissing, arg1);
+            return string.Format("Parent table name is missing in relation '{0}'.", arg1);
         }
 
 
@@ -444,14 +444,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_RelationChildNameMissing", resourceCulture);
+                return "Child table name is missing in relation '{0}'.";
             }
         }
 
 
         internal static string FormatXml_RelationChildNameMissing(object arg1)
         {
-            return string.Format(Xml_RelationChildNameMissing, arg1);
+            return string.Format("Child table name is missing in relation '{0}'.", arg1);
         }
 
 
@@ -462,14 +462,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_RelationTableKeyMissing", resourceCulture);
+                return "Parent table key is missing in relation '{0}'.";
             }
         }
 
 
         internal static string FormatXml_RelationTableKeyMissing(object arg1)
         {
-            return string.Format(Xml_RelationTableKeyMissing, arg1);
+            return string.Format("Parent table key is missing in relation '{0}'.", arg1);
         }
 
 
@@ -480,14 +480,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_RelationChildKeyMissing", resourceCulture);
+                return "Child table key is missing in relation '{0}'.";
             }
         }
 
 
         internal static string FormatXml_RelationChildKeyMissing(object arg1)
         {
-            return string.Format(Xml_RelationChildKeyMissing, arg1);
+            return string.Format("Child table key is missing in relation '{0}'.", arg1);
         }
 
 
@@ -498,14 +498,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_UndefinedDatatype", resourceCulture);
+                return "Undefined data type: '{0}'.";
             }
         }
 
 
         internal static string FormatXml_UndefinedDatatype(object arg1)
         {
-            return string.Format(Xml_UndefinedDatatype, arg1);
+            return string.Format("Undefined data type: '{0}'.", arg1);
         }
 
 
@@ -516,7 +516,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_DatatypeNotDefined", resourceCulture);
+                return "Data type not defined.";
             }
         }
 
@@ -529,14 +529,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidField", resourceCulture);
+                return "Invalid XPath selection inside field node. Cannot find: {0}.";
             }
         }
 
 
         internal static string FormatXml_InvalidField(object arg1)
         {
-            return string.Format(Xml_InvalidField, arg1);
+            return string.Format("Invalid XPath selection inside field node. Cannot find: {0}.", arg1);
         }
 
 
@@ -547,14 +547,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidSelector", resourceCulture);
+                return "Invalid XPath selection inside selector node: {0}.";
             }
         }
 
 
         internal static string FormatXml_InvalidSelector(object arg1)
         {
-            return string.Format(Xml_InvalidSelector, arg1);
+            return string.Format("Invalid XPath selection inside selector node: {0}.", arg1);
         }
 
 
@@ -565,14 +565,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidKey", resourceCulture);
+                return "Invalid 'Key' node inside constraint named: {0}.";
             }
         }
 
 
         internal static string FormatXml_InvalidKey(object arg1)
         {
-            return string.Format(Xml_InvalidKey, arg1);
+            return string.Format("Invalid 'Key' node inside constraint named: {0}.", arg1);
         }
 
 
@@ -583,14 +583,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_DuplicateConstraint", resourceCulture);
+                return "The constraint name {0} is already used in the schema.";
             }
         }
 
 
         internal static string FormatXml_DuplicateConstraint(object arg1)
         {
-            return string.Format(Xml_DuplicateConstraint, arg1);
+            return string.Format("The constraint name {0} is already used in the schema.", arg1);
         }
 
 
@@ -601,14 +601,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_CannotConvert", resourceCulture);
+                return " Cannot convert '{0}' to type '{1}'.";
             }
         }
 
 
         internal static string FormatXml_CannotConvert(object arg1, object arg2)
         {
-            return string.Format(Xml_CannotConvert, arg1, arg2);
+            return string.Format(" Cannot convert '{0}' to type '{1}'.", arg1, arg2);
         }
 
 
@@ -619,14 +619,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_MissingRefer", resourceCulture);
+                return "Missing '{0}' part in '{1}' constraint named '{2}'.";
             }
         }
 
 
         internal static string FormatXml_MissingRefer(object arg1, object arg2, object arg3)
         {
-            return string.Format(Xml_MissingRefer, arg1, arg2, arg3);
+            return string.Format("Missing '{0}' part in '{1}' constraint named '{2}'.", arg1, arg2, arg3);
         }
 
 
@@ -637,7 +637,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_MismatchKeyLength", resourceCulture);
+                return "Invalid Relation definition: different length keys.";
             }
         }
 
@@ -650,14 +650,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_CircularComplexType", resourceCulture);
+                return "DataSet doesn't allow the circular reference in the ComplexType named '{0}'.";
             }
         }
 
 
         internal static string FormatXml_CircularComplexType(object arg1)
         {
-            return string.Format(Xml_CircularComplexType, arg1);
+            return string.Format("DataSet doesn't allow the circular reference in the ComplexType named '{0}'.", arg1);
         }
 
 
@@ -668,14 +668,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_CannotInstantiateAbstract", resourceCulture);
+                return "DataSet cannot instantiate an abstract ComplexType for the node {0}.";
             }
         }
 
 
         internal static string FormatXml_CannotInstantiateAbstract(object arg1)
         {
-            return string.Format(Xml_CannotInstantiateAbstract, arg1);
+            return string.Format("DataSet cannot instantiate an abstract ComplexType for the node {0}.", arg1);
         }
 
 
@@ -686,7 +686,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_MultipleTargetConverterError", resourceCulture);
+                return "An error occurred with the multiple target converter while writing an Xml Schema.  See the inner exception for details.";
             }
         }
 
@@ -699,7 +699,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_MultipleTargetConverterEmpty", resourceCulture);
+                return "An error occurred with the multiple target converter while writing an Xml Schema.  A null or empty string was returned.";
             }
         }
 
@@ -712,14 +712,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_MergeDuplicateDeclaration", resourceCulture);
+                return "Duplicated declaration '{0}'.";
             }
         }
 
 
         internal static string FormatXml_MergeDuplicateDeclaration(object arg1)
         {
-            return string.Format(Xml_MergeDuplicateDeclaration, arg1);
+            return string.Format("Duplicated declaration '{0}'.", arg1);
         }
 
 
@@ -730,7 +730,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_MissingSQL", resourceCulture);
+                return "Cannot load diffGram. The 'sql' node is missing.";
             }
         }
 
@@ -743,14 +743,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ColumnConflict", resourceCulture);
+                return "Column name '{0}' is defined for different mapping types.";
             }
         }
 
 
         internal static string FormatXml_ColumnConflict(object arg1)
         {
-            return string.Format(Xml_ColumnConflict, arg1);
+            return string.Format("Column name '{0}' is defined for different mapping types.", arg1);
         }
 
 
@@ -761,14 +761,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_InvalidPrefix_SpecialCharacters", resourceCulture);
+                return "Prefix '{0}' is not valid, because it contains special characters.";
             }
         }
 
 
         internal static string FormatXml_InvalidPrefix_SpecialCharacters(object arg1)
         {
-            return string.Format(Xml_InvalidPrefix_SpecialCharacters, arg1);
+            return string.Format("Prefix '{0}' is not valid, because it contains special characters.", arg1);
         }
 
 
@@ -779,14 +779,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_NestedCircular", resourceCulture);
+                return "Circular reference in self-nested table '{0}'.";
             }
         }
 
 
         internal static string FormatXml_NestedCircular(object arg1)
         {
-            return string.Format(Xml_NestedCircular, arg1);
+            return string.Format("Circular reference in self-nested table '{0}'.", arg1);
         }
 
 
@@ -797,7 +797,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_FoundEntity", resourceCulture);
+                return "DataSet cannot expand entities. Use XmlValidatingReader and set the EntityHandling property accordingly.";
             }
         }
 
@@ -810,14 +810,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_PolymorphismNotSupported", resourceCulture);
+                return "Type '{0}' does not implement IXmlSerializable interface therefore can not proceed with serialization.";
             }
         }
 
 
         internal static string FormatXml_PolymorphismNotSupported(object arg1)
         {
-            return string.Format(Xml_PolymorphismNotSupported, arg1);
+            return string.Format("Type '{0}' does not implement IXmlSerializable interface therefore can not proceed with serialization.", arg1);
         }
 
 
@@ -828,7 +828,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_CanNotDeserializeObjectType", resourceCulture);
+                return "Unable to proceed with deserialization. Data does not implement IXMLSerializable, therefore polymorphism is not supported.";
             }
         }
 
@@ -841,7 +841,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_DataTableInferenceNotSupported", resourceCulture);
+                return "DataTable does not support schema inference from Xml.";
             }
         }
 
@@ -854,14 +854,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_MultipleParentRows", resourceCulture);
+                return "Cannot proceed with serializing DataTable '{0}'. It contains a DataRow which has multiple parent rows on the same Foreign Key.";
             }
         }
 
 
         internal static string FormatXml_MultipleParentRows(object arg1)
         {
-            return string.Format(Xml_MultipleParentRows, arg1);
+            return string.Format("Cannot proceed with serializing DataTable '{0}'. It contains a DataRow which has multiple parent rows on the same Foreign Key.", arg1);
         }
 
 
@@ -872,7 +872,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_IsDataSetAttributeMissingInSchema", resourceCulture);
+                return "IsDataSet attribute is missing in input Schema.";
             }
         }
 
@@ -885,7 +885,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_TooManyIsDataSetAttributesInSchema", resourceCulture);
+                return "Cannot determine the DataSet element. More than one IsDataSet attribute exists.";
             }
         }
 
@@ -898,7 +898,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_DynamicWithoutXmlSerializable", resourceCulture);
+                return "DataSet will not serialize types that implement IDynamicMetaObjectProvider but do not also implement IXmlSerializable.";
             }
         }
 
@@ -911,14 +911,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_NYI", resourceCulture);
+                return "The feature not implemented. {0}.";
             }
         }
 
 
         internal static string FormatExpr_NYI(object arg1)
         {
-            return string.Format(Expr_NYI, arg1);
+            return string.Format("The feature not implemented. {0}.", arg1);
         }
 
 
@@ -929,14 +929,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_MissingOperand", resourceCulture);
+                return "Syntax error: Missing operand after '{0}' operator.";
             }
         }
 
 
         internal static string FormatExpr_MissingOperand(object arg1)
         {
-            return string.Format(Expr_MissingOperand, arg1);
+            return string.Format("Syntax error: Missing operand after '{0}' operator.", arg1);
         }
 
 
@@ -947,14 +947,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_TypeMismatch", resourceCulture);
+                return "Type mismatch in expression '{0}'.";
             }
         }
 
 
         internal static string FormatExpr_TypeMismatch(object arg1)
         {
-            return string.Format(Expr_TypeMismatch, arg1);
+            return string.Format("Type mismatch in expression '{0}'.", arg1);
         }
 
 
@@ -965,7 +965,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_ExpressionTooComplex", resourceCulture);
+                return "Expression is too complex.";
             }
         }
 
@@ -978,14 +978,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_UnboundName", resourceCulture);
+                return "Cannot find column [{0}].";
             }
         }
 
 
         internal static string FormatExpr_UnboundName(object arg1)
         {
-            return string.Format(Expr_UnboundName, arg1);
+            return string.Format("Cannot find column [{0}].", arg1);
         }
 
 
@@ -996,14 +996,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_InvalidString", resourceCulture);
+                return "The expression contains an invalid string constant: {0}.";
             }
         }
 
 
         internal static string FormatExpr_InvalidString(object arg1)
         {
-            return string.Format(Expr_InvalidString, arg1);
+            return string.Format("The expression contains an invalid string constant: {0}.", arg1);
         }
 
 
@@ -1014,14 +1014,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_UndefinedFunction", resourceCulture);
+                return "The expression contains undefined function call {0}().";
             }
         }
 
 
         internal static string FormatExpr_UndefinedFunction(object arg1)
         {
-            return string.Format(Expr_UndefinedFunction, arg1);
+            return string.Format("The expression contains undefined function call {0}().", arg1);
         }
 
 
@@ -1032,7 +1032,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_Syntax", resourceCulture);
+                return "Syntax error in the expression.";
             }
         }
 
@@ -1045,14 +1045,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_FunctionArgumentCount", resourceCulture);
+                return "Invalid number of arguments: function {0}().";
             }
         }
 
 
         internal static string FormatExpr_FunctionArgumentCount(object arg1)
         {
-            return string.Format(Expr_FunctionArgumentCount, arg1);
+            return string.Format("Invalid number of arguments: function {0}().", arg1);
         }
 
 
@@ -1063,7 +1063,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_MissingRightParen", resourceCulture);
+                return "The expression is missing the closing parenthesis.";
             }
         }
 
@@ -1076,14 +1076,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_UnknownToken", resourceCulture);
+                return "Cannot interpret token '{0}' at position {1}.";
             }
         }
 
 
         internal static string FormatExpr_UnknownToken(object arg1, object arg2)
         {
-            return string.Format(Expr_UnknownToken, arg1, arg2);
+            return string.Format("Cannot interpret token '{0}' at position {1}.", arg1, arg2);
         }
 
 
@@ -1094,14 +1094,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_UnknownToken1", resourceCulture);
+                return "Expected {0}, but actual token at the position {2} is {1}.";
             }
         }
 
 
         internal static string FormatExpr_UnknownToken1(object arg1, object arg2, object arg3)
         {
-            return string.Format(Expr_UnknownToken1, arg1, arg2, arg3);
+            return string.Format("Expected {0}, but actual token at the position {2} is {1}.", arg1, arg2, arg3);
         }
 
 
@@ -1112,14 +1112,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_DatatypeConversion", resourceCulture);
+                return "Cannot convert from {0} to {1}.";
             }
         }
 
 
         internal static string FormatExpr_DatatypeConversion(object arg1, object arg2)
         {
-            return string.Format(Expr_DatatypeConversion, arg1, arg2);
+            return string.Format("Cannot convert from {0} to {1}.", arg1, arg2);
         }
 
 
@@ -1130,14 +1130,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_DatavalueConversion", resourceCulture);
+                return "Cannot convert value '{0}' to Type: {1}.";
             }
         }
 
 
         internal static string FormatExpr_DatavalueConversion(object arg1, object arg2)
         {
-            return string.Format(Expr_DatavalueConversion, arg1, arg2);
+            return string.Format("Cannot convert value '{0}' to Type: {1}.", arg1, arg2);
         }
 
 
@@ -1148,14 +1148,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_InvalidName", resourceCulture);
+                return "Invalid column name [{0}].";
             }
         }
 
 
         internal static string FormatExpr_InvalidName(object arg1)
         {
-            return string.Format(Expr_InvalidName, arg1);
+            return string.Format("Invalid column name [{0}].", arg1);
         }
 
 
@@ -1166,14 +1166,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_InvalidDate", resourceCulture);
+                return "The expression contains invalid date constant '{0}'.";
             }
         }
 
 
         internal static string FormatExpr_InvalidDate(object arg1)
         {
-            return string.Format(Expr_InvalidDate, arg1);
+            return string.Format("The expression contains invalid date constant '{0}'.", arg1);
         }
 
 
@@ -1184,7 +1184,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_NonConstantArgument", resourceCulture);
+                return "Only constant expressions are allowed in the expression list for the IN operator.";
             }
         }
 
@@ -1197,14 +1197,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_InvalidPattern", resourceCulture);
+                return "Error in Like operator: the string pattern '{0}' is invalid.";
             }
         }
 
 
         internal static string FormatExpr_InvalidPattern(object arg1)
         {
-            return string.Format(Expr_InvalidPattern, arg1);
+            return string.Format("Error in Like operator: the string pattern '{0}' is invalid.", arg1);
         }
 
 
@@ -1215,7 +1215,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_InWithoutParentheses", resourceCulture);
+                return "Syntax error: The items following the IN keyword must be separated by commas and be enclosed in parentheses.";
             }
         }
 
@@ -1228,14 +1228,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_ArgumentType", resourceCulture);
+                return "Type mismatch in function argument: {0}(), argument {1}, expected {2}.";
             }
         }
 
 
         internal static string FormatExpr_ArgumentType(object arg1, object arg2, object arg3)
         {
-            return string.Format(Expr_ArgumentType, arg1, arg2, arg3);
+            return string.Format("Type mismatch in function argument: {0}(), argument {1}, expected {2}.", arg1, arg2, arg3);
         }
 
 
@@ -1246,14 +1246,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_ArgumentTypeInteger", resourceCulture);
+                return "Type mismatch in function argument: {0}(), argument {1}, expected one of the Integer types.";
             }
         }
 
 
         internal static string FormatExpr_ArgumentTypeInteger(object arg1, object arg2)
         {
-            return string.Format(Expr_ArgumentTypeInteger, arg1, arg2);
+            return string.Format("Type mismatch in function argument: {0}(), argument {1}, expected one of the Integer types.", arg1, arg2);
         }
 
 
@@ -1264,14 +1264,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_TypeMismatchInBinop", resourceCulture);
+                return "Cannot perform '{0}' operation on {1} and {2}.";
             }
         }
 
 
         internal static string FormatExpr_TypeMismatchInBinop(object arg1, object arg2, object arg3)
         {
-            return string.Format(Expr_TypeMismatchInBinop, arg1, arg2, arg3);
+            return string.Format("Cannot perform '{0}' operation on {1} and {2}.", arg1, arg2, arg3);
         }
 
 
@@ -1282,14 +1282,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_AmbiguousBinop", resourceCulture);
+                return "Operator '{0}' is ambiguous on operands of type '{1}' and '{2}'. Cannot mix signed and unsigned types. Please use explicit Convert() function.";
             }
         }
 
 
         internal static string FormatExpr_AmbiguousBinop(object arg1, object arg2, object arg3)
         {
-            return string.Format(Expr_AmbiguousBinop, arg1, arg2, arg3);
+            return string.Format("Operator '{0}' is ambiguous on operands of type '{1}' and '{2}'. Cannot mix signed and unsigned types. Please use explicit Convert() function.", arg1, arg2, arg3);
         }
 
 
@@ -1300,7 +1300,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_InWithoutList", resourceCulture);
+                return "Syntax error: The IN keyword must be followed by a non-empty list of expressions separated by commas, and also must be enclosed in parentheses.";
             }
         }
 
@@ -1313,14 +1313,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_UnsupportedOperator", resourceCulture);
+                return "The expression contains unsupported operator '{0}'.";
             }
         }
 
 
         internal static string FormatExpr_UnsupportedOperator(object arg1)
         {
-            return string.Format(Expr_UnsupportedOperator, arg1);
+            return string.Format("The expression contains unsupported operator '{0}'.", arg1);
         }
 
 
@@ -1331,14 +1331,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_InvalidNameBracketing", resourceCulture);
+                return "The expression contains invalid name: '{0}'.";
             }
         }
 
 
         internal static string FormatExpr_InvalidNameBracketing(object arg1)
         {
-            return string.Format(Expr_InvalidNameBracketing, arg1);
+            return string.Format("The expression contains invalid name: '{0}'.", arg1);
         }
 
 
@@ -1349,14 +1349,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_MissingOperandBefore", resourceCulture);
+                return "Syntax error: Missing operand before '{0}' operator.";
             }
         }
 
 
         internal static string FormatExpr_MissingOperandBefore(object arg1)
         {
-            return string.Format(Expr_MissingOperandBefore, arg1);
+            return string.Format("Syntax error: Missing operand before '{0}' operator.", arg1);
         }
 
 
@@ -1367,7 +1367,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_TooManyRightParentheses", resourceCulture);
+                return "The expression has too many closing parentheses.";
             }
         }
 
@@ -1380,14 +1380,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_UnresolvedRelation", resourceCulture);
+                return "The table [{0}] involved in more than one relation. You must explicitly mention a relation name in the expression '{1}'.";
             }
         }
 
 
         internal static string FormatExpr_UnresolvedRelation(object arg1, object arg2)
         {
-            return string.Format(Expr_UnresolvedRelation, arg1, arg2);
+            return string.Format("The table [{0}] involved in more than one relation. You must explicitly mention a relation name in the expression '{1}'.", arg1, arg2);
         }
 
 
@@ -1398,7 +1398,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_AggregateArgument", resourceCulture);
+                return "Syntax error in aggregate argument: Expecting a single column argument with possible 'Child' qualifier.";
             }
         }
 
@@ -1411,14 +1411,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_AggregateUnbound", resourceCulture);
+                return "Unbound reference in the aggregate expression '{0}'.";
             }
         }
 
 
         internal static string FormatExpr_AggregateUnbound(object arg1)
         {
-            return string.Format(Expr_AggregateUnbound, arg1);
+            return string.Format("Unbound reference in the aggregate expression '{0}'.", arg1);
         }
 
 
@@ -1429,7 +1429,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_EvalNoContext", resourceCulture);
+                return "Cannot evaluate non-constant expression without current row.";
             }
         }
 
@@ -1442,14 +1442,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_ExpressionUnbound", resourceCulture);
+                return "Unbound reference in the expression '{0}'.";
             }
         }
 
 
         internal static string FormatExpr_ExpressionUnbound(object arg1)
         {
-            return string.Format(Expr_ExpressionUnbound, arg1);
+            return string.Format("Unbound reference in the expression '{0}'.", arg1);
         }
 
 
@@ -1460,14 +1460,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_ComputeNotAggregate", resourceCulture);
+                return "Cannot evaluate. Expression '{0}' is not an aggregate.";
             }
         }
 
 
         internal static string FormatExpr_ComputeNotAggregate(object arg1)
         {
-            return string.Format(Expr_ComputeNotAggregate, arg1);
+            return string.Format("Cannot evaluate. Expression '{0}' is not an aggregate.", arg1);
         }
 
 
@@ -1478,14 +1478,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_FilterConversion", resourceCulture);
+                return "Filter expression '{0}' does not evaluate to a Boolean term.";
             }
         }
 
 
         internal static string FormatExpr_FilterConversion(object arg1)
         {
-            return string.Format(Expr_FilterConversion, arg1);
+            return string.Format("Filter expression '{0}' does not evaluate to a Boolean term.", arg1);
         }
 
 
@@ -1496,14 +1496,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_InvalidType", resourceCulture);
+                return "Invalid type name '{0}'.";
             }
         }
 
 
         internal static string FormatExpr_InvalidType(object arg1)
         {
-            return string.Format(Expr_InvalidType, arg1);
+            return string.Format("Invalid type name '{0}'.", arg1);
         }
 
 
@@ -1514,7 +1514,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_LookupArgument", resourceCulture);
+                return "Syntax error in Lookup expression: Expecting keyword 'Parent' followed by a single column argument with possible relation qualifier: Parent[(<relation_name>)].<column_name>.";
             }
         }
 
@@ -1527,7 +1527,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_InvokeArgument", resourceCulture);
+                return "Need a row or a table to Invoke DataFilter.";
             }
         }
 
@@ -1540,14 +1540,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_ArgumentOutofRange", resourceCulture);
+                return "{0}() argument is out of range.";
             }
         }
 
 
         internal static string FormatExpr_ArgumentOutofRange(object arg1)
         {
-            return string.Format(Expr_ArgumentOutofRange, arg1);
+            return string.Format("{0}() argument is out of range.", arg1);
         }
 
 
@@ -1558,7 +1558,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_IsSyntax", resourceCulture);
+                return "Syntax error: Invalid usage of 'Is' operator. Correct syntax: <expression> Is [Not] Null.";
             }
         }
 
@@ -1571,14 +1571,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_Overflow", resourceCulture);
+                return "Value is either too large or too small for Type '{0}'.";
             }
         }
 
 
         internal static string FormatExpr_Overflow(object arg1)
         {
-            return string.Format(Expr_Overflow, arg1);
+            return string.Format("Value is either too large or too small for Type '{0}'.", arg1);
         }
 
 
@@ -1589,14 +1589,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_BindFailure", resourceCulture);
+                return "Cannot find the parent relation '{0}'.";
             }
         }
 
 
         internal static string FormatExpr_BindFailure(object arg1)
         {
-            return string.Format(Expr_BindFailure, arg1);
+            return string.Format("Cannot find the parent relation '{0}'.", arg1);
         }
 
 
@@ -1607,7 +1607,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_InvalidHoursArgument", resourceCulture);
+                return "'hours' argument is out of range. Value must be between -14 and +14.";
             }
         }
 
@@ -1620,7 +1620,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_InvalidMinutesArgument", resourceCulture);
+                return "'minutes' argument is out of range. Value must be between -59 and +59.";
             }
         }
 
@@ -1633,7 +1633,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_InvalidTimeZoneRange", resourceCulture);
+                return "Provided range for time one exceeds total of 14 hours.";
             }
         }
 
@@ -1646,7 +1646,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_MismatchKindandTimeSpan", resourceCulture);
+                return "Kind property of provided DateTime argument, does not match 'hours' and 'minutes' arguments.";
             }
         }
 
@@ -1659,14 +1659,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Expr_UnsupportedType", resourceCulture);
+                return "A DataColumn of type '{0}' does not support expression.";
             }
         }
 
 
         internal static string FormatExpr_UnsupportedType(object arg1)
         {
-            return string.Format(Expr_UnsupportedType, arg1);
+            return string.Format("A DataColumn of type '{0}' does not support expression.", arg1);
         }
 
 
@@ -1677,7 +1677,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Batch_NotSupportedOnDataSourceBatch", resourceCulture);
+                return "Connection and transaction access is not supported on batches created from DbDataSource.";
             }
         }
 
@@ -1690,7 +1690,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Command_NotSupportedOnDataSourceCommand", resourceCulture);
+                return "Connection and transaction access is not supported on commands created from DbDataSource.";
             }
         }
 
@@ -1703,7 +1703,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Data_EnforceConstraints", resourceCulture);
+                return "Failed to enable constraints. One or more rows contain values violating non-null, unique, or foreign-key constraints.";
             }
         }
 
@@ -1716,7 +1716,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Data_CannotModifyCollection", resourceCulture);
+                return "Collection itself is not modifiable.";
             }
         }
 
@@ -1729,14 +1729,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Data_CaseInsensitiveNameConflict", resourceCulture);
+                return "The given name '{0}' matches at least two names in the collection object with different cases, but does not match either of them with the same case.";
             }
         }
 
 
         internal static string FormatData_CaseInsensitiveNameConflict(object arg1)
         {
-            return string.Format(Data_CaseInsensitiveNameConflict, arg1);
+            return string.Format("The given name '{0}' matches at least two names in the collection object with different cases, but does not match either of them with the same case.", arg1);
         }
 
 
@@ -1747,14 +1747,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Data_NamespaceNameConflict", resourceCulture);
+                return "The given name '{0}' matches at least two names in the collection object with different namespaces.";
             }
         }
 
 
         internal static string FormatData_NamespaceNameConflict(object arg1)
         {
-            return string.Format(Data_NamespaceNameConflict, arg1);
+            return string.Format("The given name '{0}' matches at least two names in the collection object with different namespaces.", arg1);
         }
 
 
@@ -1765,7 +1765,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Data_InvalidOffsetLength", resourceCulture);
+                return "Offset and length were out of bounds for the array or count is greater than the number of elements from index to the end of the source collection.";
             }
         }
 
@@ -1778,14 +1778,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Data_ArgumentOutOfRange", resourceCulture);
+                return "'{0}' argument is out of range.";
             }
         }
 
 
         internal static string FormatData_ArgumentOutOfRange(object arg1)
         {
-            return string.Format(Data_ArgumentOutOfRange, arg1);
+            return string.Format("'{0}' argument is out of range.", arg1);
         }
 
 
@@ -1796,14 +1796,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Data_ArgumentNull", resourceCulture);
+                return "'{0}' argument cannot be null.";
             }
         }
 
 
         internal static string FormatData_ArgumentNull(object arg1)
         {
-            return string.Format(Data_ArgumentNull, arg1);
+            return string.Format("'{0}' argument cannot be null.", arg1);
         }
 
 
@@ -1814,14 +1814,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Data_ArgumentContainsNull", resourceCulture);
+                return "'{0}' argument contains null value.";
             }
         }
 
 
         internal static string FormatData_ArgumentContainsNull(object arg1)
         {
-            return string.Format(Data_ArgumentContainsNull, arg1);
+            return string.Format("'{0}' argument contains null value.", arg1);
         }
 
 
@@ -1832,14 +1832,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Data_TypeNotAllowed", resourceCulture);
+                return "Type '{0}' is not allowed here. See https://go.microsoft.com/fwlink/?linkid=2132227 for more details.";
             }
         }
 
 
         internal static string FormatData_TypeNotAllowed(object arg1)
         {
-            return string.Format(Data_TypeNotAllowed, arg1);
+            return string.Format("Type '{0}' is not allowed here. See https://go.microsoft.com/fwlink/?linkid=2132227 for more details.", arg1);
         }
 
 
@@ -1850,14 +1850,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumns_OutOfRange", resourceCulture);
+                return "Cannot find column {0}.";
             }
         }
 
 
         internal static string FormatDataColumns_OutOfRange(object arg1)
         {
-            return string.Format(DataColumns_OutOfRange, arg1);
+            return string.Format("Cannot find column {0}.", arg1);
         }
 
 
@@ -1868,14 +1868,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumns_Add1", resourceCulture);
+                return "Column '{0}' already belongs to this DataTable.";
             }
         }
 
 
         internal static string FormatDataColumns_Add1(object arg1)
         {
-            return string.Format(DataColumns_Add1, arg1);
+            return string.Format("Column '{0}' already belongs to this DataTable.", arg1);
         }
 
 
@@ -1886,14 +1886,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumns_Add2", resourceCulture);
+                return "Column '{0}' already belongs to another DataTable.";
             }
         }
 
 
         internal static string FormatDataColumns_Add2(object arg1)
         {
-            return string.Format(DataColumns_Add2, arg1);
+            return string.Format("Column '{0}' already belongs to another DataTable.", arg1);
         }
 
 
@@ -1904,28 +1904,23 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumns_Add3", resourceCulture);
+                return "Cannot have more than one SimpleContent columns in a DataTable.";
             }
         }
 
 
 
         /// <summary>
-        /// Cannot add a SimpleContent column '{0}' to a table containing element columns or nested relations.
+        /// Cannot add a SimpleContent column to a table containing element columns or nested relations.
         /// </summary>
         internal static string DataColumns_Add4
         {
             get
             {
-                return ResourceManager.GetString("DataColumns_Add4", resourceCulture);
+                return "Cannot add a SimpleContent column to a table containing element columns or nested relations.";
             }
         }
 
-
-        internal static string FormatDataColumns_Add4(object arg1)
-        {
-            return string.Format(DataColumns_Add4, arg1);
-        }
 
 
         /// <summary>
@@ -1935,14 +1930,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumns_AddDuplicate", resourceCulture);
+                return "A column named '{0}' already belongs to this DataTable.";
             }
         }
 
 
         internal static string FormatDataColumns_AddDuplicate(object arg1)
         {
-            return string.Format(DataColumns_AddDuplicate, arg1);
+            return string.Format("A column named '{0}' already belongs to this DataTable.", arg1);
         }
 
 
@@ -1953,14 +1948,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumns_AddDuplicate2", resourceCulture);
+                return "Cannot add a column named '{0}': a nested table with the same name already belongs to this DataTable.";
             }
         }
 
 
         internal static string FormatDataColumns_AddDuplicate2(object arg1)
         {
-            return string.Format(DataColumns_AddDuplicate2, arg1);
+            return string.Format("Cannot add a column named '{0}': a nested table with the same name already belongs to this DataTable.", arg1);
         }
 
 
@@ -1971,14 +1966,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumns_AddDuplicate3", resourceCulture);
+                return "A column named '{0}' already belongs to this DataTable: cannot set a nested table name to the same name.";
             }
         }
 
 
         internal static string FormatDataColumns_AddDuplicate3(object arg1)
         {
-            return string.Format(DataColumns_AddDuplicate3, arg1);
+            return string.Format("A column named '{0}' already belongs to this DataTable: cannot set a nested table name to the same name.", arg1);
         }
 
 
@@ -1989,7 +1984,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumns_Remove", resourceCulture);
+                return "Cannot remove a column that doesn't belong to this table.";
             }
         }
 
@@ -2002,7 +1997,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumns_RemovePrimaryKey", resourceCulture);
+                return "Cannot remove this column, because it's part of the primary key.";
             }
         }
 
@@ -2015,14 +2010,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumns_RemoveChildKey", resourceCulture);
+                return "Cannot remove this column, because it is part of the parent key for relationship {0}.";
             }
         }
 
 
         internal static string FormatDataColumns_RemoveChildKey(object arg1)
         {
-            return string.Format(DataColumns_RemoveChildKey, arg1);
+            return string.Format("Cannot remove this column, because it is part of the parent key for relationship {0}.", arg1);
         }
 
 
@@ -2033,14 +2028,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumns_RemoveConstraint", resourceCulture);
+                return "Cannot remove this column, because it is a part of the constraint {0} on the table {1}.";
             }
         }
 
 
         internal static string FormatDataColumns_RemoveConstraint(object arg1, object arg2)
         {
-            return string.Format(DataColumns_RemoveConstraint, arg1, arg2);
+            return string.Format("Cannot remove this column, because it is a part of the constraint {0} on the table {1}.", arg1, arg2);
         }
 
 
@@ -2051,7 +2046,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_AutoIncrementAndExpression", resourceCulture);
+                return "Cannot set AutoIncrement property for a computed column.";
             }
         }
 
@@ -2064,7 +2059,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_AutoIncrementAndDefaultValue", resourceCulture);
+                return "Cannot set AutoIncrement property for a column with DefaultValue set.";
             }
         }
 
@@ -2077,7 +2072,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_DefaultValueAndAutoIncrement", resourceCulture);
+                return "Cannot set a DefaultValue on an AutoIncrement column.";
             }
         }
 
@@ -2090,7 +2085,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_AutoIncrementSeed", resourceCulture);
+                return "AutoIncrementStep must be a non-zero value.";
             }
         }
 
@@ -2103,7 +2098,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_NameRequired", resourceCulture);
+                return "ColumnName is required when it is part of a DataTable.";
             }
         }
 
@@ -2116,7 +2111,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_ChangeDataType", resourceCulture);
+                return "Cannot change DataType of a column once it has data.";
             }
         }
 
@@ -2129,7 +2124,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_NullDataType", resourceCulture);
+                return "Column requires a valid DataType.";
             }
         }
 
@@ -2142,14 +2137,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_DefaultValueDataType", resourceCulture);
+                return "The DefaultValue for column {0} is of type {1} and cannot be converted to {2}.";
             }
         }
 
 
         internal static string FormatDataColumn_DefaultValueDataType(object arg1, object arg2, object arg3)
         {
-            return string.Format(DataColumn_DefaultValueDataType, arg1, arg2, arg3);
+            return string.Format("The DefaultValue for column {0} is of type {1} and cannot be converted to {2}.", arg1, arg2, arg3);
         }
 
 
@@ -2160,14 +2155,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_DefaultValueDataType1", resourceCulture);
+                return "The DefaultValue for the column is of type {0} and cannot be converted to {1}.";
             }
         }
 
 
         internal static string FormatDataColumn_DefaultValueDataType1(object arg1, object arg2)
         {
-            return string.Format(DataColumn_DefaultValueDataType1, arg1, arg2);
+            return string.Format("The DefaultValue for the column is of type {0} and cannot be converted to {1}.", arg1, arg2);
         }
 
 
@@ -2178,14 +2173,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_DefaultValueColumnDataType", resourceCulture);
+                return "The DefaultValue for column {0} is of type {1}, but the column is of type {2}.";
             }
         }
 
 
         internal static string FormatDataColumn_DefaultValueColumnDataType(object arg1, object arg2, object arg3)
         {
-            return string.Format(DataColumn_DefaultValueColumnDataType, arg1, arg2, arg3);
+            return string.Format("The DefaultValue for column {0} is of type {1}, but the column is of type {2}.", arg1, arg2, arg3);
         }
 
 
@@ -2196,7 +2191,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_ReadOnlyAndExpression", resourceCulture);
+                return "Cannot change ReadOnly property for the expression column.";
             }
         }
 
@@ -2209,7 +2204,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_UniqueAndExpression", resourceCulture);
+                return "Cannot change Unique property for the expression column.";
             }
         }
 
@@ -2222,7 +2217,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_ExpressionAndUnique", resourceCulture);
+                return "Cannot create an expression on a column that has AutoIncrement or Unique.";
             }
         }
 
@@ -2235,27 +2230,27 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_ExpressionAndReadOnly", resourceCulture);
+                return "Cannot set expression because column cannot be made ReadOnly.";
             }
         }
 
 
 
         /// <summary>
-        /// Cannot set Expression property on column {0}, because it is a part of constraint '{1}'.
+        /// Cannot set Expression property on column {0}, because it is a part of a constraint.
         /// </summary>
         internal static string DataColumn_ExpressionAndConstraint
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_ExpressionAndConstraint", resourceCulture);
+                return "Cannot set Expression property on column {0}, because it is a part of a constraint.";
             }
         }
 
 
-        internal static string FormatDataColumn_ExpressionAndConstraint(object arg1, object arg2)
+        internal static string FormatDataColumn_ExpressionAndConstraint(object arg1)
         {
-            return string.Format(DataColumn_ExpressionAndConstraint, arg1, arg2);
+            return string.Format("Cannot set Expression property on column {0}, because it is a part of a constraint.", arg1);
         }
 
 
@@ -2266,14 +2261,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_ExpressionInConstraint", resourceCulture);
+                return "Cannot create a constraint based on Expression column {0}.";
             }
         }
 
 
         internal static string FormatDataColumn_ExpressionInConstraint(object arg1)
         {
-            return string.Format(DataColumn_ExpressionInConstraint, arg1);
+            return string.Format("Cannot create a constraint based on Expression column {0}.", arg1);
         }
 
 
@@ -2284,7 +2279,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_ExpressionCircular", resourceCulture);
+                return "Cannot set Expression property due to circular reference in the expression.";
             }
         }
 
@@ -2297,14 +2292,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_NullKeyValues", resourceCulture);
+                return "Column '{0}' has null values in it.";
             }
         }
 
 
         internal static string FormatDataColumn_NullKeyValues(object arg1)
         {
-            return string.Format(DataColumn_NullKeyValues, arg1);
+            return string.Format("Column '{0}' has null values in it.", arg1);
         }
 
 
@@ -2315,14 +2310,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_NullValues", resourceCulture);
+                return "Column '{0}' does not allow nulls.";
             }
         }
 
 
         internal static string FormatDataColumn_NullValues(object arg1)
         {
-            return string.Format(DataColumn_NullValues, arg1);
+            return string.Format("Column '{0}' does not allow nulls.", arg1);
         }
 
 
@@ -2333,14 +2328,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_ReadOnly", resourceCulture);
+                return "Column '{0}' is read only.";
             }
         }
 
 
         internal static string FormatDataColumn_ReadOnly(object arg1)
         {
-            return string.Format(DataColumn_ReadOnly, arg1);
+            return string.Format("Column '{0}' is read only.", arg1);
         }
 
 
@@ -2351,14 +2346,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_NonUniqueValues", resourceCulture);
+                return "Column '{0}' contains non-unique values.";
             }
         }
 
 
         internal static string FormatDataColumn_NonUniqueValues(object arg1)
         {
-            return string.Format(DataColumn_NonUniqueValues, arg1);
+            return string.Format("Column '{0}' contains non-unique values.", arg1);
         }
 
 
@@ -2369,14 +2364,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_NotInTheTable", resourceCulture);
+                return "Column '{0}' does not belong to table {1}.";
             }
         }
 
 
         internal static string FormatDataColumn_NotInTheTable(object arg1, object arg2)
         {
-            return string.Format(DataColumn_NotInTheTable, arg1, arg2);
+            return string.Format("Column '{0}' does not belong to table {1}.", arg1, arg2);
         }
 
 
@@ -2387,7 +2382,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_NotInAnyTable", resourceCulture);
+                return "Column must belong to a table.";
             }
         }
 
@@ -2400,14 +2395,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_SetFailed", resourceCulture);
+                return "Couldn't store <{0}> in {1} Column.  Expected type is {2}.";
             }
         }
 
 
         internal static string FormatDataColumn_SetFailed(object arg1, object arg2, object arg3)
         {
-            return string.Format(DataColumn_SetFailed, arg1, arg2, arg3);
+            return string.Format("Couldn't store <{0}> in {1} Column.  Expected type is {2}.", arg1, arg2, arg3);
         }
 
 
@@ -2418,14 +2413,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_CannotSetToNull", resourceCulture);
+                return "Cannot set Column '{0}' to be null. Please use DBNull instead.";
             }
         }
 
 
         internal static string FormatDataColumn_CannotSetToNull(object arg1)
         {
-            return string.Format(DataColumn_CannotSetToNull, arg1);
+            return string.Format("Cannot set Column '{0}' to be null. Please use DBNull instead.", arg1);
         }
 
 
@@ -2436,14 +2431,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_LongerThanMaxLength", resourceCulture);
+                return "Cannot set column '{0}'. The value violates the MaxLength limit of this column.";
             }
         }
 
 
         internal static string FormatDataColumn_LongerThanMaxLength(object arg1)
         {
-            return string.Format(DataColumn_LongerThanMaxLength, arg1);
+            return string.Format("Cannot set column '{0}'. The value violates the MaxLength limit of this column.", arg1);
         }
 
 
@@ -2454,14 +2449,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_HasToBeStringType", resourceCulture);
+                return "MaxLength applies to string data type only. You cannot set Column '{0}' property MaxLength to be non-negative number.";
             }
         }
 
 
         internal static string FormatDataColumn_HasToBeStringType(object arg1)
         {
-            return string.Format(DataColumn_HasToBeStringType, arg1);
+            return string.Format("MaxLength applies to string data type only. You cannot set Column '{0}' property MaxLength to be non-negative number.", arg1);
         }
 
 
@@ -2472,14 +2467,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_CannotSetMaxLength", resourceCulture);
+                return "Cannot set Column '{0}' property MaxLength to '{1}'. There is at least one string in the table longer than the new limit.";
             }
         }
 
 
         internal static string FormatDataColumn_CannotSetMaxLength(object arg1, object arg2)
         {
-            return string.Format(DataColumn_CannotSetMaxLength, arg1, arg2);
+            return string.Format("Cannot set Column '{0}' property MaxLength to '{1}'. There is at least one string in the table longer than the new limit.", arg1, arg2);
         }
 
 
@@ -2490,14 +2485,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_CannotSetMaxLength2", resourceCulture);
+                return "Cannot set Column '{0}' property MaxLength. The Column is SimpleContent.";
             }
         }
 
 
         internal static string FormatDataColumn_CannotSetMaxLength2(object arg1)
         {
-            return string.Format(DataColumn_CannotSetMaxLength2, arg1);
+            return string.Format("Cannot set Column '{0}' property MaxLength. The Column is SimpleContent.", arg1);
         }
 
 
@@ -2508,14 +2503,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_CannotSimpleContentType", resourceCulture);
+                return "Cannot set Column '{0}' property DataType to {1}. The Column is SimpleContent.";
             }
         }
 
 
         internal static string FormatDataColumn_CannotSimpleContentType(object arg1, object arg2)
         {
-            return string.Format(DataColumn_CannotSimpleContentType, arg1, arg2);
+            return string.Format("Cannot set Column '{0}' property DataType to {1}. The Column is SimpleContent.", arg1, arg2);
         }
 
 
@@ -2526,14 +2521,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_CannotSimpleContent", resourceCulture);
+                return "Cannot set Column '{0}' property MappingType to SimpleContent. The Column DataType is {1}.";
             }
         }
 
 
         internal static string FormatDataColumn_CannotSimpleContent(object arg1, object arg2)
         {
-            return string.Format(DataColumn_CannotSimpleContent, arg1, arg2);
+            return string.Format("Cannot set Column '{0}' property MappingType to SimpleContent. The Column DataType is {1}.", arg1, arg2);
         }
 
 
@@ -2544,14 +2539,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_ExceedMaxLength", resourceCulture);
+                return "Column '{0}' exceeds the MaxLength limit.";
             }
         }
 
 
         internal static string FormatDataColumn_ExceedMaxLength(object arg1)
         {
-            return string.Format(DataColumn_ExceedMaxLength, arg1);
+            return string.Format("Column '{0}' exceeds the MaxLength limit.", arg1);
         }
 
 
@@ -2562,14 +2557,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_NotAllowDBNull", resourceCulture);
+                return "Column '{0}' does not allow DBNull.Value.";
             }
         }
 
 
         internal static string FormatDataColumn_NotAllowDBNull(object arg1)
         {
-            return string.Format(DataColumn_NotAllowDBNull, arg1);
+            return string.Format("Column '{0}' does not allow DBNull.Value.", arg1);
         }
 
 
@@ -2580,14 +2575,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_CannotChangeNamespace", resourceCulture);
+                return "Cannot change the Column '{0}' property Namespace. The Column is SimpleContent.";
             }
         }
 
 
         internal static string FormatDataColumn_CannotChangeNamespace(object arg1)
         {
-            return string.Format(DataColumn_CannotChangeNamespace, arg1);
+            return string.Format("Cannot change the Column '{0}' property Namespace. The Column is SimpleContent.", arg1);
         }
 
 
@@ -2598,14 +2593,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_AutoIncrementCannotSetIfHasData", resourceCulture);
+                return "Cannot change AutoIncrement of a DataColumn with type '{0}' once it has data.";
             }
         }
 
 
         internal static string FormatDataColumn_AutoIncrementCannotSetIfHasData(object arg1)
         {
-            return string.Format(DataColumn_AutoIncrementCannotSetIfHasData, arg1);
+            return string.Format("Cannot change AutoIncrement of a DataColumn with type '{0}' once it has data.", arg1);
         }
 
 
@@ -2616,14 +2611,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_NotInTheUnderlyingTable", resourceCulture);
+                return "Column '{0}' does not belong to underlying table '{1}'.";
             }
         }
 
 
         internal static string FormatDataColumn_NotInTheUnderlyingTable(object arg1, object arg2)
         {
-            return string.Format(DataColumn_NotInTheUnderlyingTable, arg1, arg2);
+            return string.Format("Column '{0}' does not belong to underlying table '{1}'.", arg1, arg2);
         }
 
 
@@ -2634,14 +2629,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_InvalidDataColumnMapping", resourceCulture);
+                return "DataColumn with type '{0}' is a complexType. Can not serialize value of a complex type as Attribute";
             }
         }
 
 
         internal static string FormatDataColumn_InvalidDataColumnMapping(object arg1)
         {
-            return string.Format(DataColumn_InvalidDataColumnMapping, arg1);
+            return string.Format("DataColumn with type '{0}' is a complexType. Can not serialize value of a complex type as Attribute", arg1);
         }
 
 
@@ -2652,7 +2647,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_CannotSetDateTimeModeForNonDateTimeColumns", resourceCulture);
+                return "The DateTimeMode can be set only on DataColumns of type DateTime.";
             }
         }
 
@@ -2665,14 +2660,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_DateTimeMode", resourceCulture);
+                return "Cannot change DateTimeMode from '{0}' to '{1}' once the table has data.";
             }
         }
 
 
         internal static string FormatDataColumn_DateTimeMode(object arg1, object arg2)
         {
-            return string.Format(DataColumn_DateTimeMode, arg1, arg2);
+            return string.Format("Cannot change DateTimeMode from '{0}' to '{1}' once the table has data.", arg1, arg2);
         }
 
 
@@ -2683,14 +2678,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_INullableUDTwithoutStaticNull", resourceCulture);
+                return "Type '{0}' does not contain static Null property or field.";
             }
         }
 
 
         internal static string FormatDataColumn_INullableUDTwithoutStaticNull(object arg1)
         {
-            return string.Format(DataColumn_INullableUDTwithoutStaticNull, arg1);
+            return string.Format("Type '{0}' does not contain static Null property or field.", arg1);
         }
 
 
@@ -2701,14 +2696,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_UDTImplementsIChangeTrackingButnotIRevertible", resourceCulture);
+                return "Type '{0}' does not implement IRevertibleChangeTracking; therefore can not proceed with RejectChanges().";
             }
         }
 
 
         internal static string FormatDataColumn_UDTImplementsIChangeTrackingButnotIRevertible(object arg1)
         {
-            return string.Format(DataColumn_UDTImplementsIChangeTrackingButnotIRevertible, arg1);
+            return string.Format("Type '{0}' does not implement IRevertibleChangeTracking; therefore can not proceed with RejectChanges().", arg1);
         }
 
 
@@ -2719,7 +2714,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_SetAddedAndModifiedCalledOnNonUnchanged", resourceCulture);
+                return "SetAdded and SetModified can only be called on DataRows with Unchanged DataRowState.";
             }
         }
 
@@ -2732,14 +2727,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_OrdinalExceedMaximum", resourceCulture);
+                return "Ordinal '{0}' exceeds the maximum number.";
             }
         }
 
 
         internal static string FormatDataColumn_OrdinalExceedMaximum(object arg1)
         {
-            return string.Format(DataColumn_OrdinalExceedMaximum, arg1);
+            return string.Format("Ordinal '{0}' exceeds the maximum number.", arg1);
         }
 
 
@@ -2750,7 +2745,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumn_NullableTypesNotSupported", resourceCulture);
+                return "DataSet does not support System.Nullable<>.";
             }
         }
 
@@ -2763,7 +2758,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataConstraint_NoName", resourceCulture);
+                return "Cannot change the name of a constraint to empty string when it is in the ConstraintCollection.";
             }
         }
 
@@ -2776,14 +2771,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataConstraint_Violation", resourceCulture);
+                return "Cannot enforce constraints on constraint {0}.";
             }
         }
 
 
         internal static string FormatDataConstraint_Violation(object arg1)
         {
-            return string.Format(DataConstraint_Violation, arg1);
+            return string.Format("Cannot enforce constraints on constraint {0}.", arg1);
         }
 
 
@@ -2794,14 +2789,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataConstraint_ViolationValue", resourceCulture);
+                return "Column '{0}' is constrained to be unique.  Value '{1}' is already present.";
             }
         }
 
 
         internal static string FormatDataConstraint_ViolationValue(object arg1, object arg2)
         {
-            return string.Format(DataConstraint_ViolationValue, arg1, arg2);
+            return string.Format("Column '{0}' is constrained to be unique.  Value '{1}' is already present.", arg1, arg2);
         }
 
 
@@ -2812,14 +2807,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataConstraint_NotInTheTable", resourceCulture);
+                return "Constraint '{0}' does not belong to this DataTable.";
             }
         }
 
 
         internal static string FormatDataConstraint_NotInTheTable(object arg1)
         {
-            return string.Format(DataConstraint_NotInTheTable, arg1);
+            return string.Format("Constraint '{0}' does not belong to this DataTable.", arg1);
         }
 
 
@@ -2830,14 +2825,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataConstraint_OutOfRange", resourceCulture);
+                return "Cannot find constraint {0}.";
             }
         }
 
 
         internal static string FormatDataConstraint_OutOfRange(object arg1)
         {
-            return string.Format(DataConstraint_OutOfRange, arg1);
+            return string.Format("Cannot find constraint {0}.", arg1);
         }
 
 
@@ -2848,14 +2843,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataConstraint_Duplicate", resourceCulture);
+                return "Constraint matches constraint named {0} already in collection.";
             }
         }
 
 
         internal static string FormatDataConstraint_Duplicate(object arg1)
         {
-            return string.Format(DataConstraint_Duplicate, arg1);
+            return string.Format("Constraint matches constraint named {0} already in collection.", arg1);
         }
 
 
@@ -2866,14 +2861,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataConstraint_DuplicateName", resourceCulture);
+                return "A Constraint named '{0}' already belongs to this DataTable.";
             }
         }
 
 
         internal static string FormatDataConstraint_DuplicateName(object arg1)
         {
-            return string.Format(DataConstraint_DuplicateName, arg1);
+            return string.Format("A Constraint named '{0}' already belongs to this DataTable.", arg1);
         }
 
 
@@ -2884,7 +2879,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataConstraint_UniqueViolation", resourceCulture);
+                return "These columns don't currently have unique values.";
             }
         }
 
@@ -2897,7 +2892,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataConstraint_ForeignTable", resourceCulture);
+                return "These columns don't point to this table.";
             }
         }
 
@@ -2910,7 +2905,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataConstraint_ParentValues", resourceCulture);
+                return "This constraint cannot be enabled as not all values have corresponding parent values.";
             }
         }
 
@@ -2923,14 +2918,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataConstraint_AddFailed", resourceCulture);
+                return "This constraint cannot be added since ForeignKey doesn't belong to table {0}.";
             }
         }
 
 
         internal static string FormatDataConstraint_AddFailed(object arg1)
         {
-            return string.Format(DataConstraint_AddFailed, arg1);
+            return string.Format("This constraint cannot be added since ForeignKey doesn't belong to table {0}.", arg1);
         }
 
 
@@ -2941,7 +2936,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataConstraint_RemoveFailed", resourceCulture);
+                return "Cannot remove a constraint that doesn't belong to this table.";
             }
         }
 
@@ -2954,14 +2949,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataConstraint_NeededForForeignKeyConstraint", resourceCulture);
+                return "Cannot remove unique constraint '{0}'. Remove foreign key constraint '{1}' first.";
             }
         }
 
 
         internal static string FormatDataConstraint_NeededForForeignKeyConstraint(object arg1, object arg2)
         {
-            return string.Format(DataConstraint_NeededForForeignKeyConstraint, arg1, arg2);
+            return string.Format("Cannot remove unique constraint '{0}'. Remove foreign key constraint '{1}' first.", arg1, arg2);
         }
 
 
@@ -2972,14 +2967,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataConstraint_CascadeDelete", resourceCulture);
+                return "Cannot delete this row because constraints are enforced on relation {0}, and deleting this row will strand child rows.";
             }
         }
 
 
         internal static string FormatDataConstraint_CascadeDelete(object arg1)
         {
-            return string.Format(DataConstraint_CascadeDelete, arg1);
+            return string.Format("Cannot delete this row because constraints are enforced on relation {0}, and deleting this row will strand child rows.", arg1);
         }
 
 
@@ -2990,14 +2985,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataConstraint_CascadeUpdate", resourceCulture);
+                return "Cannot make this change because constraints are enforced on relation {0}, and changing this value will strand child rows.";
             }
         }
 
 
         internal static string FormatDataConstraint_CascadeUpdate(object arg1)
         {
-            return string.Format(DataConstraint_CascadeUpdate, arg1);
+            return string.Format("Cannot make this change because constraints are enforced on relation {0}, and changing this value will strand child rows.", arg1);
         }
 
 
@@ -3008,14 +3003,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataConstraint_ClearParentTable", resourceCulture);
+                return "Cannot clear table {0} because ForeignKeyConstraint {1} enforces constraints and there are child rows in {2}.";
             }
         }
 
 
         internal static string FormatDataConstraint_ClearParentTable(object arg1, object arg2, object arg3)
         {
-            return string.Format(DataConstraint_ClearParentTable, arg1, arg2, arg3);
+            return string.Format("Cannot clear table {0} because ForeignKeyConstraint {1} enforces constraints and there are child rows in {2}.", arg1, arg2, arg3);
         }
 
 
@@ -3026,14 +3021,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataConstraint_ForeignKeyViolation", resourceCulture);
+                return "ForeignKeyConstraint {0} requires the child key values ({1}) to exist in the parent table.";
             }
         }
 
 
         internal static string FormatDataConstraint_ForeignKeyViolation(object arg1, object arg2)
         {
-            return string.Format(DataConstraint_ForeignKeyViolation, arg1, arg2);
+            return string.Format("ForeignKeyConstraint {0} requires the child key values ({1}) to exist in the parent table.", arg1, arg2);
         }
 
 
@@ -3044,14 +3039,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataConstraint_BadObjectPropertyAccess", resourceCulture);
+                return "Property not accessible because '{0}'.";
             }
         }
 
 
         internal static string FormatDataConstraint_BadObjectPropertyAccess(object arg1)
         {
-            return string.Format(DataConstraint_BadObjectPropertyAccess, arg1);
+            return string.Format("Property not accessible because '{0}'.", arg1);
         }
 
 
@@ -3062,14 +3057,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataConstraint_RemoveParentRow", resourceCulture);
+                return "Cannot remove this row because it has child rows, and constraints on relation {0} are enforced.";
             }
         }
 
 
         internal static string FormatDataConstraint_RemoveParentRow(object arg1)
         {
-            return string.Format(DataConstraint_RemoveParentRow, arg1);
+            return string.Format("Cannot remove this row because it has child rows, and constraints on relation {0} are enforced.", arg1);
         }
 
 
@@ -3080,7 +3075,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataConstraint_AddPrimaryKeyConstraint", resourceCulture);
+                return "Cannot add primary key constraint since primary key is already set for the table.";
             }
         }
 
@@ -3093,14 +3088,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataConstraint_CantAddConstraintToMultipleNestedTable", resourceCulture);
+                return "Cannot add constraint to DataTable '{0}' which is a child table in two nested relations.";
             }
         }
 
 
         internal static string FormatDataConstraint_CantAddConstraintToMultipleNestedTable(object arg1)
         {
-            return string.Format(DataConstraint_CantAddConstraintToMultipleNestedTable, arg1);
+            return string.Format("Cannot add constraint to DataTable '{0}' which is a child table in two nested relations.", arg1);
         }
 
 
@@ -3111,7 +3106,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataKey_TableMismatch", resourceCulture);
+                return "Cannot create a Key from Columns that belong to different tables.";
             }
         }
 
@@ -3124,7 +3119,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataKey_NoColumns", resourceCulture);
+                return "Cannot have 0 columns.";
             }
         }
 
@@ -3137,14 +3132,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataKey_TooManyColumns", resourceCulture);
+                return "Cannot have more than {0} columns.";
             }
         }
 
 
         internal static string FormatDataKey_TooManyColumns(object arg1)
         {
-            return string.Format(DataKey_TooManyColumns, arg1);
+            return string.Format("Cannot have more than {0} columns.", arg1);
         }
 
 
@@ -3155,14 +3150,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataKey_DuplicateColumns", resourceCulture);
+                return "Cannot create a Key when the same column is listed more than once: '{0}'";
             }
         }
 
 
         internal static string FormatDataKey_DuplicateColumns(object arg1)
         {
-            return string.Format(DataKey_DuplicateColumns, arg1);
+            return string.Format("Cannot create a Key when the same column is listed more than once: '{0}'", arg1);
         }
 
 
@@ -3173,7 +3168,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataKey_RemovePrimaryKey", resourceCulture);
+                return "Cannot remove unique constraint since it's the primary key of a table.";
             }
         }
 
@@ -3186,14 +3181,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataKey_RemovePrimaryKey1", resourceCulture);
+                return "Cannot remove unique constraint since it's the primary key of table {0}.";
             }
         }
 
 
         internal static string FormatDataKey_RemovePrimaryKey1(object arg1)
         {
-            return string.Format(DataKey_RemovePrimaryKey1, arg1);
+            return string.Format("Cannot remove unique constraint since it's the primary key of table {0}.", arg1);
         }
 
 
@@ -3204,7 +3199,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_ColumnsTypeMismatch", resourceCulture);
+                return "Parent Columns and Child Columns don't have type-matching columns.";
             }
         }
 
@@ -3217,7 +3212,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_KeyColumnsIdentical", resourceCulture);
+                return "ParentKey and ChildKey are identical.";
             }
         }
 
@@ -3230,7 +3225,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_KeyLengthMismatch", resourceCulture);
+                return "ParentColumns and ChildColumns should be the same length.";
             }
         }
 
@@ -3243,7 +3238,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_KeyZeroLength", resourceCulture);
+                return "ParentColumns and ChildColumns must not be zero length.";
             }
         }
 
@@ -3256,7 +3251,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_ForeignRow", resourceCulture);
+                return "The row doesn't belong to the same DataSet as this relation.";
             }
         }
 
@@ -3269,7 +3264,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_NoName", resourceCulture);
+                return "RelationName is required when it is part of a DataSet.";
             }
         }
 
@@ -3282,14 +3277,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_ForeignTable", resourceCulture);
+                return "GetChildRows requires a row whose Table is {0}, but the specified row's Table is {1}.";
             }
         }
 
 
         internal static string FormatDataRelation_ForeignTable(object arg1, object arg2)
         {
-            return string.Format(DataRelation_ForeignTable, arg1, arg2);
+            return string.Format("GetChildRows requires a row whose Table is {0}, but the specified row's Table is {1}.", arg1, arg2);
         }
 
 
@@ -3300,7 +3295,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_ForeignDataSet", resourceCulture);
+                return "This relation should connect two tables in this DataSet to be added to this DataSet.";
             }
         }
 
@@ -3313,14 +3308,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_GetParentRowTableMismatch", resourceCulture);
+                return "GetParentRow requires a row whose Table is {0}, but the specified row's Table is {1}.";
             }
         }
 
 
         internal static string FormatDataRelation_GetParentRowTableMismatch(object arg1, object arg2)
         {
-            return string.Format(DataRelation_GetParentRowTableMismatch, arg1, arg2);
+            return string.Format("GetParentRow requires a row whose Table is {0}, but the specified row's Table is {1}.", arg1, arg2);
         }
 
 
@@ -3331,14 +3326,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_SetParentRowTableMismatch", resourceCulture);
+                return "SetParentRow requires a child row whose Table is {0}, but the specified row's Table is {1}.";
             }
         }
 
 
         internal static string FormatDataRelation_SetParentRowTableMismatch(object arg1, object arg2)
         {
-            return string.Format(DataRelation_SetParentRowTableMismatch, arg1, arg2);
+            return string.Format("SetParentRow requires a child row whose Table is {0}, but the specified row's Table is {1}.", arg1, arg2);
         }
 
 
@@ -3349,7 +3344,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_DataSetMismatch", resourceCulture);
+                return "Cannot have a relationship between tables in different DataSets.";
             }
         }
 
@@ -3362,7 +3357,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_TablesInDifferentSets", resourceCulture);
+                return "Cannot create a relation between tables in different DataSets.";
             }
         }
 
@@ -3375,7 +3370,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_AlreadyExists", resourceCulture);
+                return "A relation already exists for these child columns.";
             }
         }
 
@@ -3388,7 +3383,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_DoesNotExist", resourceCulture);
+                return "This relation doesn't belong to this relation collection.";
             }
         }
 
@@ -3401,7 +3396,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_AlreadyInOtherDataSet", resourceCulture);
+                return "This relation already belongs to another DataSet.";
             }
         }
 
@@ -3414,7 +3409,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_AlreadyInTheDataSet", resourceCulture);
+                return "This relation already belongs to this DataSet.";
             }
         }
 
@@ -3427,14 +3422,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_DuplicateName", resourceCulture);
+                return "A Relation named '{0}' already belongs to this DataSet.";
             }
         }
 
 
         internal static string FormatDataRelation_DuplicateName(object arg1)
         {
-            return string.Format(DataRelation_DuplicateName, arg1);
+            return string.Format("A Relation named '{0}' already belongs to this DataSet.", arg1);
         }
 
 
@@ -3445,14 +3440,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_NotInTheDataSet", resourceCulture);
+                return "Relation {0} does not belong to this DataSet.";
             }
         }
 
 
         internal static string FormatDataRelation_NotInTheDataSet(object arg1)
         {
-            return string.Format(DataRelation_NotInTheDataSet, arg1);
+            return string.Format("Relation {0} does not belong to this DataSet.", arg1);
         }
 
 
@@ -3463,14 +3458,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_OutOfRange", resourceCulture);
+                return "Cannot find relation {0}.";
             }
         }
 
 
         internal static string FormatDataRelation_OutOfRange(object arg1)
         {
-            return string.Format(DataRelation_OutOfRange, arg1);
+            return string.Format("Cannot find relation {0}.", arg1);
         }
 
 
@@ -3481,7 +3476,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_TableNull", resourceCulture);
+                return "Cannot create a collection on a null table.";
             }
         }
 
@@ -3494,7 +3489,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_TableWasRemoved", resourceCulture);
+                return "The table this collection displays relations for has been removed from its DataSet.";
             }
         }
 
@@ -3507,7 +3502,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_ChildTableMismatch", resourceCulture);
+                return "Cannot add a relation to this table's ParentRelation collection where this table isn't the child table.";
             }
         }
 
@@ -3520,7 +3515,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_ParentTableMismatch", resourceCulture);
+                return "Cannot add a relation to this table's ChildRelation collection where this table isn't the parent table.";
             }
         }
 
@@ -3533,7 +3528,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_RelationNestedReadOnly", resourceCulture);
+                return "Cannot set the 'Nested' property to false for this relation.";
             }
         }
 
@@ -3546,14 +3541,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_TableCantBeNestedInTwoTables", resourceCulture);
+                return "The same table '{0}' cannot be the child table in two nested relations.";
             }
         }
 
 
         internal static string FormatDataRelation_TableCantBeNestedInTwoTables(object arg1)
         {
-            return string.Format(DataRelation_TableCantBeNestedInTwoTables, arg1);
+            return string.Format("The same table '{0}' cannot be the child table in two nested relations.", arg1);
         }
 
 
@@ -3564,14 +3559,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_LoopInNestedRelations", resourceCulture);
+                return "The table ({0}) cannot be the child table to itself in nested relations.";
             }
         }
 
 
         internal static string FormatDataRelation_LoopInNestedRelations(object arg1)
         {
-            return string.Format(DataRelation_LoopInNestedRelations, arg1);
+            return string.Format("The table ({0}) cannot be the child table to itself in nested relations.", arg1);
         }
 
 
@@ -3582,7 +3577,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_CaseLocaleMismatch", resourceCulture);
+                return "Cannot add a DataRelation or Constraint that has different Locale or CaseSensitive settings between its parent and child tables.";
             }
         }
 
@@ -3595,7 +3590,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_ParentOrChildColumnsDoNotHaveDataSet", resourceCulture);
+                return "Cannot create a DataRelation if Parent or Child Columns are not in a DataSet.";
             }
         }
 
@@ -3608,14 +3603,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_InValidNestedRelation", resourceCulture);
+                return "Nested table '{0}' which inherits its namespace cannot have multiple parent tables in different namespaces.";
             }
         }
 
 
         internal static string FormatDataRelation_InValidNestedRelation(object arg1)
         {
-            return string.Format(DataRelation_InValidNestedRelation, arg1);
+            return string.Format("Nested table '{0}' which inherits its namespace cannot have multiple parent tables in different namespaces.", arg1);
         }
 
 
@@ -3626,14 +3621,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRelation_InValidNamespaceInNestedRelation", resourceCulture);
+                return "Nested table '{0}' with empty namespace cannot have multiple parent tables in different namespaces.";
             }
         }
 
 
         internal static string FormatDataRelation_InValidNamespaceInNestedRelation(object arg1)
         {
-            return string.Format(DataRelation_InValidNamespaceInNestedRelation, arg1);
+            return string.Format("Nested table '{0}' with empty namespace cannot have multiple parent tables in different namespaces.", arg1);
         }
 
 
@@ -3644,7 +3639,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRow_NotInTheDataSet", resourceCulture);
+                return "The row doesn't belong to the same DataSet as this relation.";
             }
         }
 
@@ -3657,7 +3652,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRow_NotInTheTable", resourceCulture);
+                return "Cannot perform this operation on a row not in the table.";
             }
         }
 
@@ -3670,7 +3665,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRow_ParentRowNotInTheDataSet", resourceCulture);
+                return "This relation and child row don't belong to same DataSet.";
             }
         }
 
@@ -3683,7 +3678,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRow_EditInRowChanging", resourceCulture);
+                return "Cannot change a proposed value in the RowChanging event.";
             }
         }
 
@@ -3696,7 +3691,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRow_EndEditInRowChanging", resourceCulture);
+                return "Cannot call EndEdit() inside an OnRowChanging event.";
             }
         }
 
@@ -3709,7 +3704,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRow_BeginEditInRowChanging", resourceCulture);
+                return "Cannot call BeginEdit() inside the RowChanging event.";
             }
         }
 
@@ -3722,7 +3717,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRow_CancelEditInRowChanging", resourceCulture);
+                return "Cannot call CancelEdit() inside an OnRowChanging event.  Throw an exception to cancel this update.";
             }
         }
 
@@ -3735,7 +3730,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRow_DeleteInRowDeleting", resourceCulture);
+                return "Cannot call Delete inside an OnRowDeleting event.  Throw an exception to cancel this delete.";
             }
         }
 
@@ -3748,7 +3743,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRow_ValuesArrayLength", resourceCulture);
+                return "Input array is longer than the number of columns in this table.";
             }
         }
 
@@ -3761,7 +3756,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRow_NoCurrentData", resourceCulture);
+                return "There is no Current data to access.";
             }
         }
 
@@ -3774,7 +3769,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRow_NoOriginalData", resourceCulture);
+                return "There is no Original data to access.";
             }
         }
 
@@ -3787,7 +3782,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRow_NoProposedData", resourceCulture);
+                return "There is no Proposed data to access.";
             }
         }
 
@@ -3800,7 +3795,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRow_RemovedFromTheTable", resourceCulture);
+                return "This row has been removed from a table and does not have any data.  BeginEdit() will allow creation of new data in this row.";
             }
         }
 
@@ -3813,7 +3808,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRow_DeletedRowInaccessible", resourceCulture);
+                return "Deleted row information cannot be accessed through the row.";
             }
         }
 
@@ -3826,7 +3821,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRow_InvalidVersion", resourceCulture);
+                return "Version must be Original, Current, or Proposed.";
             }
         }
 
@@ -3839,14 +3834,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRow_OutOfRange", resourceCulture);
+                return "There is no row at position {0}.";
             }
         }
 
 
         internal static string FormatDataRow_OutOfRange(object arg1)
         {
-            return string.Format(DataRow_OutOfRange, arg1);
+            return string.Format("There is no row at position {0}.", arg1);
         }
 
 
@@ -3857,14 +3852,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRow_RowInsertOutOfRange", resourceCulture);
+                return "The row insert position {0} is invalid.";
             }
         }
 
 
         internal static string FormatDataRow_RowInsertOutOfRange(object arg1)
         {
-            return string.Format(DataRow_RowInsertOutOfRange, arg1);
+            return string.Format("The row insert position {0} is invalid.", arg1);
         }
 
 
@@ -3875,14 +3870,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRow_RowInsertMissing", resourceCulture);
+                return "Values are missing in the rowOrder sequence for table '{0}'.";
             }
         }
 
 
         internal static string FormatDataRow_RowInsertMissing(object arg1)
         {
-            return string.Format(DataRow_RowInsertMissing, arg1);
+            return string.Format("Values are missing in the rowOrder sequence for table '{0}'.", arg1);
         }
 
 
@@ -3893,7 +3888,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRow_RowOutOfRange", resourceCulture);
+                return "The given DataRow is not in the current DataRowCollection.";
             }
         }
 
@@ -3906,7 +3901,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRow_AlreadyInOtherCollection", resourceCulture);
+                return "This row already belongs to another table.";
             }
         }
 
@@ -3919,7 +3914,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRow_AlreadyInTheCollection", resourceCulture);
+                return "This row already belongs to this table.";
             }
         }
 
@@ -3932,7 +3927,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRow_AlreadyDeleted", resourceCulture);
+                return "Cannot delete this row since it's already deleted.";
             }
         }
 
@@ -3945,7 +3940,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRow_Empty", resourceCulture);
+                return "This row is empty.";
             }
         }
 
@@ -3958,7 +3953,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRow_AlreadyRemoved", resourceCulture);
+                return "Cannot remove a row that's already been removed.";
             }
         }
 
@@ -3971,7 +3966,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRow_MultipleParents", resourceCulture);
+                return "A child row has multiple parents.";
             }
         }
 
@@ -3984,7 +3979,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRow_InvalidRowBitPattern", resourceCulture);
+                return "Unrecognized row state bit pattern.";
             }
         }
 
@@ -3997,7 +3992,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataSet_SetNameToEmpty", resourceCulture);
+                return "Cannot change the name of the DataSet to an empty string.";
             }
         }
 
@@ -4010,14 +4005,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataSet_SetDataSetNameConflicting", resourceCulture);
+                return "The name '{0}' is invalid. A DataSet cannot have the same name of the DataTable.";
             }
         }
 
 
         internal static string FormatDataSet_SetDataSetNameConflicting(object arg1)
         {
-            return string.Format(DataSet_SetDataSetNameConflicting, arg1);
+            return string.Format("The name '{0}' is invalid. A DataSet cannot have the same name of the DataTable.", arg1);
         }
 
 
@@ -4028,14 +4023,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataSet_UnsupportedSchema", resourceCulture);
+                return "The schema namespace is invalid. Please use this one instead: {0}.";
             }
         }
 
 
         internal static string FormatDataSet_UnsupportedSchema(object arg1)
         {
-            return string.Format(DataSet_UnsupportedSchema, arg1);
+            return string.Format("The schema namespace is invalid. Please use this one instead: {0}.", arg1);
         }
 
 
@@ -4046,7 +4041,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataSet_CannotChangeCaseLocale", resourceCulture);
+                return "Cannot change CaseSensitive or Locale property. This change would lead to at least one DataRelation or Constraint to have different Locale or CaseSensitive settings between its related tables.";
             }
         }
 
@@ -4059,7 +4054,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataSet_CannotChangeSchemaSerializationMode", resourceCulture);
+                return "SchemaSerializationMode property can be set only if it is overridden by derived DataSet.";
             }
         }
 
@@ -4072,7 +4067,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTable_ForeignPrimaryKey", resourceCulture);
+                return "PrimaryKey columns do not belong to this table.";
             }
         }
 
@@ -4085,7 +4080,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTable_CannotAddToSimpleContent", resourceCulture);
+                return "Cannot add a nested relation or an element column to a table containing a SimpleContent column.";
             }
         }
 
@@ -4098,7 +4093,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTable_NoName", resourceCulture);
+                return "TableName is required when it is part of a DataSet.";
             }
         }
 
@@ -4111,7 +4106,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTable_MultipleSimpleContentColumns", resourceCulture);
+                return "DataTable already has a simple content column.";
             }
         }
 
@@ -4124,7 +4119,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTable_MissingPrimaryKey", resourceCulture);
+                return "Table doesn't have a primary key.";
             }
         }
 
@@ -4137,14 +4132,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTable_InvalidSortString", resourceCulture);
+                return " {0} isn't a valid Sort string entry.";
             }
         }
 
 
         internal static string FormatDataTable_InvalidSortString(object arg1)
         {
-            return string.Format(DataTable_InvalidSortString, arg1);
+            return string.Format(" {0} isn't a valid Sort string entry.", arg1);
         }
 
 
@@ -4155,7 +4150,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTable_CanNotSerializeDataTableHierarchy", resourceCulture);
+                return "Cannot serialize the DataTable. A DataTable being used in one or more DataColumn expressions is not a descendant of current DataTable.";
             }
         }
 
@@ -4168,7 +4163,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTable_CanNotRemoteDataTable", resourceCulture);
+                return "This DataTable can only be remoted as part of DataSet. One or more Expression Columns has reference to other DataTable(s).";
             }
         }
 
@@ -4181,7 +4176,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTable_CanNotSetRemotingFormat", resourceCulture);
+                return "Cannot have different remoting format property value for DataSet and DataTable.";
             }
         }
 
@@ -4194,7 +4189,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTable_CanNotSerializeDataTableWithEmptyName", resourceCulture);
+                return "Cannot serialize the DataTable. DataTable name is not set.";
             }
         }
 
@@ -4207,14 +4202,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTable_DuplicateName", resourceCulture);
+                return "A DataTable named '{0}' already belongs to this DataSet.";
             }
         }
 
 
         internal static string FormatDataTable_DuplicateName(object arg1)
         {
-            return string.Format(DataTable_DuplicateName, arg1);
+            return string.Format("A DataTable named '{0}' already belongs to this DataSet.", arg1);
         }
 
 
@@ -4225,14 +4220,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTable_DuplicateName2", resourceCulture);
+                return "A DataTable named '{0}' with the same Namespace '{1}' already belongs to this DataSet.";
             }
         }
 
 
         internal static string FormatDataTable_DuplicateName2(object arg1, object arg2)
         {
-            return string.Format(DataTable_DuplicateName2, arg1, arg2);
+            return string.Format("A DataTable named '{0}' with the same Namespace '{1}' already belongs to this DataSet.", arg1, arg2);
         }
 
 
@@ -4243,14 +4238,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTable_SelfnestedDatasetConflictingName", resourceCulture);
+                return "The table ({0}) cannot be the child table to itself in a nested relation: the DataSet name conflicts with the table name.";
             }
         }
 
 
         internal static string FormatDataTable_SelfnestedDatasetConflictingName(object arg1)
         {
-            return string.Format(DataTable_SelfnestedDatasetConflictingName, arg1);
+            return string.Format("The table ({0}) cannot be the child table to itself in a nested relation: the DataSet name conflicts with the table name.", arg1);
         }
 
 
@@ -4261,14 +4256,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTable_DatasetConflictingName", resourceCulture);
+                return "The name '{0}' is invalid. A DataTable cannot have the same name of the DataSet.";
             }
         }
 
 
         internal static string FormatDataTable_DatasetConflictingName(object arg1)
         {
-            return string.Format(DataTable_DatasetConflictingName, arg1);
+            return string.Format("The name '{0}' is invalid. A DataTable cannot have the same name of the DataSet.", arg1);
         }
 
 
@@ -4279,7 +4274,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTable_AlreadyInOtherDataSet", resourceCulture);
+                return "DataTable already belongs to another DataSet.";
             }
         }
 
@@ -4292,7 +4287,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTable_AlreadyInTheDataSet", resourceCulture);
+                return "DataTable already belongs to this DataSet.";
             }
         }
 
@@ -4305,14 +4300,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTable_NotInTheDataSet", resourceCulture);
+                return "Table {0} does not belong to this DataSet.";
             }
         }
 
 
         internal static string FormatDataTable_NotInTheDataSet(object arg1)
         {
-            return string.Format(DataTable_NotInTheDataSet, arg1);
+            return string.Format("Table {0} does not belong to this DataSet.", arg1);
         }
 
 
@@ -4323,14 +4318,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTable_OutOfRange", resourceCulture);
+                return "Cannot find table {0}.";
             }
         }
 
 
         internal static string FormatDataTable_OutOfRange(object arg1)
         {
-            return string.Format(DataTable_OutOfRange, arg1);
+            return string.Format("Cannot find table {0}.", arg1);
         }
 
 
@@ -4341,7 +4336,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTable_InRelation", resourceCulture);
+                return "Cannot remove a table that has existing relations.  Remove relations first.";
             }
         }
 
@@ -4354,14 +4349,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTable_InConstraint", resourceCulture);
+                return "Cannot remove table {0}, because it referenced in ForeignKeyConstraint {1}.  Remove the constraint first.";
             }
         }
 
 
         internal static string FormatDataTable_InConstraint(object arg1, object arg2)
         {
-            return string.Format(DataTable_InConstraint, arg1, arg2);
+            return string.Format("Cannot remove table {0}, because it referenced in ForeignKeyConstraint {1}.  Remove the constraint first.", arg1, arg2);
         }
 
 
@@ -4372,14 +4367,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTable_TableNotFound", resourceCulture);
+                return "DataTable '{0}' does not match to any DataTable in source.";
             }
         }
 
 
         internal static string FormatDataTable_TableNotFound(object arg1)
         {
-            return string.Format(DataTable_TableNotFound, arg1);
+            return string.Format("DataTable '{0}' does not match to any DataTable in source.", arg1);
         }
 
 
@@ -4390,14 +4385,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataMerge_MissingDefinition", resourceCulture);
+                return "Target DataSet missing definition for {0}.";
             }
         }
 
 
         internal static string FormatDataMerge_MissingDefinition(object arg1)
         {
-            return string.Format(DataMerge_MissingDefinition, arg1);
+            return string.Format("Target DataSet missing definition for {0}.", arg1);
         }
 
 
@@ -4408,14 +4403,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataMerge_MissingConstraint", resourceCulture);
+                return "Target DataSet missing {0} {1}.";
             }
         }
 
 
         internal static string FormatDataMerge_MissingConstraint(object arg1, object arg2)
         {
-            return string.Format(DataMerge_MissingConstraint, arg1, arg2);
+            return string.Format("Target DataSet missing {0} {1}.", arg1, arg2);
         }
 
 
@@ -4426,14 +4421,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataMerge_DataTypeMismatch", resourceCulture);
+                return "<target>.{0} and <source>.{0} have conflicting properties: DataType property mismatch.";
             }
         }
 
 
         internal static string FormatDataMerge_DataTypeMismatch(object arg1, object arg2)
         {
-            return string.Format(DataMerge_DataTypeMismatch, arg1, arg2);
+            return string.Format("<target>.{0} and <source>.{0} have conflicting properties: DataType property mismatch.", arg1, arg2);
         }
 
 
@@ -4444,7 +4439,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataMerge_PrimaryKeyMismatch", resourceCulture);
+                return "<target>.PrimaryKey and <source>.PrimaryKey have different Length.";
             }
         }
 
@@ -4457,14 +4452,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataMerge_PrimaryKeyColumnsMismatch", resourceCulture);
+                return "Mismatch columns in the PrimaryKey : <target>.{0} versus <source>.{1}.";
             }
         }
 
 
         internal static string FormatDataMerge_PrimaryKeyColumnsMismatch(object arg1, object arg2)
         {
-            return string.Format(DataMerge_PrimaryKeyColumnsMismatch, arg1, arg2);
+            return string.Format("Mismatch columns in the PrimaryKey : <target>.{0} versus <source>.{1}.", arg1, arg2);
         }
 
 
@@ -4475,14 +4470,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataMerge_ReltionKeyColumnsMismatch", resourceCulture);
+                return "Relation {0} cannot be merged, because keys have mismatch columns.";
             }
         }
 
 
         internal static string FormatDataMerge_ReltionKeyColumnsMismatch(object arg1)
         {
-            return string.Format(DataMerge_ReltionKeyColumnsMismatch, arg1);
+            return string.Format("Relation {0} cannot be merged, because keys have mismatch columns.", arg1);
         }
 
 
@@ -4493,14 +4488,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataMerge_MissingColumnDefinition", resourceCulture);
+                return "Target table {0} missing definition for column {1}.";
             }
         }
 
 
         internal static string FormatDataMerge_MissingColumnDefinition(object arg1, object arg2)
         {
-            return string.Format(DataMerge_MissingColumnDefinition, arg1, arg2);
+            return string.Format("Target table {0} missing definition for column {1}.", arg1, arg2);
         }
 
 
@@ -4511,7 +4506,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataIndex_RecordStateRange", resourceCulture);
+                return "The RowStates parameter must be set to a valid combination of values from the DataViewRowState enumeration.";
             }
         }
 
@@ -4524,7 +4519,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataIndex_FindWithoutSortOrder", resourceCulture);
+                return "Find finds a row based on a Sort order, and no Sort order is specified.";
             }
         }
 
@@ -4537,14 +4532,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataIndex_KeyLength", resourceCulture);
+                return "Expecting {0} value(s) for the key being indexed, but received {1} value(s).";
             }
         }
 
 
         internal static string FormatDataIndex_KeyLength(object arg1, object arg2)
         {
-            return string.Format(DataIndex_KeyLength, arg1, arg2);
+            return string.Format("Expecting {0} value(s) for the key being indexed, but received {1} value(s).", arg1, arg2);
         }
 
 
@@ -4555,14 +4550,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataStorage_AggregateException", resourceCulture);
+                return "Invalid usage of aggregate function {0}() and Type: {1}.";
             }
         }
 
 
         internal static string FormatDataStorage_AggregateException(object arg1, object arg2)
         {
-            return string.Format(DataStorage_AggregateException, arg1, arg2);
+            return string.Format("Invalid usage of aggregate function {0}() and Type: {1}.", arg1, arg2);
         }
 
 
@@ -4573,14 +4568,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataStorage_InvalidStorageType", resourceCulture);
+                return "Invalid storage type: {0}.";
             }
         }
 
 
         internal static string FormatDataStorage_InvalidStorageType(object arg1)
         {
-            return string.Format(DataStorage_InvalidStorageType, arg1);
+            return string.Format("Invalid storage type: {0}.", arg1);
         }
 
 
@@ -4591,14 +4586,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataStorage_ProblematicChars", resourceCulture);
+                return "The DataSet Xml persistency does not support the value '{0}' as Char value, please use Byte storage instead.";
             }
         }
 
 
         internal static string FormatDataStorage_ProblematicChars(object arg1)
         {
-            return string.Format(DataStorage_ProblematicChars, arg1);
+            return string.Format("The DataSet Xml persistency does not support the value '{0}' as Char value, please use Byte storage instead.", arg1);
         }
 
 
@@ -4609,7 +4604,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataStorage_SetInvalidDataType", resourceCulture);
+                return "Type of value has a mismatch with column type";
             }
         }
 
@@ -4622,14 +4617,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataStorage_IComparableNotDefined", resourceCulture);
+                return " Type '{0}' does not implement IComparable interface. Comparison cannot be done.";
             }
         }
 
 
         internal static string FormatDataStorage_IComparableNotDefined(object arg1)
         {
-            return string.Format(DataStorage_IComparableNotDefined, arg1);
+            return string.Format(" Type '{0}' does not implement IComparable interface. Comparison cannot be done.", arg1);
         }
 
 
@@ -4640,14 +4635,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataView_SetFailed", resourceCulture);
+                return "Cannot set {0}.";
             }
         }
 
 
         internal static string FormatDataView_SetFailed(object arg1)
         {
-            return string.Format(DataView_SetFailed, arg1);
+            return string.Format("Cannot set {0}.", arg1);
         }
 
 
@@ -4658,7 +4653,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataView_SetDataSetFailed", resourceCulture);
+                return "Cannot change DataSet on a DataViewManager that's already the default view for a DataSet.";
             }
         }
 
@@ -4671,7 +4666,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataView_SetRowStateFilter", resourceCulture);
+                return "RowStateFilter cannot show ModifiedOriginals and ModifiedCurrents at the same time.";
             }
         }
 
@@ -4684,7 +4679,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataView_SetTable", resourceCulture);
+                return "Cannot change Table property on a DefaultView or a DataView coming from a DataViewManager.";
             }
         }
 
@@ -4697,7 +4692,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataView_CanNotSetDataSet", resourceCulture);
+                return "Cannot change DataSet property once it is set.";
             }
         }
 
@@ -4710,7 +4705,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataView_CanNotUseDataViewManager", resourceCulture);
+                return "DataSet must be set prior to using DataViewManager.";
             }
         }
 
@@ -4723,7 +4718,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataView_CanNotSetTable", resourceCulture);
+                return "Cannot change Table property once it is set.";
             }
         }
 
@@ -4736,7 +4731,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataView_CanNotUse", resourceCulture);
+                return "DataTable must be set prior to using DataView.";
             }
         }
 
@@ -4749,7 +4744,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataView_CanNotBindTable", resourceCulture);
+                return "Cannot bind to DataTable with no name.";
             }
         }
 
@@ -4762,7 +4757,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataView_SetIListObject", resourceCulture);
+                return "Cannot set an object into this list.";
             }
         }
 
@@ -4775,7 +4770,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataView_AddNewNotAllowNull", resourceCulture);
+                return "Cannot call AddNew on a DataView where AllowNew is false.";
             }
         }
 
@@ -4788,7 +4783,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataView_NotOpen", resourceCulture);
+                return "DataView is not open.";
             }
         }
 
@@ -4801,7 +4796,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataView_CreateChildView", resourceCulture);
+                return "The relation is not parented to the table to which this DataView points.";
             }
         }
 
@@ -4814,7 +4809,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataView_CanNotDelete", resourceCulture);
+                return "Cannot delete on a DataSource where AllowDelete is false.";
             }
         }
 
@@ -4827,7 +4822,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataView_CanNotEdit", resourceCulture);
+                return "Cannot edit on a DataSource where AllowEdit is false.";
             }
         }
 
@@ -4840,14 +4835,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataView_GetElementIndex", resourceCulture);
+                return "Index {0} is either negative or above rows count.";
             }
         }
 
 
         internal static string FormatDataView_GetElementIndex(object arg1)
         {
-            return string.Format(DataView_GetElementIndex, arg1);
+            return string.Format("Index {0} is either negative or above rows count.", arg1);
         }
 
 
@@ -4858,7 +4853,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataView_AddExternalObject", resourceCulture);
+                return "Cannot add external objects to this list.";
             }
         }
 
@@ -4871,7 +4866,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataView_CanNotClear", resourceCulture);
+                return "Cannot clear this list.";
             }
         }
 
@@ -4884,7 +4879,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataView_InsertExternalObject", resourceCulture);
+                return "Cannot insert external objects to this list.";
             }
         }
 
@@ -4897,7 +4892,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataView_RemoveExternalObject", resourceCulture);
+                return "Cannot remove objects not in the list.";
             }
         }
 
@@ -4910,14 +4905,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataROWView_PropertyNotFound", resourceCulture);
+                return "{0} is neither a DataColumn nor a DataRelation for table {1}.";
             }
         }
 
 
         internal static string FormatDataROWView_PropertyNotFound(object arg1, object arg2)
         {
-            return string.Format(DataROWView_PropertyNotFound, arg1, arg2);
+            return string.Format("{0} is neither a DataColumn nor a DataRelation for table {1}.", arg1, arg2);
         }
 
 
@@ -4928,14 +4923,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Range_Argument", resourceCulture);
+                return "Min ({0}) must be less than or equal to max ({1}) in a Range object.";
             }
         }
 
 
         internal static string FormatRange_Argument(object arg1, object arg2)
         {
-            return string.Format(Range_Argument, arg1, arg2);
+            return string.Format("Min ({0}) must be less than or equal to max ({1}) in a Range object.", arg1, arg2);
         }
 
 
@@ -4946,7 +4941,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Range_NullRange", resourceCulture);
+                return "This is a null range.";
             }
         }
 
@@ -4959,7 +4954,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("RecordManager_MinimumCapacity", resourceCulture);
+                return "MinimumCapacity must be non-negative.";
             }
         }
 
@@ -4972,14 +4967,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlConvert_ConvertFailed", resourceCulture);
+                return "Cannot convert object of type '{0}' to object of type '{1}'.";
             }
         }
 
 
         internal static string FormatSqlConvert_ConvertFailed(object arg1, object arg2)
         {
-            return string.Format(SqlConvert_ConvertFailed, arg1, arg2);
+            return string.Format("Cannot convert object of type '{0}' to object of type '{1}'.", arg1, arg2);
         }
 
 
@@ -4990,7 +4985,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataSet_DefaultDataException", resourceCulture);
+                return "Data Exception.";
             }
         }
 
@@ -5003,7 +4998,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataSet_DefaultConstraintException", resourceCulture);
+                return "Constraint Exception.";
             }
         }
 
@@ -5016,7 +5011,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataSet_DefaultDeletedRowInaccessibleException", resourceCulture);
+                return "Deleted rows inaccessible.";
             }
         }
 
@@ -5029,7 +5024,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataSet_DefaultDuplicateNameException", resourceCulture);
+                return "Duplicate name not allowed.";
             }
         }
 
@@ -5042,7 +5037,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataSet_DefaultInRowChangingEventException", resourceCulture);
+                return "Operation not supported in the RowChanging event.";
             }
         }
 
@@ -5055,7 +5050,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataSet_DefaultInvalidConstraintException", resourceCulture);
+                return "Invalid constraint.";
             }
         }
 
@@ -5068,7 +5063,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataSet_DefaultMissingPrimaryKeyException", resourceCulture);
+                return "Missing primary key.";
             }
         }
 
@@ -5081,7 +5076,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataSet_DefaultNoNullAllowedException", resourceCulture);
+                return "Null not allowed.";
             }
         }
 
@@ -5094,7 +5089,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataSet_DefaultReadOnlyException", resourceCulture);
+                return "Column is marked read only.";
             }
         }
 
@@ -5107,7 +5102,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataSet_DefaultRowNotInTableException", resourceCulture);
+                return "Row not found in table.";
             }
         }
 
@@ -5120,7 +5115,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataSet_DefaultVersionNotFoundException", resourceCulture);
+                return "Version not found.";
             }
         }
 
@@ -5133,7 +5128,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Load_ReadOnlyDataModified", resourceCulture);
+                return "ReadOnly Data is Modified.";
             }
         }
 
@@ -5146,14 +5141,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTableReader_InvalidDataTableReader", resourceCulture);
+                return "DataTableReader is invalid for current DataTable '{0}'.";
             }
         }
 
 
         internal static string FormatDataTableReader_InvalidDataTableReader(object arg1)
         {
-            return string.Format(DataTableReader_InvalidDataTableReader, arg1);
+            return string.Format("DataTableReader is invalid for current DataTable '{0}'.", arg1);
         }
 
 
@@ -5164,14 +5159,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTableReader_SchemaInvalidDataTableReader", resourceCulture);
+                return "Schema of current DataTable '{0}' in DataTableReader has changed, DataTableReader is invalid.";
             }
         }
 
 
         internal static string FormatDataTableReader_SchemaInvalidDataTableReader(object arg1)
         {
-            return string.Format(DataTableReader_SchemaInvalidDataTableReader, arg1);
+            return string.Format("Schema of current DataTable '{0}' in DataTableReader has changed, DataTableReader is invalid.", arg1);
         }
 
 
@@ -5182,7 +5177,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTableReader_CannotCreateDataReaderOnEmptyDataSet", resourceCulture);
+                return "DataTableReader Cannot be created. There is no DataTable in DataSet.";
             }
         }
 
@@ -5195,7 +5190,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTableReader_DataTableReaderArgumentIsEmpty", resourceCulture);
+                return "Cannot create DataTableReader. Argument is Empty.";
             }
         }
 
@@ -5208,7 +5203,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTableReader_ArgumentContainsNullValue", resourceCulture);
+                return "Cannot create DataTableReader. Arguments contain null value.";
             }
         }
 
@@ -5221,7 +5216,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTableReader_InvalidRowInDataTableReader", resourceCulture);
+                return "Current DataRow is either in Deleted or Detached state.";
             }
         }
 
@@ -5234,14 +5229,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataTableReader_DataTableCleared", resourceCulture);
+                return "Current DataTable '{0}' is empty. There is no DataRow in DataTable.";
             }
         }
 
 
         internal static string FormatDataTableReader_DataTableCleared(object arg1)
         {
-            return string.Format(DataTableReader_DataTableCleared, arg1);
+            return string.Format("Current DataTable '{0}' is empty. There is no DataRow in DataTable.", arg1);
         }
 
 
@@ -5252,14 +5247,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("RbTree_InvalidState", resourceCulture);
+                return "DataTable internal index is corrupted: '{0}'.";
             }
         }
 
 
         internal static string FormatRbTree_InvalidState(object arg1)
         {
-            return string.Format(RbTree_InvalidState, arg1);
+            return string.Format("DataTable internal index is corrupted: '{0}'.", arg1);
         }
 
 
@@ -5270,7 +5265,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("RbTree_EnumerationBroken", resourceCulture);
+                return "Collection was modified; enumeration operation might not execute.";
             }
         }
 
@@ -5283,14 +5278,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NamedSimpleType_InvalidDuplicateNamedSimpleTypeDelaration", resourceCulture);
+                return "Simple type '{0}' has already be declared with different '{1}'.";
             }
         }
 
 
         internal static string FormatNamedSimpleType_InvalidDuplicateNamedSimpleTypeDelaration(object arg1, object arg2)
         {
-            return string.Format(NamedSimpleType_InvalidDuplicateNamedSimpleTypeDelaration, arg1, arg2);
+            return string.Format("Simple type '{0}' has already be declared with different '{1}'.", arg1, arg2);
         }
 
 
@@ -5301,7 +5296,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataDom_Foliation", resourceCulture);
+                return "Invalid foliation.";
             }
         }
 
@@ -5314,7 +5309,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataDom_TableNameChange", resourceCulture);
+                return "Cannot change the table name once the associated DataSet is mapped to a loaded XML document.";
             }
         }
 
@@ -5327,7 +5322,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataDom_TableNamespaceChange", resourceCulture);
+                return "Cannot change the table namespace once the associated DataSet is mapped to a loaded XML document.";
             }
         }
 
@@ -5340,7 +5335,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataDom_ColumnNameChange", resourceCulture);
+                return "Cannot change the column name once the associated DataSet is mapped to a loaded XML document.";
             }
         }
 
@@ -5353,7 +5348,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataDom_ColumnNamespaceChange", resourceCulture);
+                return "Cannot change the column namespace once the associated DataSet is mapped to a loaded XML document.";
             }
         }
 
@@ -5366,7 +5361,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataDom_ColumnMappingChange", resourceCulture);
+                return "Cannot change the ColumnMapping property once the associated DataSet is mapped to a loaded XML document.";
             }
         }
 
@@ -5379,7 +5374,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataDom_TableColumnsChange", resourceCulture);
+                return "Cannot add or remove columns from the table once the DataSet is mapped to a loaded XML document.";
             }
         }
 
@@ -5392,7 +5387,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataDom_DataSetTablesChange", resourceCulture);
+                return "Cannot add or remove tables from the DataSet once the DataSet is mapped to a loaded XML document.";
             }
         }
 
@@ -5405,7 +5400,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataDom_DataSetNestedRelationsChange", resourceCulture);
+                return "Cannot add, remove, or change Nested relations from the DataSet once the DataSet is mapped to a loaded XML document.";
             }
         }
 
@@ -5418,7 +5413,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataDom_DataSetNull", resourceCulture);
+                return "The DataSet parameter is invalid. It cannot be null.";
             }
         }
 
@@ -5431,7 +5426,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataDom_DataSetNameChange", resourceCulture);
+                return "Cannot change the DataSet name once the DataSet is mapped to a loaded XML document.";
             }
         }
 
@@ -5444,14 +5439,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataDom_CloneNode", resourceCulture);
+                return "This type of node cannot be cloned: {0}.";
             }
         }
 
 
         internal static string FormatDataDom_CloneNode(object arg1)
         {
-            return string.Format(DataDom_CloneNode, arg1);
+            return string.Format("This type of node cannot be cloned: {0}.", arg1);
         }
 
 
@@ -5462,7 +5457,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataDom_MultipleLoad", resourceCulture);
+                return "Cannot load XmlDataDocument if it already contains data. Please use a new XmlDataDocument.";
             }
         }
 
@@ -5475,7 +5470,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataDom_MultipleDataSet", resourceCulture);
+                return "DataSet can be associated with at most one XmlDataDocument. Cannot associate the DataSet with the current XmlDataDocument because the DataSet is already associated with another XmlDataDocument.";
             }
         }
 
@@ -5488,7 +5483,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataDom_NotSupport_GetElementById", resourceCulture);
+                return "GetElementById() is not supported on DataDocument.";
             }
         }
 
@@ -5501,7 +5496,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataDom_NotSupport_EntRef", resourceCulture);
+                return "Cannot create entity references on DataDocument.";
             }
         }
 
@@ -5514,7 +5509,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataDom_NotSupport_Clear", resourceCulture);
+                return "Clear function on DateSet and DataTable is not supported on XmlDataDocument.";
             }
         }
 
@@ -5527,14 +5522,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_EmptyArray", resourceCulture);
+                return "Expecting non-empty array for '{0}' parameter.";
             }
         }
 
 
         internal static string FormatADP_EmptyArray(object arg1)
         {
-            return string.Format(ADP_EmptyArray, arg1);
+            return string.Format("Expecting non-empty array for '{0}' parameter.", arg1);
         }
 
 
@@ -5545,14 +5540,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SQL_WrongType", resourceCulture);
+                return "Expecting argument of type {1}, but received type {0}.";
             }
         }
 
 
         internal static string FormatSQL_WrongType(object arg1, object arg2)
         {
-            return string.Format(SQL_WrongType, arg1, arg2);
+            return string.Format("Expecting argument of type {1}, but received type {0}.", arg1, arg2);
         }
 
 
@@ -5563,14 +5558,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_InvalidConnectionOptionValue", resourceCulture);
+                return "Invalid value for key '{0}'.";
             }
         }
 
 
         internal static string FormatADP_InvalidConnectionOptionValue(object arg1)
         {
-            return string.Format(ADP_InvalidConnectionOptionValue, arg1);
+            return string.Format("Invalid value for key '{0}'.", arg1);
         }
 
 
@@ -5581,14 +5576,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_KeywordNotSupported", resourceCulture);
+                return "Keyword not supported: '{0}'.";
             }
         }
 
 
         internal static string FormatADP_KeywordNotSupported(object arg1)
         {
-            return string.Format(ADP_KeywordNotSupported, arg1);
+            return string.Format("Keyword not supported: '{0}'.", arg1);
         }
 
 
@@ -5599,14 +5594,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_InternalProviderError", resourceCulture);
+                return "Internal .NET Framework Data Provider error {0}.";
             }
         }
 
 
         internal static string FormatADP_InternalProviderError(object arg1)
         {
-            return string.Format(ADP_InternalProviderError, arg1);
+            return string.Format("Internal .NET Framework Data Provider error {0}.", arg1);
         }
 
 
@@ -5617,7 +5612,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_NoQuoteChange", resourceCulture);
+                return "The QuotePrefix and QuoteSuffix properties cannot be changed once an Insert, Update, or Delete command has been generated.";
             }
         }
 
@@ -5630,7 +5625,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_MissingSourceCommand", resourceCulture);
+                return "The DataAdapter.SelectCommand property needs to be initialized.";
             }
         }
 
@@ -5643,7 +5638,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_MissingSourceCommandConnection", resourceCulture);
+                return "The DataAdapter.SelectCommand.Connection property needs to be initialized;";
             }
         }
 
@@ -5656,14 +5651,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_InvalidMultipartName", resourceCulture);
+                return "{0} '{1}'.";
             }
         }
 
 
         internal static string FormatADP_InvalidMultipartName(object arg1, object arg2)
         {
-            return string.Format(ADP_InvalidMultipartName, arg1, arg2);
+            return string.Format("{0} '{1}'.", arg1, arg2);
         }
 
 
@@ -5674,14 +5669,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_InvalidMultipartNameQuoteUsage", resourceCulture);
+                return "{0} '{1}', incorrect usage of quotes.";
             }
         }
 
 
         internal static string FormatADP_InvalidMultipartNameQuoteUsage(object arg1, object arg2)
         {
-            return string.Format(ADP_InvalidMultipartNameQuoteUsage, arg1, arg2);
+            return string.Format("{0} '{1}', incorrect usage of quotes.", arg1, arg2);
         }
 
 
@@ -5692,14 +5687,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_InvalidMultipartNameToManyParts", resourceCulture);
+                return "{0} '{1}', the current limit of '{2}' is insufficient.";
             }
         }
 
 
         internal static string FormatADP_InvalidMultipartNameToManyParts(object arg1, object arg2, object arg3)
         {
-            return string.Format(ADP_InvalidMultipartNameToManyParts, arg1, arg2, arg3);
+            return string.Format("{0} '{1}', the current limit of '{2}' is insufficient.", arg1, arg2, arg3);
         }
 
 
@@ -5710,14 +5705,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_ColumnSchemaExpression", resourceCulture);
+                return "The column mapping from SourceColumn '{0}' failed because the DataColumn '{1}' is a computed column.";
             }
         }
 
 
         internal static string FormatADP_ColumnSchemaExpression(object arg1, object arg2)
         {
-            return string.Format(ADP_ColumnSchemaExpression, arg1, arg2);
+            return string.Format("The column mapping from SourceColumn '{0}' failed because the DataColumn '{1}' is a computed column.", arg1, arg2);
         }
 
 
@@ -5728,14 +5723,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_ColumnSchemaMismatch", resourceCulture);
+                return "Inconvertible type mismatch between SourceColumn '{0}' of {1} and the DataColumn '{2}' of {3}.";
             }
         }
 
 
         internal static string FormatADP_ColumnSchemaMismatch(object arg1, object arg2, object arg3, object arg4)
         {
-            return string.Format(ADP_ColumnSchemaMismatch, arg1, arg2, arg3, arg4);
+            return string.Format("Inconvertible type mismatch between SourceColumn '{0}' of {1} and the DataColumn '{2}' of {3}.", arg1, arg2, arg3, arg4);
         }
 
 
@@ -5746,14 +5741,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_ColumnSchemaMissing1", resourceCulture);
+                return "Missing the DataColumn '{0}' for the SourceColumn '{2}'.";
             }
         }
 
 
         internal static string FormatADP_ColumnSchemaMissing1(object arg1, object arg2)
         {
-            return string.Format(ADP_ColumnSchemaMissing1, arg1, arg2);
+            return string.Format("Missing the DataColumn '{0}' for the SourceColumn '{2}'.", arg1, arg2);
         }
 
 
@@ -5764,14 +5759,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_ColumnSchemaMissing2", resourceCulture);
+                return "Missing the DataColumn '{0}' in the DataTable '{1}' for the SourceColumn '{2}'.";
             }
         }
 
 
         internal static string FormatADP_ColumnSchemaMissing2(object arg1, object arg2, object arg3)
         {
-            return string.Format(ADP_ColumnSchemaMissing2, arg1, arg2, arg3);
+            return string.Format("Missing the DataColumn '{0}' in the DataTable '{1}' for the SourceColumn '{2}'.", arg1, arg2, arg3);
         }
 
 
@@ -5782,7 +5777,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_InvalidSourceColumn", resourceCulture);
+                return "SourceColumn is required to be a non-empty string.";
             }
         }
 
@@ -5795,14 +5790,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_MissingColumnMapping", resourceCulture);
+                return "Missing SourceColumn mapping for '{0}'.";
             }
         }
 
 
         internal static string FormatADP_MissingColumnMapping(object arg1)
         {
-            return string.Format(ADP_MissingColumnMapping, arg1);
+            return string.Format("Missing SourceColumn mapping for '{0}'.", arg1);
         }
 
 
@@ -5813,14 +5808,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_NotSupportedEnumerationValue", resourceCulture);
+                return "The {0} enumeration value, {1}, is not supported by the {2} method.";
             }
         }
 
 
         internal static string FormatADP_NotSupportedEnumerationValue(object arg1, object arg2, object arg3)
         {
-            return string.Format(ADP_NotSupportedEnumerationValue, arg1, arg2, arg3);
+            return string.Format("The {0} enumeration value, {1}, is not supported by the {2} method.", arg1, arg2, arg3);
         }
 
 
@@ -5831,14 +5826,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_MissingTableSchema", resourceCulture);
+                return "Missing the '{0}' DataTable for the '{1}' SourceTable.";
             }
         }
 
 
         internal static string FormatADP_MissingTableSchema(object arg1, object arg2)
         {
-            return string.Format(ADP_MissingTableSchema, arg1, arg2);
+            return string.Format("Missing the '{0}' DataTable for the '{1}' SourceTable.", arg1, arg2);
         }
 
 
@@ -5849,7 +5844,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_InvalidSourceTable", resourceCulture);
+                return "SourceTable is required to be a non-empty string";
             }
         }
 
@@ -5862,14 +5857,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_MissingTableMapping", resourceCulture);
+                return "Missing SourceTable mapping: '{0}'";
             }
         }
 
 
         internal static string FormatADP_MissingTableMapping(object arg1)
         {
-            return string.Format(ADP_MissingTableMapping, arg1);
+            return string.Format("Missing SourceTable mapping: '{0}'", arg1);
         }
 
 
@@ -5880,7 +5875,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_ConnectionRequired_Insert", resourceCulture);
+                return "Update requires the InsertCommand to have a connection object. The Connection property of the InsertCommand has not been initialized.";
             }
         }
 
@@ -5893,7 +5888,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_ConnectionRequired_Update", resourceCulture);
+                return "Update requires the UpdateCommand to have a connection object. The Connection property of the UpdateCommand has not been initialized.";
             }
         }
 
@@ -5906,7 +5901,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_ConnectionRequired_Delete", resourceCulture);
+                return "Update requires the DeleteCommand to have a connection object. The Connection property of the DeleteCommand has not been initialized.";
             }
         }
 
@@ -5919,7 +5914,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_ConnectionRequired_Batch", resourceCulture);
+                return "Update requires a connection object.  The Connection property has not been initialized.";
             }
         }
 
@@ -5932,7 +5927,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_ConnectionRequired_Clone", resourceCulture);
+                return "Update requires the command clone to have a connection object. The Connection property of the command clone has not been initialized.";
             }
         }
 
@@ -5945,14 +5940,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_OpenConnectionRequired_Insert", resourceCulture);
+                return "Update requires the {0}Command to have an open connection object. {1}";
             }
         }
 
 
         internal static string FormatADP_OpenConnectionRequired_Insert(object arg1, object arg2)
         {
-            return string.Format(ADP_OpenConnectionRequired_Insert, arg1, arg2);
+            return string.Format("Update requires the {0}Command to have an open connection object. {1}", arg1, arg2);
         }
 
 
@@ -5963,14 +5958,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_OpenConnectionRequired_Update", resourceCulture);
+                return "Update requires the {0}Command to have an open connection object. {1}";
             }
         }
 
 
         internal static string FormatADP_OpenConnectionRequired_Update(object arg1, object arg2)
         {
-            return string.Format(ADP_OpenConnectionRequired_Update, arg1, arg2);
+            return string.Format("Update requires the {0}Command to have an open connection object. {1}", arg1, arg2);
         }
 
 
@@ -5981,14 +5976,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_OpenConnectionRequired_Delete", resourceCulture);
+                return "Update requires the {0}Command to have an open connection object. {1}";
             }
         }
 
 
         internal static string FormatADP_OpenConnectionRequired_Delete(object arg1, object arg2)
         {
-            return string.Format(ADP_OpenConnectionRequired_Delete, arg1, arg2);
+            return string.Format("Update requires the {0}Command to have an open connection object. {1}", arg1, arg2);
         }
 
 
@@ -5999,14 +5994,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_OpenConnectionRequired_Clone", resourceCulture);
+                return "Update requires the updating command to have an open connection object. {1}";
             }
         }
 
 
         internal static string FormatADP_OpenConnectionRequired_Clone(object arg1)
         {
-            return string.Format(ADP_OpenConnectionRequired_Clone, arg1);
+            return string.Format("Update requires the updating command to have an open connection object. {1}", arg1);
         }
 
 
@@ -6017,14 +6012,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_MissingSelectCommand", resourceCulture);
+                return "The SelectCommand property has not been initialized before calling '{0}'.";
             }
         }
 
 
         internal static string FormatADP_MissingSelectCommand(object arg1)
         {
-            return string.Format(ADP_MissingSelectCommand, arg1);
+            return string.Format("The SelectCommand property has not been initialized before calling '{0}'.", arg1);
         }
 
 
@@ -6035,14 +6030,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_UnwantedStatementType", resourceCulture);
+                return "The StatementType {0} is not expected here.";
             }
         }
 
 
         internal static string FormatADP_UnwantedStatementType(object arg1)
         {
-            return string.Format(ADP_UnwantedStatementType, arg1);
+            return string.Format("The StatementType {0} is not expected here.", arg1);
         }
 
 
@@ -6053,7 +6048,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_FillSchemaRequiresSourceTableName", resourceCulture);
+                return "FillSchema: expected a non-empty string for the SourceTable name.";
             }
         }
 
@@ -6066,7 +6061,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_FillRequiresSourceTableName", resourceCulture);
+                return "Fill: expected a non-empty string for the SourceTable name.";
             }
         }
 
@@ -6079,7 +6074,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_FillChapterAutoIncrement", resourceCulture);
+                return "Hierarchical chapter columns must map to an AutoIncrement DataColumn.";
             }
         }
 
@@ -6092,14 +6087,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_MissingDataReaderFieldType", resourceCulture);
+                return "DataReader.GetFieldType({0}) returned null.";
             }
         }
 
 
         internal static string FormatADP_MissingDataReaderFieldType(object arg1)
         {
-            return string.Format(ADP_MissingDataReaderFieldType, arg1);
+            return string.Format("DataReader.GetFieldType({0}) returned null.", arg1);
         }
 
 
@@ -6110,7 +6105,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_OnlyOneTableForStartRecordOrMaxRecords", resourceCulture);
+                return "Only specify one item in the dataTables array when using non-zero values for startRecords or maxRecords.";
             }
         }
 
@@ -6123,33 +6118,28 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_UpdateRequiresSourceTable", resourceCulture);
+                return "Update unable to find TableMapping['{0}'] or DataTable '{0}'.";
             }
         }
 
 
         internal static string FormatADP_UpdateRequiresSourceTable(object arg1, object arg2)
         {
-            return string.Format(ADP_UpdateRequiresSourceTable, arg1, arg2);
+            return string.Format("Update unable to find TableMapping['{0}'] or DataTable '{0}'.", arg1, arg2);
         }
 
 
         /// <summary>
-        /// Update: expected a non-empty SourceTable name. Table: '{0}'.
+        /// Update: expected a non-empty SourceTable name.
         /// </summary>
         internal static string ADP_UpdateRequiresSourceTableName
         {
             get
             {
-                return ResourceManager.GetString("ADP_UpdateRequiresSourceTableName", resourceCulture);
+                return "Update: expected a non-empty SourceTable name.";
             }
         }
 
-
-        internal static string FormatADP_UpdateRequiresSourceTableName(object arg1)
-        {
-            return string.Format(ADP_UpdateRequiresSourceTableName, arg1);
-        }
 
 
         /// <summary>
@@ -6159,7 +6149,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_UpdateRequiresCommandClone", resourceCulture);
+                return "Update requires the command clone to be valid.";
             }
         }
 
@@ -6172,7 +6162,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_UpdateRequiresCommandSelect", resourceCulture);
+                return "Auto SQL generation during Update requires a valid SelectCommand.";
             }
         }
 
@@ -6185,7 +6175,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_UpdateRequiresCommandInsert", resourceCulture);
+                return "Update requires a valid InsertCommand when passed DataRow collection with new rows.";
             }
         }
 
@@ -6198,7 +6188,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_UpdateRequiresCommandUpdate", resourceCulture);
+                return "Update requires a valid UpdateCommand when passed DataRow collection with modified rows.";
             }
         }
 
@@ -6211,7 +6201,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_UpdateRequiresCommandDelete", resourceCulture);
+                return "Update requires a valid DeleteCommand when passed DataRow collection with deleted rows.";
             }
         }
 
@@ -6224,14 +6214,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_UpdateMismatchRowTable", resourceCulture);
+                return "DataRow[{0}] is from a different DataTable than DataRow[0].";
             }
         }
 
 
         internal static string FormatADP_UpdateMismatchRowTable(object arg1)
         {
-            return string.Format(ADP_UpdateMismatchRowTable, arg1);
+            return string.Format("DataRow[{0}] is from a different DataTable than DataRow[0].", arg1);
         }
 
 
@@ -6242,7 +6232,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_RowUpdatedErrors", resourceCulture);
+                return "RowUpdatedEvent: Errors occurred; no additional is information available.";
             }
         }
 
@@ -6255,7 +6245,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_RowUpdatingErrors", resourceCulture);
+                return "RowUpdatingEvent: Errors occurred; no additional is information available.";
             }
         }
 
@@ -6268,7 +6258,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_ResultsNotAllowedDuringBatch", resourceCulture);
+                return "When batching, the command's UpdatedRowSource property value of UpdateRowSource.FirstReturnedRecord or UpdateRowSource.Both is invalid.";
             }
         }
 
@@ -6281,14 +6271,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_UpdateConcurrencyViolation_Update", resourceCulture);
+                return "Concurrency violation: the UpdateCommand affected {0} of the expected {1} records.";
             }
         }
 
 
         internal static string FormatADP_UpdateConcurrencyViolation_Update(object arg1, object arg2)
         {
-            return string.Format(ADP_UpdateConcurrencyViolation_Update, arg1, arg2);
+            return string.Format("Concurrency violation: the UpdateCommand affected {0} of the expected {1} records.", arg1, arg2);
         }
 
 
@@ -6299,14 +6289,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_UpdateConcurrencyViolation_Delete", resourceCulture);
+                return "Concurrency violation: the DeleteCommand affected {0} of the expected {1} records.";
             }
         }
 
 
         internal static string FormatADP_UpdateConcurrencyViolation_Delete(object arg1, object arg2)
         {
-            return string.Format(ADP_UpdateConcurrencyViolation_Delete, arg1, arg2);
+            return string.Format("Concurrency violation: the DeleteCommand affected {0} of the expected {1} records.", arg1, arg2);
         }
 
 
@@ -6317,14 +6307,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_UpdateConcurrencyViolation_Batch", resourceCulture);
+                return "Concurrency violation: the batched command affected {0} of the expected {1} records.";
             }
         }
 
 
         internal static string FormatADP_UpdateConcurrencyViolation_Batch(object arg1, object arg2)
         {
-            return string.Format(ADP_UpdateConcurrencyViolation_Batch, arg1, arg2);
+            return string.Format("Concurrency violation: the batched command affected {0} of the expected {1} records.", arg1, arg2);
         }
 
 
@@ -6335,14 +6325,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_InvalidSourceBufferIndex", resourceCulture);
+                return "Invalid source buffer (size of {0}) offset: {1}";
             }
         }
 
 
         internal static string FormatADP_InvalidSourceBufferIndex(object arg1, object arg2)
         {
-            return string.Format(ADP_InvalidSourceBufferIndex, arg1, arg2);
+            return string.Format("Invalid source buffer (size of {0}) offset: {1}", arg1, arg2);
         }
 
 
@@ -6353,14 +6343,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_InvalidDestinationBufferIndex", resourceCulture);
+                return "Invalid destination buffer (size of {0}) offset: {1}";
             }
         }
 
 
         internal static string FormatADP_InvalidDestinationBufferIndex(object arg1, object arg2)
         {
-            return string.Format(ADP_InvalidDestinationBufferIndex, arg1, arg2);
+            return string.Format("Invalid destination buffer (size of {0}) offset: {1}", arg1, arg2);
         }
 
 
@@ -6371,14 +6361,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_StreamClosed", resourceCulture);
+                return "Invalid attempt to {0} when stream is closed.";
             }
         }
 
 
         internal static string FormatADP_StreamClosed(object arg1)
         {
-            return string.Format(ADP_StreamClosed, arg1);
+            return string.Format("Invalid attempt to {0} when stream is closed.", arg1);
         }
 
 
@@ -6389,7 +6379,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_InvalidSeekOrigin", resourceCulture);
+                return "Specified SeekOrigin value is invalid.";
             }
         }
 
@@ -6402,7 +6392,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_DynamicSQLJoinUnsupported", resourceCulture);
+                return "Dynamic SQL generation is not supported against multiple base tables.";
             }
         }
 
@@ -6415,7 +6405,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_DynamicSQLNoTableInfo", resourceCulture);
+                return "Dynamic SQL generation is not supported against a SelectCommand that does not return any base table information.";
             }
         }
 
@@ -6428,7 +6418,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_DynamicSQLNoKeyInfoDelete", resourceCulture);
+                return "Dynamic SQL generation for the DeleteCommand is not supported against a SelectCommand that does not return any key column information.";
             }
         }
 
@@ -6441,7 +6431,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_DynamicSQLNoKeyInfoUpdate", resourceCulture);
+                return "Dynamic SQL generation for the UpdateCommand is not supported against a SelectCommand that does not return any key column information.";
             }
         }
 
@@ -6454,7 +6444,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_DynamicSQLNoKeyInfoRowVersionDelete", resourceCulture);
+                return "Dynamic SQL generation for the DeleteCommand is not supported against a SelectCommand that does not contain a row version column.";
             }
         }
 
@@ -6467,7 +6457,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_DynamicSQLNoKeyInfoRowVersionUpdate", resourceCulture);
+                return "Dynamic SQL generation for the UpdateCommand is not supported against a SelectCommand that does not contain a row version column.";
             }
         }
 
@@ -6480,14 +6470,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_DynamicSQLNestedQuote", resourceCulture);
+                return "Dynamic SQL generation not supported against table names '{0}' that contain the QuotePrefix or QuoteSuffix character '{1}'.";
             }
         }
 
 
         internal static string FormatADP_DynamicSQLNestedQuote(object arg1, object arg2)
         {
-            return string.Format(ADP_DynamicSQLNestedQuote, arg1, arg2);
+            return string.Format("Dynamic SQL generation not supported against table names '{0}' that contain the QuotePrefix or QuoteSuffix character '{1}'.", arg1, arg2);
         }
 
 
@@ -6498,14 +6488,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SQL_InvalidBufferSizeOrIndex", resourceCulture);
+                return "Buffer offset '{1}' plus the bytes available '{0}' is greater than the length of the passed in buffer.";
             }
         }
 
 
         internal static string FormatSQL_InvalidBufferSizeOrIndex(object arg1, object arg2)
         {
-            return string.Format(SQL_InvalidBufferSizeOrIndex, arg1, arg2);
+            return string.Format("Buffer offset '{1}' plus the bytes available '{0}' is greater than the length of the passed in buffer.", arg1, arg2);
         }
 
 
@@ -6516,14 +6506,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SQL_InvalidDataLength", resourceCulture);
+                return "Data length '{0}' is less than 0.";
             }
         }
 
 
         internal static string FormatSQL_InvalidDataLength(object arg1)
         {
-            return string.Format(SQL_InvalidDataLength, arg1);
+            return string.Format("Data length '{0}' is less than 0.", arg1);
         }
 
 
@@ -6534,7 +6524,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlMisc_NullString", resourceCulture);
+                return "Null";
             }
         }
 
@@ -6547,7 +6537,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlMisc_MessageString", resourceCulture);
+                return "Message";
             }
         }
 
@@ -6560,7 +6550,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlMisc_ArithOverflowMessage", resourceCulture);
+                return "Arithmetic Overflow.";
             }
         }
 
@@ -6573,7 +6563,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlMisc_DivideByZeroMessage", resourceCulture);
+                return "Divide by zero error encountered.";
             }
         }
 
@@ -6586,7 +6576,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlMisc_NullValueMessage", resourceCulture);
+                return "Data is Null. This method or property cannot be called on Null values.";
             }
         }
 
@@ -6599,7 +6589,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlMisc_TruncationMessage", resourceCulture);
+                return "Numeric arithmetic causes truncation.";
             }
         }
 
@@ -6612,7 +6602,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlMisc_DateTimeOverflowMessage", resourceCulture);
+                return "SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM.";
             }
         }
 
@@ -6625,7 +6615,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlMisc_ConcatDiffCollationMessage", resourceCulture);
+                return "Two strings to be concatenated have different collation.";
             }
         }
 
@@ -6638,7 +6628,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlMisc_CompareDiffCollationMessage", resourceCulture);
+                return "Two strings to be compared have different collation.";
             }
         }
 
@@ -6651,7 +6641,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlMisc_InvalidFlagMessage", resourceCulture);
+                return "Invalid flag value.";
             }
         }
 
@@ -6664,7 +6654,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlMisc_NumeToDecOverflowMessage", resourceCulture);
+                return "Conversion from SqlDecimal to Decimal overflows.";
             }
         }
 
@@ -6677,7 +6667,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlMisc_ConversionOverflowMessage", resourceCulture);
+                return "Conversion overflows.";
             }
         }
 
@@ -6690,7 +6680,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlMisc_InvalidDateTimeMessage", resourceCulture);
+                return "Invalid SqlDateTime.";
             }
         }
 
@@ -6703,7 +6693,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlMisc_TimeZoneSpecifiedMessage", resourceCulture);
+                return "A time zone was specified. SqlDateTime does not support time zones.";
             }
         }
 
@@ -6716,7 +6706,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlMisc_InvalidArraySizeMessage", resourceCulture);
+                return "Invalid array size.";
             }
         }
 
@@ -6729,7 +6719,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlMisc_InvalidPrecScaleMessage", resourceCulture);
+                return "Invalid numeric precision/scale.";
             }
         }
 
@@ -6742,7 +6732,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlMisc_FormatMessage", resourceCulture);
+                return "The input wasn't in a correct format.";
             }
         }
 
@@ -6755,7 +6745,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlMisc_SqlTypeMessage", resourceCulture);
+                return "SqlType error.";
             }
         }
 
@@ -6768,7 +6758,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlMisc_NoBufferMessage", resourceCulture);
+                return "There is no buffer. Read or write operation failed.";
             }
         }
 
@@ -6781,7 +6771,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlMisc_BufferInsufficientMessage", resourceCulture);
+                return "The buffer is insufficient. Read or write operation failed.";
             }
         }
 
@@ -6794,7 +6784,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlMisc_WriteNonZeroOffsetOnNullMessage", resourceCulture);
+                return "Cannot write to non-zero offset, because current value is Null.";
             }
         }
 
@@ -6807,7 +6797,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlMisc_WriteOffsetLargerThanLenMessage", resourceCulture);
+                return "Cannot write from an offset that is larger than current length. It would leave uninitialized data in the buffer.";
             }
         }
 
@@ -6820,7 +6810,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlMisc_NotFilledMessage", resourceCulture);
+                return "SQL Type has not been loaded with data.";
             }
         }
 
@@ -6833,7 +6823,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlMisc_AlreadyFilledMessage", resourceCulture);
+                return "SQL Type has already been loaded with data.";
             }
         }
 
@@ -6846,7 +6836,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlMisc_ClosedXmlReaderMessage", resourceCulture);
+                return "Invalid attempt to access a closed XmlReader.";
             }
         }
 
@@ -6859,14 +6849,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlMisc_InvalidOpStreamNonWritable", resourceCulture);
+                return "Invalid attempt to call {0} when the stream non-writable.";
             }
         }
 
 
         internal static string FormatSqlMisc_InvalidOpStreamNonWritable(object arg1)
         {
-            return string.Format(SqlMisc_InvalidOpStreamNonWritable, arg1);
+            return string.Format("Invalid attempt to call {0} when the stream non-writable.", arg1);
         }
 
 
@@ -6877,14 +6867,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlMisc_InvalidOpStreamNonReadable", resourceCulture);
+                return "Invalid attempt to call {0} when the stream non-readable.";
             }
         }
 
 
         internal static string FormatSqlMisc_InvalidOpStreamNonReadable(object arg1)
         {
-            return string.Format(SqlMisc_InvalidOpStreamNonReadable, arg1);
+            return string.Format("Invalid attempt to call {0} when the stream non-readable.", arg1);
         }
 
 
@@ -6895,14 +6885,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("SqlMisc_InvalidOpStreamNonSeekable", resourceCulture);
+                return "Invalid attempt to call {0} when the stream is non-seekable.";
             }
         }
 
 
         internal static string FormatSqlMisc_InvalidOpStreamNonSeekable(object arg1)
         {
-            return string.Format(SqlMisc_InvalidOpStreamNonSeekable, arg1);
+            return string.Format("Invalid attempt to call {0} when the stream is non-seekable.", arg1);
         }
 
 
@@ -6913,7 +6903,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_DBConcurrencyExceptionMessage", resourceCulture);
+                return "DB concurrency violation.";
             }
         }
 
@@ -6926,14 +6916,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_InvalidMaxRecords", resourceCulture);
+                return "The MaxRecords value of {0} is invalid; the value must be >= 0.";
             }
         }
 
 
         internal static string FormatADP_InvalidMaxRecords(object arg1)
         {
-            return string.Format(ADP_InvalidMaxRecords, arg1);
+            return string.Format("The MaxRecords value of {0} is invalid; the value must be >= 0.", arg1);
         }
 
 
@@ -6944,14 +6934,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_CollectionIndexInt32", resourceCulture);
+                return "Invalid index {0} for this {1} with Count={2}.";
             }
         }
 
 
         internal static string FormatADP_CollectionIndexInt32(object arg1, object arg2, object arg3)
         {
-            return string.Format(ADP_CollectionIndexInt32, arg1, arg2, arg3);
+            return string.Format("Invalid index {0} for this {1} with Count={2}.", arg1, arg2, arg3);
         }
 
 
@@ -6962,14 +6952,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_MissingTableMappingDestination", resourceCulture);
+                return "Missing TableMapping when TableMapping.DataSetTable='{0}'.";
             }
         }
 
 
         internal static string FormatADP_MissingTableMappingDestination(object arg1)
         {
-            return string.Format(ADP_MissingTableMappingDestination, arg1);
+            return string.Format("Missing TableMapping when TableMapping.DataSetTable='{0}'.", arg1);
         }
 
 
@@ -6980,14 +6970,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_InvalidStartRecord", resourceCulture);
+                return "The StartRecord value of {0} is invalid; the value must be >= 0.";
             }
         }
 
 
         internal static string FormatADP_InvalidStartRecord(object arg1)
         {
-            return string.Format(ADP_InvalidStartRecord, arg1);
+            return string.Format("The StartRecord value of {0} is invalid; the value must be >= 0.", arg1);
         }
 
 
@@ -6998,7 +6988,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataDom_EnforceConstraintsShouldBeOff", resourceCulture);
+                return "Please set DataSet.EnforceConstraints == false before trying to edit XmlDataDocument using XML operations.";
             }
         }
 
@@ -7011,14 +7001,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataColumns_RemoveExpression", resourceCulture);
+                return "Cannot remove this column, because it is part of an expression: {0} = {1}.";
             }
         }
 
 
         internal static string FormatDataColumns_RemoveExpression(object arg1, object arg2)
         {
-            return string.Format(DataColumns_RemoveExpression, arg1, arg2);
+            return string.Format("Cannot remove this column, because it is part of an expression: {0} = {1}.", arg1, arg2);
         }
 
 
@@ -7029,14 +7019,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataRow_RowInsertTwice", resourceCulture);
+                return "The rowOrder value={0} has been found twice for table named '{1}'.";
             }
         }
 
 
         internal static string FormatDataRow_RowInsertTwice(object arg1, object arg2)
         {
-            return string.Format(DataRow_RowInsertTwice, arg1, arg2);
+            return string.Format("The rowOrder value={0} has been found twice for table named '{1}'.", arg1, arg2);
         }
 
 
@@ -7047,14 +7037,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Xml_ElementTypeNotFound", resourceCulture);
+                return "Cannot find ElementType name='{0}'.";
             }
         }
 
 
         internal static string FormatXml_ElementTypeNotFound(object arg1)
         {
-            return string.Format(Xml_ElementTypeNotFound, arg1);
+            return string.Format("Cannot find ElementType name='{0}'.", arg1);
         }
 
 
@@ -7065,14 +7055,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_DbProviderFactories_InvariantNameNotFound", resourceCulture);
+                return "The specified invariant name '{0}' wasn't found in the list of registered .NET Data Providers.";
             }
         }
 
 
         internal static string FormatADP_DbProviderFactories_InvariantNameNotFound(object arg1)
         {
-            return string.Format(ADP_DbProviderFactories_InvariantNameNotFound, arg1);
+            return string.Format("The specified invariant name '{0}' wasn't found in the list of registered .NET Data Providers.", arg1);
         }
 
 
@@ -7083,7 +7073,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_DbProviderFactories_NoInstance", resourceCulture);
+                return "The requested .NET Data Provider's implementation does not have an Instance field of a System.Data.Common.DbProviderFactory derived type.";
             }
         }
 
@@ -7096,14 +7086,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_DbProviderFactories_FactoryNotLoadable", resourceCulture);
+                return "The registered .NET Data Provider's DbProviderFactory implementation type '{0}' couldn't be loaded.";
             }
         }
 
 
         internal static string FormatADP_DbProviderFactories_FactoryNotLoadable(object arg1)
         {
-            return string.Format(ADP_DbProviderFactories_FactoryNotLoadable, arg1);
+            return string.Format("The registered .NET Data Provider's DbProviderFactory implementation type '{0}' couldn't be loaded.", arg1);
         }
 
 
@@ -7114,7 +7104,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_DbProviderFactories_NoAssemblyQualifiedName", resourceCulture);
+                return "The missing .NET Data Provider's assembly qualified name is required.";
             }
         }
 
@@ -7127,14 +7117,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ADP_DbProviderFactories_NotAFactoryType", resourceCulture);
+                return "The type '{0}' doesn't inherit from DbProviderFactory.";
             }
         }
 
 
         internal static string FormatADP_DbProviderFactories_NotAFactoryType(object arg1)
         {
-            return string.Format(ADP_DbProviderFactories_NotAFactoryType, arg1);
+            return string.Format("The type '{0}' doesn't inherit from DbProviderFactory.", arg1);
         }
 
 
@@ -7145,14 +7135,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataSetLinq_InvalidEnumerationValue", resourceCulture);
+                return "The {0} enumeration value, {1}, is not valid.";
             }
         }
 
 
         internal static string FormatDataSetLinq_InvalidEnumerationValue(object arg1, object arg2)
         {
-            return string.Format(DataSetLinq_InvalidEnumerationValue, arg1, arg2);
+            return string.Format("The {0} enumeration value, {1}, is not valid.", arg1, arg2);
         }
 
 
@@ -7163,14 +7153,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LDV_InvalidNumOfKeys", resourceCulture);
+                return "Must provide '{0}' keys to find.";
             }
         }
 
 
         internal static string FormatLDV_InvalidNumOfKeys(object arg1)
         {
-            return string.Format(LDV_InvalidNumOfKeys, arg1);
+            return string.Format("Must provide '{0}' keys to find.", arg1);
         }
 
 
@@ -7181,7 +7171,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("LDVRowStateError", resourceCulture);
+                return "DataViewRowState must be DataViewRowState.CurrentRows.";
             }
         }
 
@@ -7194,7 +7184,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("ToLDVUnsupported", resourceCulture);
+                return "Can not create DataView after using projection.";
             }
         }
 
@@ -7207,7 +7197,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataSetLinq_EmptyDataRowSource", resourceCulture);
+                return "The source contains no DataRows.";
             }
         }
 
@@ -7220,7 +7210,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataSetLinq_NullDataRow", resourceCulture);
+                return "The source contains a DataRow reference that is null.";
             }
         }
 
@@ -7233,7 +7223,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataSetLinq_CannotLoadDetachedRow", resourceCulture);
+                return "The source contains a detached DataRow that cannot be copied to the DataTable.";
             }
         }
 
@@ -7246,7 +7236,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataSetLinq_CannotCompareDeletedRow", resourceCulture);
+                return "The DataRowComparer does not work with DataRows that have been deleted since it only compares current values.";
             }
         }
 
@@ -7259,7 +7249,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataSetLinq_CannotLoadDeletedRow", resourceCulture);
+                return "The source contains a deleted DataRow that cannot be copied to the DataTable.";
             }
         }
 
@@ -7272,14 +7262,14 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataSetLinq_NonNullableCast", resourceCulture);
+                return "Cannot cast DBNull. Value to type '{0}'. Please use a nullable type.";
             }
         }
 
 
         internal static string FormatDataSetLinq_NonNullableCast(object arg1)
         {
-            return string.Format(DataSetLinq_NonNullableCast, arg1);
+            return string.Format("Cannot cast DBNull. Value to type '{0}'. Please use a nullable type.", arg1);
         }
 
 
@@ -7290,7 +7280,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("DataSet_XmlSerializationUnsupported", resourceCulture);
+                return "DataSet implementation of IXmlSerializable is not trim compatible and has been disabled in the app configuration.";
             }
         }
 

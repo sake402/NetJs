@@ -1,5 +1,11 @@
 ﻿namespace NetJs
 {
+    public enum InterfaceMixinMode
+    {
+        None,
+        ProxyLookup,
+        MixinMethod
+    }
     [External]
     public static class Constants
     {
@@ -12,6 +18,10 @@
         [InlineConst]
         public const bool StructFieldAlwaysLayout = true;
         [InlineConst]
+        public const bool CompatibleExtensionPropertyGetSetMethod = true;
+        [InlineConst]
+        public const InterfaceMixinMode UseInterfaceMixin = InterfaceMixinMode.None;
+        [InlineConst]
         public const string ProjectName = "NetJs";
         [InlineConst]
         public const string GlobalName = "$";
@@ -20,7 +30,7 @@
         [InlineConst]
         public const string AssemblyRegistryName = "$asm";
         [InlineConst]
-        public const string AssemblyClassName = "$cls";
+        public const string AssemblyDefineClassName = "$cls";
         [InlineConst]
         public const string AssemblyNestedClassName = "$ncls";
         [InlineConst]
@@ -47,12 +57,10 @@
         public const string AppDomainInitialize = "$init";
         [InlineConst]
         public const string RunModuleInitializersName = "$minit";
-        [InlineConst]
-        public const string AssemblyMetadataRegistryName = "$meta";
+        //[InlineConst]
+        //public const string AssemblyMetadataRegistryName = "$meta";
         [InlineConst]
         public const string NamespaceRegistryName = "$ns";
-        [InlineConst]
-        public const string ObjectTypeName = "$type";
         [InlineConst]
         public const string CastName = "$cast";
         [InlineConst]
@@ -128,9 +136,31 @@
         [InlineConst]
         public const string StaticStructFieldsLayoutName = "$sfields";
         [InlineConst]
+        public const string PrototypeTypeName = "$type";
+        [InlineConst]
+        public const string PrototypeAssemblyName = "$asmb";
+        [InlineConst]
         public const string PrototypeFullName = "$fullName";
         [InlineConst]
-        public const string PrototypeMetadata = "$metadata";
+        public const string PrototypeMetadataFullName = "$mfullName";
+        [InlineConst]
+        public const string PrototypeTypeFlags = "$f";
+        [InlineConst]
+        public const string PrototypeKind = "$k";
+        [InlineConst]
+        public const string PrototypeKnownType = "$t";
+        [InlineConst]
+        public const string PrototypeStructSize = "$z";
+        [InlineConst]
+        public const string PrototypeBaseTypeHandle = "$b";
+        [InlineConst]
+        public const string PrototypeTypeHandle = "$h";
+        [InlineConst]
+        public const string PrototypeGenericArgumentCount = "$g";
+        [InlineConst]
+        public const string PrototypeMetadata = "$md";
+        [InlineConst]
+        public const string PrototypeInterfaces = "$i";
         [InlineConst]
         public const string NumericShift = "$nsh";
         [InlineConst]
@@ -140,8 +170,24 @@
         [InlineConst]
         public const string NativeDelagateFunction = "$nativeFunction";
         [InlineConst]
+        public const string FileScopedTypeNameMangling = "$file";
+        [InlineConst]
         public const string Clone = "Clone";
         [InlineConst]
+        public const string IsProxy = "$isProxy";
+        [InlineConst]
+        public const string ProxyType = "$type";
+        [InlineConst]
+        public const string IntegerChecked = "$checked";
+        [InlineConst]
         public const string OutputFolderName = "wwwroot";
+        [InlineConst]
+        public const string ObjectGetField = "$getField";
+        [InlineConst]
+        public const string ObjectSetField = "$setField";
+        [InlineConst]
+        public const string ObjectGetStaticField = "$getSField";
+        [InlineConst]
+        public const string ObjectSetStaticField = "$setSField";
     }
 }

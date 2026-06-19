@@ -9,7 +9,7 @@ namespace System
         public static unsafe void MemmoveImpl<T>(ref T destination, ref T source, nuint elementCount)
         {
             var sizeOfT = sizeof(T);
-            if (NetJs.Script.IsDefined(sizeOfT) && typeof(T).As<RuntimeType>()._prototype!.Metadata!.KnownType.IsNumeric())
+            if (NetJs.Script.IsDefined(sizeOfT) && typeof(T).As<RuntimeType>()._prototype.KnownType.IsNumeric())
             {
                 SpanHelpers.Memmove(
                         ref Unsafe.As<T, byte>(ref destination),

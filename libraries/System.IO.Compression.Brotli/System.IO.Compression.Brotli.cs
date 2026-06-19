@@ -10,7 +10,6 @@ namespace System.IO.Compression
     {
         public BrotliCompressionOptions() { }
         public int Quality { get { throw new System.PlatformNotSupportedException(); } set { throw new System.PlatformNotSupportedException(); } }
-        public int WindowLog { get { throw new System.PlatformNotSupportedException(); } set { throw new System.PlatformNotSupportedException(); } }
     }
     public partial struct BrotliDecoder : System.IDisposable
     {

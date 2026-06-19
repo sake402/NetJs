@@ -152,9 +152,9 @@ namespace System.Runtime.InteropServices
         {
             if (!type.IsValueType)
                 return IntPtr.Size;
-            if (NetJs.Script.IsDefined(type._model.As<TypeModel>().Size))
+            if (NetJs.Script.IsDefined(type._prototype.Size))
             {
-                return type._model.As<TypeModel>().Size!.Value;
+                return type._prototype.Size;
             }
             int sz = 0;
             var fields = type.GetFields(BindingFlags.Instance);

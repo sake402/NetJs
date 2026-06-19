@@ -6,9 +6,9 @@ internal static partial class Interop
 {
     internal static unsafe partial class Sys
     {
-        internal static unsafe partial byte* GetEnv(string name)
+        internal static unsafe partial IntPtr GetEnv(string name)
         {
-            return null;
+            return IntPtr.Zero;
         }
 
 

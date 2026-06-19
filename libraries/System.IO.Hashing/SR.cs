@@ -24,8 +24,8 @@ namespace System
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal static partial class SR
     {
-        
-        private static global::System.Resources.ResourceManager resourceMan;
+
+        private static global::System.Resources.ResourceManager s_resourceManager;
 
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -37,12 +37,12 @@ namespace System
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
+                if (object.ReferenceEquals(s_resourceManager, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("System.IO.Hashing", typeof(SR).Assembly);
-                    resourceMan = temp;
+                    s_resourceManager = temp;
                 }
-                return resourceMan;
+                return s_resourceManager;
             }
         }
 
@@ -70,7 +70,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("Argument_DestinationTooShort", resourceCulture);
+                return "Destination is too short.";
             }
         }
 
@@ -83,7 +83,7 @@ namespace System
         {
             get
             {
-                return ResourceManager.GetString("NotSupported_GetHashCode", resourceCulture);
+                return "The GetHashCode method is not supported on this object. Use GetCurrentHash or GetHashAndReset to retrieve the hash code computed by this object.";
             }
         }
 

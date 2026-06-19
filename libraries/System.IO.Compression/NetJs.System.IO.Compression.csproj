@@ -52,7 +52,6 @@
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Compression\src\System\IO\Compression\PositionPreservingWriteOnlyStreamWrapper.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Compression\src\System\IO\Compression\ZLibCompressionOptions.cs" />
     <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Compression\src\System\IO\Compression\ZLibStream.cs" />
-    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Compression\src\System\IO\Compression\ZipCompressionMethod.cs" />
     <Compile Include="$(CommonPath)System\Obsoletions.cs" Link="Common\System\Obsoletions.cs" />
   </ItemGroup>
   <!-- Windows specific files -->
@@ -68,24 +67,6 @@
     <Compile Include="$(CommonPath)Interop\Unix\Interop.Libraries.cs" Link="Common\Interop\Unix\Interop.Libraries.cs" />
     <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.PathConf.cs" Link="Common\Interop\Unix\System.Native\Interop.PathConf.cs" />
     <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.Stat.cs" Link="Common\Interop\Unix\System.Native\Interop.Stat.cs" />
-  </ItemGroup>
-  <!-- Zstandard files (not supported on browser/wasi) -->
-  <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'windows' or '$(TargetPlatformIdentifier)' == 'unix'">
-    <Compile Include="$(CommonPath)Interop\Interop.Zstd.cs" />
-    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Compression\src\System\IO\Compression\Zstandard\ZstandardCompressionOptions.cs" />
-    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Compression\src\System\IO\Compression\Zstandard\ZstandardDecoder.cs" />
-    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Compression\src\System\IO\Compression\Zstandard\ZstandardDictionary.cs" />
-    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Compression\src\System\IO\Compression\Zstandard\ZstandardEncoder.cs" />
-    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Compression\src\System\IO\Compression\Zstandard\ZstandardStream.Compress.cs" />
-    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Compression\src\System\IO\Compression\Zstandard\ZstandardStream.Decompress.cs" />
-    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Compression\src\System\IO\Compression\Zstandard\ZstandardStream.cs" />
-    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Compression\src\System\IO\Compression\Zstandard\ZstandardUtils.cs" />
-    <Compile Include="$(CommonPath)Microsoft\Win32\SafeHandles\SafeZstdHandle.cs" Link="Common\Microsoft\Win32\SafeHandles\SafeZstdHandle.cs" />
-    <Compile Include="$(CommonPath)System\Net\ArrayBuffer.cs" Link="Common\System\Net\ArrayBuffer.cs" />
-  </ItemGroup>
-  <!-- Zstandard PlatformNotSupported stubs for browser/wasi -->
-  <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'browser' or '$(TargetPlatformIdentifier)' == 'wasi'">
-    <Compile Include="$(DotnetRuntimeRoot)src\libraries\System.IO.Compression\src\System\IO\Compression\Zstandard\Zstandard.PlatformNotSupported.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Collections\NetJs.System.Collections.csproj" />

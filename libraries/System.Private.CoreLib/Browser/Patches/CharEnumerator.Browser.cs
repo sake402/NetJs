@@ -1,5 +1,7 @@
 ﻿
-namespace System
+using NetJs;
+
+namespace System    
 {
     [NetJs.ForcePartial(typeof(CharEnumerator))]
     public sealed partial class CharEnumerator_Partial : ForcedPartialBase<CharEnumerator>

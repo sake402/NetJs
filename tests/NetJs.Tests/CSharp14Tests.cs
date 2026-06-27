@@ -36,7 +36,7 @@ namespace NetJs.Tests
     // =============================================================================
     public static class CSharp14TranspilerTests
     {
-        public static void Run()
+        public static async Task Run()
         {
             // ── Primitive types & literals ──────────────────────────────────────
             LiteralTests.Run();
@@ -81,10 +81,10 @@ namespace NetJs.Tests
             DelegateLambdaTests.Run();
 
             // ── Local functions ──────────────────────────────────────────────────
-            LocalFunctionTests.Run();
+            await LocalFunctionTests.Run();
 
             // ── Async / await ────────────────────────────────────────────────────
-            AsyncTests.Run();
+            await AsyncTests.Run();
 
             // ── Span / Memory (stack-only types) ────────────────────────────────
             SpanTests.Run();
@@ -1461,7 +1461,7 @@ namespace NetJs.Tests
     // =============================================================================
     file static class LocalFunctionTests
     {
-        public static void Run()
+        public static async Task Run()
         {
             // Basic local function
             int Double(int n) => n * 2;
@@ -1486,22 +1486,17 @@ namespace NetJs.Tests
                 for (int i = 0; i < count; i++) yield return start + i;
             }
             Debug.Assert(Range(5, 3).ToArray() is [5, 6, 7], "iterator local function");
-            
-#if NET11_0_OR_GREATER
-            if (RuntimeFeature.IsMultithreadingSupported)
+
+            // Local async function
+            async Task<int> FetchAsync(int v)
             {
-                // Local async function
-                async Task<int> FetchAsync(int v)
-                {
-                    var t = Task.Yield();
-                    await t;
-                    return v * 10;
-                }
-                var task = FetchAsync(7);
-                int asyncResult = task.GetAwaiter().GetResult();
-                Debug.Assert(asyncResult == 70, "async local function");
+                var t = Task.Yield();
+                await t;
+                return v * 10;
             }
-#endif
+            var task = FetchAsync(7);
+            int asyncResult = await task;
+            Debug.Assert(asyncResult == 70, "async local function");
             // Local function using out param
             bool TryParsePositive(string s, out int result)
             {
@@ -1526,62 +1521,57 @@ namespace NetJs.Tests
     // =============================================================================
     file static class AsyncTests
     {
-        public static void Run()
+        public static async Task Run()
         {
-#if NET11_0_OR_GREATER
-            if (RuntimeFeature.IsMultithreadingSupported)
+            // Basic async/await
+            int r1 = await BasicAsync();
+            Debug.Assert(r1 == 42, "basic async returns value");
+
+            // Sequential await
+            int r2 = await SequentialAsync();
+            Debug.Assert(r2 == 30, "sequential await");
+
+            // Parallel await
+            int r3 = await ParallelAsync();
+            Debug.Assert(r3 == 10, "parallel await Task.WhenAll");
+
+            // async void via Task wrapper
+            bool fired = false;
+            await Task.Run(() => { fired = true; });
+            Debug.Assert(fired, "Task.Run");
+
+            // ValueTask
+            int r4 = await ValueTaskAsync(5);
+            Debug.Assert(r4 == 25, "ValueTask async");
+
+            // CancellationToken
+            var cts = new CancellationTokenSource();
+            cts.Cancel();
+            bool cancelled = false;
+            try
             {
-                // Basic async/await
-                int r1 = BasicAsync().GetAwaiter().GetResult();
-                Debug.Assert(r1 == 42, "basic async returns value");
-
-                // Sequential await
-                int r2 = SequentialAsync().GetAwaiter().GetResult();
-                Debug.Assert(r2 == 30, "sequential await");
-
-                // Parallel await
-                int r3 = ParallelAsync().GetAwaiter().GetResult();
-                Debug.Assert(r3 == 10, "parallel await Task.WhenAll");
-
-                // async void via Task wrapper
-                bool fired = false;
-                Task.Run(() => { fired = true; }).Wait();
-                Debug.Assert(fired, "Task.Run");
-
-                // ValueTask
-                int r4 = ValueTaskAsync(5).GetAwaiter().GetResult();
-                Debug.Assert(r4 == 25, "ValueTask async");
-
-                // CancellationToken
-                var cts = new CancellationTokenSource();
-                cts.Cancel();
-                bool cancelled = false;
-                try
-                {
-                    CancellableAsync(cts.Token).GetAwaiter().GetResult();
-                }
-                catch (OperationCanceledException)
-                {
-                    cancelled = true;
-                }
-                Debug.Assert(cancelled, "CancellationToken throws");
-
-                // IAsyncEnumerable (C# 8+)
-                var asyncSeq = ConsumeAsync().GetAwaiter().GetResult();
-                Debug.Assert(asyncSeq is [0, 1, 2, 3, 4], "IAsyncEnumerable");
-
-                // Task.WhenAny
-                int r5 = Task.WhenAny(
-                    Task.Delay(1000).ContinueWith(_ => 1),
-                    Task.FromResult(2)
-                ).GetAwaiter().GetResult().GetAwaiter().GetResult();
-                Debug.Assert(r5 == 2, "Task.WhenAny picks fastest");
-
-                // ConfigureAwait
-                int r6 = ConfiguredAsync().GetAwaiter().GetResult();
-                Debug.Assert(r6 == 1, "ConfigureAwait(false)");
+                await CancellableAsync(cts.Token);
             }
-#endif
+            catch (OperationCanceledException)
+            {
+                cancelled = true;
+            }
+            Debug.Assert(cancelled, "CancellationToken throws");
+
+            // IAsyncEnumerable (C# 8+)
+            var asyncSeq = await ConsumeAsync();
+            Debug.Assert(asyncSeq is [0, 1, 2, 3, 4], "IAsyncEnumerable");
+
+            // Task.WhenAny
+            int r5 = await await Task.WhenAny(
+                Task.Delay(1000).ContinueWith(_ => 1),
+                Task.FromResult(2)
+            );
+            Debug.Assert(r5 == 2, "Task.WhenAny picks fastest");
+
+            // ConfigureAwait
+            int r6 = await ConfiguredAsync();
+            Debug.Assert(r6 == 1, "ConfigureAwait(false)");
         }
 
         private static async Task<int> BasicAsync()

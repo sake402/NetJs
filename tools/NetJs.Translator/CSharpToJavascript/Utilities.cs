@@ -2217,6 +2217,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 case SpecialType.System_SByte:
                 case SpecialType.System_Int16:
                 case SpecialType.System_Int32:
+                case SpecialType.System_Int64:
                 case SpecialType.System_IntPtr:
                 case SpecialType.System_Single:
                 case SpecialType.System_Double:
@@ -2821,7 +2822,7 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             else if (kind == SyntaxKind.StringLiteralExpression) //handless @"jsdd" string 
             {
-                if (txt.StartsWith("@") && txt.Length > 1 && txt[1] == '\"' && txt.EndsWith("\""))
+                /*if (txt.StartsWith("@") && txt.Length > 1 && txt[1] == '\"' && txt.EndsWith("\""))
                 {
                     txt = "\"" + txt.Substring(2, txt.Length - 3).EscapeString() + "\"";
                 }
@@ -2838,7 +2839,8 @@ namespace NetJs.Translator.CSharpToJavascript
                     txt = "\"" + txt.Substring(startingQuotes, txt.Length - startingQuotes - startingQuotes)
                         .EscapeString() + "\"";
                 }
-                else if (txt.Contains("\0"))//In js a string like "[G\003" is invalid in strict mode. We split as "[G\0" + "03"
+                else*/
+                if (txt.Contains("\0"))//In js a string like "[G\003" is invalid in strict mode. We split as "[G\0" + "03"
                 {
                     var indexOfZero = txt.IndexOf('\0');
                     var charAfterZero = indexOfZero + 1 < txt.Length ? txt[indexOfZero + 1] : '\0';

@@ -2,20 +2,21 @@
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Diagnostics;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Xml.Serialization;
 
 namespace NetJs.Translator.CSharpToJavascript
 {
-    public partial class PreWriterSyntaxVisitor : CSharpSyntaxRewriter
+    public partial class SecondPassRewriter : CSharpSyntaxRewriter
     {
         CSharpCompilation _compilation;
         SemanticModel _semanticModel;
         SyntaxTree _tree;
         Dictionary<string, List<TypeDeclarationSyntax>> _partialClassGroupings;
         //List<SyntaxNode> _pendingVisits;
-        public PreWriterSyntaxVisitor(
+        public SecondPassRewriter(
             CSharpCompilation compilation,
             SyntaxTree tree,
             Dictionary<string, List<TypeDeclarationSyntax>> partialClassGroupings)
@@ -57,11 +58,27 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 rhsExpression = el.Expression;
             }
-            var rhsSymbol = GetSymbol(rhsExpression);
-            if (rhsSymbol is IMethodSymbol m && (m.IsExtensionMethod/* || m.IsStaticCallConvention()*/))
+            var invoke = rhsExpression;
+            while (invoke.IsKind(SyntaxKind.InvocationExpression))
             {
-                //We only rewite for extension method and static call convensions
-                return true;
+                var rhsSymbol = GetSymbol(invoke);
+                if (rhsSymbol is IMethodSymbol m && (m.IsExtensionMethod/* || m.IsStaticCallConvention()*/))
+                {
+                    //We only rewite for extension method and static call convensions
+                    return true;
+                }
+                //Dealing with something like oldBytes?.AsSpan(0, _offset).Clear();
+                //The clear is not an extension method, but AsSpan is
+                if (((InvocationExpressionSyntax)invoke).Expression.IsKind(SyntaxKind.SimpleMemberAccessExpression))
+                {
+                    var sm = (MemberAccessExpressionSyntax)((InvocationExpressionSyntax)invoke).Expression;
+                    if (sm.Expression.IsKind(SyntaxKind.InvocationExpression))
+                    {
+                        invoke = sm.Expression;
+                        continue;
+                    }
+                }
+                break;
             }
             return false;
         }
@@ -1472,10 +1489,6 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public SyntaxNode? VisitConditionalAccessExpression(ConditionalAccessExpressionSyntax node, ConditionalAccessExpressionSyntax? parentCondition = null)
         {
-            if (node.ToString().Contains("oldBytes?.AsSpan"))
-            {
-
-            }
             if (parentCondition == null && !IsRewiteCandidate(node))
                 return base.VisitConditionalAccessExpression(node);
             //no block to define temp variable in
@@ -1573,7 +1586,7 @@ namespace NetJs.Translator.CSharpToJavascript
             var type = GetTypeSymbol(parentCondition ?? node);
             bool typeIsVoid = type != null && type.SpecialType == SpecialType.System_Void;
             ExpressionSyntax? whenNull = null;
-            if (node.Parent.IsKind(SyntaxKind.CoalesceExpression))
+            if (node.Parent.IsKind(SyntaxKind.CoalesceExpression) && ((BinaryExpressionSyntax)node.Parent).Left == node)
             {
                 var binary = (BinaryExpressionSyntax)node.Parent;
                 whenNull = binary.Right;

@@ -23,7 +23,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Pointer
                     var rightOperandType = visitor.Global.TryGetTypeSymbol(node.Right, visitor);
                     if ((leftOperandType?.IsPointer(out _) ?? false) && (rightOperandType?.IsPointer(out _) ?? false))
                     {
-                        visitor.WriteMethodInvocation(node, "System.RefOrPointer.Compare",/* classGenericTypes: [visitor.Global.SystemObject],*/ arguments: [node.Left, node.Right]);
+                        visitor.WriteMethodInvocation(node, "NetJs.RefOrPointer.Compare",/* classGenericTypes: [visitor.Global.SystemObject],*/ arguments: [node.Left, node.Right]);
                         //visitor.Visit(node.Left);
                         //visitor.CurrentTypeWriter.Write(node, ".Compare(");
                         //visitor.Visit(node.Right);

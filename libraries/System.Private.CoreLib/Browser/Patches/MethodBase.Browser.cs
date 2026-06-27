@@ -12,7 +12,7 @@ namespace System.Reflection
     //[NetJs.Reflectable(false)]
     public partial class MethodBase
     {
-        internal MethodBase(MethodModel model) : base(model)
+        internal MethodBase(NetJs.MethodModel model) : base(model)
         {
         }
 

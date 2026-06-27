@@ -32,8 +32,11 @@ namespace NetJs.Translator.CSharpToJavascript
                     if (!string.IsNullOrEmpty(_catch.Declaration!.Identifier.ValueText))
                     {
                         CurrentTypeWriter.WriteLine(node, "{", true);
+                        OpenClosure(_catch.Block);
                         CurrentTypeWriter.WriteLine(node, $"let {_catch.Declaration!.Identifier.ValueText} = $e;", true);
-                        VisitChildren(_catch.Block.ChildNodes());
+                        MarkBlockBraceWritten(_catch.Block);
+                        Visit(_catch.Block);
+                        CloseClosure(_catch.Block);
                         CurrentTypeWriter.WriteLine(node, "}", true);
                     }
                     else

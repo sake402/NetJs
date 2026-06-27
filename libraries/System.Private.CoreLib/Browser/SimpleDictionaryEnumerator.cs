@@ -1,6 +1,6 @@
 using System.Collections;
 
-namespace System
+namespace NetJs
 {
     public class SimpleDictionaryEnumerator<T> : IDictionaryEnumerator
     {

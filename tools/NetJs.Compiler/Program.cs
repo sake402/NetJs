@@ -3,7 +3,8 @@ using Microsoft.CodeAnalysis;
 using System.IO;
 using System.Threading;
 using NetJs.Compiler;
-using Project = Microsoft.Build.Evaluation.Project;
+using MsBuildProject = Microsoft.Build.Evaluation.Project;
+using CodeAnalysisProject = Microsoft.CodeAnalysis.Project;
 using Microsoft.Build.Locator;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +12,8 @@ using NetJs.Translator;
 using System.Linq.Expressions;
 using System.Globalization;
 using System.Xml.Linq;
+using Microsoft.CodeAnalysis.MSBuild;
+using System.Threading.Tasks;
 
 if (args.Length > 0 && args[0] == "--doctor")
 {
@@ -51,27 +54,34 @@ else if (args.Length > 0 && args[0] == "watch")
     var dotnetFolder = Path.GetDirectoryName(dotnetPath) + "\\";
     Console.WriteLine($"Using dotnet {dotnetVersion} @ {dotnetPath}. SDK {sdkVersion} @ {sdkPath}");
 
-    Watch(directory);
+    var workspace = MSBuildWorkspace.Create();
+    await Watch(directory);
 
-    void Watch(string directory)
+    async Task Watch(string directory)
     {
-        Dictionary<Project, ProjectContext> contexts = new Dictionary<Project, ProjectContext>();
+        Dictionary<string, ProjectContext> contexts = new Dictionary<string, ProjectContext>();
 
-        IEnumerable<Project> DiscoverProjects()
+        async Task<IEnumerable<(CodeAnalysisProject CodeAnalysis, MsBuildProject MsBuild)>> DiscoverProjects()
         {
             var projectCollection = new Microsoft.Build.Evaluation.ProjectCollection();
             Console.WriteLine($"Scanning for projects in \"{directory}\"...");
-            var projects = Directory.EnumerateFiles(directory, "*.csproj", SearchOption.AllDirectories)
-                .Select(path =>
+            var projects = Directory.EnumerateFiles(directory, "*.csproj", SearchOption.AllDirectories);
+            List<(CodeAnalysisProject, MsBuildProject)> list = new();
+            foreach (var path in projects)
+            {
+                Console.WriteLine($"Enumerating project \"{path}\"...");
+                try
                 {
-                    Console.WriteLine($"Enumerating project \"{path}\"...");
-                    return new Project(path, GetBuildProperties(), null, projectCollection);
-                })
-                .ToList();
-            return projects;
+                    var codeAnalysisProject = workspace.CurrentSolution.Projects.FirstOrDefault(f => f.FilePath == path) ?? await workspace.OpenProjectAsync(path);
+                    var msProject = new MsBuildProject(path, GetBuildProperties(), null, projectCollection);
+                    list.Add((codeAnalysisProject, msProject));
+                }
+                catch (Exception e) { Console.WriteLine(e.Message); }
+            }
+            return list;
         }
 
-        var projects = DiscoverProjects();
+        var projects = await DiscoverProjects();
 
         Console.WriteLine($"\r\n{projects.Count()} projects found in {directory}!");
         //foreach (var project in projects)
@@ -85,7 +95,7 @@ else if (args.Length > 0 && args[0] == "watch")
         foreach (var _project in projects)
         {
             var project = _project;
-            FileSystemWatcher razorWatcher = new FileSystemWatcher(Path.GetDirectoryName(project!.FullPath)!);
+            FileSystemWatcher razorWatcher = new FileSystemWatcher(Path.GetDirectoryName(project.MsBuild.FullPath)!);
             razorWatcher.NotifyFilter =
                  NotifyFilters.Attributes
                  | NotifyFilters.CreationTime
@@ -101,18 +111,18 @@ else if (args.Length > 0 && args[0] == "watch")
             razorWatcher.EnableRaisingEvents = true;
             razorWatcher.Changed += (s, e) =>
             {
-                TryProcessProject(project);
+                TryProcessProject(project.CodeAnalysis, project.MsBuild);
             };
             razorWatcher.Created += (s, e) =>
             {
-                TryProcessProject(project);
+                TryProcessProject(project.CodeAnalysis, project.MsBuild);
             };
             razorWatcher.Renamed += (s, e) =>
             {
-                TryProcessProject(project);
+                TryProcessProject(project.CodeAnalysis, project.MsBuild);
             };
 
-            FileSystemWatcher csWatcher = new FileSystemWatcher(Path.GetDirectoryName(project.FullPath)!);
+            FileSystemWatcher csWatcher = new FileSystemWatcher(Path.GetDirectoryName(project.MsBuild.FullPath)!);
             csWatcher.NotifyFilter =
                  NotifyFilters.Attributes
                  | NotifyFilters.CreationTime
@@ -128,18 +138,18 @@ else if (args.Length > 0 && args[0] == "watch")
             csWatcher.EnableRaisingEvents = true;
             csWatcher.Changed += (s, e) =>
             {
-                TryProcessProject(project);
+                TryProcessProject(project.CodeAnalysis, project.MsBuild);
             };
             csWatcher.Created += (s, e) =>
             {
-                TryProcessProject(project);
+                TryProcessProject(project.CodeAnalysis, project.MsBuild);
             };
             csWatcher.Renamed += (s, e) =>
             {
-                TryProcessProject(project);
+                TryProcessProject(project.CodeAnalysis, project.MsBuild);
             };
 
-            FileSystemWatcher csProjWatcher = new FileSystemWatcher(Path.GetDirectoryName(project.FullPath)!);
+            FileSystemWatcher csProjWatcher = new FileSystemWatcher(Path.GetDirectoryName(project.MsBuild.FullPath)!);
             csProjWatcher.NotifyFilter =
                  NotifyFilters.Attributes
                  | NotifyFilters.CreationTime
@@ -155,37 +165,37 @@ else if (args.Length > 0 && args[0] == "watch")
             csProjWatcher.EnableRaisingEvents = true;
             csProjWatcher.Changed += (s, e) =>
             {
-                TryProcessProject(project);
+                TryProcessProject(project.CodeAnalysis, project.MsBuild);
             };
             csProjWatcher.Created += (s, e) =>
             {
-                TryProcessProject(project);
+                TryProcessProject(project.CodeAnalysis, project.MsBuild);
             };
             csProjWatcher.Renamed += (s, e) =>
             {
-                TryProcessProject(project);
+                TryProcessProject(project.CodeAnalysis, project.MsBuild);
             };
 
 
-            contexts[project] = new ProjectContext(razorWatcher, csWatcher);
+            contexts[project.MsBuild.FullPath] = new ProjectContext(razorWatcher, csWatcher);
         }
 
         Console.WriteLine("\r\nWaiting for changes...");
         Thread.Sleep(Timeout.InfiniteTimeSpan);
 
-        void TryProcessProject(Project project)
+        void TryProcessProject(CodeAnalysisProject caProject, MsBuildProject msProject)
         {
 
-            lock (project)
+            lock (msProject)
             {
-                var context = contexts[project];
+                var context = contexts[msProject.FullPath];
                 if (context.LastProcessed == DateTime.MinValue || DateTime.Now - context.LastProcessed > TimeSpan.FromSeconds(5))
                 {
                     "Building".Profile(() =>
                     {
                         try
                         {
-                            var wProject = new ProjectWrapper(project);
+                            var wProject = new ProjectWrapper(caProject, msProject);
                             Translator.Build(wProject, new ProjectBinOutputProvider(wProject));
                         }
                         catch (Exception e)
@@ -222,12 +232,14 @@ else if (args.Length > 0 && args[0] == "build")
         projects.Count() > 1 ? throw new InvalidOperationException($"Multiple project file found in directory {directory}. Specify the one to build using --project") :
         throw new InvalidOperationException($"No project file found in directory {directory}"));
 
-    Build();
-    void Build()
+    var workspace = MSBuildWorkspace.Create();
+    await Build();
+    async Task Build()
     {
         var projectCollection = new Microsoft.Build.Evaluation.ProjectCollection();
-        var project = new Project(csProjectFile, GetBuildProperties(), null, projectCollection);
-        var wProject = new ProjectWrapper(project);
+        var codeAnalysisProject = await workspace.OpenProjectAsync(csProjectFile!);
+        var msBuildProject = new MsBuildProject(csProjectFile, GetBuildProperties(), null, projectCollection);
+        var wProject = new ProjectWrapper(codeAnalysisProject, msBuildProject);
         StringWriter logWriter = new StringWriter();
         var tempFolder = Path.GetTempPath() + "NetJs\\";
         try

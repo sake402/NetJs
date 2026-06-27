@@ -1,8 +1,10 @@
-﻿namespace System
+﻿using System;
+
+namespace System
 {
-    [NetJs.ForcePartial(typeof(Byte))]
+    [NetJs.ForcePartial(typeof(Char))]
     [NetJs.StaticCallConvention]
-    public readonly struct Byte_Partial 
+    public readonly struct Char_Partial
     {
         //[NetJs.MemberReplace(nameof(GetHashCode))]
         //public int GetHashCodeImplChar()
@@ -10,14 +12,14 @@
         //    return NetJs.Script.Write<int>("m_value");
         //}
 
-        readonly byte _m_value;
+        readonly char _m_value;
         [NetJs.MemberReplace("m_value")]
-        internal byte MValue
+        internal char MValue
         {
             get
             {
                 if (NetJs.Script.TypeOf(this).NativeEquals("number"))
-                    return this.As<byte>();
+                    return this.As<char>();
                 return _m_value;
             }
             set

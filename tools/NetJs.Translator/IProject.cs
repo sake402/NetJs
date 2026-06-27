@@ -1,6 +1,7 @@
-﻿using NetJs.Translator.CSharpToJavascript;
+﻿using LivingThing.Core.Frameworks.Common.OneOf;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using NetJs.Translator.CSharpToJavascript;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,6 +12,7 @@ namespace NetJs.Translator
     public interface IProject
     {
         CSharpCompilation? Compilation { get; }
+        CompilationOptions? CompilationOptions { get; }
         string DirectoryPath { get; }
         string FullPath { get; }
         string? Evaluate(string propertyName);
@@ -22,6 +24,7 @@ namespace NetJs.Translator
         IList<string> GetContentFiles();
         IList<string> GetLinkerFiles();
         IList<string> GetEmbeddedFiles();
+        IList<string> GetGlobalUsings();
         bool Build();
     }
 
@@ -32,6 +35,6 @@ namespace NetJs.Translator
         Stream HtmlStyleContent { get; }
         Stream HtmlBodyContent { get; }
         IEnumerable<string> OutputtedFiles { get; }
-        void Output(GlobalCompilationVisitor global, string destinationRelativePath, Stream content, DateTime? sourceCreateTime);
+        void Output(GlobalCompilationVisitor global, string destinationRelativePath, OneOf<string, Stream> content);
     }
 }

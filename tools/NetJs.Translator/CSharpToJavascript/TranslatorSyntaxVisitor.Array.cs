@@ -393,7 +393,22 @@ namespace NetJs.Translator.CSharpToJavascript
                         CurrentTypeWriter.Write(node, "let ", true);
                         CurrentTypeWriter.Write(node, instanceName);
                         CurrentTypeWriter.Write(node, " = ");
-                        WriteConstructorCall(node, (INamedTypeSymbol)lhsType, lhsType.GetMembers(".ctor").Cast<IMethodSymbol>().Where(e => e.Parameters.Count() == 0).First());
+                        var defaultCtor = lhsType.GetMembers(".ctor").Cast<IMethodSymbol>().FirstOrDefault(e => e.Parameters.Count() == 0);
+                        if (defaultCtor != null)
+                        {
+                            WriteConstructorCall(node, (INamedTypeSymbol)lhsType, defaultCtor);
+                        }
+                        else
+                        {
+                            var paramsCtor = lhsType.GetMembers(".ctor")
+                            .Cast<IMethodSymbol>()
+                            .FirstOrDefault(e => e.Parameters.Count() == 1 && e.Parameters[0].IsParams && e.Parameters[0].Type.IsArray(out _)) ??
+                            lhsType.GetMembers(".ctor")
+                            .Cast<IMethodSymbol>()
+                            .FirstOrDefault(e => e.Parameters.Count() == 1 && e.Parameters[0].IsParams && SymbolEqualityComparer.Default.Equals(e.Parameters[0].Type.OriginalDefinition, _global.SystemReadOnlySpan)) ??
+                            throw new InvalidOperationException();
+                            WriteConstructorCall(node, (INamedTypeSymbol)lhsType, paramsCtor, null, []);
+                        }
                         CurrentTypeWriter.WriteLine(node, ";");
                         WriteInitializer(node, instanceName, lhsType, node.Elements);
                         CurrentTypeWriter.WriteLine(node, $"return {instanceName};", true);

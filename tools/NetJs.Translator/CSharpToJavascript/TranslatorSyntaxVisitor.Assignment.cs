@@ -420,12 +420,12 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (TryInvokeMethodOperator(node, node.OperatorToken.ValueText, null, node.Left, [node.Left, node.Right]))
                 return;
-            var rhsType = _global.GetSymbol(node.Right, this);// GetExpressionBoundTarget(node.Right).TypeSyntaxOrSymbol as ISymbol;
+            var rhsType = _global.TryGetSymbol(node.Right, this);// GetExpressionBoundTarget(node.Right).TypeSyntaxOrSymbol as ISymbol;
             //if (rhsType == null)
             //{
             //    rhsType = _global.ResolveSymbol(GetExpressionReturnSymbol(node.Right), this/*, out _, out _*/);
             //}
-            var lhsType = _global.GetSymbol(node.Left, this);// GetExpressionBoundTarget(node.Left).TypeSyntaxOrSymbol as ISymbol;
+            var lhsType = _global.TryGetSymbol(node.Left, this);// GetExpressionBoundTarget(node.Left).TypeSyntaxOrSymbol as ISymbol;
             //if (lhsType == null)
             //{
             //    lhsType = _global.ResolveSymbol(GetExpressionReturnSymbol(node.Left), this/*, out _, out _*/);

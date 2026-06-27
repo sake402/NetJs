@@ -426,7 +426,7 @@ namespace NetJs
         public static extern T FromTemp<T>(string name, T t);
 
         [Template("{action:body}")]
-        public static extern object FromLambda(System.Action action);
+        public static extern object FromLambda(NativeAction action);
 
         [Template("{o:plain}")]
         public static extern T ToPlainObject<T>(T o);
@@ -440,7 +440,7 @@ namespace NetJs
         /// <param name="fn">Function to run</param>
         /// <returns>Return either function result or false in case of catch</returns>
         [Template("dotnetJs.safe({fn})")]
-        public static extern bool SafeFunc(Func<bool> fn);
+        public static extern bool SafeFunc(NativeFunction<bool> fn);
 
         [Template("dotnetJs.isNode")]
         public static readonly bool IsNode;

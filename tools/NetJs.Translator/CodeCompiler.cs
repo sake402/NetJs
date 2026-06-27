@@ -281,40 +281,99 @@ namespace NetJs.Translator
             string content = File.ReadAllText(projectAsset);
             var lockFileFormat = new LockFileFormat();
             var lockFile = lockFileFormat.Parse(content, "In Memory");
-            var sortLibraries = lockFile.Libraries.ToArray();
+            var sortLibraries = lockFile.Libraries.Where(e =>
+            {
+                if (e.Type == "package" && e.HasTools)//TODO: Need better way of doing this. We targets filtering Microsoft.NET.ILLink.Tasks from Microsoft.AspNetCore.Components
+                {
+                    return false;
+                }
+                return true;
+            }).ToArray();
             var model = JsonSerializer.Deserialize<ProjectAssetModel>(content);
             model!.Targets = model.Targets.ToDictionary(e => e.Key, e => e.Value.ToDictionary(ee => ee.Key.Split('/')[0], ee => ee.Value));
             var dic = model.Targets.Values.Single();
-            //make sure all dependecies are complete
-            IEnumerable<string> GetDependecies(string libName)
+
+            // 1. Build an adjacency list (who depends on whom) and track in-degrees
+            var adjacencyList = sortLibraries.ToDictionary(l => l.Name, _ => new List<string>());
+            var inDegree = sortLibraries.ToDictionary(l => l.Name, _ => 0);
+
+            foreach (var lib in sortLibraries)
             {
-                var graph = dic[libName];
-                if (graph.Dependencies == null)
-                    yield break;
-                foreach (var d in graph.Dependencies)
-                    yield return d.Key;
-                foreach (var d in graph.Dependencies)
-                    foreach (var deps in GetDependecies(d.Key))
-                        yield return deps;
+                var graph = dic[lib.Name];
+                if (graph.Dependencies != null)
+                {
+                    foreach (var dep in graph.Dependencies.Keys)
+                    {
+                        // Only map dependencies that exist in our target library list
+                        if (adjacencyList.ContainsKey(dep))
+                        {
+                            adjacencyList[dep].Add(lib.Name); // 'dep' must be loaded before 'lib.Name'
+                            inDegree[lib.Name]++;
+                        }
+                    }
+                }
             }
-            Array.Sort(sortLibraries, (a, b) =>
+
+            // 2. Process libraries with zero remaining dependencies
+            var queue = new Queue<string>(inDegree.Where(x => x.Value == 0).Select(x => x.Key));
+            var sortedNames = new List<string>();
+
+            while (queue.Count > 0)
             {
-                var aGraph = dic[a.Name];
-                var bGraph = dic[b.Name];
-                if (aGraph.Dependencies == null || aGraph.Dependencies.Count == 0)
-                    return -1;
-                if (bGraph.Dependencies == null || bGraph.Dependencies.Count == 0)
-                    return 1;
-                if (GetDependecies(a.Name).Contains(b.Name))
+                var current = queue.Dequeue();
+                sortedNames.Add(current);
+
+                foreach (var neighbor in adjacencyList[current])
                 {
-                    return 1;
+                    inDegree[neighbor]--;
+                    if (inDegree[neighbor] == 0)
+                    {
+                        queue.Enqueue(neighbor);
+                    }
                 }
-                if (GetDependecies(b.Name).Contains(a.Name))
-                {
-                    return -1;
-                }
-                return 0;
-            });
+            }
+
+            // 3. Map back to your original object array
+            if (sortedNames.Count != sortLibraries.Length)
+            {
+                throw new InvalidOperationException("Circular dependency detected in assets file!");
+            }
+
+            var libraryMap = sortLibraries.ToDictionary(l => l.Name);
+            sortLibraries = sortedNames.Select(name => libraryMap[name]).ToArray();
+
+            ////make sure all dependecies are complete
+            //IEnumerable<string> GetDependecies(string libName)
+            //{
+            //    var graph = dic[libName];
+            //    if (graph.Dependencies == null)
+            //        yield break;
+            //    foreach (var d in graph.Dependencies)
+            //        yield return d.Key;
+            //    foreach (var d in graph.Dependencies)
+            //        foreach (var deps in GetDependecies(d.Key))
+            //            yield return deps;
+            //}
+            //Array.Sort(sortLibraries, (a, b) =>
+            //{
+            //    if (a.Name == b.Name)
+            //        return 0;
+            //    var aGraph = dic[a.Name];
+            //    var bGraph = dic[b.Name];
+            //    if (aGraph.Dependencies == null || aGraph.Dependencies.Count == 0)
+            //        return -1;
+            //    if (bGraph.Dependencies == null || bGraph.Dependencies.Count == 0)
+            //        return 1;
+            //    if (GetDependecies(a.Name).Contains(b.Name))
+            //    {
+            //        return 1;
+            //    }
+            //    if (GetDependecies(b.Name).Contains(a.Name))
+            //    {
+            //        return -1;
+            //    }
+            //    return 0;
+            //});
             foreach (var lib in sortLibraries)
             {
                 if (lib.Type == "package")
@@ -382,9 +441,30 @@ namespace NetJs.Translator
         //}
 
 
-        public IEnumerable<SyntaxTree> GetSyntaxTrees(IProject project, string[] sourceCodePath, string[]? sourceCodes)
+        public IEnumerable<SyntaxTree> GetSyntaxTrees(IProject project, string[] sourceCodePath, string[]? sourceCodes, IEnumerable<string>? globalUsings)
         {
             List<SyntaxTree> syntaxTrees = new List<SyntaxTree>();
+
+            if (globalUsings != null)
+            {
+                // 1. Generate your global usings tree from your List<string>
+                var globalUsingNodes = globalUsings.Select(ns => SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(ns))
+                 // Add "global" keyword with a trailing space
+                 .WithGlobalKeyword(SyntaxFactory.Token(SyntaxKind.GlobalKeyword)
+                     .WithTrailingTrivia(SyntaxFactory.Space))
+                 // Add a space after the "using" keyword itself
+                 .WithUsingKeyword(SyntaxFactory.Token(SyntaxKind.UsingKeyword)
+                     .WithTrailingTrivia(SyntaxFactory.Space))
+                 // Add a newline right after the trailing semicolon
+                 .WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken)
+                     .WithTrailingTrivia(SyntaxFactory.CarriageReturnLineFeed))
+                ).ToArray();
+
+                var compilationUnit = SyntaxFactory.CompilationUnit().WithUsings(SyntaxFactory.List(globalUsingNodes));
+                var globalUsingsTree = CSharpSyntaxTree.Create(compilationUnit).WithFilePath("GlobalUsings.cs");
+                syntaxTrees.Add(globalUsingsTree);
+            }
+
             int index = 0;
             var constants = project.Evaluate("DefineConstants")?.Split([';'], StringSplitOptions.RemoveEmptyEntries);
             foreach (var path in sourceCodePath)
@@ -399,13 +479,13 @@ namespace NetJs.Translator
             return syntaxTrees;
         }
 
-        public CSharpCompilation GenerateCode(IProject project, string[] sourceCodePath, string[]? sourceCodes, out IEnumerable<MetadataReference> references, out IEnumerable<string> symbols)
+        public CSharpCompilation GenerateCode(IProject project, string[] sourceCodePath, string[]? sourceCodes, IEnumerable<string>? globalUsings, out IEnumerable<MetadataReference> references, out IEnumerable<string> symbols)
         {
-            var syntaxTrees = GetSyntaxTrees(project, sourceCodePath, sourceCodes);
+            var syntaxTrees = GetSyntaxTrees(project, sourceCodePath, sourceCodes, globalUsings);
             var mreferences = GetReferencesForProject(project);
             references = mreferences.Item1;
             symbols = mreferences.Item2;
-            var options = new CSharpCompilationOptions(
+            var options = project.CompilationOptions as CSharpCompilationOptions ?? new CSharpCompilationOptions(
                     OutputKind.DynamicallyLinkedLibrary,
                     optimizationLevel: OptimizationLevel.Debug,
                     assemblyIdentityComparer: DesktopAssemblyIdentityComparer.Default,

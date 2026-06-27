@@ -2,7 +2,7 @@ using NetJs;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace System
+namespace NetJs
 {
     public class YieldToIterator<T> : IEnumerable<T>
     {
@@ -21,9 +21,8 @@ namespace System
             IteratorResult Next();
         }
 
-        [NativeDelegate]
-        Func<IGenerator> _getGenerator;
-        public YieldToIterator([NativeDelegate] Func<IGenerator> getGenerator)
+        NativeFunction<IGenerator> _getGenerator;
+        public YieldToIterator(NativeFunction<IGenerator> getGenerator)
         {
             _getGenerator = getGenerator;
         }

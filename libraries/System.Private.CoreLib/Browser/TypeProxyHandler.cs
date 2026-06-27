@@ -1,13 +1,14 @@
-﻿using NetJs;
+﻿using System;
+using System.Reflection;
 
-namespace System.Reflection
+namespace NetJs
 {
     /// <summary>
     /// For types that needs to reference itself(defined via typeproxy)
     /// This is simply a JS proxy handler that forwards request to the proxy to the System.Type/Prototype itself
     /// </summary>
-    [Boot]
-    [Reflectable(false)]
+    [NetJs.Boot]
+    [NetJs.Reflectable(false)]
     class TypeProxyHandler
     {
         public TypeProxyHandler(string metadataFullName)

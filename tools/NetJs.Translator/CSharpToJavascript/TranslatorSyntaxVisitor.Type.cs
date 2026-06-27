@@ -1360,7 +1360,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 CurrentTypeWriter.WriteLine(node, $"/*{node.ReturnType}*/ Invoke({(string.Join(", ", node.ParameterList.Parameters.Select(parameter =>
                 {
                     var t = _global.TryGetSymbol(parameter.Type!, null);
-                    return $"/*{(t != null ? _global.GetRequiredMetadata(t)?.InvocationName : null)}*/ ${parameter.Identifier.ValueText}";
+                    return $"/*{(t != null ? _global.GetMetadata(t)?.InvocationName??t?.Name : t?.Name)}*/ ${parameter.Identifier.ValueText}";
                 })))})", true);
                 CurrentTypeWriter.WriteLine(node, "{", true);
                 CurrentTypeWriter.WriteLine(node, $"return this.{Constants.NativeDelagateFunction}.apply(this._target, arguments);", true);

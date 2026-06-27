@@ -11,7 +11,7 @@ namespace NetJs.Translator.CSharpToJavascript
 {
     // This is a sub class of a bigger class that do the rewrite, among other things.
     // Hence, it may be that part of the code will seem redundant.
-    public partial class PreWriterSyntaxVisitor : CSharpSyntaxRewriter
+    public partial class SecondPassRewriter : CSharpSyntaxRewriter
     {
         private class QueryState
         {

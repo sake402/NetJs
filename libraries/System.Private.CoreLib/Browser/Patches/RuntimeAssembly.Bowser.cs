@@ -1,5 +1,4 @@
 ﻿using NetJs;
-using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection.Metadata;
@@ -317,7 +316,7 @@ namespace System.Reflection
                 var len = fullTypeName.Length;
                 if (len == 0 || fullTypeName.NativeCharCodeAt(len - 1) != '>')
                     throw new InvalidOperationException();
-                var indexOfLessThan = fullTypeName.LastIndexOf("<");
+                var indexOfLessThan = fullTypeName.NativeLastIndexOf("<");
                 if (indexOfLessThan == -1)
                 {
                     throw new InvalidOperationException();

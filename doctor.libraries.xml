@@ -67,8 +67,13 @@ Whenever we sync our forked dotnet runtime and aspnetcore with official repo, we
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Runtime.Loader\src\System.Runtime.Loader.csproj">
 	</Project>
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Security.Cryptography\src\System.Security.Cryptography.csproj">
+		<PropertyGroup>
+			<NoWarn>$(NoWarn),CA5350,CA5351,CA5379,CA5384,SYSLIB0026</NoWarn>
+			<NoWarn>$(NoWarn),CS0809</NoWarn>
+			<NoWarn>$(NoWarn),SYSLIB5006</NoWarn>
+		</PropertyGroup>
 		<ItemGroup>
-		  <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interop.GetRandomBytes.cs" />
+		  <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interops\Interop.GetRandomBytes.cs" />
 		</ItemGroup>
 	</Project>
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.IO.MemoryMappedFiles\src\System.IO.MemoryMappedFiles.csproj">

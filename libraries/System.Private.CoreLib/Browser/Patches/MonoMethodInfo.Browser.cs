@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using NetJs;
+using System.Runtime.InteropServices;
 
 namespace System.Reflection
 {

@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using NetJs;
+using System.Runtime.CompilerServices;
 
 namespace System
 {

@@ -106,7 +106,7 @@ namespace System.Runtime.CompilerServices
                 if (fromSize != toSize)
                 {
                     //var mreff = new Ref<TTo>(reff);
-                    var mreff = NetJs.Script.Write<Ref<object>>("new ($.$spc.System.Ref$$(TTo))().$ctor$5(reff)");
+                    var mreff = NetJs.Script.Write<Ref<object>>("new ($.$spc.NetJs.Ref$$(TTo))().$ctor$5(reff)");
                     mreff._type = typeof(TTo);
                     reff = mreff.As<Ref<object>>();
                 }

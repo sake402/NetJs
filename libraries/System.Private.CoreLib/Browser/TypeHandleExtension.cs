@@ -1,8 +1,8 @@
-﻿using NetJs;
+﻿using System;
 
-namespace System
+namespace NetJs
 {
-    [NetJs.Reflectable(false)]
+    [Reflectable(false)]
     public static class TypeHandleExtension
     {
         //[Template("{i} & 0xFFFF")]

@@ -1,7 +1,7 @@
-﻿using NetJs;
+﻿using System;
 using System.Diagnostics.CodeAnalysis;
 
-namespace System
+namespace NetJs
 {
     [NetJs.Reflectable(false)]
     public class ArrayWindowProxyHandler : IJsProxyHandler

@@ -176,10 +176,6 @@ namespace NetJs.Translator.CSharpToJavascript
                 //if (longType.Equals(constantType, SymbolEqualityComparer.Default))
                 if (constantType.SpecialType == SpecialType.System_Int64 || constantValue.Value is long)
                 {
-                    //long handling
-                    //Long literal is a different beast because js cannot actually handle it precisely
-                    //This would have require us to estimate a constant expression in runtime instead of compile time
-                    //var val = constantValue.Value!.ToString();
                     int _base = 10;
                     if (constantExpression.IsKind(SyntaxKind.NumericLiteralExpression) && constantExpression is LiteralExpressionSyntax lt)
                     {
@@ -188,14 +184,10 @@ namespace NetJs.Translator.CSharpToJavascript
                         else if (lt.Token.Text.StartsWith("0b", StringComparison.InvariantCultureIgnoreCase))
                             _base = 2;
                     }
-                    WriteLongConstant(node, Convert.ToInt64(constantValue.Value!), _base);
+                    WriteLongConstant(node, constantValue.Value is ulong ? (long)(ulong)constantValue.Value : constantValue.Value is long ? (long)constantValue.Value : Convert.ToInt64(constantValue.Value!), _base);
                 }
                 else if (constantType.SpecialType == SpecialType.System_UInt64 || constantValue.Value is ulong)
                 {
-                    //ulong handling
-                    //Long literal is a different beast because js cannot actually handle it precisely
-                    //This would have require us to estimate a constant expression in runtime instead of compile time
-                    //var val = !.ToString();
                     int _base = 10;
                     if (constantExpression.IsKind(SyntaxKind.NumericLiteralExpression) && constantExpression is LiteralExpressionSyntax lt)
                     {
@@ -204,7 +196,7 @@ namespace NetJs.Translator.CSharpToJavascript
                         else if (lt.Token.Text.StartsWith("0b", StringComparison.InvariantCultureIgnoreCase))
                             _base = 2;
                     }
-                    WriteULongConstant(node, Convert.ToUInt64(constantValue.Value!), _base);
+                    WriteULongConstant(node, constantValue.Value is long ? (ulong)(long)constantValue.Value : constantValue.Value is ulong ? (ulong)constantValue.Value : Convert.ToUInt64(constantValue.Value!), _base);
                 }
                 else if (constantType.SpecialType == SpecialType.System_Decimal || constantValue.Value is decimal)
                 {

@@ -1842,7 +1842,7 @@ namespace NetJs.Translator.CSharpToJavascript
         public INamedTypeSymbol SystemIEnumerable => field ??= (INamedTypeSymbol)GetSymbol("System.Collections.IEnumerable", null);
         public INamedTypeSymbol SystemIEnumerableT => field ??= (INamedTypeSymbol)GetSymbol("System.Collections.Generic.IEnumerable<>", null);
         public INamedTypeSymbol SystemIDisposable => field ??= (INamedTypeSymbol)GetSymbol("System.IDisposable", null);
-        public INamedTypeSymbol SystemDynamic => field ??= (INamedTypeSymbol)GetSymbol("System.DynamicType", null);
+        public INamedTypeSymbol SystemDynamic => field ??= (INamedTypeSymbol)GetSymbol("NetJs.DynamicType", null);
         public INamedTypeSymbol SystemT1 => field ??= (INamedTypeSymbol)GetSymbol("T1", null);
         public INamedTypeSymbol SystemT2 => field ??= (INamedTypeSymbol)GetSymbol("T2", null);
         public INamedTypeSymbol SystemT3 => field ??= (INamedTypeSymbol)GetSymbol("T3", null);
@@ -1878,7 +1878,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public INamedTypeSymbol DeletedObject => field ??= (INamedTypeSymbol)GetSymbol("DeletedObject", null/*, out _, out _*/);
 
-        public INamedTypeSymbol AwaitableInterface => field ??= (INamedTypeSymbol)GetSymbol("System.IAwaitable", null);
+        public INamedTypeSymbol AwaitableInterface => field ??= (INamedTypeSymbol)GetSymbol("NetJs.IAwaitable", null);
 
         public ITypeSymbol Union(IEnumerable<ITypeSymbol> types, TranslatorSyntaxVisitor? visitor)
         {
@@ -2711,15 +2711,15 @@ namespace NetJs.Translator.CSharpToJavascript
                 constructorArgs = cArgs;
                 return true;
             }
-            if (inherits && symbol is ITypeSymbol ns && ns.BaseType != null)
+            if (inherits && symbol.Kind == SymbolKind.NamedType && symbol is ITypeSymbol ns && ns.BaseType != null)
             {
                 return HasAttribute(ns.BaseType, attributeName, visitor, inherits, out constructorArgs);
             }
-            if (inherits && symbol is IMethodSymbol ms && ms.OverriddenMethod != null)
+            if (inherits && symbol.Kind == SymbolKind.Method && symbol is IMethodSymbol ms && ms.OverriddenMethod != null)
             {
                 return HasAttribute(ms.OverriddenMethod, attributeName, visitor, inherits, out constructorArgs);
             }
-            if (inherits && symbol is IPropertySymbol ps && ps.OverriddenProperty != null)
+            if (inherits && symbol.Kind == SymbolKind.Property && symbol is IPropertySymbol ps && ps.OverriddenProperty != null)
             {
                 return HasAttribute(ps.OverriddenProperty, attributeName, visitor, inherits, out constructorArgs);
             }

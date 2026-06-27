@@ -157,7 +157,7 @@ namespace NetJs.Translator.CSharpToJavascript
             return node.IsKind(SyntaxKind.CaseSwitchLabel) || node.IsKind(SyntaxKind.DefaultSwitchLabel);
         }
 
-        static bool SwitchHasGotoJump(SwitchStatementSyntax node)
+        static bool SwitchCaseHasGotoJump(SwitchStatementSyntax node)
         {
             return node.Sections.Any(c => SwitchCaseHasGotoStatement(c));
         }
@@ -169,8 +169,15 @@ namespace NetJs.Translator.CSharpToJavascript
 
         static bool IsSimpleSwitchCase(SwitchStatementSyntax node)
         {
-            return node.Sections.SelectMany(c => c.Labels).All(c => IsSimpleSwitchCase(c)) &&
-                node.Sections.All(c => !SwitchCaseHasLabeledStatement(c)/* && !SwitchCaseHasGotoStatement(c)*/);
+            //if (SwitchHasGotoCase(node))
+            //return false;
+            //if (SwitchCaseHasGotoJump(node))
+            //    return false;
+            //if (SwitchCaseHasLabeledStatement(node))
+            //    return false;
+            return node.Sections.SelectMany(c => c.Labels).All(c => IsSimpleSwitchCase(c));
+            //&&
+                //node.Sections.All(c => !SwitchCaseHasLabeledStatement(c)/* && !SwitchCaseHasGotoStatement(c)*/);
         }
 
         //bool IsTypeSwitchStatement(SwitchStatementSyntax node)
@@ -245,6 +252,7 @@ namespace NetJs.Translator.CSharpToJavascript
             bool isSimpleSwitchCase = IsSimpleSwitchCase(node);
             var hasGotoCase = SwitchHasGotoCase(node);
             bool hasGotoLabel = SwitchCaseHasLabeledStatement(node);
+            //bool hasGotoJump = SwitchCaseHasGotoJump(node);
             //if any of the case is a CasePatternSwitchLabelSyntax, use.GetType()
             //bool isTypeSwitch = IsTypeSwitchStatement(node);
             OpenClosure(node);
@@ -255,31 +263,39 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     var labels = CollectGotoLabelsIntoCurrentClosure(section);
                     //Collect each label statements, an queue them for insertion directly into the goto places
-                    foreach (var label in labels)
-                    {
-                        //get all statement after this label, until we see break;
-                        var statements = GetStatementsFromSwitchLabel(label);
-                        //force a break after, unless we already jumped again
-                        if (!statements.Last().IsKind(SyntaxKind.GotoStatement))
-                            statements.Add(SyntaxFactory.BreakStatement());
-                        switchClosure.GotoInsertInlineStatements.Add(label.Identifier.ValueText, statements);
-                    }
+                    //foreach (var label in labels)
+                    //{
+                        //alreadyTriedImport added by CollectGotoLabelsIntoCurrentClosure
+                        //switchClosure.GotoJumpLabels.Add(label.Identifier.ValueText);
+                        ////get all statement after this label, until we see break;
+                        //var statements = GetStatementsFromSwitchLabel(label);
+                        ////force a break after, unless we already jumped again
+                        //if (!statements.Last().IsKind(SyntaxKind.GotoStatement))
+                        //    statements.Add(SyntaxFactory.BreakStatement());
+                        //switchClosure.GotoInsertInlineStatements.Add(label.Identifier.ValueText, statements);
+                    //}
                 }
             }
-            if (hasGotoCase || hasGotoLabel)
+            //if (hasGotoCase || hasGotoLabel/* || hasGotoJump*/)
+            //{
+            //    var manglingSeed = ++CurrentTypeWriter.CurrentClosure.NameManglingSeed;
+            //    string jumpStart = $"$switchJumpStart{manglingSeed}";
+            //    string jumpState = $"$switchJumpState{manglingSeed}";
+            //    CurrentClosure.JumpStartLabelName = jumpStart;
+            //    CurrentClosure.JumpStateMachineVariableName = jumpState;
+            //    CurrentTypeWriter.WriteLine(node, $"let {jumpState} = null;", true);
+            //    CurrentTypeWriter.WriteLine(node, $"{jumpStart}: while(true)", true);
+            //    CurrentTypeWriter.WriteLine(node, "{", true);
+            //}
+            //else 
+            if (!isSimpleSwitchCase || hasGotoCase)
             {
                 var manglingSeed = ++CurrentTypeWriter.CurrentClosure.NameManglingSeed;
                 string jumpStart = $"$switchJumpStart{manglingSeed}";
                 string jumpState = $"$switchJumpState{manglingSeed}";
                 CurrentClosure.JumpStartLabelName = jumpStart;
                 CurrentClosure.JumpStateMachineVariableName = jumpState;
-                CurrentTypeWriter.WriteLine(node, $"let {jumpState} = null;", true);
                 CurrentTypeWriter.WriteLine(node, $"{jumpStart}: while(true)", true);
-                CurrentTypeWriter.WriteLine(node, "{", true);
-            }
-            else if (!isSimpleSwitchCase)
-            {
-                CurrentTypeWriter.WriteLine(node, $"while(true)", true);
                 CurrentTypeWriter.WriteLine(node, "{", true);
             }
             var i = ++CurrentTypeWriter.CurrentClosure.NameManglingSeed;
@@ -298,21 +314,9 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     CurrentTypeWriter.Write(node, $"{CurrentClosure.JumpStateMachineVariableName} ?? ");
                 }
-                //if (isTypeSwitch)
-                //{
-                //    Writer.Write(node, $"{_global.GlobalName}.System.Object.GetType.call(");
-                //}
                 CurrentTypeWriter.Write(node, $"$switch{i}");
-                //if (isTypeSwitch)
-                //{
-                //    Writer.Write(node, $").{Constants.TypePrototypeName}");
-                //}
                 CurrentTypeWriter.WriteLine(node, ")");
                 CurrentTypeWriter.WriteLine(node, "{", true, forbidInsertion: true);
-            }
-            else
-            {
-
             }
             VisitChildren(node.Sections);
             CloseClosure(node);
@@ -321,7 +325,7 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 CurrentTypeWriter.WriteLine(node, "}", true);
             }
-            if (hasGotoCase || !isSimpleSwitchCase)
+            if (!isSimpleSwitchCase || hasGotoCase)
             {
                 CurrentTypeWriter.WriteLine(node, "break;", true); //end while
                 CurrentTypeWriter.WriteLine(node, "}", true);
@@ -402,7 +406,8 @@ namespace NetJs.Translator.CSharpToJavascript
             //        //Visit(dps.Type);
             //    }
             //}
-            VisitChildren(node.ChildNodes().Except(node.Labels));
+            //if (!BlockTryHandleJumpLabels(node, node.ChildNodes().Except(node.Labels)))
+            VisitChildren(node.Statements);
             //base.VisitSwitchSection(node);
             if (!childIsBlock)
             {

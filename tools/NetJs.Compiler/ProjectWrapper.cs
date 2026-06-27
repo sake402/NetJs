@@ -4,58 +4,63 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Project = Microsoft.Build.Evaluation.Project;
+using MsBuildProject = Microsoft.Build.Evaluation.Project;
+using CodeAnalysisProject = Microsoft.CodeAnalysis.Project;
 using NuGet.Packaging;
+using Microsoft.CodeAnalysis;
 
 namespace NetJs.Compiler
 {
     public class ProjectWrapper : IProject
     {
-        Project project;
+        MsBuildProject msProject;
+        CodeAnalysisProject caProject;
         public CSharpCompilation? Compilation { get; }
-        public string DirectoryPath => project.DirectoryPath;
-        public string FullPath => project.FullPath;
-
-        public ProjectWrapper(Project project)
+        public string DirectoryPath => msProject.DirectoryPath;
+        public string FullPath => msProject.FullPath;
+        public CompilationOptions? CompilationOptions => caProject.CompilationOptions;
+        public ProjectWrapper(CodeAnalysisProject caProject, MsBuildProject project)
         {
-            this.project = project;
+            this.caProject = caProject;
+            this.msProject = project;
+
         }
 
         public string? Evaluate(string propertyName)
         {
-            var v = project.GetPropertyValue(propertyName);
+            var v = msProject.GetPropertyValue(propertyName);
             if (!string.IsNullOrEmpty(v))
                 return v;
-            var value = project.AllEvaluatedProperties.LastOrDefault(e => e.Name == propertyName);
+            var value = msProject.AllEvaluatedProperties.LastOrDefault(e => e.Name == propertyName);
             return value?.EvaluatedValue;
         }
         public string GetAssemblyName()
         {
-            return project.AllEvaluatedProperties.Last(e => e.Name == "AssemblyName").EvaluatedValue;
+            return msProject.AllEvaluatedProperties.Last(e => e.Name == "AssemblyName").EvaluatedValue;
         }
         public string GetNamespace()
         {
-            return project.AllEvaluatedProperties.Last(e => e.Name == "RootNamespace").EvaluatedValue;
+            return msProject.AllEvaluatedProperties.Last(e => e.Name == "RootNamespace").EvaluatedValue;
         }
         public string GetOutputPath()
         {
-            return project.AllEvaluatedProperties.Last(e => e.Name == "OutputPath").EvaluatedValue;
+            return msProject.AllEvaluatedProperties.Last(e => e.Name == "OutputPath").EvaluatedValue;
         }
         public string GetConfiguration()
         {
-            return project.AllEvaluatedProperties.Last(e => e.Name == "Configuration").EvaluatedValue;
+            return msProject.AllEvaluatedProperties.Last(e => e.Name == "Configuration").EvaluatedValue;
         }
         public string GetPlatform()
         {
-            return project.AllEvaluatedProperties.Last(e => e.Name == "Platform").EvaluatedValue;
+            return msProject.AllEvaluatedProperties.Last(e => e.Name == "Platform").EvaluatedValue;
         }
         public string GetTargetFramework()
         {
-            return project.AllEvaluatedProperties.Last(e => e.Name == "TargetFramework").EvaluatedValue;
+            return msProject.AllEvaluatedProperties.Last(e => e.Name == "TargetFramework").EvaluatedValue;
         }
         public OutputMode GetOutputMode()
         {
-            var v = project.AllEvaluatedProperties.LastOrDefault(e => e.Name == "OutputMode")?.EvaluatedValue;
+            var v = msProject.AllEvaluatedProperties.LastOrDefault(e => e.Name == "OutputMode")?.EvaluatedValue;
             Enum.TryParse<OutputMode>(v, out var value);
             if (value == OutputMode.None)
             {
@@ -72,22 +77,34 @@ namespace NetJs.Compiler
             return value;
         }
 
+        public IList<string> GetGlobalUsings()
+        {
+            IList<string> sourceFiles = new List<string>();
+
+            foreach (var projectItem in msProject.AllEvaluatedItems.Where(i => i.ItemType == "Using"))
+            {
+                sourceFiles.Add(projectItem.EvaluatedInclude);
+            }
+
+            return sourceFiles;
+        }
+
         public IList<string> GetSourceFiles()
         {
             IList<string> sourceFiles = new List<string>();
 
-            foreach (var projectItem in project.AllEvaluatedItems.Where(i => i.ItemType == "Compile"))
+            foreach (var projectItem in msProject.AllEvaluatedItems.Where(i => i.ItemType == "Compile"))
             {
                 if (projectItem.EvaluatedInclude.Contains(".NETCoreApp,"))
                     continue;
                 if (projectItem.EvaluatedInclude.Contains(':')) //check if it has volume label already
                     sourceFiles.Add(projectItem.EvaluatedInclude);
                 else
-                    sourceFiles.Add(Path.Join(project.DirectoryPath, projectItem.EvaluatedInclude));
+                    sourceFiles.Add(Path.Join(msProject.DirectoryPath, projectItem.EvaluatedInclude));
             }
 
             //Check for source generated files
-            var sourceGenOutputPath = $"{project.DirectoryPath}/obj/{GetPlatform()}/{GetConfiguration()}/{GetTargetFramework()}/generated";
+            var sourceGenOutputPath = $"{msProject.DirectoryPath}/obj/{GetPlatform()}/{GetConfiguration()}/{GetTargetFramework()}/generated";
             if (Directory.Exists(sourceGenOutputPath))
             {
                 var csFiles = Directory.EnumerateFiles(sourceGenOutputPath, "*.cs", SearchOption.AllDirectories);
@@ -100,16 +117,16 @@ namespace NetJs.Compiler
         {
             IList<string> sourceFiles = new List<string>();
 
-            foreach (var projectItem in project.AllEvaluatedItems.Where(i => i.ItemType == "Content"))
+            foreach (var projectItem in msProject.AllEvaluatedItems.Where(i => i.ItemType == "Content"))
             {
                 if (projectItem.EvaluatedInclude.Contains(".NETCoreApp,"))
                     continue;
                 if (projectItem.EvaluatedInclude.Contains(':')) //check if it has volume label already
                     sourceFiles.Add(projectItem.EvaluatedInclude);
                 else
-                    sourceFiles.Add(Path.Join(project.DirectoryPath, projectItem.EvaluatedInclude));
+                    sourceFiles.Add(Path.Join(msProject.DirectoryPath, projectItem.EvaluatedInclude));
             }
-            foreach (var projectItem in project.AllEvaluatedItems.Where(i => i.ItemType == "None"))
+            foreach (var projectItem in msProject.AllEvaluatedItems.Where(i => i.ItemType == "None"))
             {
                 if (projectItem.EvaluatedInclude.Contains(".NETCoreApp,"))
                     continue;
@@ -119,7 +136,7 @@ namespace NetJs.Compiler
                     if (projectItem.EvaluatedInclude.Contains(':')) //check if it has volume label already
                         sourceFiles.Add(projectItem.EvaluatedInclude);
                     else
-                        sourceFiles.Add(Path.Join(project.DirectoryPath, projectItem.EvaluatedInclude));
+                        sourceFiles.Add(Path.Join(msProject.DirectoryPath, projectItem.EvaluatedInclude));
                 }
             }
 
@@ -130,14 +147,14 @@ namespace NetJs.Compiler
         {
             IList<string> sourceFiles = new List<string>();
 
-            foreach (var projectItem in project.AllEvaluatedItems.Where(i => i.ItemType == "ILLinkSubstitutionsXmls"))
+            foreach (var projectItem in msProject.AllEvaluatedItems.Where(i => i.ItemType == "ILLinkSubstitutionsXmls"))
             {
                 if (projectItem.EvaluatedInclude.Contains(".NETCoreApp,"))
                     continue;
                 if (projectItem.EvaluatedInclude.Contains(':')) //check if it has volume label already
                     sourceFiles.Add(projectItem.EvaluatedInclude);
                 else
-                    sourceFiles.Add(Path.Join(project.DirectoryPath, projectItem.EvaluatedInclude));
+                    sourceFiles.Add(Path.Join(msProject.DirectoryPath, projectItem.EvaluatedInclude));
             }
 
             return sourceFiles;
@@ -147,14 +164,14 @@ namespace NetJs.Compiler
         {
             IList<string> sourceFiles = new List<string>();
 
-            foreach (var projectItem in project.AllEvaluatedItems.Where(i => i.ItemType == "EmbeddedResource"))
+            foreach (var projectItem in msProject.AllEvaluatedItems.Where(i => i.ItemType == "EmbeddedResource"))
             {
                 if (projectItem.EvaluatedInclude.Contains(".NETCoreApp,"))
                     continue;
                 if (projectItem.EvaluatedInclude.Contains(':')) //check if it has volume label already
                     sourceFiles.Add(projectItem.EvaluatedInclude);
                 else
-                    sourceFiles.Add(Path.Join(project.DirectoryPath, projectItem.EvaluatedInclude));
+                    sourceFiles.Add(Path.Join(msProject.DirectoryPath, projectItem.EvaluatedInclude));
             }
 
             return sourceFiles;
@@ -162,7 +179,7 @@ namespace NetJs.Compiler
 
         public bool Build()
         {
-            return project.Build();
+            return msProject.Build();
         }
     }
 }

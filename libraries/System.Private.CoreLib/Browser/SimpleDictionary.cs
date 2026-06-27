@@ -1,7 +1,6 @@
 using NetJs;
-using System;
 
-namespace System
+namespace NetJs
 {
     [External]
     [ObjectLiteral]
@@ -59,10 +58,13 @@ namespace System
             get;
         }
     }
+}
 
-    [Boot]
-    [OutputOrder(int.MinValue)]
-    [Reflectable(false)]
+namespace System
+{
+    [NetJs.Boot]
+    [NetJs.OutputOrder(int.MinValue)]
+    [NetJs.Reflectable(false)]
     public static class SimpleDictionaryExtension
     {
         [IgnoreGeneric]

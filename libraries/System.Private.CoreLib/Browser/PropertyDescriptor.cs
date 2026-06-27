@@ -1,4 +1,4 @@
-﻿namespace System
+﻿namespace NetJs
 {
     [NetJs.ObjectLiteral]
     [NetJs.Convention(NetJs.Notation.CamelCase)]
@@ -8,7 +8,7 @@
         public bool? Enumerable { get; set; }
         public object? Value { get; set; }
         public bool? Writable { get; set; }
-        public Func<object>? Get { get; set; }
-        public Action<object>? Set { get; set; }
+        public NativeFunction<object>? Get { get; set; }
+        public NativeAction<object>? Set { get; set; }
     }
 }

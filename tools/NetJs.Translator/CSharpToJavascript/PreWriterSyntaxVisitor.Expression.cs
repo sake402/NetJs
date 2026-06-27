@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace NetJs.Translator.CSharpToJavascript
 {
-    public partial class PreWriterSyntaxVisitor : CSharpSyntaxRewriter
+    public partial class SecondPassRewriter : CSharpSyntaxRewriter
     {
         public ExpressionSyntax ConvertLambdaToCachedBlock(
              ExpressionSyntax originalNode,
@@ -110,12 +110,40 @@ namespace NetJs.Translator.CSharpToJavascript
             );
 
             // 6. Cast the outer final result to (dynamic) to allow implicit conversion to generic Expressions
-            var finalCastExpression = SyntaxFactory.CastExpression(
-                SyntaxFactory.ParseTypeName("dynamic"),
-                SyntaxFactory.ParenthesizedExpression(functionInvocation)
+            //var finalCastExpression = SyntaxFactory.CastExpression(
+            //    SyntaxFactory.ParseTypeName("dynamic"),
+            //    SyntaxFactory.ParenthesizedExpression(functionInvocation)
+            //);
+
+            //return finalCastExpression.NormalizeWhitespace().WithTriviaFrom(originalNode);
+
+            // 6. Cast the final result using the .As<T>() extension method instead of native casting
+
+            // Fallback safely to "dynamic" if the symbol cannot be semantically resolved
+            string targetTypeName = expressionTypeSymbol?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) ?? "dynamic";
+
+            // Represents the generic method identifier: .As<System.Linq.Expressions.Expression<...>>
+            var genericAsMethod = SyntaxFactory.GenericName(
+                SyntaxFactory.Identifier("As"),
+                SyntaxFactory.TypeArgumentList(
+                    SyntaxFactory.SingletonSeparatedList<TypeSyntax>(
+                        SyntaxFactory.ParseTypeName(targetTypeName)
+                    )
+                )
             );
 
-            return finalCastExpression.NormalizeWhitespace().WithTriviaFrom(originalNode);
+            // Chains the method call to the existing parenthesized invocation expression:
+            // (...your invocation node...).As<TargetType>()
+            var extensionMethodCall = SyntaxFactory.InvocationExpression(
+                SyntaxFactory.MemberAccessExpression(
+                    SyntaxKind.SimpleMemberAccessExpression,
+                    SyntaxFactory.ParenthesizedExpression(functionInvocation), // your existing wrapper node
+                    genericAsMethod
+                )
+            );
+
+            // Apply clean structural formatting while preserving original layout locations
+            return extensionMethodCall.NormalizeWhitespace().WithTriviaFrom(originalNode);
         }
 
 

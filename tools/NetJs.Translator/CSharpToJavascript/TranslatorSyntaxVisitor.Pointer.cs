@@ -17,7 +17,7 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             Visit(pointer);
             CurrentTypeWriter.Write(node, ".");
-            var refOrPointer = (ITypeSymbol)_global.GetSymbol("System.Pointer<>", this);
+            var refOrPointer = (ITypeSymbol)_global.GetSymbol("NetJs.Pointer<>", this);
             var add = (IMethodSymbol)refOrPointer.GetMembers("Add", _global).Single();
             WriteMemberName(node, refOrPointer, add);
             CurrentTypeWriter.Write(node, $"(");
@@ -33,7 +33,7 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (false)
             {
-                var refOrPointer = (ITypeSymbol)_global.GetSymbol("System.Pointer<>", this);
+                var refOrPointer = (ITypeSymbol)_global.GetSymbol("NetJs.Pointer<>", this);
                 var add = (IMethodSymbol)refOrPointer.GetMembers("Advance", _global).Single();
                 Visit(pointer);
                 CurrentTypeWriter.Write(node, ".");
@@ -69,7 +69,7 @@ namespace NetJs.Translator.CSharpToJavascript
             //}
             Visit(left);
             CurrentTypeWriter.Write(node, ".");
-            var refOrPointer = (ITypeSymbol)_global.GetSymbol("System.Pointer<>", this);
+            var refOrPointer = (ITypeSymbol)_global.GetSymbol("NetJs.Pointer<>", this);
             var subtract = (IMethodSymbol)refOrPointer.GetMembers("Subtract", _global).Single();
             WriteMemberName(node, refOrPointer, subtract);
             CurrentTypeWriter.Write(node, $"(");

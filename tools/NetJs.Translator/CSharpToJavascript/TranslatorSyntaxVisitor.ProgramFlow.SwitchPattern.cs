@@ -141,6 +141,7 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             WrapStatementsInExpression(node, () =>
             {
+                OpenClosure(node);
                 bool needsVar = NeedsCachePatternExpressionInTempVariable(node.GoverningExpression);
                 if (needsVar)
                 {
@@ -158,6 +159,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     CurrentClosure.Tags.Remove(SwitchExpressionVariableName);
                 }
+                CloseClosure(node);
             });
             //base.VisitSwitchExpression(node);
         }

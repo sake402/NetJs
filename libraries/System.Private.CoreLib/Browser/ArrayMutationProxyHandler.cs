@@ -1,7 +1,7 @@
-﻿using NetJs;
+﻿using System;
 using System.Reflection;
 
-namespace System
+namespace NetJs
 {
     public class ArrayMutationEventArgs : EventArgs
     {
@@ -9,6 +9,7 @@ namespace System
         public object? OldValue { get; set; }
         public object? Value { get; set; }
     }
+
     [NetJs.Reflectable(false)]
     public class ArrayMutationProxyHandler : IJsProxyHandler
     {

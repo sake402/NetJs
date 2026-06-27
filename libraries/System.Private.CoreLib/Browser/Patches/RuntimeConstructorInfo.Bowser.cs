@@ -7,7 +7,7 @@ namespace System.Reflection
     //[NetJs.Reflectable(false)]
     internal sealed unsafe partial class RuntimeConstructorInfo
     {
-        internal RuntimeConstructorInfo(ConstructorModel model)
+        internal RuntimeConstructorInfo(NetJs.ConstructorModel model)
         {
             mhandle = model.Handle.As<IntPtr>();
             name = model.Name;
@@ -44,7 +44,7 @@ namespace System.Reflection
             if (NetJs.Script.IsDefined(ctor))
             {
                 object[]? parameters = RuntimeHelpers.GetParametersFromPointer(args);
-                if (parameters == null && _model.As<ConstructorModel>().Parameters!.Length > 0)
+                if (parameters == null && _model.As<NetJs.ConstructorModel>().Parameters!.Length > 0)
                 {
                     throw null!;
                 }

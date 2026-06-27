@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using System.Text;
 
 namespace System.Reflection
@@ -16,7 +17,7 @@ namespace System.Reflection
             return value;
         }
 
-        static Attribute CreateAttribute(AttributeModel att, Type attType)
+        static Attribute CreateAttribute(NetJs.AttributeModel att, Type attType)
         {
             var args = NetJs.Script.IsDefined(att.ConstructorArguments) ? att.ConstructorArguments!.Map(a =>
             {
@@ -38,11 +39,11 @@ namespace System.Reflection
             return attribute;
         }
 
-        static CustomAttributeData CreateAttributeData(AttributeModel att)
+        static CustomAttributeData CreateAttributeData(NetJs.AttributeModel att)
         {
             var attributeType = AppDomain.GetType(att.TypeHandle.As<uint>()) ?? throw new InvalidOperationException();
             var constructor = (ConstructorInfo)AppDomain.GetMember(att.ConstructorHandle.As<uint>())!;
-            return new BrowserCustomAttributeData(
+            return new NetJs.BrowserCustomAttributeData(
                 constructor,
                 NetJs.Script.IsDefined(att.ConstructorArguments) ? (att.ConstructorArguments!.Map(a => new CustomAttributeTypedArgument(AppDomain.GetType(a.Type.As<uint>()) ?? throw new InvalidOperationException(), a.Value))) : [],
                 NetJs.Script.IsDefined(att.NamedArguments) ? att.NamedArguments!.Map(a =>
@@ -52,9 +53,9 @@ namespace System.Reflection
                 }) : NetJs.Script.CreateArrayFromValues<CustomAttributeNamedArgument>());
         }
 
-        static AttributeModel[]? GetAttributeModel(ICustomAttributeProvider obj)
+        static NetJs.AttributeModel[]? GetAttributeModel(ICustomAttributeProvider obj)
         {
-            AttributeModel[]? attributesModel = null;
+            NetJs.AttributeModel[]? attributesModel = null;
             if (obj is RuntimeAssembly ra)
             {
                 attributesModel = ra.As<RuntimeAssembly_Partial>()._model.Attributes;
@@ -88,14 +89,14 @@ namespace System.Reflection
         internal static Attribute[] GetCustomAttributesInternal(ICustomAttributeProvider obj, Type attributeType, bool pseudoAttrs)
         {
             var attHandle = attributeType.As<RuntimeType>()._model.Handle;
-            AttributeModel[]? attributesModel = GetAttributeModel(obj);
+            NetJs.AttributeModel[]? attributesModel = GetAttributeModel(obj);
             return (attributesModel?.Filter(a => a.TypeHandle == attHandle).Map(a => CreateAttribute(a, attributeType)) ?? []).AsNetArray();
         }
 
         [NetJs.MemberReplace]
         private static CustomAttributeData[] GetCustomAttributesDataInternal(ICustomAttributeProvider obj)
         {
-            AttributeModel[]? attributesModel = GetAttributeModel(obj);
+            NetJs.AttributeModel[]? attributesModel = GetAttributeModel(obj);
             return (attributesModel?.Map(a => CreateAttributeData(a)) ?? []).AsNetArray();
         }
 
@@ -103,7 +104,7 @@ namespace System.Reflection
         private static bool IsDefinedInternal(ICustomAttributeProvider obj, Type AttributeType)
         {
             var attHandle = AttributeType.As<RuntimeType>()._model.Handle;
-            AttributeModel[]? attributesModel = GetAttributeModel(obj);
+            NetJs.AttributeModel[]? attributesModel = GetAttributeModel(obj);
             return attributesModel?.Some(a => a.TypeHandle == attHandle) ?? false;
         }
     }

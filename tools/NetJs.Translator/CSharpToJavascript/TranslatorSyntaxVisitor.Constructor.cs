@@ -425,23 +425,39 @@ namespace NetJs.Translator.CSharpToJavascript
                     }
                     else
                     {
-                        var disposable = CurrentClosure.DefineIdentifierType(instanceName, CodeSymbol.From(instanceType));
-                        //rewrite new a { [b] = .. } as instance[b] = ..
-                        var rewrite = SyntaxFactory.AssignmentExpression(
-                            SyntaxKind.SimpleAssignmentExpression,
-                            SyntaxFactory.ElementAccessExpression(SyntaxFactory.IdentifierName(instanceName), imp.ArgumentList),
-                            assignment.Right
-                            );
-                        CurrentTypeWriter.Write(node, "", true);
-                        Visit(rewrite);
-                        disposable.Dispose();
-                        CurrentTypeWriter.WriteLine(node, ";");
+                        var addMethod = instanceType.GetMembers("Add").Single(e => e is IMethodSymbol ms && ms.Parameters.Count() == 1 + imp.ArgumentList.Arguments.Count);
+                        var metadata = _global.GetRequiredMetadata(addMethod);
+                        CurrentTypeWriter.Write(node, $"{instanceName}.{metadata.OverloadName}(", true);
+                        int ix = 0;
+                        foreach (var exp in imp.ArgumentList.Arguments)
+                        {
+                            if (ix > 0)
+                                CurrentTypeWriter.Write(node, ", ");
+                            Visit(exp);
+                            ix++;
+                        }
+                        CurrentTypeWriter.Write(node, ", ");
+                        Visit(assignment.Right);
+                        CurrentTypeWriter.WriteLine(node, ");");
+                        //var disposable = CurrentClosure.DefineIdentifierType(instanceName, CodeSymbol.From(instanceType));
+                        ////rewrite new a { [b] = .. } as instance[b] = ..
+                        //var rewrite = SyntaxFactory.AssignmentExpression(
+                        //    SyntaxKind.SimpleAssignmentExpression,
+                        //    SyntaxFactory.ElementAccessExpression(SyntaxFactory.IdentifierName(instanceName), imp.ArgumentList),
+                        //    assignment.Right
+                        //    );
+                        //CurrentTypeWriter.Write(node, "", true);
+                        //Visit(rewrite);
+                        //disposable.Dispose();
+                        //CurrentTypeWriter.WriteLine(node, ";");
                         continue;
                     }
                 }
                 else if (expression is InitializerExpressionSyntax init)
                 {
-                    CurrentTypeWriter.Write(node, $"{instanceName}.Add(", true);
+                    var addMethod = instanceType.GetMembers("Add").Single(e => e is IMethodSymbol ms && ms.Parameters.Count() == init.Expressions.Count);
+                    var metadata = _global.GetRequiredMetadata(addMethod);
+                    CurrentTypeWriter.Write(node, $"{instanceName}.{metadata.OverloadName}(", true);
                     int ix = 0;
                     foreach (var exp in init.Expressions)
                     {
@@ -455,16 +471,37 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
                 else if (expression is ExpressionElementSyntax element)
                 {
-                    CurrentTypeWriter.Write(node, $"{instanceName}.Add(", true);
+                    var addMethod = instanceType.GetMembers("Add").Single(e => e is IMethodSymbol ms && ms.Parameters.Count() == 1);
+                    var metadata = _global.GetRequiredMetadata(addMethod);
+                    CurrentTypeWriter.Write(node, $"{instanceName}.{metadata.OverloadName}(", true);
                     Visit(element);
                     CurrentTypeWriter.WriteLine(node, ");");
                     continue;
                 }
                 else if (expression is SpreadElementSyntax spread)
                 {
-                    CurrentTypeWriter.Write(node, $"{instanceName}.AddRange(", true);
-                    Visit(spread.Expression);
-                    CurrentTypeWriter.WriteLine(node, ");");
+                    var addRangeMethod = instanceType.GetMembers("AddRange").SingleOrDefault(e => e is IMethodSymbol ms && ms.Parameters.Count() == 1);
+                    if (addRangeMethod != null)
+                    {
+                        var metadata = _global.GetRequiredMetadata(addRangeMethod);
+                        CurrentTypeWriter.Write(node, $"{instanceName}.{metadata.OverloadName}(", true);
+                        Visit(spread.Expression);
+                        CurrentTypeWriter.WriteLine(node, ");");
+                    }
+                    else
+                    {
+                        var addMethod = (IMethodSymbol)instanceType.GetMembers("Add").Single(e => e is IMethodSymbol ms && ms.Parameters.Count() == 1);
+                        var metadata = _global.GetRequiredMetadata(addMethod);
+                        CurrentTypeWriter.Write(node, "", true);
+                        WriteMethodInvocation(node,
+                            "System.Runtime.CompilerServices.RuntimeHelpers.AddSpreadToCollection",
+                            methodGenericTypes: [((INamedTypeSymbol)instanceType).TypeParameters[0]],
+                            arguments: [new CodeNode(() =>
+                        {
+                            CurrentTypeWriter.Write(node, $"{instanceName}.{metadata.OverloadName}");
+                        }), spread.Expression]);
+                        CurrentTypeWriter.WriteLine(node, ";");
+                    }
                     continue;
                 }
                 else if (expression is AssignmentExpressionSyntax assignment2)

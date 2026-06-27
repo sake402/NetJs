@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using System.IO;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace NetJs.Tests
 {
@@ -53,7 +54,7 @@ namespace NetJs.Tests
 
         //}
 
-        public static void Main()
+        public static async Task Main()
         {
             int start = Environment.TickCount;
             BooleanTests.Run();
@@ -65,8 +66,8 @@ namespace NetJs.Tests
             DateTimeExhaustiveTests.Run();
             DateTimeOffsetTests.Run();
             DateTimeOffsetExhaustiveTests.Run();
-            CSharp14TranspilerTests.Run();
-            CSharp14TranspilerTestsV2.Run();
+            await CSharp14TranspilerTests.Run();
+            await CSharp14TranspilerTestsV2.Run();
             int end = Environment.TickCount;
             Debug.WriteLine($"✅ All Tests completed in {end - start}ms.");
             //int[] aaa = [1,2,3];

@@ -249,7 +249,11 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitPropertyPatternClause(PropertyPatternClauseSyntax node)
         {
-            var containingIsPatternExpression = node.FindClosestParent<IsPatternExpressionSyntax>() ?? throw new InvalidOperationException();
+            var containingIsPatternExpression =
+                (CSharpSyntaxNode?)node.FindClosestParent<IsPatternExpressionSyntax>() ??
+                (CSharpSyntaxNode?)node.FindClosestParent<SwitchExpressionArmSyntax>() ??
+                (CSharpSyntaxNode?)node.FindClosestParent<SwitchStatementSyntax>() ??
+                throw new InvalidOperationException();
             int ix = 0;
             foreach (var sub in node.Subpatterns)
             {

@@ -1,11 +1,11 @@
-﻿namespace System
+﻿namespace NetJs
 {
     //[NetJs.NonScriptable]
     public class ForcedPartialBase<T>
     {
         protected extern T THIS
         {
-            [NetJs.Name("this")]
+            [Name("this")]
             get;
         }
         //protected extern dynamic DynamicThis

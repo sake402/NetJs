@@ -19,6 +19,8 @@
         public const bool StructFieldAlwaysLayout = true;
         [InlineConst]
         public const bool CompatibleExtensionPropertyGetSetMethod = true;
+        //[InlineConst]
+        //public const bool GotoLabelsUseIfCondition = false;
         [InlineConst]
         public const InterfaceMixinMode UseInterfaceMixin = InterfaceMixinMode.None;
         [InlineConst]

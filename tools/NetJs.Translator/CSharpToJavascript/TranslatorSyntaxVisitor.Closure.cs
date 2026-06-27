@@ -38,6 +38,14 @@ namespace NetJs.Translator.CSharpToJavascript
             closure.Dispose();
         }
 
+        CodeBlockClosure? TryGetClosureOf(CSharpSyntaxNode node)
+        {
+            foreach (var c in closures)
+                if (c.Syntax == node)
+                    return c;
+            return null;
+        }
+
         CodeBlockClosure GetClosureOf(CSharpSyntaxNode node)
         {
             foreach (var c in closures)

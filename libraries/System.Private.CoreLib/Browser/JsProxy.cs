@@ -1,11 +1,9 @@
-﻿
-using NetJs;
-using System.Reflection;
+﻿using System.Reflection;
 
-namespace System
+namespace NetJs
 {
-    [NetJs.Reflectable(false)]
-    [NetJs.External]
+    [Reflectable(false)]
+    [External]
     public interface IJsProxyHandler
     {
         //[Name("$isProxy")]
@@ -16,10 +14,10 @@ namespace System
         public bool Set(object target, string property, object value, object receiver);
     }
 
-    [NetJs.Reflectable(false)]
+    [Reflectable(false)]
     public static class JSProxy
     {
-        [NetJs.IgnoreGeneric]
+        [IgnoreGeneric]
         public static T Create<T>(IJsProxyHandler handler)
         {
             object? proxy = null;

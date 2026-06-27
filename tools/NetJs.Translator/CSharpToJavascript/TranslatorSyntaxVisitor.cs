@@ -145,10 +145,6 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (node != null)
             {
-                if (node.ToString().StartsWith("ref _blocks[0]"))
-                {
-
-                }
                 var nodeType = node.GetType();
                 for (int i = 0; i < s_Emitters.Length; i++)
                 {
@@ -971,23 +967,49 @@ namespace NetJs.Translator.CSharpToJavascript
 
         bool IsRewiteCandidate(ConditionalAccessExpressionSyntax node)
         {
+            //if (node.WhenNotNull.IsKind(SyntaxKind.ConditionalAccessExpression))
+            //    return true;
+            //var rhsSymbol = _global.GetSymbol(node.WhenNotNull, this);
+            //if (rhsSymbol is IMethodSymbol m && (m.IsExtensionMethod /*|| m.IsStaticCallConvention(_global)*/))
+            //{
+            //    //We only rewite for extension method
+            //    return true;
+            //}
+            //return false;
             if (node.WhenNotNull.IsKind(SyntaxKind.ConditionalAccessExpression))
                 return true;
-            var rhsSymbol = _global.GetSymbol(node.WhenNotNull, this);
-            if (rhsSymbol is IMethodSymbol m && (m.IsExtensionMethod /*|| m.IsStaticCallConvention(_global)*/))
+            var rhsExpression = node.WhenNotNull;
+            if (rhsExpression.IsKind(SyntaxKind.ElementAccessExpression) && rhsExpression is ElementAccessExpressionSyntax el)
             {
-                //We only rewite for extension method
-                return true;
+                rhsExpression = el.Expression;
+            }
+            var invoke = rhsExpression;
+            while (invoke.IsKind(SyntaxKind.InvocationExpression))
+            {
+                var rhsSymbol = _global.GetSymbol(invoke, this);
+                if (rhsSymbol is IMethodSymbol m && (m.IsExtensionMethod/* || m.IsStaticCallConvention()*/))
+                {
+                    //We only rewite for extension method and static call convensions
+                    return true;
+                }
+                //Dealing with something like oldBytes?.AsSpan(0, _offset).Clear();
+                //The clear is not an extension method, but AsSpan is
+                if (((InvocationExpressionSyntax)invoke).Expression.IsKind(SyntaxKind.SimpleMemberAccessExpression))
+                {
+                    var sm = (MemberAccessExpressionSyntax)((InvocationExpressionSyntax)invoke).Expression;
+                    if (sm.Expression.IsKind(SyntaxKind.InvocationExpression))
+                    {
+                        invoke = sm.Expression;
+                        continue;
+                    }
+                }
+                break;
             }
             return false;
         }
 
         public bool ConditionalAccessUseIfNotNull(ConditionalAccessExpressionSyntax node, out ISymbol rhs)
         {
-            if (node.ToString().Contains("sb?.ToString()"))
-            {
-
-            }
             var rhsExpression = node.WhenNotNull;
             bool useIfNotNull = false;
             int depth = 0;
@@ -1002,7 +1024,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     useIfNotNull |= true;
                 }
-                if (node.IsKind(SyntaxKind.ElementBindingExpression))
+                if (node.IsKind(SyntaxKind.ElementBindingExpression) && node.Parent.IsKind(SyntaxKind.ConditionalAccessExpression))
                 {
                     var indexer = GetGetIndexer((ElementBindingExpressionSyntax)node);
                     useIfNotNull |= indexer != null;

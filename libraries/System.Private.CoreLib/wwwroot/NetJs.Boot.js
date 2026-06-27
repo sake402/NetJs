@@ -1460,7 +1460,7 @@ window.classes = classes;
             mvalue = out.$v;
             return tryCastNumeric(mvalue, toType);
         }
-        if (value instanceof NetJs.$spc.System.RefOrPointer && (typeIsIntegerNumber(toType) || typeIsLong(toType))) { //casting pointer to number
+        if (value instanceof NetJs.$spc.NetJs.RefOrPointer && (typeIsIntegerNumber(toType) || typeIsLong(toType))) { //casting pointer to number
             var number = NetJs.castPtr2Address(value, toType);
             if (number) {
                 if (typeIsLong(toType))

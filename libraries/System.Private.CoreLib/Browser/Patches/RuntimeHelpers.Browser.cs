@@ -1,5 +1,4 @@
 ﻿using NetJs;
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
@@ -86,7 +85,7 @@ namespace System.Runtime.CompilerServices
             var getAwaiter = taskLike["GetAwaiter"].As<NativeFunction<INotifyCompletion>>();
             if (NetJs.Script.IsDefined(getAwaiter))
             {
-                return new Promise<object>((resolve, reject) =>
+                return new NetJs.Promise<object>((resolve, reject) =>
                 {
                     var awaiter = getAwaiter.Invoke(taskLike);
                     awaiter.OnCompleted(() =>
@@ -577,6 +576,18 @@ namespace System.Runtime.CompilerServices
                     currentByteOffset = fieldOffset.As<int>();
                 else
                     currentByteOffset += fieldSize;
+            }
+        }
+
+        [IgnoreGeneric]
+        public static void AddSpreadToCollection<T>(NativeAction<T> addMethod, IEnumerable<T> spreadItems)
+        {
+            var  enumerator = spreadItems.GetEnumerator();
+            //var addMethod = collection[addMethodName].As<NativeAction<T>>();
+            while (enumerator.MoveNext())
+            {
+                T current = enumerator.Current;
+                addMethod(current);
             }
         }
     }

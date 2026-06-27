@@ -1,10 +1,10 @@
-﻿using NetJs;
+﻿using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Window;
 
-namespace System
+namespace NetJs
 {
     //public interface IRefOrPointer
     //{
@@ -63,7 +63,7 @@ namespace System
             this._setter = setter;
         }
 
-        [NetJs.Name(NetJs.Constants.RefValueName)]
+        [Name(NetJs.Constants.RefValueName)]
         T v
         {
             get => GetAt(0);
@@ -790,7 +790,7 @@ namespace System
             };
         }
 
-        [NetJs.Name(NetJs.Constants.IsTypeName)]
+        [Name(NetJs.Constants.IsTypeName)]
         public static bool Is(object? value, out Ref<T>? result)
         {
             result = NetJs.Script.Write<Ref<T>>("undefined");
@@ -868,7 +868,7 @@ namespace System
             };
         }
 
-        [NetJs.Name(NetJs.Constants.IsTypeName)]
+        [Name(NetJs.Constants.IsTypeName)]
         public static bool Is(object? value, out Pointer<T>? result)
         {
             result = NetJs.Script.Write<Pointer<T>>("undefined");

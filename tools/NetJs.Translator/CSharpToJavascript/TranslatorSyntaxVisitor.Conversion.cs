@@ -72,8 +72,8 @@ namespace NetJs.Translator.CSharpToJavascript
                 var numFromType = fromType?.TypeKind == TypeKind.Enum ? ((INamedTypeSymbol)fromType).EnumUnderlyingType : fromType;
                 if (numFromType != null &&
                     toType != null &&
-                    (numFromType.IsIntegerNumericType()) &&
-                    toType.IsIntegerNumericType())
+                    ((numFromType.IsIntegerNumericType() && toType.IsIntegerNumericType()) || 
+                    (numFromType.IsLongNumericType() && toType.IsLongNumericType())))
                 {
                     //this type can just be assigned, no cast/conversion neccessary in js
                     int fromRank = numFromType.GetNumericRangeRank();

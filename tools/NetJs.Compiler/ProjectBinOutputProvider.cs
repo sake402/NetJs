@@ -1,4 +1,5 @@
-﻿using NetJs.Translator;
+﻿using LivingThing.Core.Frameworks.Common.OneOf;
+using NetJs.Translator;
 using NetJs.Translator.CSharpToJavascript;
 using System;
 using System.Collections.Generic;
@@ -26,7 +27,7 @@ namespace NetJs.Compiler
             this.project = project;
         }
 
-        public void Output(GlobalCompilationVisitor global, string destinationRelativePath, Stream content, DateTime? sourceCreateTime)
+        public void Output(GlobalCompilationVisitor global, string destinationRelativePath, OneOf<string, Stream> content)
         {
             if (!cleaned)
             {
@@ -59,29 +60,40 @@ namespace NetJs.Compiler
                 }
                 cleaned = true;
             }
+            var outputFile = Path.Combine(OutputPath, /*Constants.OutputFolderName,*/ destinationRelativePath);
+            FileInfo? existingInfo = null;
+            DateTime? sourceCreateTime = null;
+            if (content.IsT0 && File.Exists(outputFile))
+            {
+                var fileInfo = new FileInfo(content.AsT0);
+                sourceCreateTime = fileInfo.LastWriteTime;
+                existingInfo = new FileInfo(outputFile);
+                if (fileInfo.LastWriteTime < existingInfo.LastWriteTime)
+                    return;
+            }
+            Stream stream;
+            if (content.IsT0)
+            {
+                stream = new FileStream(content.AsT0, FileMode.Open, FileAccess.Read);
+            }
+            else
+            {
+                stream = content.AsT1;
+            }
             if (destinationRelativePath.EndsWith(".dll") || destinationRelativePath.EndsWith(".pdb") || destinationRelativePath.EndsWith(".xml"))
             {
-                var outputFile = Path.Combine(OutputPath, destinationRelativePath);
                 var output = new FileStream(outputFile, FileMode.Create, FileAccess.Write);
-                content.CopyTo(output);
+                stream.CopyTo(output);
                 output.Flush();
                 output.Close();
             }
             else if (!global.OutputMode.HasFlag(OutputMode.SingleHtmlFile) || destinationRelativePath.EndsWith(".html"))
             {
-                var outputFile = Path.Combine(OutputPath, /*Constants.OutputFolderName,*/ destinationRelativePath);
-                FileInfo? existingInfo = null;
-                if (sourceCreateTime != null && File.Exists(outputFile))
-                {
-                    existingInfo = new FileInfo(outputFile);
-                    if (sourceCreateTime.Value < existingInfo.LastWriteTime)
-                        return;
-                }
                 var dir = Path.GetDirectoryName(outputFile);
                 if (dir != null && !Directory.Exists(dir))
                     Directory.CreateDirectory(dir);
                 var output = new FileStream(outputFile, FileMode.Create, FileAccess.Write);
-                content.CopyTo(output);
+                stream.CopyTo(output);
                 output.Flush();
                 output.Close();
                 if (existingInfo != null && sourceCreateTime != null)
@@ -91,12 +103,13 @@ namespace NetJs.Compiler
             else
             {
                 if (destinationRelativePath.EndsWith(".js"))
-                    content.CopyTo(htmlScriptContent);
+                    stream.CopyTo(htmlScriptContent);
                 else if (destinationRelativePath.EndsWith(".css"))
-                    content.CopyTo(htmlStyleContent);
+                    stream.CopyTo(htmlStyleContent);
                 else
-                    content.CopyTo(htmlBodyContent);
+                    stream.CopyTo(htmlBodyContent);
             }
+
             if (!outputtedFiles.Contains(destinationRelativePath))
                 outputtedFiles.Add(destinationRelativePath);
         }

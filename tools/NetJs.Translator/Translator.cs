@@ -31,6 +31,7 @@ namespace NetJs.Translator
             Random random = new Random();
             var compiler = new CodeCompiler();
             //var dependencies = project.Imports.Select(i => i.ImportedProject);
+            var globalUsings = project.GetGlobalUsings();
             var sourceFiles = project.GetSourceFiles();
             var contentFiles = project.GetContentFiles();
             var linkerFiles = project.GetLinkerFiles();
@@ -52,7 +53,7 @@ namespace NetJs.Translator
                 {
                     $"Precompiling {rcsFiles.Count} files for razor generator...".Profile(() =>
                     {
-                        compilation = compiler.GenerateCode(project, rcsFiles.ToArray(), null, out _, out _);
+                        compilation = compiler.GenerateCode(project, rcsFiles.ToArray(), null, globalUsings, out _, out _);
                     });
                 }
 
@@ -259,17 +260,16 @@ namespace {project.GetNamespace()}
             CSharpCompilation csCompilation = default!;
             IEnumerable<MetadataReference> references = default!;
             IEnumerable<string> symbolFiles = default!;
-            IEnumerable<SyntaxTree> syntaxTrees = default!;
+            SyntaxTree[] syntaxTrees = default!;
             $"Prebuilding Syntax Tree".Profile(() =>
             {
-                csCompilation = compiler.GenerateCode(project, csFiles.ToArray(), null, out references, out _);
-                syntaxTrees = csCompilation.SyntaxTrees;
+                csCompilation = compiler.GenerateCode(project, csFiles.ToArray(), null, globalUsings, out references, out _);
+                syntaxTrees = csCompilation.SyntaxTrees.ToArray();
             });
             //Measure($"Generating Syntax Trees", () =>
             //{
             //    syntaxTrees = compiler.GetSyntaxTrees(project, csFiles.ToArray(), null);
             //});
-            (string FilePath, string Source)[] replacements = new (string, string)[syntaxTrees.Count()];
             //Delete all existing files first, we want to check for filename duplicates since this is a flat directory structure
             var projectTempFolder = Path.Combine(tempFolder, project.GetName());
             if (!Directory.Exists(projectTempFolder))
@@ -277,15 +277,32 @@ namespace {project.GetNamespace()}
             var files = Directory.GetFiles(projectTempFolder);
             foreach (var f in files)
                 File.Delete(f);
-            $"Rewriting".Profile(() =>
+
+            $"Rewriting.1".Profile(() =>
             {
-                var partialClassGroupings = syntaxTrees
-                .SelectMany(s => s.GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>())
-                .GroupBy(t => t.CreateFullMemberName()!)
-                .ToDictionary(e => e.Key, e => e.ToList());
                 Parallel.ForEach(syntaxTrees.Select((tree, i) => (tree, i)), new ParallelOptions { MaxDegreeOfParallelism = 10 }, tree =>
                 {
-                    var visitor = new PreWriterSyntaxVisitor(csCompilation, tree.tree, partialClassGroupings);
+                    var visitor = new FirstPassRewriter();
+                    var newTree = (((CSharpSyntaxNode)tree.tree.GetRoot()).Accept(visitor))
+                    !.SyntaxTree
+                    .WithFilePath(tree.tree.FilePath);
+                    syntaxTrees[tree.i] = newTree;
+                });
+                csCompilation = compiler.GenerateCode(project, syntaxTrees.Select(c => c.FilePath).ToArray(), syntaxTrees.Select(c => c.GetText().ToString()).ToArray(), null, out references, out _);
+                syntaxTrees = csCompilation.SyntaxTrees.ToArray();
+            });
+
+            (string FilePath, string Source)[] replacements = new (string, string)[syntaxTrees.Count()];
+
+            $"Rewriting.2".Profile(() =>
+            {
+                var partialClassGroupings = syntaxTrees
+                    .SelectMany(s => s.GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>())
+                    .GroupBy(t => t.CreateFullMemberName()!)
+                    .ToDictionary(e => e.Key, e => e.ToList());
+                Parallel.ForEach(syntaxTrees.Select((tree, i) => (tree, i)), new ParallelOptions { MaxDegreeOfParallelism = 10 }, tree =>
+                {
+                    var visitor = new SecondPassRewriter(csCompilation, tree.tree, partialClassGroupings);
                     var newTree = (((CSharpSyntaxNode)tree.tree.GetRoot()).Accept(visitor))
                     !.SyntaxTree
                     .WithFilePath(tree.tree.FilePath);
@@ -312,7 +329,7 @@ namespace {project.GetNamespace()}
                             }
                         }
                     }
-                    var path = project.DirectoryPath.GetRelativePath(newTree.FilePath);
+                    //var path = project.DirectoryPath.GetRelativePath(newTree.FilePath);
                     //var tempFile = Path.Combine(TempFolder, path);
                     var tempFile = Path.Combine(projectTempFolder, Path.GetFileName(newTree.FilePath));
                     int ix = 1;
@@ -338,7 +355,7 @@ namespace {project.GetNamespace()}
             });
             $"Rebuilding Syntax Tree".Profile(() =>
             {
-                csCompilation = compiler.GenerateCode(project, replacements.Select(s => s.FilePath).ToArray(), replacements.Select(s => s.Source).ToArray(), out references, out symbolFiles);
+                csCompilation = compiler.GenerateCode(project, replacements.Select(s => s.FilePath).ToArray(), replacements.Select(s => s.Source).ToArray(), null, out references, out symbolFiles);
                 //var errors = csCompilation.GetDiagnostics().Where(e => e.Severity == DiagnosticSeverity.Error);
             });
             if (sourceGenerators != null)
@@ -410,15 +427,13 @@ namespace {project.GetNamespace()}
 
             void DeepCopyFolder(string source, string? relative = null)
             {
-                foreach (var file in Directory.EnumerateFiles(source, "*.*", SearchOption.AllDirectories))
+                var files = Directory.EnumerateFiles(source, "*.*", SearchOption.AllDirectories).ToList();
+                foreach (var file in files)
                 {
                     var relativePath = Utility.GetRelativePath(relative ?? source, file);
                     //var thisPath = Path.Combine(outputPath, "js", relative);
-                    var existingFileInfo = new FileInfo(file);
-                    using (var fs = new FileStream(file, FileMode.Open, FileAccess.Read))
-                    {
-                        output.Output(global, relativePath, fs, existingFileInfo.LastWriteTime);
-                    }
+                    //var existingFileInfo = new FileInfo(file);
+                    output.Output(global, relativePath, file);
                     //File.Copy(file, thisPath, true);
                     //File.Copy(file, thisPath, true);
                     //outputtedFiles.Add(relative);
@@ -433,9 +448,9 @@ namespace {project.GetNamespace()}
             dllStream.Position = 0;
             pdbStream.Position = 0;
             docStream.Position = 0;
-            output.Output(global, project.GetName() + ".js.dll", dllStream, null);
-            output.Output(global, project.GetName() + ".js.pdb", pdbStream, null);
-            output.Output(global, project.GetName() + ".js.xml", docStream, null);
+            output.Output(global, project.GetName() + ".js.dll", dllStream);
+            output.Output(global, project.GetName() + ".js.pdb", pdbStream);
+            output.Output(global, project.GetName() + ".js.xml", docStream);
 
             //copy the js folder in every refence over to this js folder
             foreach (var _ref in references)
@@ -451,32 +466,24 @@ namespace {project.GetNamespace()}
             var jsFiles = contentFiles.Where(e => e.EndsWith(".js")).ToList();
             foreach (var file in jsFiles)
             {
-                var existingFileInfo = new FileInfo(file);
-                using (var source = new FileStream(file, FileMode.Open, FileAccess.Read))
-                {
-                    var relativePath = Utility.GetRelativePath(project.GetFolder(), file);
-                    //Since wwwroot contains content files like js, css and img.
-                    //And what we are producing from cs files are also js files, flatten the wwwroot folder with our output path
-                    output.Output(global,
-                        !relativePath.StartsWith(Constants.OutputFolderName + "\\") ? Constants.OutputFolderName + "\\" + relativePath : relativePath,
-                        source,
-                        existingFileInfo.LastWriteTime);
-                }
+                //var existingFileInfo = new FileInfo(file);
+                var relativePath = Utility.GetRelativePath(project.GetFolder(), file);
+                //Since wwwroot contains content files like js, css and img.
+                //And what we are producing from cs files are also js files, flatten the wwwroot folder with our output path
+                output.Output(global,
+                    !relativePath.StartsWith(Constants.OutputFolderName + "\\") ? Constants.OutputFolderName + "\\" + relativePath : relativePath,
+                    file);
             }
 
             var cssFiles = contentFiles.Where(e => e.EndsWith(".css")).ToList();
             foreach (var file in cssFiles)
             {
-                var existingFileInfo = new FileInfo(file);
-                using (var source = new FileStream(file, FileMode.Open, FileAccess.Read))
-                {
-                    var relativePath = Utility.GetRelativePath(project.GetFolder(), file);
-                    output.Output(global,
-                        !relativePath.StartsWith(Constants.OutputFolderName + "\\") ? Constants.OutputFolderName + "\\" + relativePath : relativePath,
-                        source,
-                        existingFileInfo.LastWriteTime);
-                    //output.Output(global, relativePath.StartsWith(Constants.OutputFolderName + "\\") ? relativePath.Substring((Constants.OutputFolderName + "\\").Length) : relativePath, source, existingFileInfo.LastWriteTime);
-                }
+                //var existingFileInfo = new FileInfo(file);
+                var relativePath = Utility.GetRelativePath(project.GetFolder(), file);
+                output.Output(global,
+                    !relativePath.StartsWith(Constants.OutputFolderName + "\\") ? Constants.OutputFolderName + "\\" + relativePath : relativePath,
+                    file);
+                //output.Output(global, relativePath.StartsWith(Constants.OutputFolderName + "\\") ? relativePath.Substring((Constants.OutputFolderName + "\\").Length) : relativePath, source, existingFileInfo.LastWriteTime);
             }
 
             void RecursiveDependentTypes(INamedTypeSymbol symbol, HashSet<INamedTypeSymbol> found, int depth)
@@ -788,7 +795,7 @@ namespace {project.GetNamespace()}
         {(isSystemPrivateCoreLib ? $"{global.GlobalName}.{global.GetAssemblyGlobalSlug(global.Compilation.Assembly)}.System.AppDomain.{Constants.AppDomainInitialize}($asm)" : "")}
         {codes}
 	}});
-}})(window.{Constants.ProjectName}.{Constants.BootName}(), window)" : codes), null);
+}})(window.{Constants.ProjectName}.{Constants.BootName}(), window)" : codes));
             }
             else
             {
@@ -810,7 +817,7 @@ namespace {project.GetNamespace()}
 	{{
         {codes}
 	}});
-}})(window.{Constants.ProjectName}.{Constants.BootName}(), window)" : codes), null);
+}})(window.{Constants.ProjectName}.{Constants.BootName}(), window)" : codes));
                         //var path = Path.Combine(outputPath, "js", filePath);
                         ////var path = Path.Combine(outputPath, "js", $"{Path.ChangeExtension(Path.GetFileName(visitor.Key.FilePath), "js")}");
                         //var dir = Path.GetDirectoryName(path);
@@ -823,7 +830,7 @@ namespace {project.GetNamespace()}
             }
 
             var yaml = serializer.Serialize(global.Symbols);
-            output.Output(global, project.GetName() + $".SymbolNames.yaml", StringToStream(yaml), null);
+            output.Output(global, project.GetName() + $".SymbolNames.yaml", StringToStream(yaml));
 
             if (global.MainEntry != null)
             {
@@ -855,7 +862,7 @@ namespace {project.GetNamespace()}
 </body>
 </html>
 ";
-                output.Output(global, Constants.OutputFolderName + "/" + project.GetName() + ".html", StringToStream(index), null);
+                output.Output(global, Constants.OutputFolderName + "/" + project.GetName() + ".html", StringToStream(index));
             }
         }
 

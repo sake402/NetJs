@@ -78,7 +78,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 if (bodyIsBlock)
                     CurrentTypeWriter.WriteLine(node, "{", true);
                 var typeParameter = isObjectEnumerable || isObjectEnumerator ? (type ?? _global.SystemObject) : (ITypeSymbol)_global.GetSymbol(typeparameters.First(), this/*, out _, out _*/);
-                var yieldClass = ((INamedTypeSymbol)_global.GetSymbol("System.YieldToIterator<>", this)).Construct(typeParameter);
+                var yieldClass = ((INamedTypeSymbol)_global.GetSymbol("NetJs.YieldToIterator<>", this)).Construct(typeParameter);
                 var constructor = (IMethodSymbol)yieldClass.GetMembers(".ctor").Single();
                 CurrentTypeWriter.Write(node, $"return ", true);
                 WriteObjectCreation(node, null, yieldClass, constructor, [new CodeNode(() =>

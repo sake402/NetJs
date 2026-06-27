@@ -1,9 +1,8 @@
-﻿using System;
+﻿using NetJs;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace System
 {

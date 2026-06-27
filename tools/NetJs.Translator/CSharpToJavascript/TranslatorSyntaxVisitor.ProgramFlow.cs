@@ -90,12 +90,12 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             string? loopStart = null;
             //List<CSharpSyntaxNode> found = new();
-            var parentControl = node.FindClosestParent<CSharpSyntaxNode>(isCandidate: (c) =>
+            var parentControl = !node.Parent.IsKind(SyntaxKind.SwitchSection) ? node.FindClosestParent<CSharpSyntaxNode>(isCandidate: (c) =>
             {
                 //if (found.Contains(c))
                 //return false;
                 return c is DoStatementSyntax || c is WhileStatementSyntax || c is ForEachStatementSyntax || c is ForStatementSyntax;
-            });
+            }) : null;
             if (parentControl != null && flowJumpLabels.TryGetValue(parentControl, out var label))
             {
                 loopStart = label;
@@ -303,7 +303,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 if (rhsType == null)
                     rhsType = returnType != null ? _global.GetTypeSymbol(returnType) : null;
                 returnType ??= rhsType;
-                if (cacheKeyVariable!= null)
+                if (cacheKeyVariable != null)
                 {
                     CurrentTypeWriter.Write(node, cacheKeyVariable);
                     CurrentTypeWriter.Write(node, " ??= ");

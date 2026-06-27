@@ -327,7 +327,7 @@ namespace NetJs.Translator.CSharpToJavascript
             var types = InitializeForAssembly(assembly);
             var model = new AssemblyModel
             {
-                AssemblyFlags = global.MainEntry != null ? System.AssemblyFlags.Entry : System.AssemblyFlags.None,
+                AssemblyFlags = global.MainEntry != null ? NetJs.AssemblyFlags.Entry : NetJs.AssemblyFlags.None,
                 Handle = assemblyHandle,
                 FullName = assembly.Identity.Name.Replace("NetJs.", ""),
                 Version = assembly.Identity.Version?.ToString() ?? "0.0.0.0",

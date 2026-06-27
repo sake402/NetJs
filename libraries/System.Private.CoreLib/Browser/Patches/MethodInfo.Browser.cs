@@ -6,7 +6,7 @@ namespace System.Reflection
     //[NetJs.Reflectable(false)]
     public abstract partial class MethodInfo
     {
-        internal MethodInfo(MethodModel model) : base(model)
+        internal MethodInfo(NetJs.MethodModel model) : base(model)
         {
         }
     }

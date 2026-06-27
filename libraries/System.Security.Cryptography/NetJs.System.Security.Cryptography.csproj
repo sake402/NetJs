@@ -1572,7 +1572,7 @@
     <None Include="@(AsnXml)" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interop.GetRandomBytes.cs" />
+    <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interops\Interop.GetRandomBytes.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="$(DotnetRuntimeRoot)src/libraries/Common/src/System/SR.cs" />

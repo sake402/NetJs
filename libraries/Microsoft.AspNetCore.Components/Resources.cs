@@ -24,9 +24,9 @@
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal static partial class Resources
     {
-
+    
         private static global::System.Resources.ResourceManager s_resourceManager;
-
+    
         private static global::System.Globalization.CultureInfo resourceCulture;
 
         /// <summary>

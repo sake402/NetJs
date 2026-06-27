@@ -1,6 +1,5 @@
-﻿using NetJs;
-
-namespace System.Text.RegularExpressions
+﻿
+namespace NetJs
 {
     [NetJs.External]
     [NetJs.Name("RegExp")]

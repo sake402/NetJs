@@ -1,4 +1,5 @@
-﻿
+﻿using System;
+
 namespace System
 {
     [NetJs.ForcePartial(typeof(ICloneable))]

@@ -1,4 +1,5 @@
 using NetJs;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text.Json;
@@ -42,7 +43,7 @@ public class HandleSerializer : JsonConverter<Handle>
 using Handle = ulong;
 #endif
 
-namespace System
+namespace NetJs
 {
     // --- Enums ---
 

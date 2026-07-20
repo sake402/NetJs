@@ -29,7 +29,7 @@ namespace NetJs.Translator
         IProjectOutputProvider output;
         Random random;
         public IEnumerable<IIncrementalGenerator>? SourceGenerators { get; set; }
-        public TextWriter? LogTo { get; set; }
+        //public TextWriter? LogTo { get; set; }
         public string TempFolder { get; set; }
 
         CodeCompiler compiler = default!;
@@ -316,7 +316,13 @@ namespace NetJs.Translator
             packages.Add((project.GetName() + ".js.xml", docStream));
             packages.Add(("package.yaml", new MemoryStream(Encoding.UTF8.GetBytes(serializer.Serialize(new PackageModel()
             {
-                Dependencies = sortedReferences.Select(s => Path.GetFileNameWithoutExtension(s.Display))!
+                Dependencies = sortedReferences.Select(s =>
+                {
+                    var ret = Path.GetFileNameWithoutExtension(s.Display);
+                    if (ret.EndsWith(".js"))
+                        ret = Path.GetFileNameWithoutExtension(ret);
+                    return ret;
+                })!
             })))));
         }
 
@@ -785,7 +791,7 @@ namespace NetJs.Translator
 
         void WritePackages()
         {
-            var localPackageCacheFolder = $"{TempFolder}{Path.DirectorySeparatorChar}@Packages{Path.DirectorySeparatorChar}{project.GetName()}";
+            var localPackageCacheFolder = $"{compiler.LocalPackageCacheFolder}{Path.DirectorySeparatorChar}{project.GetName()}";
             if (Directory.Exists(localPackageCacheFolder))
                 Directory.Delete(localPackageCacheFolder, true);
             Directory.CreateDirectory(localPackageCacheFolder);
@@ -839,9 +845,7 @@ namespace NetJs.Translator
 
         public async Task Build()
         {
-            LogTo.LogTo();
-            compiler = new CodeCompiler(dotnetPath, dotnetVersion, dotnetSdkPath, dotnetSdkVersion, TempFolder);
-            Console.WriteLine($"\r\nProcessing in {project.DirectoryPath}...");
+            compiler = new CodeCompiler(dotnetPath, dotnetVersion, dotnetSdkPath, dotnetSdkVersion, TempFolder, deSerializer);
             if (!Directory.Exists(output.OutputPath))
                 Directory.CreateDirectory(output.OutputPath);
 

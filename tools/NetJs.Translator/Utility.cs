@@ -146,18 +146,19 @@ namespace NetJs.Translator
             }
         }
 
-        static TextWriter logTo = Console.Out;
+        //static TextWriter logTo = Console.Out;
 
-        public static void LogTo(this TextWriter? writer)
-        {
-            logTo = writer ?? Console.Out;
-        }
+        //public static void LogTo(this TextWriter? writer)
+        //{
+        //    logTo = writer ?? Console.Out;
+        //    Console.Tex. = logTo;
+        //}
 
-        static ThreadLocal<int> depth = new ThreadLocal<int>();
+        static AsyncLocal<int> depth = new AsyncLocal<int>();
         public static void Profile(this string message, Action action)
         {
-            logTo.WriteLine();
-            logTo.Write(string.Join("", Enumerable.Range(1, depth.Value).Select(i => "    ")) + message + "...");
+            Console.WriteLine();
+            Console.Write(string.Join("", Enumerable.Range(1, depth.Value).Select(i => "    ")) + message + "...");
             Stopwatch sw = new();
             sw.Start();
             depth.Value++;
@@ -170,13 +171,13 @@ namespace NetJs.Translator
                 depth.Value--;
             }
             sw.Stop();
-            logTo.Write("  " + sw.ElapsedMilliseconds + "ms");
+            Console.Write("  " + sw.ElapsedMilliseconds + "ms");
         }
 
         public static async Task ProfileAsync(this string message, Func<Task> action)
         {
-            logTo.WriteLine();
-            logTo.Write(string.Join("", Enumerable.Range(1, depth.Value).Select(i => "    ")) + message + "...");
+            Console.WriteLine();
+            Console.Write(string.Join("", Enumerable.Range(1, depth.Value).Select(i => "    ")) + message + "...");
             Stopwatch sw = new();
             sw.Start();
             depth.Value++;
@@ -189,7 +190,7 @@ namespace NetJs.Translator
                 depth.Value--;
             }
             sw.Stop();
-            logTo.Write("  " + sw.ElapsedMilliseconds + "ms");
+            Console.Write("  " + sw.ElapsedMilliseconds + "ms");
         }
 
         public static string RemoveComments(this string str)

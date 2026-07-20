@@ -5,16 +5,24 @@ using NetJs.Compiler;
 using NetJs.Translator;
 using System;
 using System.Collections.Generic;
+using System.CommandLine;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using CodeAnalysisProject = Microsoft.CodeAnalysis.Project;
 using MsBuildProject = Microsoft.Build.Evaluation.Project;
+
+
+TextWriter originalConsole = Console.Out;
+TextWriter logWriter = new StringWriter();
+using var twinWriter = TextWriter.Synchronized(new DuplicityWriter(originalConsole, logWriter));
+Console.SetOut(twinWriter);
 
 string dotnetPath = (await "where dotnet".CLI()).StdOut.Trim();
 string dotnetVersion = (await "dotnet --version".CLI()).StdOut.Trim();
@@ -28,26 +36,33 @@ var sdkVersion = match.Groups[1].Value;
 var sdkPath = match.Groups[2].Value; ;
 var dotnetFolder = Path.GetDirectoryName(dotnetPath) + "\\";
 var directory = Directory.GetCurrentDirectory();
-
 Console.WriteLine($"Using dotnet {dotnetVersion} @ {dotnetPath}. SDK {sdkVersion} @ {sdkPath}");
 
-if (args.Length > 0 && args[0] == "--doctor")
-{
-    string netJsPath = "E:\\Apps\\NetJs";
-    SystemPrivateCoreLibProject.Generate(netJsPath);
-    var doctorFile = File.ReadAllText(args[1]);
-    var doc = XElement.Parse(doctorFile); // validate XML
-    var projects = doc.Elements("Project");
-    var doctor = new LibraryDoctor(netJsPath);
-    List<string> projectFiles = new();
-    var allProjects = projects.Select(p => p.Attribute("Include")!.Value.Replace("$(DotnetGitRoot)", doctor.DotnetGitRoot));
+var rootCommand = new RootCommand("NetJs");
 
-    foreach (var project in projects)
+var doctorCommand = new Command("doctor", "Creates csproj files from dotnet runtime and aspnetcore from official dotnet repo");
+doctorCommand.Aliases.Add("--doctor");
+var fileArgument = new Argument<FileInfo>("file") { Description = "Path to the doctor.libraries.xml file" };
+doctorCommand.SetAction(async parseResult =>
+{
+    FileInfo targetedFile = parseResult.GetValue(fileArgument)!;
+    if (targetedFile.Exists)
     {
-        var projectFile = await doctor.Doctor(netJsPath, project, allProjects);
-        projectFiles.Add(projectFile);
-    }
-    var netJsAll = $@"
+        string netJsPath = "E:\\Apps\\NetJs";
+        SystemPrivateCoreLibProject.Generate(netJsPath);
+        var doctorFile = File.ReadAllText(args[1]);
+        var doc = XElement.Parse(doctorFile); // validate XML
+        var projects = doc.Elements("Project");
+        var doctor = new LibraryDoctor(netJsPath);
+        List<string> projectFiles = new();
+        var allProjects = projects.Select(p => p.Attribute("Include")!.Value.Replace("$(DotnetGitRoot)", doctor.DotnetGitRoot));
+
+        foreach (var project in projects)
+        {
+            var projectFile = await doctor.Doctor(netJsPath, project, allProjects);
+            projectFiles.Add(projectFile);
+        }
+        var netJsAll = $@"
 <Project Sdk=""Microsoft.NET.Sdk.Razor"">
   <PropertyGroup>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -57,9 +72,18 @@ if (args.Length > 0 && args[0] == "--doctor")
   </ItemGroup>
 </Project>
 ";
-    File.WriteAllText($"{netJsPath}\\libraries\\NetJs.All\\NetJs.All.csproj", netJsAll);
-}
-else if (args.Length > 0 && args[0] == "watch")
+        File.WriteAllText($"{netJsPath}\\libraries\\NetJs.All\\NetJs.All.csproj", netJsAll);
+    }
+    else
+    {
+        Console.WriteLine("File not found");
+    }
+});
+
+
+var watchCommand = new Command("watch", "Watch directory for file changes and build accordingly");
+watchCommand.Aliases.Add("--watch");
+watchCommand.SetAction(async parseResult =>
 {
     MSBuildLocator.RegisterDefaults();
 
@@ -98,13 +122,6 @@ else if (args.Length > 0 && args[0] == "watch")
         var projects = await DiscoverProjects();
 
         Console.WriteLine($"\r\n{projects.Count()} projects found in {directory}!");
-        //foreach (var project in projects)
-        //{
-        //    Console.WriteLine($"{project!.FullPath}");
-        //}
-
-        //var projectFolders = new string[] { @"E:\Apps\LivingThing\KitchenSink\BlazorJs.Core", @"E:\Apps\LivingThing\KitchenSink\BlazorJs.Sample", };
-
 
         foreach (var _project in projects)
         {
@@ -215,7 +232,7 @@ else if (args.Length > 0 && args[0] == "watch")
                 {
                     if (context.LastProcessed == DateTime.MinValue || DateTime.Now - context.LastProcessed > TimeSpan.FromSeconds(5))
                     {
-                        await "Building".ProfileAsync(async () =>
+                        await $"Building \"{msProject.FullPath}\"...".ProfileAsync(async () =>
                         {
                             try
                             {
@@ -245,50 +262,64 @@ else if (args.Length > 0 && args[0] == "watch")
             }
         }
     }
-}
-else if (args.Length > 0 && args[0] == "build")
+});
+
+var buildCommand = new Command("build", "Build a project");
+buildCommand.Aliases.Add("--build");
+var projectOption = new Option<FileInfo>("--project") { Description = "Path to the project to build" };
+projectOption.Aliases.Add("-p");
+buildCommand.Options.Add(projectOption);
+buildCommand.SetAction(async (parseResult, cancellationToken) =>
 {
     MSBuildLocator.RegisterDefaults();
-    var projects = Directory.EnumerateFiles(directory, "*.csproj", SearchOption.AllDirectories);
-    var projectIndex = args.IndexOf("--project");
-    string? projectFile = null;
-    if (projectIndex > 0)
+
+    string? csProjectFile = null;
+    var projectFileInfo = parseResult.GetValue(projectOption);
+
+    if (projectFileInfo != null)
     {
-        projectFile = args[projectIndex + 1];
+        csProjectFile = projectFileInfo.FullName;
     }
-    var csProjectFile = projectFile ??
-        (projects.Count() == 1 ? projects.FirstOrDefault() :
+    else
+    {
+        var projects = Directory.EnumerateFiles(directory, "*.csproj", SearchOption.AllDirectories);
+        var project = (projects.Count() == 1 ? projects.FirstOrDefault() :
         projects.Count() > 1 ? throw new InvalidOperationException($"Multiple project file found in directory {directory}. Specify the one to build using --project") :
         throw new InvalidOperationException($"No project file found in directory {directory}"));
-
+        csProjectFile = project;
+    }
+    //var csProjectFile = projectFile;
     var workspace = MSBuildWorkspace.Create();
-    await Build();
+    await "Building".ProfileAsync(async () =>
+    {
+        await Build();
+    });
     async Task Build()
     {
         var projectCollection = new Microsoft.Build.Evaluation.ProjectCollection();
         var codeAnalysisProject = await workspace.OpenProjectAsync(csProjectFile!);
         var msBuildProject = new MsBuildProject(csProjectFile, GetBuildProperties(), null, projectCollection);
         var wProject = new ProjectWrapper(codeAnalysisProject, msBuildProject);
-        var originalWriter = new StringWriter();
-        var logWriter = TextWriter.Synchronized(originalWriter);
         Translator translator = default!;
         try
         {
             translator = new Translator(dotnetPath, dotnetVersion, sdkPath, sdkVersion, wProject, new ProjectBinOutputProvider(wProject));
-            translator.LogTo = logWriter;
+            //translator.LogTo = logWriter;
             await translator.Build();
-            logWriter.WriteLine("BUILD SUCCESS!");
+            Console.WriteLine();
+            Console.WriteLine();
+            Console.WriteLine("BUILD SUCCESS!");
         }
         catch (Exception e)
         {
-            logWriter.WriteLine();
-            logWriter.WriteLine();
-            logWriter.WriteLine("BUILD ERROR!!!");
+            Console.WriteLine();
+            Console.WriteLine();
+            Console.WriteLine("BUILD ERROR!!!");
             while (e != null)
             {
-                logWriter.WriteLine(e.GetType().FullName);
-                logWriter.WriteLine(e.Message);
-                logWriter.WriteLine(e.StackTrace);
+                Console.WriteLine(e.GetType().FullName);
+                Console.WriteLine(e.Message);
+                Console.WriteLine(e.StackTrace);
                 e = e.InnerException!;
             }
             throw;
@@ -299,10 +330,15 @@ else if (args.Length > 0 && args[0] == "build")
             var directory = Path.GetDirectoryName(logFile);
             if (!Directory.Exists(directory))
                 Directory.CreateDirectory(directory!);
-            File.WriteAllText(logFile, originalWriter.ToString());
+            File.WriteAllText(logFile, logWriter.ToString());
         }
     }
-}
+});
+
+rootCommand.Subcommands.Add(doctorCommand);
+rootCommand.Subcommands.Add(watchCommand);
+rootCommand.Subcommands.Add(buildCommand);
+return await rootCommand.Parse(args).InvokeAsync();
 
 Dictionary<string, string> GetBuildProperties()
 {
@@ -310,17 +346,4 @@ Dictionary<string, string> GetBuildProperties()
     globalProperties.Add("Configuration", "Debug");
     globalProperties.Add("Platform", "wasm");
     return globalProperties;
-}
-
-
-struct Foo()
-{
-    public static Foo operator ++(Foo a)
-    {
-        return new Foo();
-    }
-    public static Foo operator +(Foo a, int i)
-    {
-        return new Foo();
-    }
 }

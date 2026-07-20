@@ -67,7 +67,7 @@
 		<AddAdditionalExplicitAssemblyReferences>false</AddAdditionalExplicitAssemblyReferences>
 		<AdditionalExplicitAssemblyReferences />
 	
-		<ZipPackageFolder>$(NetJsFolder)packages</ZipPackageFolder>
+		<ZipPackageFolder>$(NetJsFolder)zpackages</ZipPackageFolder>
 	
 		<CoreBuildDependsOn>
 			$(CoreBuildDependsOn);

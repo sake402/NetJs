@@ -38,8 +38,8 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public void WriteCreateArrayRefOrPointer(CSharpSyntaxNode node, ITypeSymbol type, CodeNode arrayExpression, IEnumerable<CodeNode>? indexExpression)
         {
-            WriteMethodInvocation(node, "System.Runtime.CompilerServices.RuntimeHelpers.CreateArrayReference", 
-                methodGenericTypes: [type], 
+            WriteMethodInvocation(node, "System.Runtime.CompilerServices.RuntimeHelpers.CreateArrayReferenceT",
+                methodGenericTypes: [type],
                 arguments: [arrayExpression, .. (indexExpression ?? Enumerable.Empty<CodeNode>())]);
             //var refStaticClass = (ITypeSymbol)_global.GetTypeSymbol("System.RefOrPointer", this);
             //var createMethod = (IMethodSymbol)refStaticClass.GetMembers("CreateFromArray").Single();
@@ -49,14 +49,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public void WriteCreateObjectRefOrPointer(CSharpSyntaxNode node, ITypeSymbol type, ExpressionSyntax objectTargetExpression, CodeNode? byteOffset = null)
         {
-            //CurrentTypeWriter.Write(node, $"{{ get {Constants.RefValueName}(){{ return ");
-            //Visit(objectTargetExpression);
-            //CurrentTypeWriter.Write(node, $"; }}");
-            //CurrentTypeWriter.Write(node, $", set {Constants.RefValueName}(v){{ ");
-            //Visit(objectTargetExpression);
-            //CurrentTypeWriter.Write(node, $" = v; }}");
-            //CurrentTypeWriter.Write(node, $" }}");
-            WriteMethodInvocation(node, "System.Runtime.CompilerServices.RuntimeHelpers.CreateObjectReference", methodGenericTypes: [type], arguments: [
+            WriteMethodInvocation(node, "System.Runtime.CompilerServices.RuntimeHelpers.CreateObjectReferenceT", methodGenericTypes: [type], arguments: [
                 new CodeNode(() => {
                     CurrentTypeWriter.Write(node, "() => ");
                     Visit(objectTargetExpression);
@@ -82,11 +75,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 byteOffset ?? new CodeNode(() => {
                     CurrentTypeWriter.Write(node, "null");
                 })
-                ]);
-            //var refStaticClass = (ITypeSymbol)_global.GetTypeSymbol("System.RefOrPointer", this);
-            //var createMethod = (IMethodSymbol)refStaticClass.GetMembers("CreateFromObject").Single();
-            //createMethod = createMethod.Construct(type);
-            //WriteMethodInvocation(node, createMethod, null, null, [objectTargetExpression], null, null, false);
+            ]);
         }
 
         public void WriteCreateRef(CSharpSyntaxNode node, ITypeSymbol type, string fieldName, string? prefix = null, string? suffix = null, bool _readOnly = false, bool inCurrentClosure = true)
@@ -97,7 +86,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     if (prefix != null)
                         CurrentTypeWriter.Write(node, prefix);
-                    WriteMethodInvocation(node, "System.Runtime.CompilerServices.RuntimeHelpers.CreateObjectReference", methodGenericTypes: [type], arguments: [new CodeNode(() => {
+                    WriteMethodInvocation(node, "System.Runtime.CompilerServices.RuntimeHelpers.CreateObjectReferenceT", methodGenericTypes: [type], arguments: [new CodeNode(() => {
                         CurrentTypeWriter.Write(node, "() => ");
                         CurrentTypeWriter.Write(node, fieldName);
                     }),
@@ -114,7 +103,7 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 if (prefix != null)
                     CurrentTypeWriter.Write(node, prefix);
-                WriteMethodInvocation(node, "System.Runtime.CompilerServices.RuntimeHelpers.CreateObjectReference", methodGenericTypes: [type], arguments: [new CodeNode(() => {
+                WriteMethodInvocation(node, "System.Runtime.CompilerServices.RuntimeHelpers.CreateObjectReferenceT", methodGenericTypes: [type], arguments: [new CodeNode(() => {
                     CurrentTypeWriter.Write(node, "() => ");
                     CurrentTypeWriter.Write(node, fieldName);
                 }),
@@ -154,26 +143,48 @@ namespace NetJs.Translator.CSharpToJavascript
             }
         }
 
-        public void WriteCreateSimpleRef(CSharpSyntaxNode node, CodeNode expression, string? prefix = null, string? suffix = null, bool _readOnly = false, bool _writeOnly = false)
+        public void WriteCreateSimpleRef(CSharpSyntaxNode node, CodeNode expression, ITypeSymbol? type = null, bool _readOnly = false, bool _writeOnly = false)
         {
-            CurrentTypeWriter.Write(node, $"{prefix}{{");
+            CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.RefCreateName}(");
             if (!_writeOnly)
             {
-                CurrentTypeWriter.Write(node, $" get {Constants.RefValueName}(){{ return ");
+                CurrentTypeWriter.Write(node, $"() => ");
                 VisitNode(expression);
-                CurrentTypeWriter.Write(node, $"; }}");
             }
-            if (!_writeOnly && !_readOnly)
+            else
             {
-                CurrentTypeWriter.Write(node, $",");
+                CurrentTypeWriter.Write(node, $"undefined");
             }
+            CurrentTypeWriter.Write(node, $", ");
             if (!_readOnly)
             {
-                CurrentTypeWriter.Write(node, $" set {Constants.RefValueName}(v){{ ");
-                VisitNode(expression);
-                CurrentTypeWriter.Write(node, $" = v; }} ");
+                CurrentTypeWriter.Write(node, $"($v) => ");
+                if (expression.IsT0 && expression.AsT0.IsKind(SyntaxKind.ThisExpression))
+                {
+                    //The only time when c# allows this to be assigned is if it is a struct type.
+                    //We clone the rhs into this
+                    CurrentTypeWriter.Write(node, "$v.");
+                    CurrentTypeWriter.Write(node, Constants.Clone);
+                    CurrentTypeWriter.Write(node, "(");
+                    Visit(expression.AsT0);
+                    CurrentTypeWriter.Write(node, ")");
+                }
+                else
+                {
+                    VisitNode(expression);
+                    CurrentTypeWriter.Write(node, $" = $v");
+                }
             }
-            CurrentTypeWriter.Write(node, $"}}{suffix}");
+            else if (type != null)
+            {
+                CurrentTypeWriter.Write(node, $"undefined");
+            }
+            if (type != null)
+            {
+                CurrentTypeWriter.Write(node, $", ");
+                CurrentTypeWriter.Write(node, type.ComputeOutputTypeName(_global));
+            }
+            CurrentTypeWriter.Write(node, $")");
         }
 
         public override void VisitRefExpression(RefExpressionSyntax node)
@@ -184,6 +195,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 refTarget is IFieldSymbol mfield &&
                 mfield.RefKind == RefKind.None &&
                 !mfield.IsStatic &&
+                mfield.ContainingType.IsValueType &&
                 IsFieldStructLayout(null, mfield, out var fieldOffset, out var fieldSize))
             {
                 WriteCreateArrayRefOrPointer(node, mfield.Type, new CodeNode(() =>
@@ -201,17 +213,25 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 WriteCreateRef(node, node.Expression, _global.GetTypeSymbol(refTarget));
             }
-            //if we have an array ref expression like ref _array[byteIndex],
+            //if we have an array ref expression like ref _array[byteIndex]
             //we need to create a ref than can read and write the array at the specified index
             else if (node.Expression is ElementAccessExpressionSyntax elementAccess)
             {
                 var target = elementAccess.Expression;
                 var index = elementAccess.ArgumentList.Arguments.Select(e => new CodeNode(e));
                 ITypeSymbol? arrayElementType = null;
-                var isArrayType = _global.GetTypeSymbol(target, this).IsArray(out arrayElementType);
+                var type = _global.GetTypeSymbol(target, this);
+                var isArrayType = type.IsArray(out arrayElementType);
                 if (isArrayType && arrayElementType != null)
                 {
-                    WriteCreateArrayRefOrPointer(node, arrayElementType, target, index);
+                    //if (arrayElementType.IsArray(out _))//jagged array? eg ref jaggedArray[0], where jaggedArray is int[][]
+                    //{
+                    //    WriteCreateObjectRefOrPointer(node, arrayElementType, node.Expression);
+                    //}
+                    //else
+                    {
+                        WriteCreateArrayRefOrPointer(node, arrayElementType, target, index);
+                    }
                     //var refStaticClass = (ITypeSymbol)_global.GetTypeSymbol("System.RefOrPointer", this);
                     //var createMethod = (IMethodSymbol)refStaticClass.GetMembers("CreateFromArray").Single();
                     //createMethod = createMethod.Construct(arrayElementType);

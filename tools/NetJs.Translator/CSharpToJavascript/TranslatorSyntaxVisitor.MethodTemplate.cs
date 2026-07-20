@@ -1,10 +1,11 @@
-﻿using NetJs.Translator.CSharpToJavascript;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using NetJs.Translator.CSharpToJavascript;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -12,6 +13,29 @@ namespace NetJs.Translator.CSharpToJavascript
 {
     public partial class TranslatorSyntaxVisitor
     {
+        void WriteJsImport(
+            CSharpSyntaxNode node,
+            IMethodSymbol? method,
+            IEnumerable<CodeNode>? parameterArgs,
+            AttributeData importAttribute)
+        {
+            var template = importAttribute.ConstructorArguments.FirstOrDefault().Value!.ToString();
+            CurrentTypeWriter.Write(node, template);
+            CurrentTypeWriter.Write(node, "(");
+            if (parameterArgs != null)
+            {
+                int ix = 0;
+                foreach (var remaining in parameterArgs)
+                {
+                    if (ix > 0)
+                        CurrentTypeWriter.Write(node, ", ");
+                    WriteSingleMethodInvocationArgument(node, ix, remaining, null, method!.Parameters.ElementAt(ix), default, enableBoxing: false);
+                    ix++;
+                }
+            }
+            CurrentTypeWriter.Write(node, ")");
+        }
+
         void WriteMethodTemplate(
             CSharpSyntaxNode node,
             CodeNode? lhsExpression,
@@ -137,7 +161,20 @@ namespace NetJs.Translator.CSharpToJavascript
                             name = kv[0];
                             constraint = kv[1];
                         }
-                        if (name == "this")
+                        if (method != null && name == "...") //write all remaining parameters exactly as passed
+                        {
+                            int ix = 0;
+                            //var remainingParams = arguments.Skip(parameterIndex - (isExtensionCall ? 1 : 0));
+                            foreach (var remaining in arguments)
+                            {
+                                if (ix > 0)
+                                    CurrentTypeWriter.Write(node, ", ");
+                                WriteSingleMethodInvocationArgument(node, ix, remaining, null, method.Parameters.ElementAt(ix), overloadResult, enableBoxing: false);
+                                //Visit(remaining);
+                                ix++;
+                            }
+                        }
+                        else if (name == "this")
                         {
                             if (constraint == "!super" && lhsExpression != null && lhsExpression.IsT0 && lhsExpression.AsT0 is BaseExpressionSyntax)
                             {
@@ -222,7 +259,7 @@ namespace NetJs.Translator.CSharpToJavascript
                                 var manglingIndex = ++CurrentTypeWriter.CurrentClosure.NameManglingSeed;
                                 vName = $"$t{name.Substring(Constants.TemplateVariablePrefix.Length)}{manglingIndex}";
                                 variables.Add(name, vName);
-                                CurrentTypeWriter.InsertInCurrentClosure(node, $"let {vName};", true);
+                                CurrentTypeWriter.InsertAbove(node, $"let {vName};", true);
                             }
                             CurrentTypeWriter.Write(node, vName);
                         }
@@ -261,10 +298,6 @@ namespace NetJs.Translator.CSharpToJavascript
                                 var mkv = name.Split(':');
                                 name = mkv[0];
                                 qualifier = mkv[1];
-                            }
-                            if (qualifier == "raw")
-                            {
-
                             }
                             if (method != null)
                             {

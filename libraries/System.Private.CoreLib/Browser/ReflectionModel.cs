@@ -51,7 +51,7 @@ namespace NetJs
     [External]
     public enum KnownTypeHandle
     {
-        Unknown,
+        SystemDynamic,
         SystemVoid,
         SystemObject,
         SystemValueType,
@@ -64,7 +64,7 @@ namespace NetJs
         SystemInt32,
         SystemUint32,
         SystemIntPtr,
-        SystemUintPtr,
+        SystemUIntPtr,
         SystemInt64,
         SystemUint64,
         SystemEnum,
@@ -73,6 +73,7 @@ namespace NetJs
         SystemArray,
         SystemString,
         SystemPointer,
+        SystemReference,
 
         GenericType1Placeholder,
         GenericType2Placeholder,
@@ -225,6 +226,7 @@ namespace NetJs
         IsSealed = 1 << 16,
         IsGeneric = 1 << 17,
         HasDefaultValue = 1 << 18,
+        ReturnTypeIsCovariantOut = 1 << 19,
         IsFamilyAndAssembly = IsFamily | IsAssembly,
     }
 
@@ -238,6 +240,9 @@ namespace NetJs
         HasStructConstraint = 1 << 1,
         HasNewConstraint = 1 << 2,
         HasUnmanagedConstraint = 1 << 3,
+        HasInConstraint = 1 << 4,
+        HasOutConstraint = 1 << 5,
+        HasNotNullConstraint = 1 << 6
     }
 
     [Flags]
@@ -249,7 +254,10 @@ namespace NetJs
         Optional = 1 << 0,
         Out = 1 << 1,
         Ref = 1 << 2,
-        Params = 1 << 3
+        In = 1 << 3,
+        Params = 1 << 4,
+        ContravariantIn = 1 << 5,
+        HasDefaultValue = 1 << 6
     }
 
     [Flags]
@@ -295,9 +303,9 @@ namespace NetJs
         [JsonPropertyName("b")][Name("b")] public Handle? BaseType { get; set; }
         //[JsonPropertyName("d")][Name("d")] public ulong? DeclaringType { get; set; }
         [JsonPropertyName("u")][Name("u")] public Handle UnderlyingType { get; set; }
-        [JsonPropertyName("k")][Name("k")] public TypeKindModel Kind { get; set; }
+        //[JsonPropertyName("k")][Name("k")] public TypeKindModel Kind { get; set; }
         [JsonPropertyName("kt")][Name("kt")] public KnownTypeHandle KnownType { get; set; }
-        [JsonPropertyName("fg")][Name("fg")] public new TypeFlagsModel Flags { get; set; }
+        //[JsonPropertyName("fg")][Name("fg")] public new TypeFlagsModel Flags { get; set; }
         //[JsonPropertyName("y")][Name("y")] public TypeAttributes TypeAttributes { get; set; }
         [JsonPropertyName("p")][Name("p")] public PropertyModel[]? Properties { get; set; }
         [JsonPropertyName("m")][Name("m")] public MethodModel[]? Methods { get; set; }
@@ -310,7 +318,7 @@ namespace NetJs
         [JsonPropertyName("s")][Name("s")] public GenericParameterConstraintModel[]? GenericConstraints { get; set; }
         [JsonPropertyName("j")][Name("j")] public Handle[]? NestedTypes { get; set; }
         [JsonPropertyName("r")][Name("r")] public int GenericParameterCount { get; set; }
-        [JsonPropertyName("sz")][Name("sz")] public int? Size { get; set; }
+        //[JsonPropertyName("sz")][Name("sz")] public int? Size { get; set; }
 
         //// --- Helper properties for transpiler ---
         //[JsonIgnore][Name("(f & 1L) != 0")] public extern bool IsPublic { get; }
@@ -371,10 +379,15 @@ namespace NetJs
     [ObjectLiteral]
     public class MethodModel : MemberModel
     {
+#if TRANSLATOR
         [JsonPropertyName("r")][Name("r")] public Handle? ReturnType { get; set; }
+#else
+        //Generic method return type may be runtime computed
+        [JsonPropertyName("r")][Name("r")] public NetJs.Union<Handle, NetJs.NativeFunction<Handle>> ReturnType { get; set; } = default!;
+#endif
         [JsonPropertyName("t")][Name("t")] public AttributeModel[]? ReturnAttributes { get; set; }
         [JsonPropertyName("p")][Name("p")] public ParameterModel[]? Parameters { get; set; }
-        [JsonPropertyName("g")][Name("a")] public string[]? GenericArguments { get; set; }
+        [JsonPropertyName("g")][Name("g")] public string[]? GenericArguments { get; set; }
         [JsonPropertyName("c")][Name("c")] public GenericParameterConstraintModel[]? GenericConstraints { get; set; }
 
         //[JsonIgnore][Name("(f & 2048) != 0")] public extern bool IsExtensionMethod { get; }
@@ -407,7 +420,12 @@ namespace NetJs
     public class ParameterModel// : IHasAssemblyModel
     {
         [JsonPropertyName("n")][Name("n")] public string Name { get; set; } = default!;
+#if TRANSLATOR
         [JsonPropertyName("p")][Name("p")] public Handle ParameterType { get; set; } = default!;
+#else
+        //Generic method parameter may be runtime computed
+        [JsonPropertyName("p")][Name("p")] public NetJs.Union<Handle, NetJs.NativeFunction<Handle>> ParameterType { get; set; } = default!;
+#endif
         //[JsonPropertyName("o")][Name("o")] public int Position { get; set; }
         [JsonPropertyName("f")][Name("f")] public ParameterFlagsModel Flags { get; set; }
         [JsonPropertyName("v")][Name("v")] public object? DefaultValue { get; set; }

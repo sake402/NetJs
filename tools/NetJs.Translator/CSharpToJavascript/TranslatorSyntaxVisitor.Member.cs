@@ -30,7 +30,7 @@ namespace NetJs.Translator.CSharpToJavascript
             //, CodeNode? thisExpression = null, bool? isGet = null, CodeNode? setValue = null
             )
         {
-            var template = member.GetTemplateAttribute(_global);
+            var template = member.GetTemplateAttribute(_global, this);
             //if (template == null && isGet != null && member.Kind == SymbolKind.Property)
             //{
             //    var memberProperty = (IPropertySymbol)member;
@@ -134,7 +134,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
             }
             IMethodSymbol? method = member as IMethodSymbol;
-            AttributeData? attribute = member?.GetTemplateAttribute(_global);
+            AttributeData? attribute = member?.GetTemplateAttribute(_global, this);
             if (attribute == null)
             {
                 if (member is IPropertySymbol property)
@@ -142,12 +142,12 @@ namespace NetJs.Translator.CSharpToJavascript
                     if (isAssignment)
                     {
                         method = property.SetMethod;
-                        attribute = property.SetMethod?.GetTemplateAttribute(_global);
+                        attribute = property.SetMethod?.GetTemplateAttribute(_global, this);
                     }
                     else
                     {
                         method = property.GetMethod;
-                        attribute = property.GetMethod?.GetTemplateAttribute(_global);
+                        attribute = property.GetMethod?.GetTemplateAttribute(_global, this);
                     }
                 }
             }
@@ -230,18 +230,19 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
                 else
                 {
-                    var memberMetadata = member.Kind != SymbolKind.DynamicType ? _global.GetMetadata(member):null;
+                    var memberMetadata = member.Kind != SymbolKind.DynamicType ? _global.GetMetadata(member) : null;
                     memberName = memberMetadata?.InvocationName ?? memberName;
                 }
             }
             var initialCurrentNamespace = currentExpressionNamespace;
             bool lhsWritten = false;
-            if (thisExpression == null && member != null && !(member.IsStatic || isStaticConvention))
+            if (thisExpression == null &&
+                member != null &&
+                !(member.IsStatic || isStaticConvention) &&
+                !node.Parent.IsKind(SyntaxKind.NameColon) &&
+                !node.Parent.IsKind(SyntaxKind.MemberBindingExpression))
             {
                 if (node.Parent is AssignmentExpressionSyntax assign && assign.Left == node && node.Parent?.Parent is InitializerExpressionSyntax)
-                {
-                }
-                else if (node.Parent.IsKind(SyntaxKind.NameColon))
                 {
                 }
                 else

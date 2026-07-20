@@ -16,26 +16,29 @@ namespace NetJs.Translator.CSharpToJavascript
         Dictionary<CSharpSyntaxNode, string> flowJumpLabels { get; } = new Dictionary<CSharpSyntaxNode, string>();
         bool PrepareContinueLabelIfNeccessary(CSharpSyntaxNode node, out string? jumpStart)
         {
-            //If a control loop has an inner goto, we must label the loop itself
+            //If a control loop has an inner continue or goto, we must label the loop itself
             //So its own continue can have the right label to continue to
             var loopHasGoto = node.DescendantNodes().Any(c => c.IsKind(SyntaxKind.GotoStatement));
             var loopHasContinue = node.DescendantNodes().Any(c => c.IsKind(SyntaxKind.ContinueStatement));
+            var loopHasBreak = node.DescendantNodes().Any(c => c.IsKind(SyntaxKind.BreakStatement));
             jumpStart = null;
-            if (loopHasGoto && loopHasContinue)
+            if (loopHasGoto && (loopHasContinue || loopHasBreak))
             {
-                string loopPrefix = node.IsKind(SyntaxKind.DoStatement) ? "do" : node.IsKind(SyntaxKind.WhileStatement) ? "while" : "for";
+                string loopPrefix = node.IsKind(SyntaxKind.DoStatement) ? "do" : node.IsKind(SyntaxKind.WhileStatement) ? "while" : node.IsKind(SyntaxKind.ForEachKeyword) ? "foreach" : "for";
                 var manglingSeed = ++CurrentTypeWriter.CurrentClosure.NameManglingSeed;
                 jumpStart = $"${loopPrefix}JumpStart{manglingSeed}";
                 //Save the jump labels for the continue to use
                 flowJumpLabels.Add(node, jumpStart);
+                return true;
             }
-            return loopHasGoto && loopHasContinue;
+            return false;
         }
 
         public override void VisitWhileStatement(WhileStatementSyntax node)
         {
             bool loopNeedsLabel = PrepareContinueLabelIfNeccessary(node, out var jumStartLabel);
             bool conditionIsAlwaysFalse = _global.EvaluateConditionalExpressionAsConstant(node.Condition, this, out var rewittenCondition) == false;
+            CodeBlockClosure? whileClosure = null;
             if (conditionIsAlwaysFalse)
             {
                 CurrentTypeWriter.WriteLine(node, $"//{node.Condition.ToString().Replace("\r", "").Replace("\n", "")} {{ ... }}", true);
@@ -45,10 +48,17 @@ namespace NetJs.Translator.CSharpToJavascript
             Visit(rewittenCondition);
             CurrentTypeWriter.WriteLine(node, ")");
             if (!node.Statement.IsKind(SyntaxKind.Block))
+            {
                 CurrentTypeWriter.WriteLine(node, "{", true);
+                OpenClosure(node);
+                whileClosure = CurrentClosure;
+            }
             Visit(node.Statement);
             if (!node.Statement.IsKind(SyntaxKind.Block))
+            {
                 CurrentTypeWriter.WriteLine(node, "}", true);
+                CloseClosure(node);
+            }
             //base.VisitWhileStatement(node);
         }
 
@@ -58,11 +68,16 @@ namespace NetJs.Translator.CSharpToJavascript
             var rewittenCondition = node.Condition;
             bool conditionIsAlwaysFalse = false;// _global.EvaluateConditionalExpressionAsConstant(node.Condition, this, out var rewittenCondition) == false;
             CodeLineWriter? doLine = null;
+            CodeBlockClosure? doClosure = null;
             if (!conditionIsAlwaysFalse)
             {
                 doLine = CurrentTypeWriter.WriteLine(node, $"{(loopNeedsLabel ? $"{jumStartLabel}: " : "")}do", true);
                 if (!node.Statement.IsKind(SyntaxKind.Block))
+                {
                     CurrentTypeWriter.WriteLine(node, "{", true);
+                    OpenClosure(node);
+                    doClosure = CurrentClosure;
+                }
             }
             else
             {
@@ -72,7 +87,10 @@ namespace NetJs.Translator.CSharpToJavascript
             if (!conditionIsAlwaysFalse)
             {
                 if (!node.Statement.IsKind(SyntaxKind.Block))
+                {
                     CurrentTypeWriter.WriteLine(node, "}", true);
+                    CloseClosure(node);
+                }
                 var whileLine = CurrentTypeWriter.Write(node, "while(", true);
                 //make us insert before do, any request from while condition
                 whileLine.RedirectInsertBefore = doLine;
@@ -88,19 +106,30 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitBreakStatement(BreakStatementSyntax node)
         {
+            if (node.Parent.IsKind(SyntaxKind.SwitchSection))
+            {
+                var mswitch = node.FindClosestParent<SwitchStatementSyntax>();
+                //a non simple switch using if else if should not write break that is directly in the case
+                if (mswitch != null && !IsSimpleSwitchCase(mswitch) && Constants.ComplexSwitchUseIfElse)
+                    return;
+            }
             string? loopStart = null;
             //List<CSharpSyntaxNode> found = new();
             var parentControl = !node.Parent.IsKind(SyntaxKind.SwitchSection) ? node.FindClosestParent<CSharpSyntaxNode>(isCandidate: (c) =>
             {
                 //if (found.Contains(c))
                 //return false;
-                return c is DoStatementSyntax || c is WhileStatementSyntax || c is ForEachStatementSyntax || c is ForStatementSyntax;
+                return c.IsKind(SyntaxKind.DoStatement) ||// is DoStatementSyntax || 
+                c.IsKind(SyntaxKind.WhileStatement) ||// is WhileStatementSyntax ||
+                c.IsKind(SyntaxKind.ForEachStatement) ||// is ForEachStatementSyntax || 
+                c.IsKind(SyntaxKind.ForStatement) ||// is ForStatementSyntax;
+                (c.IsKind(SyntaxKind.SwitchStatement) && !IsSimpleSwitchCase((SwitchStatementSyntax)c)); //only if the switch is not a simple switch
             }) : null;
             if (parentControl != null && flowJumpLabels.TryGetValue(parentControl, out var label))
             {
                 loopStart = label;
             }
-            CurrentTypeWriter.WriteLine(node, $"break {loopStart};", true);
+            CurrentTypeWriter.WriteLine(node, $"break{(loopStart == null ? "" : " ")}{loopStart};", true);
             base.VisitBreakStatement(node);
         }
 
@@ -110,17 +139,21 @@ namespace NetJs.Translator.CSharpToJavascript
             //List<CSharpSyntaxNode> found = new();
             var parentControl = node.FindClosestParent<CSharpSyntaxNode>(isCandidate: (c) =>
             {
-                //if (found.Contains(c))
-                //return false;
-                return c is DoStatementSyntax || c is WhileStatementSyntax || c is ForEachStatementSyntax || c is ForStatementSyntax;
+                return c.IsKind(SyntaxKind.DoStatement) ||// is DoStatementSyntax || 
+                c.IsKind(SyntaxKind.WhileStatement) ||// is WhileStatementSyntax ||
+                c.IsKind(SyntaxKind.ForEachStatement) ||// is ForEachStatementSyntax || 
+                c.IsKind(SyntaxKind.ForStatement);// ||// is ForStatementSyntax;
+                //Cant continue in a switch
+                //(c.IsKind(SyntaxKind.SwitchStatement) && !IsSimpleSwitchCase((SwitchStatementSyntax)c)); //only if the switch is not a simple switch
             });
             if (parentControl != null && flowJumpLabels.TryGetValue(parentControl, out var label))
             {
                 loopStart = label;
             }
-            CurrentTypeWriter.WriteLine(node, $"continue {loopStart};", true);
+            CurrentTypeWriter.WriteLine(node, $"continue{(loopStart == null ? "" : " ")}{loopStart};", true);
             base.VisitContinueStatement(node);
         }
+
         public override void VisitConditionalExpression(ConditionalExpressionSyntax node)
         {
             var condition = _global.EvaluateConditionalExpressionAsConstant(node.Condition, this, out var rewittenCondition);
@@ -294,29 +327,37 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public void WriteReturn(CSharpSyntaxNode node, CodeNode? expression, string? cacheKeyVariable = null)
         {
-            CurrentTypeWriter.Write(node, expression == null || !expression.IsT0 || !expression.AsT0.IsKind(SyntaxKind.ThrowExpression) ? "return " : "", true);
-            if (expression != null)
+            if (expression != null && expression.IsT0 && expression.AsT0.IsKind(SyntaxKind.ThrowExpression))
             {
-                var returnType = InferReturnType(node);
-                //We try to get the required return type from this expression to make sure we return the right type
-                var rhsType = expression.IsT0 ? _global.ResolveSymbol(GetExpressionReturnSymbol(expression.AsT0), this/*, out _, out _*/) : null;
-                if (rhsType == null)
-                    rhsType = returnType != null ? _global.GetTypeSymbol(returnType) : null;
-                returnType ??= rhsType;
-                if (cacheKeyVariable != null)
-                {
-                    CurrentTypeWriter.Write(node, cacheKeyVariable);
-                    CurrentTypeWriter.Write(node, " ??= ");
-                }
-                WriteVariableAssignment(node, null, returnType, null, expression, rhsType);
+                VisitNode(expression);
             }
             else
             {
-                //Must always return this in a constructor overload
-                var inConstructor = node.FindClosestParent<ConstructorDeclarationSyntax>();
-                if (inConstructor != null)
+                CurrentTypeWriter.Write(node, expression == null || !expression.IsT0 || !expression.AsT0.IsKind(SyntaxKind.ThrowExpression) ? "return" : "", true);
+                if (expression != null)
                 {
-                    CurrentTypeWriter.Write(node, "this");
+                    CurrentTypeWriter.Write(node, " ");
+                    var returnType = InferReturnType(node);
+                    //We try to get the required return type from this expression to make sure we return the right type
+                    var rhsType = expression.IsT0 ? _global.ResolveSymbol(GetExpressionReturnSymbol(expression.AsT0), this/*, out _, out _*/) : null;
+                    if (rhsType == null)
+                        rhsType = returnType != null ? _global.GetTypeSymbol(returnType) : null;
+                    returnType ??= rhsType;
+                    if (cacheKeyVariable != null)
+                    {
+                        CurrentTypeWriter.Write(node, cacheKeyVariable);
+                        CurrentTypeWriter.Write(node, " ??= ");
+                    }
+                    WriteVariableAssignment(node, null, returnType, null, expression, rhsType);
+                }
+                else
+                {
+                    //Must always return this in a constructor overload
+                    var inConstructor = node.FindClosestParent<ConstructorDeclarationSyntax>();
+                    if (inConstructor != null)
+                    {
+                        CurrentTypeWriter.Write(node, " this");
+                    }
                 }
             }
             CurrentTypeWriter.WriteLine(node, ";");
@@ -324,24 +365,20 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitArrowExpressionClause(ArrowExpressionClauseSyntax node)
         {
-            if (node.Expression.IsKind(SyntaxKind.ThrowExpression)/* is ThrowExpressionSyntax*/)
-                CurrentTypeWriter.Write(node, "", true);
+            if (node.Parent.IsKind(SyntaxKind.ConstructorDeclaration) || node.Expression.IsKind(SyntaxKind.ThrowExpression))
+            {
+                //Arrow constructor body should not use return as we need to explicitly return this
+                //Throw should not use return too;
+            }
             else
             {
-                if (node.Parent.IsKind(SyntaxKind.ConstructorDeclaration))
-                {
-                    //Arrow constructor body should not use return as we need to explicitly return this
-                }
-                else
-                {
-                    WriteReturn(node, node.Expression);
-                    return;
-                }
+                WriteReturn(node, node.Expression);
+                return;
             }
-            CurrentTypeWriter.WriteLine(node, "", true);
+            CurrentTypeWriter.Write(node, "", true);
             Visit(node.Expression);
-            //base.VisitArrowExpressionClause(node);
             CurrentTypeWriter.WriteLine(node, ";");
+            //base.VisitArrowExpressionClause(node);
         }
 
         public override void VisitReturnStatement(ReturnStatementSyntax node)

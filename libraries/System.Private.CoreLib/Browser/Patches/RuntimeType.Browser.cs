@@ -23,6 +23,7 @@ namespace System
         internal RuntimeType? _parentGenericTypeDefinition = null;
 
         //for generic types
+        internal RuntimeType[]? _typeParameters;
         internal RuntimeType[]? _typeArguments;
 
         //for type parameters
@@ -146,53 +147,96 @@ namespace System
         //    Initialize();
         //}
 
+        bool _isInitializing;
         [Name("$do_self_init")]
-        internal void SelfInitialize()
+        internal void EnsureSelfInitialized()
         {
             if (_model != null)
                 return;
-            if (NetJs.Constants.UseInterfaceMixin == NetJs.InterfaceMixinMode.None)
+            if (_isInitializing)
+                return;
+            _isInitializing = true;
+            try
             {
-                //copy all properties defined on the interfaces onto this prototype
-                if (_prototype.Kind != TypeKindModel.Interface && NetJs.Script.IsDefined(_prototype.Interfaces))
+                _model = _prototype.Metadata!;
+                if (NetJs.Constants.UseInterfaceMixin == NetJs.InterfaceMixinMode.None)
                 {
-                    static void ImplementInterfaces(TypePrototype targetClass, TypePrototype[] interfaceDefinitions)
+                    //copy all properties defined on the interfaces onto this prototype
+                    if (_prototype.Kind != TypeKindModel.Interface && NetJs.Script.IsDefined(_prototype.Interfaces))
                     {
-                        if (interfaceDefinitions.Length == 0)
+                        static void ImplementInterfaces(TypePrototype targetClass, TypePrototype[] interfaceDefinitions)
                         {
-                            return;
-                        }
-                        unchecked
-                        {
-                            // 1. Get the current direct prototype object of your class
-                            var classProto = targetClass.Prototype!;
-
-                            // 2. Get the base/parent class prototype it currently inherits from
-                            var currentBaseProto = Object.GetPrototypeOf(classProto);
-
-                            // 3. Create a SINGLE isolated intermediate link that wraps ALL interfaces
-                            // It inherits from the old base class so we maintain the structural chain
-                            var unifiedInterfaceLink = Object.Create(currentBaseProto);
-
-                            // Track keys to avoid redundant descriptor operations
-                            var appliedInstanceKeys = new Window.Set();
-                            var appliedStaticKeys = new Window.Set();
-
-                            bool unifiedInterfaceLinkHasChanges = false;
-                            // 4. Loop through every provided interface definition
-                            for (var i = 0; i < interfaceDefinitions.Length; i++)
+                            if (interfaceDefinitions.Length == 0)
                             {
-                                var interfaceDef = interfaceDefinitions[i];
+                                return;
+                            }
+                            unchecked
+                            {
+                                var classProto = targetClass.Prototype!;
+                                var currentBaseProto = Object.GetPrototypeOf(classProto);
 
-                                // --- PART A: Handle Instance Methods/Getters/Setters ---
-                                if (NetJs.Script.IsDefined(interfaceDef.Prototype))
+                                // Create a SINGLE isolated intermediate link that wraps ALL interfaces
+                                // It inherits from the old base class so we maintain the structural chain
+                                var unifiedInterfaceLink = Object.Create(currentBaseProto);
+
+                                // Track keys to avoid redundant descriptor operations
+                                var appliedInstanceKeys = new Window.Set();
+                                var appliedStaticKeys = new Window.Set();
+
+                                bool unifiedInterfaceLinkHasChanges = false;
+                                for (var i = 0; i < interfaceDefinitions.Length; i++)
                                 {
-                                    var instanceKeys = Reflect.ownKeys(interfaceDef.Prototype!);
-                                    var instLen = instanceKeys.Length;
+                                    var interfaceDef = interfaceDefinitions[i];
 
-                                    for (var j = 0; j < instLen; j++)
+                                    // --- PART A: Handle Instance Methods/Getters/Setters ---
+                                    if (NetJs.Script.IsDefined(interfaceDef.Prototype))
                                     {
-                                        var key = instanceKeys[j];
+                                        var instanceKeys = Reflect.ownKeys(interfaceDef.Prototype!);
+                                        var instLen = instanceKeys.Length;
+
+                                        for (var j = 0; j < instLen; j++)
+                                        {
+                                            var key = instanceKeys[j];
+
+                                            //if (NetJs.Script.TypeOf(key).NativeNotEquals("string"))
+                                            //continue;
+
+                                            if (key.NativeEquals("constructor") ||
+                                                key.NativeEquals("prototype") ||
+                                                key.NativeEquals("length") ||
+                                                key.NativeEquals("name") ||
+                                                (NetJs.Script.TypeOf(key).NativeEquals("string") && key.NativeCharCodeAt(0) == '$'))
+                                            {
+                                                continue;
+                                            }
+
+                                            var implDescriptor = Object.GetOwnPropertyDescriptor(classProto, key);
+                                            if (NetJs.Script.IsDefined(implDescriptor))
+                                                continue;
+
+                                            // Skip if a previous interface in this execution batch already added it
+                                            if (appliedInstanceKeys.has(key))
+                                            {
+                                                continue;
+                                            }
+
+                                            var interfaceDescriptor = Object.GetOwnPropertyDescriptor(interfaceDef.Prototype!, key);
+                                            if (NetJs.Script.IsDefined(interfaceDescriptor))
+                                            {
+                                                Object.DefineProperty(unifiedInterfaceLink, key, interfaceDescriptor);
+                                                appliedInstanceKeys.add(key);
+                                                unifiedInterfaceLinkHasChanges = true;
+                                            }
+                                        }
+                                    }
+
+                                    // --- PART B: Handle Static Constants/Methods ---
+                                    var staticKeys = Reflect.ownKeys(interfaceDef);
+                                    var statLen = staticKeys.Length;
+
+                                    for (int j = 0; j < statLen; j++)
+                                    {
+                                        var key = staticKeys[j];
 
                                         if (NetJs.Script.TypeOf(key).NativeNotEquals("string"))
                                             continue;
@@ -201,160 +245,152 @@ namespace System
                                             key.NativeEquals("prototype") ||
                                             key.NativeEquals("length") ||
                                             key.NativeEquals("name") ||
-                                            key.NativeCharCodeAt(0) == '$')
+                                            (key.NativeCharCodeAt(0) == '$' && key.NativeNotEquals(NetJs.Constants.IsTypeName) && key.NativeNotEquals(NetJs.Constants.DefaultTypeName)))
                                         {
                                             continue;
                                         }
 
-                                        // Skip if a previous interface in this execution batch already added it
-                                        if (NetJs.Script.IsDefined(classProto[key]) || appliedInstanceKeys.has(key))
+                                        // Prioritize targetClass explicit statics, then earlier batch interfaces
+                                        if (NetJs.Script.IsDefined(targetClass[key]) || appliedStaticKeys.has(key))
                                         {
                                             continue;
                                         }
 
-                                        var descriptor = Object.GetOwnPropertyDescriptor(interfaceDef.Prototype!, key);
+                                        var descriptor = Object.GetOwnPropertyDescriptor(interfaceDef, key);
                                         if (NetJs.Script.IsDefined(descriptor))
                                         {
-                                            Object.DefineProperty(unifiedInterfaceLink, key, descriptor);
-                                            appliedInstanceKeys.add(key);
-                                            unifiedInterfaceLinkHasChanges = true;
+                                            Object.DefineProperty(targetClass, key, descriptor);
+                                            appliedStaticKeys.add(key);
                                         }
                                     }
                                 }
 
-                                // --- PART B: Handle Static Constants/Methods ---
-                                var staticKeys = Reflect.ownKeys(interfaceDef);
-                                var statLen = staticKeys.Length;
-
-                                for (int j = 0; j < statLen; j++)
-                                {
-                                    var key = staticKeys[j];
-
-                                    if (NetJs.Script.TypeOf(key).NativeNotEquals("string"))
-                                        continue;
-
-                                    if (key.NativeEquals("constructor") ||
-                                        key.NativeEquals("prototype") ||
-                                        key.NativeEquals("length") ||
-                                        key.NativeEquals("name") ||
-                                        (key.NativeCharCodeAt(0) == '$' && key.NativeNotEquals(NetJs.Constants.IsTypeName) && key.NativeNotEquals(NetJs.Constants.DefaultTypeName)))
-                                    {
-                                        continue;
-                                    }
-
-                                    // Prioritize targetClass explicit statics, then earlier batch interfaces
-                                    if (NetJs.Script.IsDefined(targetClass[key]) || appliedStaticKeys.has(key))
-                                    {
-                                        continue;
-                                    }
-
-                                    var descriptor = Object.GetOwnPropertyDescriptor(interfaceDef, key);
-                                    if (NetJs.Script.IsDefined(descriptor))
-                                    {
-                                        Object.DefineProperty(targetClass, key, descriptor);
-                                        appliedStaticKeys.add(key);
-                                    }
-                                }
+                                // 5. 🚀 THE CRITICAL LINK: Splice the single unified layer into the chain.
+                                // This alters the internal inheritance vector without assigning to the read-only property.
+                                if (unifiedInterfaceLinkHasChanges)
+                                    Object.SetPrototypeOf(classProto, unifiedInterfaceLink);
                             }
+                        }
+                        ImplementInterfaces(_prototype, _prototype.Interfaces!);
+                        //static void MergeDescriptors(TypePrototype interfaceDefinition, TypePrototype targetClass)
+                        //{
+                        //    var keys = Window.Reflect.ownKeys(interfaceDefinition); // Captures strings, symbols, and non-enumerables
+                        //    var len = keys.Length;
 
-                            // 5. 🚀 THE CRITICAL LINK: Splice the single unified layer into the chain.
-                            // This alters the internal inheritance vector without assigning to the read-only property.
-                            if (unifiedInterfaceLinkHasChanges)
-                                Object.SetPrototypeOf(classProto, unifiedInterfaceLink);
+                        //    for (int i = 0; i < len; i++)
+                        //    {
+                        //        unchecked
+                        //        {
+                        //            var key = keys[i];
+
+                        //            // Avoid overwriting critical native engine foundations
+                        //            if (key.NativeEquals("constructor") ||
+                        //                key.NativeEquals("prototype") ||
+                        //                key.NativeEquals("length") ||
+                        //                key.NativeEquals("name") ||
+                        //                key.NativeCharCodeAt(0) == '$')
+                        //            {
+                        //                continue;
+                        //            }
+                        //            if (NetJs.Script.KeyIn(key, targetClass))
+                        //            {
+                        //                continue;
+                        //            }
+                        //            var sourceDescriptor = Object.GetOwnPropertyDescriptor(interfaceDefinition, key);
+                        //            if (NetJs.Script.IsUndefined(sourceDescriptor))
+                        //            {
+                        //                Object.DefineProperty(targetClass, key, sourceDescriptor);
+                        //            }
+                        //        }
+                        //    }
+                        //}
+                        //for (int i = 0; i < _prototype.Interfaces!.Length; i++)
+                        //{
+                        //    unchecked
+                        //    {
+                        //        var it = _prototype.Interfaces[i];
+                        //        if (NetJs.Script.IsDefined(_prototype.Prototype) && NetJs.Script.IsDefined(it.Prototype))
+                        //        {
+                        //            MergeDescriptors(it.Prototype!, _prototype.Prototype!);
+                        //        }
+                        //        //Statioc methods
+                        //        MergeDescriptors(it, _prototype);
+                        //    }
+                        //}
+
+                    }
+                }
+                if (!Constants.HandleStringAsValueTypePrimitive)
+                {
+                    void CopyDotNetInstanceMembersToNativePrototype(TypePrototype dotnetPrototype, TypePrototype nativePrototype, NativeFunction<string, bool>? filterKey)
+                    {
+                        var descriptors = Object.GetOwnPropertyDescriptors(dotnetPrototype);
+
+                        var keys = Object.Keys(descriptors);
+                        for (int i = 0; i < keys.Length; i++)
+                        {
+                            unchecked
+                            {
+                                var key = keys[i];
+                                // Skip the standard constructor property to avoid overwriting native setup
+                                if (key == "constructor") continue;
+                                if (filterKey != null && filterKey(key) == false) continue;
+                                // Define the member onto the native prototype with original descriptors intact
+                                Object.DefineProperty(nativePrototype, key, descriptors[key]);
+                            }
                         }
                     }
-                    ImplementInterfaces(_prototype, _prototype.Interfaces!);
-                    //static void MergeDescriptors(TypePrototype interfaceDefinition, TypePrototype targetClass)
-                    //{
-                    //    var keys = Window.Reflect.ownKeys(interfaceDefinition); // Captures strings, symbols, and non-enumerables
-                    //    var len = keys.Length;
-
-                    //    for (int i = 0; i < len; i++)
-                    //    {
-                    //        unchecked
-                    //        {
-                    //            var key = keys[i];
-
-                    //            // Avoid overwriting critical native engine foundations
-                    //            if (key.NativeEquals("constructor") ||
-                    //                key.NativeEquals("prototype") ||
-                    //                key.NativeEquals("length") ||
-                    //                key.NativeEquals("name") ||
-                    //                key.NativeCharCodeAt(0) == '$')
-                    //            {
-                    //                continue;
-                    //            }
-                    //            if (NetJs.Script.KeyIn(key, targetClass))
-                    //            {
-                    //                continue;
-                    //            }
-                    //            var sourceDescriptor = Object.GetOwnPropertyDescriptor(interfaceDefinition, key);
-                    //            if (NetJs.Script.IsUndefined(sourceDescriptor))
-                    //            {
-                    //                Object.DefineProperty(targetClass, key, sourceDescriptor);
-                    //            }
-                    //        }
-                    //    }
-                    //}
-                    //for (int i = 0; i < _prototype.Interfaces!.Length; i++)
-                    //{
-                    //    unchecked
-                    //    {
-                    //        var it = _prototype.Interfaces[i];
-                    //        if (NetJs.Script.IsDefined(_prototype.Prototype) && NetJs.Script.IsDefined(it.Prototype))
-                    //        {
-                    //            MergeDescriptors(it.Prototype!, _prototype.Prototype!);
-                    //        }
-                    //        //Statioc methods
-                    //        MergeDescriptors(it, _prototype);
-                    //    }
-                    //}
-
+                    if (_prototype.FullName.NativeEquals("System.String"))
+                    {
+                        var nativeString = NetJs.Script.Write<TypePrototype>("String.prototype");
+                        CopyDotNetInstanceMembersToNativePrototype(_prototype.Prototype!, nativeString, (key) =>
+                        {
+                            return key.NativeNotEquals("length");
+                        });
+                    }
                 }
-            }
-            _model = _prototype.Metadata!;
-            if (Script.IsDefined(_model.As<TypeModel>().Methods))
-            {
-                _model.As<TypeModel>().Methods!.ForEach(m =>
+                if (Script.IsDefined(_model.As<TypeModel>().Methods))
                 {
-                    var methodInfo = new RuntimeMethodInfo(m);
-                    _methods.Push(methodInfo);
-                });
-            }
-            if (Script.IsDefined(_model.As<TypeModel>().Properties))
-            {
-                _model.As<TypeModel>().Properties!.ForEach(m =>
+                    _model.As<TypeModel>().Methods!.ForEach(m =>
+                    {
+                        var methodInfo = new RuntimeMethodInfo(m);
+                        _methods.Push(methodInfo);
+                    });
+                }
+                if (Script.IsDefined(_model.As<TypeModel>().Properties))
                 {
-                    var propertyInfo = new RuntimePropertyInfo_Partial(m);
-                    _properties.Push(propertyInfo.As<RuntimePropertyInfo>());
-                });
-            }
-            if (Script.IsDefined(_model.As<TypeModel>().Fields))
-            {
-                _model.As<TypeModel>().Fields!.ForEach(m =>
+                    _model.As<TypeModel>().Properties!.ForEach(m =>
+                    {
+                        var propertyInfo = new RuntimePropertyInfo_Partial(m);
+                        _properties.Push(propertyInfo.As<RuntimePropertyInfo>());
+                    });
+                }
+                if (Script.IsDefined(_model.As<TypeModel>().Fields))
                 {
-                    var fieldInfo = new RuntimeFieldInfo_Partial(m);
-                    _fields.Push(fieldInfo.As<RuntimeFieldInfo>());
-                });
-            }
-            if (Script.IsDefined(_model.As<TypeModel>().Constructors))
-            {
-                _model.As<TypeModel>().Constructors!.ForEach(m =>
+                    _model.As<TypeModel>().Fields!.ForEach(m =>
+                    {
+                        var fieldInfo = new RuntimeFieldInfo_Partial(m);
+                        _fields.Push(fieldInfo.As<RuntimeFieldInfo>());
+                    });
+                }
+                if (Script.IsDefined(_model.As<TypeModel>().Constructors))
                 {
-                    var constructorInfo = new RuntimeConstructorInfo(m);
-                    _constructors.Push(constructorInfo);
-                });
-            }
-            if (Script.IsDefined(_model.As<TypeModel>().Events))
-            {
-                _model.As<TypeModel>().Events!.ForEach(m =>
+                    _model.As<TypeModel>().Constructors!.ForEach(m =>
+                    {
+                        var constructorInfo = new RuntimeConstructorInfo(m);
+                        _constructors.Push(constructorInfo);
+                    });
+                }
+                if (Script.IsDefined(_model.As<TypeModel>().Events))
                 {
-                    var eventInfo = new RuntimeEventInfo_Partial(m);
-                    _events.Push(eventInfo.As<RuntimeEventInfo>());
-                });
-            }
-            if (_assembly != null && _prototype != null)
-            {
+                    _model.As<TypeModel>().Events!.ForEach(m =>
+                    {
+                        var eventInfo = new RuntimeEventInfo_Partial(m);
+                        _events.Push(eventInfo.As<RuntimeEventInfo>());
+                    });
+                }
+                //if (_assembly != null && _prototype != null)
+                //{
                 //bool isGenericDefinition = _scriptFullName.NativeEndsWith("$") || _scriptFullName.NativeEndsWith(">");
                 //bool isInterface = _metadata!.Kind == TypeKindModel.Interface;
                 //bool isInterfaceMixin = isInterface && _prototypeProvider != null && Script.Write<int>("this._prototypeProvider.length") >= 1;
@@ -369,9 +405,13 @@ namespace System
                 //    AppDomain.GlobalPrototypeRegistry.SetNested(fn, _prototype);
                 //AppDomain.GlobalPrototypeRegistry[_metadata.FullName] = _prototype;
                 //AppDomain.GlobalTypeRegistry[_metadata.FullName] = this;
+                //}
+            }
+            finally
+            {
+                _isInitializing = false;
             }
         }
-
 
         [Name("$do_static_init")]
         void StaticInitialize()
@@ -399,7 +439,7 @@ namespace System
             _isCompleting = true;
             try
             {
-                SelfInitialize();
+                EnsureSelfInitialized();
                 if (!_prototype!.Flags.TypeHasFlag(TypeFlagsModel.IsGenericType) || _typeArguments != null) //dont run static init on an unsubstituted generic type definition
                     StaticInitialize();
                 _isCompleted = true;
@@ -472,20 +512,23 @@ namespace System
             if (@base == child/* || child.FullName == @base.FullName*/)
                 return true;
             //Ensure the child is initialized, else we cant access its model
-            child.SelfInitialize();
-            if (Script.IsDefined(child._model.As<TypeModel>().BaseType))
+            child.EnsureSelfInitialized();
+            if (Script.IsDefined(child._prototype.Base))//._model.As<TypeModel>().BaseType))
             {
-                var childBase = GetTypeFromHandle(child._model.As<TypeModel>().BaseType!.Value.As<uint>());
+                var childBase = child._prototype.Base!.Type.As<RuntimeType>();// GetTypeFromHandle(child._model.As<TypeModel>().BaseType!.Value.As<uint>());
                 if (childBase != null && IsSubClassOfInternal(childBase, @base))
                     return true;
             }
-            if (@base.IsInterface && Script.IsDefined(child._model.As<TypeModel>().Interfaces))
+            if (@base._prototype.Kind == TypeKindModel.Interface && Script.IsDefined(child._prototype.Interfaces))
             {
-                for (int i = 0; i < child._model.As<TypeModel>().Interfaces!.Length; i++)
+                for (int i = 0; i < child._prototype.Interfaces!.Length; i++)
                 {
-                    var childBase = GetTypeFromHandle(child._model.As<TypeModel>().Interfaces![i].As<uint>());
-                    if (childBase != null && IsSubClassOfInternal(childBase, @base))
-                        return true;
+                    unchecked
+                    {
+                        var childBase = child._prototype.Interfaces![i].Type.As<RuntimeType>();// GetTypeFromHandle(child._prototype.Interfaces![i].TypeHandle.As<uint>());
+                        if (childBase != null && IsSubClassOfInternal(childBase, @base))
+                            return true;
+                    }
                 }
             }
             return false;
@@ -498,7 +541,7 @@ namespace System
              Type[]? parameterTypes = null,
              MemberListType listType = MemberListType.All)
         {
-
+            EnsureSelfInitialized();
             MemberInfo[] Filter(MemberInfo[] info)
             {
                 if (name != null)
@@ -660,6 +703,7 @@ namespace System
             else
             {
                 t._typeArguments = typeArguments;
+                prototype.OpenGenericPrototype = _prototype;
                 prototype.Arguments = typeArguments.Map(t => t._prototype!);
             }
             _assembly.As<RuntimeAssembly_Partial>().RegisterCompletionNotification(t);
@@ -696,8 +740,10 @@ namespace System
                 return Type.EmptyTypes;
             if (IsGenericTypeDefinition)
             {
+                if (_typeParameters != null)
+                    return _typeParameters;
                 var count = _prototype.GenericArguments;
-                return AppDomain.GenericTypes.Slice(0, count).Map(e => e.Type!).AsNetArray();
+                return _typeParameters ??= AppDomain.GenericTypeParameters.ArraySlice(0, count).Map(e => e.Type!.As<RuntimeType>()).AsNetArray();
             }
             //if (_typeArguments != null)
             return _typeArguments ?? throw null!;
@@ -742,6 +788,7 @@ namespace System
                 runtimeType._prototype.Kind == TypeKindModel.Delegate ||
                 runtimeType._prototype.Kind == TypeKindModel.Enum)
             {
+                runtimeType.EnsureSelfInitialized();
                 if (NetJs.Script.IsDefined(runtimeType._model.As<TypeModel>().BaseType))
                 {
                     res.GetObjectHandleOnStack<RuntimeType?>() = AppDomain.GetType(runtimeType._model.As<TypeModel>().BaseType!.Value.As<uint>());
@@ -827,13 +874,19 @@ namespace System
         private static void GetInterfacesImpl(QCallTypeHandle type, ObjectHandleOnStack res)
         {
             var mtype = type.QCallTypeHandleToRuntimeType();
-            res.GetObjectHandleOnStack<RuntimeType[]?>() = (mtype._model.As<TypeModel>().Interfaces?.Map(i => RuntimeType.GetTypeFromHandle(i.As<uint>()) ?? throw new InvalidOperationException()) ?? []).AsNetArray();
+            var interfaces = mtype._model.As<TypeModel>().Interfaces;
+            if (NetJs.Script.IsUndefined(interfaces))
+                interfaces = null;
+            res.GetObjectHandleOnStack<RuntimeType[]?>() = (interfaces?.Map(i => RuntimeType.GetTypeFromHandle(i.As<uint>()) ?? throw new InvalidOperationException()) ?? []).AsNetArray();
         }
 
         [NetJs.MemberReplace(nameof(GetNestedTypes_internal))]
         private RuntimeType[] GetNestedTypes_internalOverride(string? displayName, BindingFlags bindingAttr, MemberListType listType)
         {
-            return (_model.As<TypeModel>().NestedTypes?.Map(i => RuntimeType.GetTypeFromHandle(i.As<uint>()) ?? throw new InvalidOperationException())
+            var nestedTypes = _model.As<TypeModel>().NestedTypes;
+            if (NetJs.Script.IsUndefined(nestedTypes))
+                nestedTypes = null;
+            return (nestedTypes?.Map(i => RuntimeType.GetTypeFromHandle(i.As<uint>()) ?? throw new InvalidOperationException())
                 .Filter(nt => (displayName == null || nt.Name.Contains(displayName)) && MemberFilter(nt, bindingAttr, null)) ?? []).AsNetArray();
         }
 

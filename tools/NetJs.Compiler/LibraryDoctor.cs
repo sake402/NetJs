@@ -18,7 +18,7 @@ namespace NetJs.Compiler
     public class LibraryDoctor
     {
         string _dotnetJsSolutionPath;
-        string _dotnetGitRoot;
+        public string DotnetGitRoot { get; }
         string _dotnetRuntimeRoot;
         string _repoRoot;
         string _coreLibRoot;
@@ -33,11 +33,11 @@ namespace NetJs.Compiler
             _dotnetJsSolutionPath = dotnetJsSolutionPath;
             var directoryBuildProps = Path.Combine(dotnetJsSolutionPath, "libraries", "Directory.Build.props");
             var fileContent = File.ReadAllText(directoryBuildProps);
-            _dotnetGitRoot = Regex.Match(fileContent, ".?<DotnetGitRoot>(.+)</DotnetGitRoot>.?").Groups[1].Value;
-            _dotnetRuntimeRoot = Regex.Match(fileContent, ".?<DotnetRuntimeRoot>(.+)</DotnetRuntimeRoot>.?").Groups[1].Value.Replace("$(DotnetGitRoot)", _dotnetGitRoot).Replace("/", "\\");
+            DotnetGitRoot = Regex.Match(fileContent, ".?<DotnetGitRoot>(.+)</DotnetGitRoot>.?").Groups[1].Value;
+            _dotnetRuntimeRoot = Regex.Match(fileContent, ".?<DotnetRuntimeRoot>(.+)</DotnetRuntimeRoot>.?").Groups[1].Value.Replace("$(DotnetGitRoot)", DotnetGitRoot).Replace("/", "\\");
             _coreLibRoot = Regex.Match(fileContent, ".?<CoreLibRoot>(.+)</CoreLibRoot>.?").Groups[1].Value.Replace("$(DotnetRuntimeRoot)", _dotnetRuntimeRoot).Replace("/", "\\"); ;
             _coreLibSharedDir = Regex.Match(fileContent, ".?<CoreLibSharedDir>(.+)</CoreLibSharedDir>.?").Groups[1].Value.Replace("$(DotnetRuntimeRoot)", _dotnetRuntimeRoot).Replace("/", "\\"); ;
-            _repoRoot = Regex.Match(fileContent, ".?<RepoRoot>(.+)</RepoRoot>.?").Groups[1].Value.Replace("$(DotnetGitRoot)", _dotnetGitRoot).Replace("/", "\\"); ;
+            _repoRoot = Regex.Match(fileContent, ".?<RepoRoot>(.+)</RepoRoot>.?").Groups[1].Value.Replace("$(DotnetGitRoot)", DotnetGitRoot).Replace("/", "\\"); ;
             _commonPath = Regex.Match(fileContent, ".?<CommonPath>(.+)</CommonPath>.?").Groups[1].Value.Replace("/", "\\"); ;
             _sharedSourceRoot = Regex.Match(fileContent, ".?<SharedSourceRoot>(.+)</SharedSourceRoot>.?").Groups[1].Value.Replace("/", "\\"); ;
             _bclSourcesRoot = Regex.Match(fileContent, ".?<BclSourcesRoot>(.+)</BclSourcesRoot>.?").Groups[1].Value.Replace("/", "\\"); ;
@@ -550,17 +550,17 @@ namespace NetJs.Compiler
         //}
 
 
-        public async Task<string> Doctor(XElement sourceNode)
+        public async Task<string> Doctor(string netJsPath, XElement sourceNode, IEnumerable<string> allProjects)
         {
             var csProj = sourceNode.Attribute("Include")!.Value;
-            var originalCsProjectFilePath = csProj.Replace("$(DotnetGitRoot)", "E:\\dotnet\\").Replace("\\\\", "\\").Replace("/\\", "\\").Replace("\\/", "\\");
+            var originalCsProjectFilePath = csProj.Replace("$(DotnetGitRoot)", $"{netJsPath}\\dotnet\\").Replace("\\\\", "\\").Replace("/\\", "\\").Replace("\\/", "\\");
             Console.WriteLine($"Doctoring {originalCsProjectFilePath}...");
             var projectFileName = Path.GetFileName(originalCsProjectFilePath);
             var projectName = Path.GetFileNameWithoutExtension(originalCsProjectFilePath);
             var projectFolderPath = Path.GetDirectoryName(originalCsProjectFilePath)!;
             var projectFolderPathAsVariable = projectFolderPath
-                .Replace("E:\\dotnet\\runtime\\", $"$(DotnetRuntimeRoot)")
-                .Replace("E:\\dotnet\\aspnetcore\\", $"$(RepoRoot)");
+                .Replace($"{netJsPath}\\dotnet\\runtime\\", $"$(DotnetRuntimeRoot)")
+                .Replace($"{netJsPath}\\dotnet\\aspnetcore\\", $"$(RepoRoot)");
             var projectFolderName = Path.GetFileName(projectFolderPath);
 
             var newProjectDirectory = Path.Join(_dotnetJsSolutionPath, "libraries", projectName);
@@ -734,6 +734,41 @@ namespace NetJs.Compiler
             //    tpi.Remove();
             //}
 
+            //There is an empty space in front of DefineConstants in System.Linq.Expressions , remove it
+            var defineConstants = destinationDocument.XPathSelectElement("//PropertyGroup/DefineConstants");
+            if (defineConstants != null)
+            {
+                defineConstants.Value = defineConstants.Value.Trim();
+            }
+
+            //Add EmitCompilerGeneratedFiles to all projects
+            var emitCompilerGeneratedFiles = destinationDocument.XPathSelectElement("//PropertyGroup/EmitCompilerGeneratedFiles");
+            if (emitCompilerGeneratedFiles == null)
+            {
+                var propertyGroup = destinationDocument.XPathSelectElement("//PropertyGroup");
+                if (propertyGroup != null)
+                {
+                    var emitCompilerGeneratedFilesElement = new XElement("EmitCompilerGeneratedFiles");
+                    emitCompilerGeneratedFilesElement.Value = "true";
+                    propertyGroup.Add(emitCompilerGeneratedFilesElement);
+                }
+            }
+
+            //Rename all InternalsVisibleTo Value
+            var internalVisibles = destinationDocument.XPathSelectElements("//ItemGroup/InternalsVisibleTo");
+            foreach (var internalVisible in internalVisibles)
+            {
+                var include = internalVisible.Attribute("Include");
+                if (include != null)
+                {
+                    if (allProjects.Any(p => Path.GetFileNameWithoutExtension(p).Equals(include.Value, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        include.Value = "NetJs." + include.Value;
+                    }
+                }
+            }
+
+
             string[] includes = ["//ItemGroup/Compile", "//ItemGroup/ILLinkSubstitutionsXmls", "//ItemGroup/None", "//ItemGroup/Compile/DependentUpon", "//ItemGroup/AsnXml", "//ItemGroup/EmbeddedResource"];
 
             //Resolve Compile paths
@@ -827,7 +862,7 @@ namespace NetJs.Compiler
             var enableDefaultItems = destinationDocument.XPathSelectElement("//PropertyGroup/EnableDefaultItems")?.Value == "true";
             if (enableDefaultItems)
             {
-                var files = Directory.GetFiles(projectFolderPath, "*.cs", SearchOption.AllDirectories);
+                var files = Directory.GetFiles(projectFolderPath, "*.cs", SearchOption.AllDirectories).Concat(Directory.GetFiles(projectFolderPath, "*.razor", SearchOption.AllDirectories));
                 var existingCompiles = destinationDocument.XPathSelectElements("//ItemGroup/Compile")
                     .Select(e => e.Attribute("Include")?.Value.Replace($"{projectFolderPathAsVariable}\\", "").Replace("/", "\\"))
                     .Where(v => v != null)
@@ -932,13 +967,15 @@ namespace NetJs.Compiler
             try
             {
                 File.WriteAllText(outPath, $"\r\n<!--Generated by NetJs doctor from {csProj}-->\r\n\r\n" + destinationDocument.ToString());
+                if (isNewProject)
+                {
+                    //Make sure the project is added to solution
+                    await $"cd {newProjectDirectory} & dotnet sln ../../NetJs.sln add NetJs.{projectFileName} --solution-folder libraries".CLI();
+                }
             }
-            catch { }
-
-            if (isNewProject)
+            catch (Exception e)
             {
-                //Make sure the project is added to solution
-                await $"cd {newProjectDirectory} & dotnet sln ../../dotnetJs.sln add NetJs.{projectFileName} --solution-folder libraries".CLI();
+                Console.WriteLine(e.Message);
             }
 
             return $"$(NewLibrariesProjectRoot){projectName}\\NetJs.{projectFileName}";

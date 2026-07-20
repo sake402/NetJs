@@ -266,6 +266,12 @@ namespace NetJs.Translator.CSharpToJavascript
                     }
                     if (constantType.SpecialType == SpecialType.System_String && constantValue.Value != null)
                         CurrentTypeWriter.Write(node, "\"");
+                    if (node.IsKind(SyntaxKind.IdentifierName) || node.IsKind(SyntaxKind.SimpleMemberAccessExpression))
+                    {
+                        CurrentTypeWriter.Write(node, "/*");
+                        CurrentTypeWriter.Write(node, node.ToString());
+                        CurrentTypeWriter.Write(node, "*/");
+                    }
                 }
                 if (needBoxing)
                 {

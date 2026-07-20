@@ -11,7 +11,7 @@ namespace NetJs
     }
 
     [NetJs.Reflectable(false)]
-    public class ArrayMutationProxyHandler : IJsProxyHandler
+    public class ArrayMutationProxyHandler : IArrayProxyHandler
     {
         public ArrayMutationProxyHandler(Array array)
         {
@@ -19,33 +19,74 @@ namespace NetJs
         }
         Array _array;
         public event EventHandler<ArrayMutationEventArgs>? OnMutated;
-        public object? Get(object target, string property, object receiver)
+        public Array Array => _array;
+        public Type? ElementType { get; private set; }
+
+        public object? Get(object target, string propertyName, object receiver)
         {
-            if (property.NativeEquals(Constants.IsProxy))
+            if (propertyName.NativeEquals(Constants.IsProxy))
             {
                 return true.As<object>();
             }
-            if (property.NativeEquals(Constants.ProxyType))
+            if (propertyName.NativeEquals(Constants.ProxyHandler))
+            {
+                return this;
+            }
+            if (propertyName.NativeEquals(Constants.ProxyType))
             {
                 return _array.GetType();
             }
+            if (propertyName.NativeEquals(Array.ElementTypeName))
+            {
+                return this[Array.ElementTypeName].As<object>();
+            }
+            if (propertyName.NativeEquals(Array.SizesName))
+            {
+                return this[Array.SizesName].As<object>();
+            }
+            if (propertyName.NativeEquals(Array.LowerBoundsName))
+            {
+                return this[Array.LowerBoundsName].As<object>();
+            }
             unchecked
             {
-                return NetJs.Script.Write<object>("Reflect.get(this._array, property, this._array)");
+                return Window.Reflect.get(_array, propertyName, _array);
+                //return NetJs.Script.Write<object>("Reflect.get(this._array, propertyName, this._array)");
                 //return _array[NetJs.Script.ParseInt(property)];
             }
         }
-        public bool Set(object target, string property, object value, object receiver)
+        public bool Set(object target, string propertyName, object value, object receiver)
         {
-            var oldValue = _array[property];
+            var propertyType = NetJs.Script.TypeOf(propertyName);
+            if (propertyType.NativeEquals("string"))
+            {
+                if (propertyName.NativeEquals(Array.ElementTypeName))
+                {
+                    this[Array.ElementTypeName] = value;
+                    ElementType = value.As<Type>();
+                    return true;
+                }
+                else if (propertyName.NativeEquals(Array.SizesName))
+                {
+                    this[Array.SizesName] = value;
+                    return true;
+                }
+                else if (propertyName.NativeEquals(Array.LowerBoundsName))
+                {
+                    this[Array.LowerBoundsName] = value;
+                    return true;
+                }
+            }
+            var oldValue = _array[propertyName];
             unchecked
             {
-                NetJs.Script.Write<object>("Reflect.set(this._array, property, value, this._array)");
+                Window.Reflect.set(_array, propertyName, value, _array);
+                //NetJs.Script.Write<object>("Reflect.set(this._array, propertyName, value, this._array)");
                 //_array[NetJs.Script.ParseInt(property)] = value;
             }
             OnMutated?.Invoke(_array, new ArrayMutationEventArgs()
             {
-                Property = property,
+                Property = propertyName,
                 OldValue = oldValue,
                 Value = value
             });

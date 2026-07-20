@@ -1,8 +1,13 @@
 {
   "profiles": {
-    "NetJs.Compiler": {
+    "NetJs.Compiler.Watch": {
       "commandName": "Project",
-      "commandLineArgs": "watch\r\n--doctor E:\\Apps\\NetJs\\doctor.libraries.xml\r\n\r\n",
+      "commandLineArgs": "watch",
+      "workingDirectory": "E:\\Apps\\NetJs"
+    },
+    "NetJs.Compiler.Doctor": {
+      "commandName": "Project",
+      "commandLineArgs": "--doctor E:\\Apps\\NetJs\\doctor.libraries.xml",
       "workingDirectory": "E:\\Apps\\NetJs"
     }
   }

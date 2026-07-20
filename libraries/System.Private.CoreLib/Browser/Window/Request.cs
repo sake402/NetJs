@@ -9,7 +9,7 @@ namespace Window
     [NetJs.External]
     public class Request : Body
     {
-        public extern Request(string input, object? init = null);
+        public extern Request(string input, FetchOption? init = null);
         public extern string? method { get; }
         public extern Headers headers { get; }
         public extern string? mode { get; }

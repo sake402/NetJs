@@ -6,8 +6,9 @@ namespace Window
     public class BigUint64Array
     {
         public extern BigUint64Array(ulong length);
-        public extern BigUint64Array(Array buffer, int byteOffset = 0, int? length = null);
-        public extern BigUint64Array(ArrayBuffer buffer, int byteOffset = 0, int? length = null);
+        public extern BigUint64Array(Union<Array, ArrayBuffer> buffer);
+        public extern BigUint64Array(Union<Array, ArrayBuffer> buffer, int byteOffset);
+        public extern BigUint64Array(Union<Array, ArrayBuffer> buffer, int byteOffset, int length);
         public extern int length { get; }
         public extern ArrayBuffer buffer { get; }
         public extern ulong this[int index] { get; set; }

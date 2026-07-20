@@ -52,7 +52,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                                     {
                                         using (ImplicitConversionSyntaxEmitter.Disable(range.RightOperand))
                                         {
-                                            visitor.WriteMethodInvocation(node, sliceMethod, null, [new CodeNode(() => 
+                                            visitor.WriteMethodInvocation(node, sliceMethod, null, [new CodeNode(() =>
                                             {
                                                 if (range.LeftOperand != null)
                                                 {
@@ -82,7 +82,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                                                 {
                                                     visitor.CurrentTypeWriter.Write(node, "0");
                                                 }
-                                            }), new CodeNode(() => 
+                                            }), new CodeNode(() =>
                                             {
                                                 if (range.RightOperand == null ||
                                                     range.RightOperand.IsKind(SyntaxKind.IndexExpression))

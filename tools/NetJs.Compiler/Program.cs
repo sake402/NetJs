@@ -1,36 +1,54 @@
-﻿using System;
+﻿using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
-using System.IO;
-using System.Threading;
-using NetJs.Compiler;
-using MsBuildProject = Microsoft.Build.Evaluation.Project;
-using CodeAnalysisProject = Microsoft.CodeAnalysis.Project;
-using Microsoft.Build.Locator;
-using System.Collections.Generic;
-using System.Linq;
-using NetJs.Translator;
-using System.Linq.Expressions;
-using System.Globalization;
-using System.Xml.Linq;
 using Microsoft.CodeAnalysis.MSBuild;
+using NetJs.Compiler;
+using NetJs.Translator;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
+using CodeAnalysisProject = Microsoft.CodeAnalysis.Project;
+using MsBuildProject = Microsoft.Build.Evaluation.Project;
+
+string dotnetPath = (await "where dotnet".CLI()).StdOut.Trim();
+string dotnetVersion = (await "dotnet --version".CLI()).StdOut.Trim();
+var dotnetSDKs = (await "dotnet --list-sdks".CLI()).StdOut.Trim();
+var sdks = dotnetSDKs.Split('\r').Select(e => e.Trim());
+var sdk = sdks.Last();
+var match = Regex.Match(sdk, @"^([^\s]+)\s+\[([^\]]+)\]");
+if (!match.Success)
+    throw new InvalidOperationException("Expected forat of dotnet --list-sdks is \"{version} [{path}]\"");
+var sdkVersion = match.Groups[1].Value;
+var sdkPath = match.Groups[2].Value; ;
+var dotnetFolder = Path.GetDirectoryName(dotnetPath) + "\\";
+var directory = Directory.GetCurrentDirectory();
+
+Console.WriteLine($"Using dotnet {dotnetVersion} @ {dotnetPath}. SDK {sdkVersion} @ {sdkPath}");
 
 if (args.Length > 0 && args[0] == "--doctor")
 {
-    string dotnetJsPath = "E:\\Apps\\NetJs";
-    SystemPrivateCoreLibProject.Generate(dotnetJsPath);
+    string netJsPath = "E:\\Apps\\NetJs";
+    SystemPrivateCoreLibProject.Generate(netJsPath);
     var doctorFile = File.ReadAllText(args[1]);
     var doc = XElement.Parse(doctorFile); // validate XML
     var projects = doc.Elements("Project");
-    var doctor = new LibraryDoctor(dotnetJsPath);
+    var doctor = new LibraryDoctor(netJsPath);
     List<string> projectFiles = new();
+    var allProjects = projects.Select(p => p.Attribute("Include")!.Value.Replace("$(DotnetGitRoot)", doctor.DotnetGitRoot));
+
     foreach (var project in projects)
     {
-        var projectFile = await doctor.Doctor(project);
+        var projectFile = await doctor.Doctor(netJsPath, project, allProjects);
         projectFiles.Add(projectFile);
     }
     var netJsAll = $@"
-<Project Sdk=""Microsoft.NET.Sdk"">
+<Project Sdk=""Microsoft.NET.Sdk.Razor"">
   <PropertyGroup>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
@@ -39,20 +57,11 @@ if (args.Length > 0 && args[0] == "--doctor")
   </ItemGroup>
 </Project>
 ";
-    File.WriteAllText($"{dotnetJsPath}\\libraries\\dotnetJs.All\\NetJs.All.csproj", netJsAll);
+    File.WriteAllText($"{netJsPath}\\libraries\\NetJs.All\\NetJs.All.csproj", netJsAll);
 }
 else if (args.Length > 0 && args[0] == "watch")
 {
     MSBuildLocator.RegisterDefaults();
-    var directory = Directory.GetCurrentDirectory();
-    string dotnetPath = (await "where dotnet".CLI()).StdOut.Trim();
-    string dotnetVersion = (await "dotnet --version".CLI()).StdOut.Trim();
-    var dotnetSDKs = (await "dotnet --list-sdks".CLI()).StdOut.Trim();
-    var sdks = dotnetSDKs.Split('\r').Last().Split(' ');
-    var sdkVersion = sdks[0].Trim();
-    var sdkPath = sdks[1].Trim('[', ']', ' ');
-    var dotnetFolder = Path.GetDirectoryName(dotnetPath) + "\\";
-    Console.WriteLine($"Using dotnet {dotnetVersion} @ {dotnetPath}. SDK {sdkVersion} @ {sdkPath}");
 
     var workspace = MSBuildWorkspace.Create();
     await Watch(directory);
@@ -69,6 +78,11 @@ else if (args.Length > 0 && args[0] == "watch")
             List<(CodeAnalysisProject, MsBuildProject)> list = new();
             foreach (var path in projects)
             {
+#if DEBUG
+                //Resolves "Updating 'attribute' requires restarting the application caused by AssemblyInformationalVersionAttribute" in development environment
+                if (path.Contains("\\dotnet\\") || path.Contains("\\3rdparty\\") || path.Contains("\\tools\\") || path.Contains("\\_Deprecated\\"))
+                    continue;
+#endif
                 Console.WriteLine($"Enumerating project \"{path}\"...");
                 try
                 {
@@ -111,15 +125,15 @@ else if (args.Length > 0 && args[0] == "watch")
             razorWatcher.EnableRaisingEvents = true;
             razorWatcher.Changed += (s, e) =>
             {
-                TryProcessProject(project.CodeAnalysis, project.MsBuild);
+                TryProcessProject(project.CodeAnalysis, project.MsBuild, $"razorWatcher.Changed: {e.FullPath}, {e.ChangeType}");
             };
             razorWatcher.Created += (s, e) =>
             {
-                TryProcessProject(project.CodeAnalysis, project.MsBuild);
+                TryProcessProject(project.CodeAnalysis, project.MsBuild, $"razorWatcher.Created: {e.FullPath}, {e.ChangeType}");
             };
             razorWatcher.Renamed += (s, e) =>
             {
-                TryProcessProject(project.CodeAnalysis, project.MsBuild);
+                TryProcessProject(project.CodeAnalysis, project.MsBuild, $"razorWatcher.Renamed: {e.FullPath}, {e.ChangeType}");
             };
 
             FileSystemWatcher csWatcher = new FileSystemWatcher(Path.GetDirectoryName(project.MsBuild.FullPath)!);
@@ -138,15 +152,21 @@ else if (args.Length > 0 && args[0] == "watch")
             csWatcher.EnableRaisingEvents = true;
             csWatcher.Changed += (s, e) =>
             {
-                TryProcessProject(project.CodeAnalysis, project.MsBuild);
+                if (e.FullPath.EndsWith(".g.cs"))
+                    return;
+                TryProcessProject(project.CodeAnalysis, project.MsBuild, $"csWatcher.Changed: {e.FullPath}, {e.ChangeType}");
             };
             csWatcher.Created += (s, e) =>
             {
-                TryProcessProject(project.CodeAnalysis, project.MsBuild);
+                if (e.FullPath.EndsWith(".g.cs"))
+                    return;
+                TryProcessProject(project.CodeAnalysis, project.MsBuild, $"csWatcher.Created: {e.FullPath}, {e.ChangeType}");
             };
             csWatcher.Renamed += (s, e) =>
             {
-                TryProcessProject(project.CodeAnalysis, project.MsBuild);
+                if (e.FullPath.EndsWith(".g.cs"))
+                    return;
+                TryProcessProject(project.CodeAnalysis, project.MsBuild, $"csWatcher.Renamed: {e.FullPath}, {e.ChangeType}");
             };
 
             FileSystemWatcher csProjWatcher = new FileSystemWatcher(Path.GetDirectoryName(project.MsBuild.FullPath)!);
@@ -165,15 +185,15 @@ else if (args.Length > 0 && args[0] == "watch")
             csProjWatcher.EnableRaisingEvents = true;
             csProjWatcher.Changed += (s, e) =>
             {
-                TryProcessProject(project.CodeAnalysis, project.MsBuild);
+                TryProcessProject(project.CodeAnalysis, project.MsBuild, $"csProjWatcher.Changed: {e.FullPath}, {e.ChangeType}");
             };
             csProjWatcher.Created += (s, e) =>
             {
-                TryProcessProject(project.CodeAnalysis, project.MsBuild);
+                TryProcessProject(project.CodeAnalysis, project.MsBuild, $"csProjWatcher.Created: {e.FullPath}, {e.ChangeType}");
             };
             csProjWatcher.Renamed += (s, e) =>
             {
-                TryProcessProject(project.CodeAnalysis, project.MsBuild);
+                TryProcessProject(project.CodeAnalysis, project.MsBuild, $"csProjWatcher.Renamed: {e.FullPath}, {e.ChangeType}");
             };
 
 
@@ -183,34 +203,44 @@ else if (args.Length > 0 && args[0] == "watch")
         Console.WriteLine("\r\nWaiting for changes...");
         Thread.Sleep(Timeout.InfiniteTimeSpan);
 
-        void TryProcessProject(CodeAnalysisProject caProject, MsBuildProject msProject)
+        async void TryProcessProject(CodeAnalysisProject caProject, MsBuildProject msProject, string? why)
         {
-
-            lock (msProject)
+            if (why != null)
+                Console.WriteLine(why);
+            //lock (msProject)
             {
                 var context = contexts[msProject.FullPath];
-                if (context.LastProcessed == DateTime.MinValue || DateTime.Now - context.LastProcessed > TimeSpan.FromSeconds(5))
+                await context.Lock.WaitAsync();
+                try
                 {
-                    "Building".Profile(() =>
+                    if (context.LastProcessed == DateTime.MinValue || DateTime.Now - context.LastProcessed > TimeSpan.FromSeconds(5))
                     {
-                        try
+                        await "Building".ProfileAsync(async () =>
                         {
-                            var wProject = new ProjectWrapper(caProject, msProject);
-                            Translator.Build(wProject, new ProjectBinOutputProvider(wProject));
-                        }
-                        catch (Exception e)
-                        {
-                            while (e != null)
+                            try
                             {
-                                Console.WriteLine(e.GetType().FullName);
-                                Console.WriteLine(e.Message);
-                                Console.WriteLine(e.StackTrace);
-                                e = e.InnerException!;
+                                var wProject = new ProjectWrapper(caProject, msProject);
+                                var translator = new Translator(dotnetPath, dotnetVersion, sdkPath, sdkVersion, wProject, new ProjectBinOutputProvider(wProject));
+                                await translator.Build();
                             }
-                        }
-                    });
-                    Console.WriteLine("\r\nWaiting for changes...");
-                    context.LastProcessed = DateTime.Now;
+                            catch (Exception e)
+                            {
+                                while (e != null)
+                                {
+                                    Console.WriteLine(e.GetType().FullName);
+                                    Console.WriteLine(e.Message);
+                                    Console.WriteLine(e.StackTrace);
+                                    e = e.InnerException!;
+                                }
+                            }
+                        });
+                        Console.WriteLine("\r\nWaiting for changes...");
+                        context.LastProcessed = DateTime.Now;
+                    }
+                }
+                finally
+                {
+                    context.Lock.Release();
                 }
             }
         }
@@ -219,7 +249,6 @@ else if (args.Length > 0 && args[0] == "watch")
 else if (args.Length > 0 && args[0] == "build")
 {
     MSBuildLocator.RegisterDefaults();
-    var directory = Directory.GetCurrentDirectory();
     var projects = Directory.EnumerateFiles(directory, "*.csproj", SearchOption.AllDirectories);
     var projectIndex = args.IndexOf("--project");
     string? projectFile = null;
@@ -240,11 +269,14 @@ else if (args.Length > 0 && args[0] == "build")
         var codeAnalysisProject = await workspace.OpenProjectAsync(csProjectFile!);
         var msBuildProject = new MsBuildProject(csProjectFile, GetBuildProperties(), null, projectCollection);
         var wProject = new ProjectWrapper(codeAnalysisProject, msBuildProject);
-        StringWriter logWriter = new StringWriter();
-        var tempFolder = Path.GetTempPath() + "NetJs\\";
+        var originalWriter = new StringWriter();
+        var logWriter = TextWriter.Synchronized(originalWriter);
+        Translator translator = default!;
         try
         {
-            Translator.Build(wProject, new ProjectBinOutputProvider(wProject), logTo: logWriter, tempFolder: tempFolder);
+            translator = new Translator(dotnetPath, dotnetVersion, sdkPath, sdkVersion, wProject, new ProjectBinOutputProvider(wProject));
+            translator.LogTo = logWriter;
+            await translator.Build();
             logWriter.WriteLine("BUILD SUCCESS!");
         }
         catch (Exception e)
@@ -263,11 +295,11 @@ else if (args.Length > 0 && args[0] == "build")
         }
         finally
         {
-            var logFile = Path.Combine(tempFolder, Path.GetFileNameWithoutExtension(csProjectFile)!, $"__build.log.txt");
+            var logFile = Path.Combine(translator.TempFolder, Path.GetFileNameWithoutExtension(csProjectFile)!, $"__build.log.txt");
             var directory = Path.GetDirectoryName(logFile);
             if (!Directory.Exists(directory))
-                Directory.CreateDirectory(directory);
-            File.WriteAllText(logFile, logWriter.ToString());
+                Directory.CreateDirectory(directory!);
+            File.WriteAllText(logFile, originalWriter.ToString());
         }
     }
 }

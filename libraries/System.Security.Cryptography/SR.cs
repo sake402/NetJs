@@ -866,6 +866,19 @@ namespace System
 
 
         /// <summary>
+        /// The Android X.509 certificate chain could not be initialized.
+        /// </summary>
+        internal static string Cryptography_AndroidX509ChainContextInitializationFailed
+        {
+            get
+            {
+                return "The Android X.509 certificate chain could not be initialized.";
+            }
+        }
+
+
+
+        /// <summary>
         /// Keys used with the DSACng algorithm must have an algorithm group of DSA.
         /// </summary>
         internal static string Cryptography_ArgDSARequiresDSAKey

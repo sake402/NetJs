@@ -15,6 +15,7 @@ namespace NetJs.Translator
         CompilationOptions? CompilationOptions { get; }
         string DirectoryPath { get; }
         string FullPath { get; }
+        string SDK { get; }
         string? Evaluate(string propertyName);
         string GetAssemblyName();
         string GetNamespace();
@@ -35,6 +36,6 @@ namespace NetJs.Translator
         Stream HtmlStyleContent { get; }
         Stream HtmlBodyContent { get; }
         IEnumerable<string> OutputtedFiles { get; }
-        void Output(GlobalCompilationVisitor global, string destinationRelativePath, OneOf<string, Stream> content);
+        Task Output(GlobalCompilationVisitor global, string destinationRelativePath, OneOf<string, Stream> content);
     }
 }

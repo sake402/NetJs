@@ -25,6 +25,13 @@ internal static partial class Interop
     }
 
     [NetJs.External]
+    class WeekInfo
+    {
+        public int firstDay;
+        public int minimalDays;
+    }
+
+    [NetJs.External]
     class Locale
     {
         public string baseName = default!;
@@ -39,7 +46,8 @@ internal static partial class Interop
         public string? region;
         public string script = default!;
 
-        public extern int getWeekInfo();
+        public extern WeekInfo getWeekInfo();
+        public extern WeekInfo weekInfo { get; }
         public extern Locale maximize();
     }
     [NetJs.External]
@@ -224,7 +232,6 @@ internal static partial class Interop
             return true;
         }
 
-
         internal static partial bool GetLocaleInfoInt(string localeName, uint localeNumberData, ref int value)
         {
             var locale = NetJs.Script.Write<Locale>("new Intl.Locale(localeName).maximize()");
@@ -232,16 +239,32 @@ internal static partial class Interop
             switch ((LocaleNumberData)localeNumberData)
             {
                 case LocaleNumberData.FirstDayOfWeek:
+                    int firstDayOfWeek()
+                    {
+                        if (NetJs.Script.IsDefined(locale["getWeekInfo"]))
+                            return locale.getWeekInfo().firstDay;
+                        if (NetJs.Script.IsDefined(locale.weekInfo))
+                            return locale.weekInfo.firstDay;
+                        return 7;
+                    }
                     // JS: 1 (Mon) - 7 (Sun)
                     // .NET/Windows LOCALE_IFIRSTDAYOFWEEK: 0 (Mon) - 6 (Sun)
-                    int jsFirstDay = NetJs.Script.Write<int>("locale.getWeekInfo().firstDay");
+                    int jsFirstDay = firstDayOfWeek();
                     value = jsFirstDay - 1;
                     return true;
 
                 case LocaleNumberData.FirstWeekOfYear:
+                    int minimalDays()
+                    {
+                        if (NetJs.Script.IsDefined(locale["getWeekInfo"]))
+                            return locale.getWeekInfo().minimalDays;
+                        if (NetJs.Script.IsDefined(locale.weekInfo))
+                            return locale.weekInfo.minimalDays;
+                        return 1;
+                    }
                     // JS minimalDays: 1, 4. 
                     // .NET: 0 (FirstDay), 1 (FirstFullWeek), 2 (FirstFourDayWeek)
-                    int minDays = NetJs.Script.Write<int>("locale.getWeekInfo().minimalDays ?? 0");
+                    int minDays = minimalDays();
                     value = minDays >= 4 ? 2 : 0;
                     return true;
 

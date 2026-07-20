@@ -248,7 +248,8 @@
       <Compile Include="$(BclSourcesRoot)\System\Runtime\InteropServices\MarshalAsAttribute.Mono.cs" />
       <Compile Include="$(BclSourcesRoot)\System\Runtime\InteropServices\NativeLibrary.Mono.cs" />
       <Compile Include="$(BclSourcesRoot)\System\Runtime\InteropServices\SafeHandle.Mono.cs" />
-      <Compile Include="$(BclSourcesRoot)\System\Runtime\InteropServices\ObjectiveCMarshal.Mono.cs" Condition="'$(FeatureObjCMarshal)' == 'true'" />
+      <Compile Include="$(BclSourcesRoot)\System\Runtime\InteropServices\ObjectiveCMarshal.Mono.cs"
+               Condition="'$(FeatureObjCMarshal)' == 'true'"/>
       <Compile Include="$(BclSourcesRoot)\System\Runtime\Intrinsics\X86\X86Base.Mono.cs" />
       <Compile Include="$(BclSourcesRoot)\System\Runtime\Loader\AssemblyLoadContext.Mono.cs" />
       <Compile Include="$(BclSourcesRoot)\System\Threading\Interlocked.Mono.cs" />
@@ -275,10 +276,10 @@
 
   <!-- Enable unsupported browser warnings -->
   <ItemGroup Condition="'$(TargetsBrowser)' == 'true' or '$(TargetsAnyOS)' == 'true'">
-    <SupportedPlatform Include="browser" />
+    <SupportedPlatform Include="browser"/>
   </ItemGroup>
   <ItemGroup Condition="'$(TargetsWasi)' == 'true' or '$(TargetsAnyOS)' == 'true'">
-    <SupportedPlatform Include="wasi" />
+    <SupportedPlatform Include="wasi"/>
   </ItemGroup>
 
   <!--<Import Project="$(LibrariesProjectRoot)\System.Private.CoreLib\src\System.Private.CoreLib.Shared.projitems" Label="Shared" />-->

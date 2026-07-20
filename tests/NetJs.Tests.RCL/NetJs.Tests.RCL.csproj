@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+	
+	<PropertyGroup>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
+	
+	<ItemGroup>
+	  <!--<ProjectReference Include="..\..\libraries\dotnetJs.All\NetJs.All.csproj" />-->
+	  <ProjectReference Include="..\..\libraries\Microsoft.AspNetCore.Components.WebAssembly\NetJs.Microsoft.AspNetCore.Components.WebAssembly.csproj" />
+	  <ProjectReference Include="..\..\libraries\Microsoft.AspNetCore.Components.Web\NetJs.Microsoft.AspNetCore.Components.Web.csproj" />
+	  <ProjectReference Include="..\..\libraries\Microsoft.AspNetCore.Components\NetJs.Microsoft.AspNetCore.Components.csproj" />
+	  <ProjectReference Include="..\..\libraries\Microsoft.CSharp\NetJs.Microsoft.CSharp.csproj" />
+	  <ProjectReference Include="..\..\libraries\System.Collections.Immutable\NetJs.System.Collections.Immutable.csproj" />
+	  <ProjectReference Include="..\..\libraries\System.Console\NetJs.System.Console.csproj" />
+	  <ProjectReference Include="..\..\libraries\System.Linq.Expressions\NetJs.System.Linq.Expressions.csproj" />
+	  <ProjectReference Include="..\..\libraries\System.Linq.Queryable\NetJs.System.Linq.Queryable.csproj" />
+	  <ProjectReference Include="..\..\libraries\System.Linq\NetJs.System.Linq.csproj" />
+	  <ProjectReference Include="..\..\libraries\System.Net.Http.Json\NetJs.System.Net.Http.Json.csproj" />
+	  <ProjectReference Include="..\..\libraries\System.Private.CoreLib\NetJs.System.Private.CoreLib.csproj" />
+	</ItemGroup>
+	
+	<ItemGroup>
+	  <Folder Include="Layout\" />
+	  <Folder Include="Shared\" />
+	  <Folder Include="Pages\" />
+	</ItemGroup>
+</Project>

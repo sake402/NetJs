@@ -1,13 +1,14 @@
-﻿using NetJs.Translator.CSharpToJavascript;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using NetJs.Translator.CSharpToJavascript;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace NetJs.Translator.CSharpToJavascript
 {
@@ -15,9 +16,9 @@ namespace NetJs.Translator.CSharpToJavascript
     {
         bool gotoVariableDeclarationActive;
         int gotoGeneratorActive;
-        List<VariableDeclarationSyntax> gotoDeclarationDefined = new List<VariableDeclarationSyntax>();
+        List<CSharpSyntaxNode> gotoDeclarationDefined = new List<CSharpSyntaxNode>();
 
-        bool GotoHasDefinedVariable(VariableDeclarationSyntax variable) => gotoGeneratorActive > 0 && gotoDeclarationDefined.Contains(variable);
+        bool GotoHasDefinedVariable(CSharpSyntaxNode variable) => gotoGeneratorActive > 0 && gotoDeclarationDefined.Contains(variable);
 
         List<LabeledStatementSyntax> CollectGotoLabelsIntoCurrentClosure(CSharpSyntaxNode node)
         {
@@ -59,18 +60,35 @@ namespace NetJs.Translator.CSharpToJavascript
                 //FileLinePositionSpan span = node.SyntaxTree.GetLineSpan(firstLabel.Span);
                 //int lineNumber = span.StartLinePosition.Line;
 
+                var initStatements = statements ?? node.ChildNodes();
                 //Since we use switch case for goto, define all declarations in the block initially so they are visible througout the block scope
-                var declarations = ((statements ?? node.ChildNodes()).Concat(labels.SelectMany<LabeledStatementSyntax, SyntaxNode>(l => l.ChildNodes())))
+                var declarations = initStatements
+                    .Concat(labels.SelectMany(l => l.ChildNodes()))
                     .Where(e => e.IsKind(SyntaxKind.LocalDeclarationStatement))
                     .Cast<LocalDeclarationStatementSyntax>()
                     .SelectMany(e => e.Declaration.Variables)
                     .DistinctBy(v => v.Identifier.ValueText);
+                    //.ToList();
+                //Handle likes of Unsafe.SkipInit(out Buf12 bufQuo), define bufQuo initially
+                var outDeclarations = initStatements
+                    .Where(e => e is ExpressionStatementSyntax satetment && satetment.Expression.IsKind(SyntaxKind.InvocationExpression))
+                    .SelectMany(d => d.DescendantNodes())
+                    .Where(e => e.Parent.IsKind(SyntaxKind.DeclarationExpression) && e.IsKind(SyntaxKind.SingleVariableDesignation))
+                    .Cast<SingleVariableDesignationSyntax>()
+                    .DistinctBy(d => d.Identifier.ValueText);
                 foreach (var d in declarations)
                 {
                     CurrentTypeWriter.WriteLine(node, $"/*{((VariableDeclarationSyntax)d.Parent!).Type.ToString().Trim()}*/ let {d.Identifier.ValueText};", true);
+                    gotoDeclarationDefined.Add((CSharpSyntaxNode)d.Parent!);
+                }
+                foreach (var d in outDeclarations)
+                {
+                    CurrentTypeWriter.WriteLine(node, $"/*{((DeclarationExpressionSyntax)d.Parent!).Type.ToString().Trim()}*/ let {d.Identifier.ValueText};", true);
+                    gotoDeclarationDefined.Add((CSharpSyntaxNode)d.Parent!);
                 }
                 //VisitChildren(declarations);
-                gotoDeclarationDefined.AddRange(declarations.Select(d => (VariableDeclarationSyntax)d.Parent!));
+                //gotoDeclarationDefined.AddRange(declarations.Select(d => (CSharpSyntaxNode)d.Parent!));
+                //gotoDeclarationDefined.AddRange(outDeclarations.Select(d => (CSharpSyntaxNode)d.Parent!));
                 gotoVariableDeclarationActive = false;
 
                 gotoGeneratorActive++;
@@ -89,13 +107,23 @@ namespace NetJs.Translator.CSharpToJavascript
                 //write every statement with no label first
                 List<SyntaxNode> writtenNodes = new List<SyntaxNode>();
                 SyntaxNode? lastNode = null;
-                foreach (var mnode in statements ?? node.ChildNodes())
+                foreach (var mnode in initStatements)
                 {
                     if (labels.Contains(mnode))
                     {
                         break;
                     }
-                    Visit(mnode);
+                    bool skipVisit = false;
+                    //if a variable is not initialized, no need to write it again
+                    //as we have already defined it up above
+                    if (mnode.IsKind(SyntaxKind.LocalDeclarationStatement))
+                    {
+                        var local = (LocalDeclarationStatementSyntax)mnode;
+                        if (local.Declaration.Variables.All(e => e.Initializer == null))
+                            skipVisit = true;
+                    }
+                    if (!skipVisit)
+                        Visit(mnode);
                     writtenNodes.Add(mnode);
                     lastNode = mnode;
                 }
@@ -271,7 +299,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 else
                 {
                     var index = blockOrSwitchClosure.GotoJumpLabels.IndexOf(id.Identifier.ValueText);
-                    if (index == -1 || node.Parent.IsKind(SyntaxKind.SwitchSection))
+                    if (index == -1 || (blockOrSwitchClosure.Syntax.IsKind(SyntaxKind.SwitchStatement) && node.Parent.IsKind(SyntaxKind.SwitchSection)))
                     {
                         CurrentTypeWriter.Write(node, $"{blockOrSwitchClosure.JumpStateMachineVariableName} = ", true);
                         CurrentTypeWriter.Write(node, $"\"${id.Identifier.ValueText}$\"");

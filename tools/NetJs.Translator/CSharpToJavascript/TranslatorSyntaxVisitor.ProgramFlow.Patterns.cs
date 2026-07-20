@@ -20,7 +20,7 @@ namespace NetJs.Translator.CSharpToJavascript
             var containingSwitchExpression = containingIsPatternExpression == null ? node.FindClosestParent<SwitchExpressionSyntax>() : null;
             var containingSwitchStatement = containingIsPatternExpression == null && containingSwitchExpression == null ? node.FindClosestParent<SwitchStatementSyntax>() : null;
             var switchClosure = CurrentClosure.FindHierachy<SwitchStatementSyntax>() ?? CurrentClosure.FindHierachy<SwitchExpressionSyntax>() ?? CurrentClosure;
-            var swVariableName = switchClosure.Tags.GetValueOrDefault(SwitchExpressionVariableName);
+            var swVariableName = switchClosure.SwitchExpressionCacheVariableNames?[0];//.Tags.GetValueOrDefault(SwitchExpressionVariableName);
             var isVariableName = switchClosure.Tags.GetValueOrDefault(IsPatternExpressionVariableName);
             if (containingSwitchExpression != null)
             {
@@ -54,8 +54,9 @@ namespace NetJs.Translator.CSharpToJavascript
             var containingIsPatternExpression = node.FindClosestParent<IsPatternExpressionSyntax>();
             var containingSwitchExpression = containingIsPatternExpression == null ? node.FindClosestParent<SwitchExpressionSyntax>() : null;
             var containingSwitchStatement = containingIsPatternExpression == null && containingSwitchExpression == null ? node.FindClosestParent<SwitchStatementSyntax>() : null;
-            var switchClosure = CurrentClosure.FindHierachy<SwitchStatementSyntax>() ?? CurrentClosure.FindHierachy<SwitchExpressionSyntax>() ?? CurrentClosure;
-            var swVariableName = switchClosure.Tags.GetValueOrDefault(SwitchExpressionVariableName);
+            var switchClosure = (containingSwitchExpression != null ? CurrentClosure.FindHierachy<SwitchExpressionSyntax>() : null) ??
+                (containingSwitchStatement != null ? CurrentClosure.FindHierachy<SwitchStatementSyntax>() : null) ?? CurrentClosure;
+            var swVariableName = switchClosure.SwitchExpressionCacheVariableNames?[0];//.Tags.GetValueOrDefault(SwitchExpressionVariableName);
             var isVariableName = switchClosure.Tags.GetValueOrDefault(IsPatternExpressionVariableName);
             void DoWrite()
             {
@@ -121,10 +122,26 @@ namespace NetJs.Translator.CSharpToJavascript
         public override void VisitConstantPattern(ConstantPatternSyntax node)
         {
             var containingIsPatternExpression = node.FindClosestParent<IsPatternExpressionSyntax>();
+            bool isNotAlreadyApplied = containingIsPatternExpression?.Pattern.IsKind(SyntaxKind.NotPattern) ?? true;
             var leftPatternType = containingIsPatternExpression != null ? _global.GetTypeSymbol(containingIsPatternExpression.Expression, this) : null;
-            var rightPatternSymbol = (node.Parent.IsKind(SyntaxKind.NotPattern) || node.Parent.IsKind(SyntaxKind.IsPatternExpression)) && !node.Expression.IsKind(SyntaxKind.NullLiteralExpression) ?
-                _global.GetSymbol(node.Expression, this) :
-                null;
+            ISymbol? rightPatternSymbol = null;
+            if (!node.Expression.IsKind(SyntaxKind.NullLiteralExpression))
+            {
+                bool IsTypePattern(SyntaxNode node)
+                {
+                    return node.IsKind(SyntaxKind.NotPattern) || node.IsKind(SyntaxKind.IsPatternExpression);
+                }
+                rightPatternSymbol = IsTypePattern(node.Parent!) ?
+                   _global.GetSymbol(node.Expression, this) :
+                   null;
+                if (rightPatternSymbol == null && node.Parent is BinaryPatternSyntax bps)
+                {
+                    if (IsTypePattern(bps.Parent!))
+                    {
+                        rightPatternSymbol = _global.GetSymbol(node.Expression, this);
+                    }
+                }
+            }
             var rightPatternType = rightPatternSymbol != null ? _global.GetTypeSymbol(rightPatternSymbol) : null;
             if (leftPatternType != null &&
                 leftPatternType.Kind == SymbolKind.NamedType &&
@@ -134,7 +151,7 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 var var_i = ++CurrentTypeWriter.CurrentClosure.NameManglingSeed;
                 CurrentTypeWriter.InsertAbove(node, $"let $t{var_i};", true);
-                CurrentTypeWriter.Write(node, $"({(node.Parent.IsKind(SyntaxKind.NotPattern) ? "!" : "")}{_global.GlobalName}.{Constants.IsTypeName}(");
+                CurrentTypeWriter.Write(node, $"({(!isNotAlreadyApplied && node.Parent.IsKind(SyntaxKind.NotPattern) ? "!" : "")}{_global.GlobalName}.{Constants.IsTypeName}(");
                 WritePatternExpressionFilter(node);
                 CurrentTypeWriter.Write(node, $", ");
                 CurrentTypeWriter.Write(node, rightPatternType.ComputeOutputTypeName(_global));
@@ -145,7 +162,7 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             else if (rightPatternSymbol != null && rightPatternSymbol.Kind == SymbolKind.NamedType && node.Expression is not LiteralExpressionSyntax)
             {
-                CurrentTypeWriter.Write(node, $"{(node.Parent.IsKind(SyntaxKind.NotPattern) ? "!" : "")}{_global.GlobalName}.{Constants.IsTypeName}(");
+                CurrentTypeWriter.Write(node, $"{(!isNotAlreadyApplied && node.Parent.IsKind(SyntaxKind.NotPattern) ? "!" : "")}{_global.GlobalName}.{Constants.IsTypeName}(");
                 WritePatternExpressionFilter(node);
                 CurrentTypeWriter.Write(node, $", ");
                 Visit(node.Expression);
@@ -155,7 +172,7 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 if (patternExpressionWrittenAlready == 0/* && !node.Parent.IsKind(SyntaxKind.PropertyPatternClause) && !node.Parent.IsKind(SyntaxKind.Subpattern)*/)
                     WritePatternExpressionFilter(node);
-                CurrentTypeWriter.Write(node, node.Parent.IsKind(SyntaxKind.NotPattern) ? " !== " : " === ");
+                CurrentTypeWriter.Write(node, !isNotAlreadyApplied && node.Parent.IsKind(SyntaxKind.NotPattern) ? " !== " : " === ");
                 if (node.Expression is BinaryExpressionSyntax)
                 {
                     CurrentTypeWriter.Write(node, $"(");
@@ -226,14 +243,20 @@ namespace NetJs.Translator.CSharpToJavascript
             //}
             //else
             //{
-            if (node.Parent.IsKind(SyntaxKind.NotPattern))
+            var containingIsPatternExpression = node.FindClosestParent<IsPatternExpressionSyntax>();
+            bool isNotAlreadyApplied = containingIsPatternExpression?.Pattern.IsKind(SyntaxKind.NotPattern) ?? true;
+            if (false && node.Parent.IsKind(SyntaxKind.NotPattern))
             {
                 CurrentTypeWriter.Write(node, "!");
             }
             CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.IsTypeName}(");
             WritePatternExpressionFilter(node);
             CurrentTypeWriter.Write(node, ", ");
-            Visit(node.Type);
+            var type = _global.TryGetTypeSymbol(node.Type, this);
+            if (type != null)
+                CurrentTypeWriter.Write(node, type.ComputeOutputTypeName(_global));
+            else
+                Visit(node.Type);
             CurrentTypeWriter.Write(node, ")");
             //}
         }
@@ -366,53 +389,132 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitPositionalPatternClause(PositionalPatternClauseSyntax node)
         {
+            var containingSwitchExpression = node.FindClosestParent<SwitchExpressionSyntax>();
+            var containingSwitchStatement = containingSwitchExpression == null ? node.FindClosestParent<SwitchStatementSyntax>() : null;
             var containingIsPatternExpression = node.FindClosestParent<IsPatternExpressionSyntax>();
             var typeSymbol = containingIsPatternExpression != null ? _global.GetTypeSymbol(containingIsPatternExpression.Expression, this) : null;
-            bool isTuple = typeSymbol?.IsTupleType ?? false;
-            Dictionary<SubpatternSyntax, int> variables = new();
-            if (!isTuple)
+            if (node.Parent.IsKind(SyntaxKind.RecursivePattern) && ((RecursivePatternSyntax)node.Parent).Designation.IsKind(SyntaxKind.SingleVariableDesignation))
             {
-                for (int i = 0; i < node.Subpatterns.Count; i++)
+                var sv = (SingleVariableDesignationSyntax)((RecursivePatternSyntax)node.Parent).Designation!;
+                int ix = 0;
+                foreach (var pattern in node.Subpatterns)
                 {
-                    var varIndex = ++CurrentTypeWriter.CurrentClosure.NameManglingSeed;
-                    CurrentTypeWriter.InsertAbove(node, $"let $t{varIndex};", true);
-                    variables.Add(node.Subpatterns[i], varIndex);
-                }
-                CurrentTypeWriter.InsertAbove(node, () =>
-                {
-                    WritePatternExpressionFilter(node);
-                    CurrentTypeWriter.Write(node, "?.");
-                    CurrentTypeWriter.Write(node, "Deconstruct(");
-                    CurrentTypeWriter.Write(node, string.Join(", ", variables.Select(v => $"{{ set $v(v) {{ $t{v.Value} = v }} }}")));
-                    CurrentTypeWriter.Write(node, ");");
-                }, true);
-            }
-            int ix = 0;
-            foreach (var sub in node.Subpatterns)
-            {
-                if (sub.Pattern.IsKind(SyntaxKind.DiscardPattern))
-                    continue;
-                if (ix > 0)
-                    CurrentTypeWriter.Write(node, " && ");
-                CurrentTypeWriter.Write(node, "(");
-                if (isTuple)
-                {
-                    WritePatternExpressionFilter(node);
+                    if (ix > 0)
+                        CurrentTypeWriter.Write(node, " && ");
+                    var decl = (DeclarationPatternSyntax)pattern.Pattern;
+                    CurrentTypeWriter.Write(node, sv.Identifier.ResolveIdentifierName());
                     CurrentTypeWriter.Write(node, ".");
                     CurrentTypeWriter.Write(node, "Item");
                     CurrentTypeWriter.Write(node, (ix + 1).ToString());
-                    patternExpressionWrittenAlready++;
-                    Visit(sub.Pattern);
-                    patternExpressionWrittenAlready--;
+                    //CurrentTypeWriter.Write(node, ((SingleVariableDesignationSyntax)decl.Designation).Identifier.ResolveIdentifierName());
+                    CurrentTypeWriter.Write(node, " != null");
+                    ix++;
                 }
-                else
+            }
+            else
+            {
+                bool isTuple = typeSymbol?.IsTupleType ?? false;
+                Dictionary<SubpatternSyntax, string> variableNames = new();
+                if (!isTuple)
                 {
-                    patternExpressions.Push($"$t{variables[sub]}");
-                    Visit(sub.Pattern);
-                    patternExpressions.Pop();
+                    if (containingSwitchStatement != null || containingSwitchExpression != null)
+                    {
+                        var closure = GetClosureOf((CSharpSyntaxNode?)containingSwitchStatement ?? containingSwitchExpression!);
+                        if (closure.SwitchExpressionCacheVariableNames != null && closure.SwitchExpressionCacheVariableNames.Length > 1)
+                        {
+                            for (int i = 0; i < node.Subpatterns.Count; i++)
+                            {
+                                variableNames.Add(node.Subpatterns[i], closure.SwitchExpressionCacheVariableNames[i]);
+                            }
+                        }
+                    }
+                    if (true)
+                    {
+                        if (variableNames.Count == 0)
+                        {
+                            for (int i = 0; i < node.Subpatterns.Count; i++)
+                            {
+                                string varName;
+                                var varIndex = ++CurrentTypeWriter.CurrentClosure.NameManglingSeed;
+                                varName = $"$t{varIndex}";
+                                CurrentTypeWriter.InsertAbove(node, $"let {varName};", true);
+                                variableNames.Add(node.Subpatterns[i], varName);
+                            }
+                            WrapStatementsInExpression(node, () =>
+                            {
+                                CurrentTypeWriter.Write(node, _global.GlobalName, true);
+                                CurrentTypeWriter.Write(node, ".");
+                                CurrentTypeWriter.Write(node, Constants.Destructure);
+                                CurrentTypeWriter.Write(node, "(");
+                                WritePatternExpressionFilter(node);
+                                CurrentTypeWriter.Write(node, ", ");
+                                CurrentTypeWriter.Write(node, string.Join(", ", variableNames.Select(v => $"{{ set $v(v) {{ {v.Value} = v }} }}")));
+                                CurrentTypeWriter.WriteLine(node, ");");
+                            });
+                            CurrentTypeWriter.Write(node, ", ");
+                        }
+                        //CurrentTypeWriter.InsertAbove(node, () =>
+                        //{
+                        //    CurrentTypeWriter.Write(node, _global.GlobalName);
+                        //    CurrentTypeWriter.Write(node, ".");
+                        //    CurrentTypeWriter.Write(node, Constants.Destructure);
+                        //    CurrentTypeWriter.Write(node, "(");
+                        //    WritePatternExpressionFilter(node);
+                        //    CurrentTypeWriter.Write(node, ", ");
+                        //    CurrentTypeWriter.Write(node, string.Join(", ", variableNames.Select(v => $"{{ set $v(v) {{ {v.Value} = v }} }}")));
+                        //    CurrentTypeWriter.Write(node, ");");
+                        //}, true);
+                    }
+                    else
+                    {
+                        CurrentTypeWriter.InsertAbove(node, () =>
+                        {
+                            CurrentTypeWriter.Write(node, "let [ ");
+                            for (int i = 0; i < node.Subpatterns.Count; i++)
+                            {
+                                if (i > 0)
+                                    CurrentTypeWriter.Write(node, ", ");
+                                var varIndex = ++CurrentTypeWriter.CurrentClosure.NameManglingSeed;
+                                CurrentTypeWriter.Write(node, $"$t{varIndex}");
+                                variableNames.Add(node.Subpatterns[i], $"$t{varIndex}");
+                            }
+                            CurrentTypeWriter.Write(node, " ] = ");
+                            CurrentTypeWriter.Write(node, _global.GlobalName);
+                            CurrentTypeWriter.Write(node, ".");
+                            CurrentTypeWriter.Write(node, Constants.Destructure);
+                            CurrentTypeWriter.Write(node, "(");
+                            WritePatternExpressionFilter(node);
+                            CurrentTypeWriter.Write(node, ");");
+                        }, true);
+                    }
                 }
-                CurrentTypeWriter.Write(node, ")");
-                ix++;
+                int ix = 0;
+                foreach (var sub in node.Subpatterns)
+                {
+                    if (sub.Pattern.IsKind(SyntaxKind.DiscardPattern))
+                        continue;
+                    if (ix > 0)
+                        CurrentTypeWriter.Write(node, " && ");
+                    CurrentTypeWriter.Write(node, "(");
+                    if (isTuple)
+                    {
+                        WritePatternExpressionFilter(node);
+                        CurrentTypeWriter.Write(node, ".");
+                        CurrentTypeWriter.Write(node, "Item");
+                        CurrentTypeWriter.Write(node, (ix + 1).ToString());
+                        patternExpressionWrittenAlready++;
+                        Visit(sub.Pattern);
+                        patternExpressionWrittenAlready--;
+                    }
+                    else
+                    {
+                        patternExpressions.Push(variableNames[sub]);
+                        Visit(sub.Pattern);
+                        patternExpressions.Pop();
+                    }
+                    CurrentTypeWriter.Write(node, ")");
+                    ix++;
+                }
             }
             //base.VisitPositionalPatternClause(node);
         }
@@ -460,7 +562,7 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             CurrentTypeWriter.Write(node, "(");
             bool isStaticConvention = lenghtProperty?.IsStaticCallConvention(_global) ?? false;
-            bool hasTemplate = lenghtProperty?.GetTemplateAttribute(_global) != null;
+            bool hasTemplate = lenghtProperty?.GetTemplateAttribute(_global, this) != null;
             if (lenghtProperty != null)
             {
                 WriteMemberAccess(node, new CodeNode(() => WritePatternExpressionFilter(node)), patternType, null, lenghtProperty);
@@ -496,9 +598,10 @@ namespace NetJs.Translator.CSharpToJavascript
                     var slice = (SlicePatternSyntax)pattern;
                     if (patternType != null && patternType.IsArray(out var elementType) && slice.Pattern is VarPatternSyntax varPattern)
                     {
-                        CurrentTypeWriter.InsertAbove(node, $"let {((SingleVariableDesignationSyntax)varPattern.Designation).Identifier.ResolveIdentifierName()};", true);
+                        var variableDeclaration = (SingleVariableDesignationSyntax)varPattern.Designation;
+                        CurrentTypeWriter.InsertAbove(node, $"let {variableDeclaration.Identifier.ResolveIdentifierName()};", true);
                         CurrentTypeWriter.Write(node, " && ");
-                        CurrentTypeWriter.Write(node, $"({((SingleVariableDesignationSyntax)varPattern.Designation).Identifier.ResolveIdentifierName()} = ");
+                        CurrentTypeWriter.Write(node, $"({variableDeclaration.Identifier.ResolveIdentifierName()} = ");
                         WriteCreateSubArray(node, elementType, new CodeNode(() => WritePatternExpressionFilter(node, dereferenceListPattern: false)), new CodeNode(() =>
                         {
                             WriteCreateRange(node, new CodeNode(() =>
@@ -525,6 +628,25 @@ namespace NetJs.Translator.CSharpToJavascript
                 else if (pattern.IsKind(SyntaxKind.DiscardPattern))
                 {
                 }
+                else if (pattern.IsKind(SyntaxKind.DeclarationPattern))
+                {
+                    var declarationPattern = (DeclarationPatternSyntax)pattern;
+                    var variableDeclaration = (SingleVariableDesignationSyntax)declarationPattern.Designation;
+                    var declarationType = _global.GetTypeSymbol(declarationPattern.Type, this);
+                    var patternElementType = (patternType?.IsArray(out var ele) ?? false) ? ele : null;
+                    CurrentTypeWriter.InsertAbove(node, $"let {variableDeclaration.Identifier.ResolveIdentifierName()};", true);
+                    if (SymbolEqualityComparer.Default.Equals(patternElementType, declarationType))
+                    {
+                        CurrentTypeWriter.Write(node, " && ");
+                        CurrentTypeWriter.Write(node, $"({variableDeclaration.Identifier.ResolveIdentifierName()} = ");
+                        WritePatternExpressionFilter(node);
+                        CurrentTypeWriter.Write(node, $", true)");
+                    }
+                    else
+                    {
+                        throw new NotImplementedException();
+                    }
+                }
                 else
                 {
                     CurrentTypeWriter.Write(node, " && ");
@@ -546,10 +668,12 @@ namespace NetJs.Translator.CSharpToJavascript
                 CurrentTypeWriter.Write(node, "(");
                 hasOpeningBracket = true;
 
-                CurrentTypeWriter.InsertInCurrentClosure(node, $"let {sv.Identifier.ResolveIdentifierName()};", true);
+                CurrentTypeWriter.InsertAbove(node, $"let {sv.Identifier.ResolveIdentifierName()};", true);
                 CurrentTypeWriter.Write(node, $"{sv.Identifier.ResolveIdentifierName()} = ");
                 WritePatternExpressionFilter(node);
                 CurrentTypeWriter.Write(node, ", ");
+                CurrentTypeWriter.Write(node, $"{sv.Identifier.ResolveIdentifierName()} != null");
+                ix++;
             }
             if (node.Type != null)
             {
@@ -558,7 +682,11 @@ namespace NetJs.Translator.CSharpToJavascript
                 CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.IsTypeName}(");
                 WritePatternExpressionFilter(node);
                 CurrentTypeWriter.Write(node, $", ");
-                Visit(node.Type);
+                var type = _global.TryGetTypeSymbol(node.Type, this);
+                if (type != null)
+                    CurrentTypeWriter.Write(node, type.ComputeOutputTypeName(_global));
+                else
+                    Visit(node.Type);
                 CurrentTypeWriter.Write(node, $")");
                 ix++;
             }
@@ -588,9 +716,11 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitVarPattern(VarPatternSyntax node)
         {
+            var containingIsPatternExpression = node.FindClosestParent<IsPatternExpressionSyntax>();
+            bool isNotAlreadyApplied = containingIsPatternExpression?.Pattern.IsKind(SyntaxKind.NotPattern) ?? true;
             var varName = ((SingleVariableDesignationSyntax)node.Designation).Identifier.ResolveIdentifierName();
             CurrentTypeWriter.InsertAbove(node, $"let {varName};", true);
-            CurrentTypeWriter.Write(node, $"{(node.Parent.IsKind(SyntaxKind.NotPattern) ? "!" : "")}({varName} = ");
+            CurrentTypeWriter.Write(node, $"{(false && node.Parent.IsKind(SyntaxKind.NotPattern) ? "!" : "")}({varName} = ");
             WritePatternExpressionFilter(node);
             CurrentTypeWriter.Write(node, $")");
             //CurrentTypeWriter.Write(node, $"{(node.Parent.IsKind(SyntaxKind.NotPattern) ? "!" : "")}{_global.GlobalName}.{Constants.IsTypeName}(");
@@ -601,6 +731,28 @@ namespace NetJs.Translator.CSharpToJavascript
             //CurrentTypeWriter.Write(node, $")");
             //base.VisitVarPattern(node);
         }
+
+        public override void VisitDeclarationPattern(DeclarationPatternSyntax node)
+        {
+            var switchExpression = node.FindClosestParent<SwitchExpressionSyntax>();
+            if (switchExpression != null)
+            {
+                HandleDeclarationPatternInSwitchExpression(node);
+            }
+            else
+            {
+                var switchStatement = node.FindClosestParent<SwitchStatementSyntax>();
+                if (switchStatement != null)
+                {
+                    HandleDeclarationPatternInSwitchStatement(node);
+                }
+                else
+                {
+                    base.VisitDeclarationPattern(node);
+                }
+            }
+        }
+
 
         const string IsPatternExpressionVariableName = "__isPatternExpressionVariableName__";
         public override void VisitIsPatternExpression(IsPatternExpressionSyntax node)
@@ -621,35 +773,22 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
                 if (svd != null)
                 {
-                    //CurrentTypeWriter.InsertInCurrentClosure(node, $"let {svd.Identifier.ResolveIdentifierName()};", true);
                     CurrentTypeWriter.InsertAbove(node, $"let {svd.Identifier.ResolveIdentifierName()};", true);
-                    //CurrentTypeWriter.Write(node, "(");
-                    //CurrentTypeWriter.Write(node, svd.Identifier.ValueText);
-                    //CurrentTypeWriter.Write(node, $" = ");
-                    //Visit(node.Expression);
-                    //CurrentTypeWriter.Write(node, $", ");
                 }
                 CurrentTypeWriter.Write(node, $"{(node.Pattern.IsKind(SyntaxKind.NotPattern) ? "!" : "")}{_global.GlobalName}.{Constants.IsTypeName}(");
-                //if (svd != null)
-                //{
-                //    CurrentTypeWriter.Write(node, svd.Identifier.ValueText);
-                //}
-                //else
-                //{
                 Visit(node.Expression);
-                //}
                 CurrentTypeWriter.Write(node, $", ");
-                Visit(declarationPattern.Type);
+                var type = _global.TryGetTypeSymbol(declarationPattern.Type, this);
+                if (type != null)
+                    CurrentTypeWriter.Write(node, type.ComputeOutputTypeName(_global));
+                else
+                    Visit(declarationPattern.Type);
                 if (svd != null)
                 {
                     CurrentTypeWriter.Write(node, $", ");
                     CurrentTypeWriter.Write(node, $"{{ set {Constants.RefValueName}(v){{ {svd.Identifier.ResolveIdentifierName()} = v; }} }}");
                 }
                 CurrentTypeWriter.Write(node, $")");
-                //if (svd != null)
-                //{
-                //    CurrentTypeWriter.Write(node, ")");
-                //}
                 if (svd != null)
                 {
                     var localSymbol = _global.TryGetSymbol(svd, this/*, out _, out _*/);
@@ -660,31 +799,9 @@ namespace NetJs.Translator.CSharpToJavascript
                     else
                     {
                         CurrentClosure.DefineIdentifierType(svd.Identifier.ResolveIdentifierName(), CodeSymbol.From(declarationPattern.Type, SymbolKind.Local));
-                        //Writer.Write(node, $", {svd.Identifier.ValueText} = {id}");
                     }
                 }
-                //Visit(d.Pattern);
             }
-            //else if (node.Pattern.IsKind(SyntaxKind.ConstantPattern))
-            //{
-            //    Visit(node.Expression);
-            //    Writer.Write(node, " === ");
-            //    Visit(node.Pattern);
-            //}
-            //else if (node.Pattern.IsKind(SyntaxKind.NotPattern))
-            //{
-            //    Visit(node.Expression);
-            //    Writer.Write(node, " !== ");
-            //    Visit(node.Pattern);
-            //}
-            //else if (node.Pattern is BinaryPatternSyntax bp)
-            //{
-            //    Visit(node.Expression);
-            //    Visit(bp.Left);
-            //    Writer.Write(node, bp.IsKind(SyntaxKind.AndPattern) ? " && " : " || ");
-            //    Visit(node.Expression);
-            //    Visit(bp.Right);
-            //}
             else
             {
                 bool needsVar = false && NeedsCachePatternExpressionInTempVariable(node.Expression);
@@ -703,7 +820,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     //We therefore make the temp variable $is a lazy evaluation
                     var i = ++CurrentTypeWriter.CurrentClosure.NameManglingSeed;
                     CurrentClosure.Tags.Add(IsPatternExpressionVariableName, $"$is{i}.{Constants.LazyVariableValueName}");
-                    CurrentTypeWriter.InsertInCurrentClosure(node, () =>
+                    CurrentTypeWriter.InsertAbove(node, () =>
                     {
                         CurrentTypeWriter.Write(node, $"let $is{i} = ");
                         WriteLazyVariable(node, node.Expression);
@@ -721,7 +838,20 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     testIfNotNull = false;
                 }
-                if (node.Pattern.IsKind(SyntaxKind.ConstantPattern) && (((ConstantPatternSyntax)node.Pattern).Expression.IsKind(SyntaxKind.NullLiteralExpression)))
+                static bool HasNullTest(PatternSyntax pattern)
+                {
+                    if (pattern.IsKind(SyntaxKind.ConstantPattern) && (((ConstantPatternSyntax)pattern).Expression.IsKind(SyntaxKind.NullLiteralExpression)))
+                    {
+                        return true;
+                    }
+                    if (pattern.IsKind(SyntaxKind.OrPattern) && pattern is BinaryPatternSyntax bp)
+                    {
+                        return HasNullTest(bp.Left) || HasNullTest(bp.Right);
+                    }
+                    return false;
+                }
+                //testing for null? no ned to have our on standalone tests
+                if (HasNullTest(node.Pattern))
                 {
                     testIfNotNull = false;
                 }
@@ -733,9 +863,21 @@ namespace NetJs.Translator.CSharpToJavascript
                         testIfNotNull = false;
                     }
                 }
+                //if (node.Pattern.IsKind(SyntaxKind.NotPattern))
+                //{
+                //    testIfNotNull = false;
+                //}
                 if (node.Pattern.IsKind(SyntaxKind.NotPattern))
                 {
-                    testIfNotNull = false;
+                    if (((UnaryPatternSyntax)node.Pattern).Pattern.IsKind(SyntaxKind.ConstantPattern))
+                    {
+                        //testing for not null? no ned to have our on standalone tests
+                        if (((ConstantPatternSyntax)((UnaryPatternSyntax)node.Pattern).Pattern).Expression.IsKind(SyntaxKind.NullLiteralExpression))
+                        {
+                            testIfNotNull = false;
+                        }
+                    }
+                    CurrentTypeWriter.Write(node, "!(");
                 }
                 if (testIfNotNull)
                 {
@@ -744,6 +886,10 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
                 Visit(node.Pattern);
                 if (testIfNotNull)
+                {
+                    CurrentTypeWriter.Write(node, ")");
+                }
+                if (node.Pattern.IsKind(SyntaxKind.NotPattern))
                 {
                     CurrentTypeWriter.Write(node, ")");
                 }

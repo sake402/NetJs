@@ -16,7 +16,18 @@ namespace NetJs.Translator.CSharpToJavascript
     {
         void WritePropertyGetAccessor(BasePropertyDeclarationSyntax node, string propertyName, AccessorDeclarationSyntax accessor, ISymbol propertySymbol)
         {
-            var symbol = OpenClosure(node);
+            var signature = propertySymbol.CreateSignature(_global, withGlobalNamespace: false);
+            var matchingMember = _global.GetLinkerMemeberSubstitution(signature);
+            if (matchingMember != null && matchingMember.Body == "stub")
+            {
+                WriteBlock(node, new CodeNode(() =>
+                {
+                    CurrentTypeWriter.WriteLine(node, $"return {matchingMember.Value}; //Linker substituted!", true);
+                }));
+                return;
+            }
+
+            OpenClosure(node);
             if (accessor.ExpressionBody != null)
             {
                 WriteBlock(accessor.ExpressionBody, new CodeNode(() =>
@@ -241,7 +252,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 var declaringMetadata = _global.GetRequiredMetadata(propertySymbol.ContainingType);
                 //closures.Push(new CodeBlockClosure(global, semanticModel, node, methodSymbol));
                 //var methodName = metadata?.OverloadedName ?? Utilities.ResolveMethodName(node);
-                var defaultValue = node.Initializer == null ? _global.GetDefaultValue(node.Type, this) : null;
+                var defaultValue = _global.GetDefaultValue(node.Type, this);
                 bool isLiteralInit = MemberIsLiteralInitialization(node.Initializer, propertySymbol.Type);
                 bool isFieldLayout = _global.HasAttribute(propertySymbol.ContainingType, typeof(StructLayoutAttribute).FullName!, this, false, out _);
                 //node.Initializer != null &&
@@ -256,14 +267,30 @@ namespace NetJs.Translator.CSharpToJavascript
                     {
                         //If we initialize a property from a primary constructor parameter, this is already handled in the primary constructor generator (WritePrimaryConstructor)
                         //We should skip it here
-                        if (MemberWasInitializedByPrimaryConstructor(node, node.Initializer))
+                        if (MemberWasMarkedInitializedByPrimaryConstructor(node, node.Initializer))
                         {
                         }
                         else
                         {
                             bool isStaticInit = node.Modifiers.IsStatic();
+                            var initLocation = isStaticInit ? TypeInitializerLocation.DefaultStaticConstructor : TypeInitializerLocation.DefaultInstanceConstructor;
+
+                            // if class has primary constructor and the field being initialized needs a parameter from the constructor, we initialize that field in the primary constructor
+                            if (node.Initializer?.Value != null && ((CurrentType is ClassDeclarationSyntax cls && cls.ParameterList != null) || (CurrentType is StructDeclarationSyntax str && str.ParameterList != null)))
+                            {
+                                var parameters = (CurrentType as ClassDeclarationSyntax)?.ParameterList ?? (CurrentType as StructDeclarationSyntax)!.ParameterList;
+                                if (MemberReferencesPrimaryConstructorParameter(node.Initializer.Value, parameters!.Parameters))
+                                {
+                                    initLocation = TypeInitializerLocation.PrimaryConstructor;
+                                }
+                            }
+
                             CurrentClosure.RegisterTypeInitializer(() =>
                             {
+                                if (initLocation == TypeInitializerLocation.PrimaryConstructor)
+                                {
+                                    CurrentTypeWriter.WriteLine(node, $"//depends on primary constructor parameter", true);
+                                }
                                 //If we are in a static initilizer, it is safe to use this as it reference the class prototype itself
                                 CurrentTypeWriter.Write(node, $"{(isStaticInit ? "this" /*declaringMetadata.InvocationName + "."*/ : "this")}", true);
                                 CurrentTypeWriter.Write(node, ".");
@@ -273,7 +300,19 @@ namespace NetJs.Translator.CSharpToJavascript
                                 if (node.Initializer != null)
                                 {
                                     if (!TryWriteConstant(node, propertySymbol.Type, node.Initializer!.Value))
+                                    {
+                                        ////We are inside js default constructor, if the node.Initializer.Value is a primary constructor parameter, we should not write it as that variable is undefined here
+                                        //var symbol = _global.TryGetSymbol(node.Initializer.Value, this);
+                                        //if (initLocation != TypeInitializerLocation.PrimaryConstructor && symbol != null && symbol.Kind == SymbolKind.Parameter)
+                                        //{
+                                        //    if (defaultValue != null)
+                                        //        CurrentTypeWriter.Write(node, defaultValue);
+                                        //    else
+                                        //        CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.DefaultTypeName}({propertySymbol.Type.ComputeOutputTypeName(_global)})");
+                                        //}
+                                        //else
                                         WriteVariableAssignment(node, null, propertySymbol, null, node.Initializer.Value, null);
+                                    }
                                 }
                                 else //handles value type
                                 {
@@ -283,7 +322,7 @@ namespace NetJs.Translator.CSharpToJavascript
                                         CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.DefaultTypeName}({propertySymbol.Type.ComputeOutputTypeName(_global)})");
                                 }
                                 CurrentTypeWriter.WriteLine(node, ";");
-                            }, isStaticInit);
+                            }, initLocation);
                         }
                     }
                 }
@@ -339,7 +378,7 @@ namespace NetJs.Translator.CSharpToJavascript
                                 }
                                 WritePropertyGetAccessor(node, node.Identifier.ValueText, accessor, propertySymbol);
                             }
-                            else if (accessor.IsKind(SyntaxKind.SetAccessorDeclaration))
+                            else if (accessor.IsKind(SyntaxKind.SetAccessorDeclaration) || accessor.IsKind(SyntaxKind.InitAccessorDeclaration))
                             {
                                 if (node.Parent.IsKind(SyntaxKind.ExtensionBlockDeclaration) && !propertySymbol.IsStatic)
                                 {
@@ -355,7 +394,7 @@ namespace NetJs.Translator.CSharpToJavascript
                             }
                         }
                         //if only getter is defined, we need a private setter too
-                        if (backingFieldWritten && !node.AccessorList.Accessors.Any(a => a.IsKind(SyntaxKind.SetAccessorDeclaration)))
+                        if (backingFieldWritten && !node.AccessorList.Accessors.Any(a => a.IsKind(SyntaxKind.SetAccessorDeclaration) || a.IsKind(SyntaxKind.InitAccessorDeclaration)))
                         {
                             CurrentTypeWriter.WriteLine(node, $"{smodifier} {modifier} {(!isStaticConvention ? "set " : "")}{propertyName}{(isStaticConvention ? "$set" : "")}(value)", true);
                             WritePropertySetAccessor(node, node.Identifier.ValueText, null, propertySymbol);
@@ -484,7 +523,7 @@ namespace NetJs.Translator.CSharpToJavascript
                                 CloseClosure(node);
                             }
                         }
-                        else if (accessor.IsKind(SyntaxKind.SetAccessorDeclaration))
+                        else if (accessor.IsKind(SyntaxKind.SetAccessorDeclaration) || accessor.IsKind(SyntaxKind.InitAccessorDeclaration))
                         {
                             if (!node.Modifiers.IsExtern())
                             {

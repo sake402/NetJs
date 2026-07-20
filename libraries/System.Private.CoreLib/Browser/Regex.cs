@@ -49,16 +49,32 @@ namespace NetJs
     [NetJs.Convention(Member = NetJs.ConventionMember.Field | NetJs.ConventionMember.Method | NetJs.ConventionMember.Property, Notation = NetJs.Notation.CamelCase)]
     public class RegexMatch
     {
-        public int Index { get; set; }
+        public extern int Index { get; }
 
-        public int Length { get; set; }
+        public extern int Length { get; }
 
-        public string Input { get; set; }
+        public extern string Input { get; }
 
-        public string this[int index] { get { return null; } set { } }
+        public extern string this[int index] { get; }
+        public extern RegexMatchGroups Groups { get; }
 
         public static extern implicit operator string[] (RegexMatch rm);
 
         public static extern explicit operator RegexMatch(string[] a);
     }
+    [NetJs.External]
+    [NetJs.Name("RegexMatchGroup")]
+    [NetJs.Convention(Member = NetJs.ConventionMember.Field | NetJs.ConventionMember.Method | NetJs.ConventionMember.Property, Notation = NetJs.Notation.CamelCase)]
+    public class RegexMatchGroups
+    {
+        public extern new string this[string index] { get; }
+    }
+
+    //[NetJs.External]
+    //[NetJs.Name("RegexMatchGroup")]
+    //[NetJs.Convention(Member = NetJs.ConventionMember.Field | NetJs.ConventionMember.Method | NetJs.ConventionMember.Property, Notation = NetJs.Notation.CamelCase)]
+    //public class RegexMatchGroup
+    //{
+    //    public extern string this[int index] { get; }
+    //}
 }

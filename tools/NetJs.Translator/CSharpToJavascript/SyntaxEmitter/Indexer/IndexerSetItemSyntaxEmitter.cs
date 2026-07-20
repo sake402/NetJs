@@ -22,7 +22,10 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Indexer
                 node.OperatorToken.IsKind(SyntaxKind.AsteriskEqualsToken) ||
                 node.OperatorToken.IsKind(SyntaxKind.SlashEqualsToken) ||
                 node.OperatorToken.IsKind(SyntaxKind.BarEqualsToken) ||
-                node.OperatorToken.IsKind(SyntaxKind.CaretEqualsToken);
+                node.OperatorToken.IsKind(SyntaxKind.CaretEqualsToken) ||
+                node.OperatorToken.IsKind(SyntaxKind.LessThanLessThanEqualsToken) ||
+                node.OperatorToken.IsKind(SyntaxKind.GreaterThanGreaterThanEqualsToken) ||
+                node.OperatorToken.IsKind(SyntaxKind.QuestionQuestionEqualsToken);
             }
             if ((node.Left.IsKind(SyntaxKind.ElementAccessExpression) || node.Left.IsKind(SyntaxKind.ElementBindingExpression)) && IsEqualToken())
             {
@@ -64,27 +67,56 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Indexer
                                 visitor.CurrentTypeWriter.Write(node, Constants.IfNotNullParameterName);
                             });
                         }
-                        var bestIndexer = visitor.GetSetIndexer(node.Left is ElementAccessExpressionSyntax ? (ElementAccessExpressionSyntax)node.Left : (ElementBindingExpressionSyntax)node.Left, node.Right);
-                        if (bestIndexer != null && bestIndexer.IsInvokable(visitor.Global))
+                        var bestGetIndexer = visitor.GetGetIndexer(node.Left is ElementAccessExpressionSyntax ? (ElementAccessExpressionSyntax)node.Left : (ElementBindingExpressionSyntax)node.Left);
+                        var bestSetIndexer = visitor.GetSetIndexer(node.Left is ElementAccessExpressionSyntax ? (ElementAccessExpressionSyntax)node.Left : (ElementBindingExpressionSyntax)node.Left, node.Right);
+                        if (bestSetIndexer != null && bestSetIndexer.IsInvokable(visitor.Global))
                         {
-                            var valueParameter = bestIndexer.Parameters.Last();
+                            var valueParameter = bestSetIndexer.Parameters.Last();
                             var box = true;
                             if (valueParameter != null && visitor.Global.HasAttribute(valueParameter, typeof(BoxAttribute).FullName, visitor, false, out var arg))
                             {
                                 box = (bool)arg[0];
                             }
-                            visitor.WriteMethodInvocation(node, bestIndexer, null, arguments.Select(a => new CodeNode(a)), cExpression, lhsSymbol, null, false, suffixArguments: (Action)(() =>
+                            string? resultCacheVariable = null;
+                            if (
+                                //node.OperatorToken.IsKind(SyntaxKind.QuestionQuestionEqualsToken) && 
+                                (node.Parent.IsKind(SyntaxKind.ReturnStatement) || 
+                                node.Parent.IsKind(SyntaxKind.ArrowExpressionClause) || 
+                                node.Parent.IsKind(SyntaxKind.Argument)))
                             {
+                                resultCacheVariable = $"$t{++visitor.CurrentTypeWriter.CurrentClosure.NameManglingSeed}";
+                            }
+                            if (resultCacheVariable != null)
+                            {
+                                visitor.CurrentTypeWriter.InsertAbove(node, $"let {resultCacheVariable};", true);
+                            }
+                            visitor.WriteMethodInvocation(node, bestSetIndexer, null, arguments.Select(a => new CodeNode(a)), cExpression, lhsSymbol, null, false, suffixArguments: (Action)(() =>
+                            {
+                                if (resultCacheVariable != null)
+                                {
+                                    visitor.CurrentTypeWriter.Write(node, resultCacheVariable);
+                                    visitor.CurrentTypeWriter.Write(node, " = (");
+                                }
                                 if (!node.OperatorToken.IsKind(SyntaxKind.EqualsToken))
                                 {
-                                    visitor.Visit(node.Left);
+                                    //visitor.Visit(node.Left);
+                                    visitor.WriteMethodInvocation(node, bestGetIndexer, null, arguments.Select(a => new CodeNode(a)), cExpression, lhsSymbol, null, false);
                                     visitor.CurrentTypeWriter.Write(node, " ");
                                     visitor.CurrentTypeWriter.Write(node, node.OperatorToken.ValueText.Substring(0, node.OperatorToken.ValueText.Length - 1));
                                     visitor.CurrentTypeWriter.Write(node, " ");
                                 }
                                 visitor.WriteVariableAssignment(node, null, lhsType, null, new CodeNode(node.Right), rhsType, enableBoxing: box);
+                                if (resultCacheVariable != null)
+                                {
+                                    visitor.CurrentTypeWriter.Write(node, ")");
+                                }
                                 //visitor.Visit(node.Right);
                             }));
+                            if (resultCacheVariable != null)
+                            {
+                                visitor.CurrentTypeWriter.Write(node, ", ");
+                                visitor.CurrentTypeWriter.Write(node, resultCacheVariable);
+                            }
                             return true;
                         }
 

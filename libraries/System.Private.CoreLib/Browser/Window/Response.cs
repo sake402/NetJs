@@ -15,6 +15,7 @@ namespace Window
         public extern Headers headers { get; }
         public extern string? type { get; }
         public extern string? url { get; }
+        public extern ReadableStream<byte> body { get; }
         public extern Response clone();
         public static extern Response error();
         public static extern Response redirect(string url, int status);

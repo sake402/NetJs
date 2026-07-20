@@ -104,7 +104,7 @@ namespace System.Reflection
                 //var pth = prototype.FullName.NativeSplit(".");
                 typeMetadata = new TypeModel
                 {
-                    Flags = prototype.Flags,
+                    //Flags = prototype.Flags,
                     //Name = pth[pth.Length - 1],
                     Handle = NetJs.Script.IsDefined(prototype.TypeHandle) ? prototype.TypeHandle : CreateTypeHandle()
                 };
@@ -130,24 +130,26 @@ namespace System.Reflection
         }
 
         [NetJs.Name(NetJs.Constants.AssemblyNestedStructName)]
-        NetJs.Union<TypePrototype, TypePrototypeProvider> DefineNestedStruct(string metadataFullTypeName, TypePrototypeProvider provider, TypePrototype parent, NativeAction<TypePrototype>? typePrototypeSink = null)
+        NetJs.Union<TypePrototype, TypePrototypeProvider> DefineNestedStruct(string metadataFullTypeName, TypePrototypeProvider provider, TypePrototype parent, NativeAction<Union<TypePrototype, TypePrototypeProvider>>? typePrototypeSink = null)
         {
             return DefineType(metadataFullTypeName, provider, TypeFlagsModel.IsValueType | TypeFlagsModel.IsNested, parent, typePrototypeSink);
         }
 
         [NetJs.Name(NetJs.Constants.AssemblyNestedClassName)]
-        NetJs.Union<TypePrototype, TypePrototypeProvider> DefineNestedClass(string metadataFullTypeName, TypePrototypeProvider provider, TypePrototype parent, NativeAction<TypePrototype>? typePrototypeSink = null)
+        NetJs.Union<TypePrototype, TypePrototypeProvider> DefineNestedClass(string metadataFullTypeName, TypePrototypeProvider provider, TypePrototype parent, NativeAction<Union<TypePrototype, TypePrototypeProvider>>? typePrototypeSink = null)
         {
             return DefineType(metadataFullTypeName, provider, TypeFlagsModel.IsNested, parent, typePrototypeSink);
         }
 
+        //SimpleDictionary<Union<TypePrototype, TypePrototypeProvider>>? prototypeRegistry;
+        //TypePrototype[]? genericTypes;
         [NetJs.Name(NetJs.Constants.AssemblyDefineClassName)]
         internal NetJs.Union<TypePrototype, TypePrototypeProvider> DefineType(
             string metadataFullTypeName,
             TypePrototypeProvider provider,
             TypeFlagsModel flags,
             TypePrototype? parent = null,
-            NativeAction<TypePrototype>? typePrototypeSink = null)
+            NativeAction<Union<TypePrototype, TypePrototypeProvider>>? typePrototypeSink = null)
         {
             if (NetJs.Script.IsUndefined(flags))
                 flags = TypeFlagsModel.None;
@@ -181,7 +183,7 @@ namespace System.Reflection
             var selfProxy = NetJs.Script.TypeOf(existing).NativeEquals("function") ?
                 existing.As<NativeFunction<TypeProxyHandler>>()() :
                 existing.As<TypeProxyHandler>() ?? (!isGenericDefinition ? CreateTypeProxy(metadataFullTypeName) : null);
-            var genericTypes = AppDomain.GenericTypes;
+            var genericTypes = AppDomain.GenericTypeParameters;
             var genericProvider = isGenericDefinition ? provider.As<GenericTypePrototypeProvider>() : null;
             //TypePrototype prototype = !isGenericDefinition ? provider(selfProxy!, null, null) : NetJs.Script.Write<TypePrototype>("provider.apply(null, genericTypes)");
             TypePrototype prototype;
@@ -234,7 +236,16 @@ namespace System.Reflection
                     else
                     {
                         //Slower but will rarely be used
-                        prototype = NetJs.Script.Write<TypePrototype>("genericProvider( ...genericTypes.slice(0, paramCount))");
+                        var args = NetJs.Script.NewArray<object>(paramCount);
+                        for(int i = 0; i < paramCount; i++)
+                        {
+                            unchecked
+                            {
+                                args[i] = genericTypes[i];
+                            }
+                        }
+                        prototype = NetJs.Script.Write<TypePrototype>("genericProvider.apply(null, args)");
+                        //prototype = NetJs.Script.Write<TypePrototype>("genericProvider( ...genericTypes.slice(0, paramCount))");
                     }
                 }
             }
@@ -280,22 +291,30 @@ namespace System.Reflection
             //dont try so set inner types, they are managed and readonly static within the containing type
             if (!isNestedClass)
             {
+                static NativeFunction<Union<TypePrototype, TypePrototypeProvider>, bool>? CreateCompleter(RuntimeType type, RuntimeAssembly_Partial assembly)
+                {
+                    bool Completer(Union<TypePrototype, TypePrototypeProvider> _)
+                    {
+                        if (assembly._isCompleted && !type._isCompleted)
+                        {
+                            type.Complete();
+                        }
+                        return type._isCompleted;
+                    }
+                    return Completer;
+                }
                 //Dont initialize type until they are actually accessed
                 //Dont static initialize open generic types
-                prototypeRegistry.SetNested(jsName, isGenericDefinition ? provider : prototype, onAccess: (v) =>
-                {
-                    if (_isCompleted && !type._isCompleted)
-                    {
-                        type.Complete();
-                    }
-                    return type._isCompleted;
-                });
+                prototypeRegistry.SetNested(jsName, isGenericDefinition ? provider : prototype, onAccess: CreateCompleter(type, this));
             }
             if (!isInterfaceMixin && !isGenericDefinition)
                 AppDomain.SetupDefaults(type);
             if (NetJs.Script.IsDefined(typePrototypeSink))
             {
-                typePrototypeSink!(prototype!);
+                if (!isGenericDefinition)
+                    typePrototypeSink!(prototype!);
+                else
+                    typePrototypeSink!(provider);
             }
             if (isNestedClass)
             {
@@ -305,6 +324,13 @@ namespace System.Reflection
                 }
                 //Initialize nested types immedialty. If we are crrating it, it means we already access it
                 RegisterCompletionNotification(type);
+            }
+            if (!isInterfaceMixin && !isGenericDefinition && prototype != null)
+            {
+                if (NetJs.Script.IsDefined(prototype[Constants.ExportMethodName]))
+                {
+                    prototype.DoExports();
+                }
             }
             return (!isGenericDefinition ? prototype : null) ?? provider.As<TypePrototype>();
         }
@@ -452,7 +478,7 @@ namespace System.Reflection
                 throw new InvalidOperationException("Generic Interface mixin must be at least 2");
             unchecked
             {
-                return Mixin(metadataFullTypeName, mixes.Slice(0, mixes.Length - 1).As<TypePrototype[]>(), mixes[mixes.Length - 1], getPrototype);
+                return Mixin(metadataFullTypeName, mixes.ArraySlice(0, mixes.Length - 1).As<TypePrototype[]>(), mixes[mixes.Length - 1], getPrototype);
             }
         }
 
@@ -478,7 +504,7 @@ namespace System.Reflection
         //            }
         //        }
 
-        bool _isCompleted;
+        internal bool _isCompleted;
         internal OnCompleted[] onCompleted = [];
 
         internal void RegisterCompletionNotification(RuntimeType type)
@@ -553,14 +579,14 @@ namespace System.Reflection
         {
             var assembly = assembly_h.QCallAssemblyHandleToRuntimeType().As<RuntimeAssembly_Partial>();
             var names = assembly._model.Manifests?.Map(e => e.Name);
-            res.GetObjectHandleOnStack<string[]?>() = names;
+            res.GetObjectHandleOnStack<string[]?>() = names?.AsNetArray();
         }
 
         [NetJs.MemberReplace]
         private static void GetExportedTypes(QCallAssembly assembly_h, ObjectHandleOnStack res)
         {
             var assembly = assembly_h.QCallAssemblyHandleToRuntimeType().As<RuntimeAssembly_Partial>();
-            res.GetObjectHandleOnStack<Type[]?>() = assembly._types.Filter(e => e._model.Flags.TypeHasFlag(TypeFlagsModel.IsPublic));
+            res.GetObjectHandleOnStack<Type[]?>() = assembly._types.Filter(e => e._prototype.Flags.TypeHasFlag(TypeFlagsModel.IsPublic)).AsNetArray();
         }
 
         [NetJs.MemberReplace]
@@ -635,7 +661,7 @@ namespace System.Reflection
                 manifest.Data = bytes.As<string>();
                 size = bytes.Length;
                 module.GetObjectHandleOnStack<RuntimeModule_Partial>() = runtimeAssembly._module;
-                return RuntimeHelpers.CreateArrayReference(bytes).As<IntPtr>();
+                return RuntimeHelpers.CreateArrayReferenceT(bytes).As<IntPtr>();
             }
             size = 0;
             return IntPtr.Zero;
@@ -662,7 +688,7 @@ namespace System.Reflection
         internal static AssemblyName[] GetReferencedAssembliesOverride(Assembly assembly)
         {
             var runtimeAssembly = assembly.As<RuntimeAssembly_Partial>();
-            return runtimeAssembly._model.ReferencedAssembliesHandle.Map(h => AppDomain.GetAssemblyName(h.As<uint>())).Filter(h => h != null).Map(n => new AssemblyName(n!));
+            return runtimeAssembly._model.ReferencedAssembliesHandle.Map(h => AppDomain.GetAssemblyName(h.As<uint>())).Filter(h => h != null).Map(n => new AssemblyName(n!)).AsNetArray();
         }
 
         [NetJs.MemberReplace]

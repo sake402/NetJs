@@ -21,7 +21,7 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             if (svd != null)
             {
-                CurrentTypeWriter.InsertInCurrentClosure(node, $"let {svd.Identifier.ResolveIdentifierName()};", true);
+                CurrentTypeWriter.InsertAbove(node, $"let {svd.Identifier.ResolveIdentifierName()};", true);
                 CurrentTypeWriter.Write(node, "(");
                 CurrentTypeWriter.Write(node, svd.Identifier.ResolveIdentifierName());
                 CurrentTypeWriter.Write(node, $" = ");
@@ -38,7 +38,11 @@ namespace NetJs.Translator.CSharpToJavascript
                 WritePatternExpressionFilter(node);
             }
             CurrentTypeWriter.Write(node, $", ");
-            Visit(node.Type);
+            var type = _global.TryGetTypeSymbol(node.Type, this);
+            if (type != null)
+                CurrentTypeWriter.Write(node, type.ComputeOutputTypeName(_global));
+            else
+                Visit(node.Type);
             CurrentTypeWriter.Write(node, $")");
             if (svd != null)
             {
@@ -61,7 +65,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitSwitchExpressionArm(SwitchExpressionArmSyntax node)
         {
-            if (node.Pattern.IsKind(SyntaxKind.DeclarationPattern)) //need a closure to declare the variable into
+            if (node.Pattern.IsKind(SyntaxKind.DeclarationPattern) || node.Pattern.IsKind(SyntaxKind.VarPattern)) //need a closure to declare the variable into
             {
                 OpenClosure(node);
                 CurrentTypeWriter.WriteLine(node, "{", true);
@@ -100,7 +104,14 @@ namespace NetJs.Translator.CSharpToJavascript
                 CurrentTypeWriter.WriteLine(node, ")");
                 CurrentTypeWriter.WriteLine(node, "{", true);
             }
-            WriteReturn(node, node.Expression);
+            if (node.Expression.IsKind(SyntaxKind.ThrowExpression))
+            {
+                CurrentTypeWriter.Write(node, "", true);
+                Visit(node.Expression);
+                CurrentTypeWriter.WriteLine(node, ";");
+            }
+            else
+                WriteReturn(node, node.Expression);
             //Writer.Write(node, node.Expression.IsKind(SyntaxKind.ThrowExpression) ? "" : "return ", true);
             //Visit(node.Expression);
             //Writer.WriteLine(node, ";");
@@ -108,7 +119,7 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 CurrentTypeWriter.WriteLine(node, "}", true);
             }
-            if (node.Pattern.IsKind(SyntaxKind.DeclarationPattern)) //need a closure to declare the variable into
+            if (node.Pattern.IsKind(SyntaxKind.DeclarationPattern) || node.Pattern.IsKind(SyntaxKind.VarPattern)) //need a closure to declare the variable into
             {
                 CloseClosure(node);
                 CurrentTypeWriter.WriteLine(node, "}", true);
@@ -142,23 +153,33 @@ namespace NetJs.Translator.CSharpToJavascript
             WrapStatementsInExpression(node, () =>
             {
                 OpenClosure(node);
-                bool needsVar = NeedsCachePatternExpressionInTempVariable(node.GoverningExpression);
-                if (needsVar)
+                var switchClosure = CurrentClosure;
+                bool needsVar = false;
+                if (node.GoverningExpression.IsKind(SyntaxKind.TupleExpression))
                 {
-                    var i = ++CurrentTypeWriter.CurrentClosure.NameManglingSeed;
-                    CurrentClosure.Tags.Add(SwitchExpressionVariableName, $"$switch{i}");
-                    CurrentTypeWriter.Write(node, $"let $switch{i} = ", true);
-                    Visit(node.GoverningExpression);
-                    CurrentTypeWriter.WriteLine(node, ";");
+                    var tuple = (TupleExpressionSyntax)node.GoverningExpression;
+                    switchClosure.SwitchExpressionCacheVariableNames = CacheTupleItemsIntoTempVariableNames(node, tuple, "$switch");
+                }
+                else
+                {
+                    needsVar = NeedsCachePatternExpressionInTempVariable(node.GoverningExpression);
+                    if (needsVar)
+                    {
+                        var i = ++CurrentTypeWriter.CurrentClosure.NameManglingSeed;
+                        CurrentClosure.SwitchExpressionCacheVariableNames = [$"$switch{i}"];//.Tags.Add(SwitchExpressionVariableName, $"$switch{i}");
+                        CurrentTypeWriter.Write(node, $"let $switch{i} = ", true);
+                        Visit(node.GoverningExpression);
+                        CurrentTypeWriter.WriteLine(node, ";");
+                    }
                 }
                 foreach (var arm in node.Arms)
                 {
                     Visit(arm);
                 }
-                if (needsVar)
-                {
-                    CurrentClosure.Tags.Remove(SwitchExpressionVariableName);
-                }
+                //if (needsVar)
+                //{
+                //    //CurrentClosure.Tags.Remove(SwitchExpressionVariableName);
+                //}
                 CloseClosure(node);
             });
             //base.VisitSwitchExpression(node);

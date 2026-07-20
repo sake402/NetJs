@@ -23,9 +23,10 @@ namespace NetJs
                 KnownTypeHandle.SystemInt32 => true,
                 KnownTypeHandle.SystemUint32 => true,
                 KnownTypeHandle.SystemIntPtr => true,
-                KnownTypeHandle.SystemUintPtr => true,
+                KnownTypeHandle.SystemUIntPtr => true,
                 KnownTypeHandle.SystemInt64 => true,
                 KnownTypeHandle.SystemUint64 => true,
+                KnownTypeHandle.SystemEnum => true,
                 _ => false
             };
         }
@@ -33,6 +34,7 @@ namespace NetJs
         {
             return value switch
             {
+                KnownTypeHandle.SystemBool => true,
                 KnownTypeHandle.SystemByte => true,
                 KnownTypeHandle.SystemSByte => true,
                 KnownTypeHandle.SystemChar => true,
@@ -41,14 +43,16 @@ namespace NetJs
                 KnownTypeHandle.SystemInt32 => true,
                 KnownTypeHandle.SystemUint32 => true,
                 KnownTypeHandle.SystemIntPtr => true,
-                KnownTypeHandle.SystemUintPtr => true,
+                KnownTypeHandle.SystemUIntPtr => true,
                 KnownTypeHandle.SystemInt64 => true,
                 KnownTypeHandle.SystemUint64 => true,
                 KnownTypeHandle.SystemSingle => true,
                 KnownTypeHandle.SystemDouble => true,
+                KnownTypeHandle.SystemEnum => true,
                 _ => false
             };
         }
+
         public static bool IsPrimitive(this KnownTypeHandle value)
         {
             return value switch
@@ -62,12 +66,13 @@ namespace NetJs
                 KnownTypeHandle.SystemInt32 => true,
                 KnownTypeHandle.SystemUint32 => true,
                 KnownTypeHandle.SystemIntPtr => true,
-                KnownTypeHandle.SystemUintPtr => true,
+                KnownTypeHandle.SystemUIntPtr => true,
                 KnownTypeHandle.SystemInt64 => true,
                 KnownTypeHandle.SystemUint64 => true,
                 KnownTypeHandle.SystemSingle => true,
                 KnownTypeHandle.SystemDouble => true,
                 KnownTypeHandle.SystemString => true,
+                KnownTypeHandle.SystemEnum => true,
                 _ => false
             };
         }

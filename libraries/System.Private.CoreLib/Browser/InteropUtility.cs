@@ -1,5 +1,7 @@
 ﻿using NetJs;
 using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Window;
 
 [NetJs.Boot]
@@ -11,10 +13,12 @@ public static class InteropUtility
     //But we need an abstraction that let this be castable in both ways
     //We will map a pointer to a vrtual address space
     const uint virtualAddressSpaceSlotSize = 64 * 1024;
+#pragma warning disable CS3003 // Type is not CLS-compliant
     public const uint virtualAddressOffset = 0x80000000;
     public const uint virtualBlockAddressOffset = 0x80000000;
     public const uint virtualObjectAddressOffset = 0xC0000000;
-    static SimpleDictionary<WeakRef<object>> virtualAddressSpaces = new();
+#pragma warning restore CS3003 // Type is not CLS-compliant
+    static SimpleDictionary<Union<object?, WeakRef<object>?>> virtualAddressSpaces = new();
 
     static InteropUtility()
     {
@@ -67,36 +71,46 @@ public static class InteropUtility
         //pointerFinalizer.register(pointer, { start, blocks });
         while (blocks-- > 0)
         {
-            virtualAddressSpaces[blockStart] = new WeakRef<object>(pointer);
+            virtualAddressSpaces[blockStart] = /*new WeakRef<object>*/(pointer);
             blockStart++;
             if (blocks > 0)
                 pointer = pointer.Add(virtualAddressSpaceSlotSize);
         }
     }
 
-    static void markAddressSpaceUsed(uint blockStart, object obj)
+    static void markAddressSpaceUsed(uint blockStart, object? obj)
     {
         //pointerFinalizer.register(pointer, { start, blocks });
-        virtualAddressSpaces[blockStart] = new WeakRef<object>(obj);
+        virtualAddressSpaces[blockStart] = obj == null ? null : /*new WeakRef<object>*/(obj);
     }
 
-    public static uint castObject2Address(object obj, uint handle = 0, bool deleteOld = false)
+    public static uint castObject2Address(object? obj, uint handle = 0, bool deleteOld = false)
     {
-        var add = obj["$virtualAddress"];
+        var add = obj != null ? obj["$virtualAddress"] : Script.Undefined;
         if (NetJs.Script.IsDefined(add))
             return add.As<uint>();
+        if (handle != 0)
+        {
+            handle = NetJs.Script.AsUnsigned(handle);
+            if (handle < virtualObjectAddressOffset)
+            {
+                throw new InvalidOperationException("Not an object virtual address");
+            }
+            handle -= virtualObjectAddressOffset;
+        }
         uint freeAddressSpace = handle == 0 ? getContaguousAddressSpace(1) : handle;
-        if (!deleteOld && virtualAddressSpaces.ContainsKey(freeAddressSpace))
+        if (!deleteOld && handle == 0 && virtualAddressSpaces.ContainsKey(freeAddressSpace))
         {
             throw new InvalidOperationException();
         }
         markAddressSpaceUsed(freeAddressSpace, obj);
-        virtualAddressSpaces[freeAddressSpace] = new WeakRef<object>(obj);
-        obj["$virtualAddress"] = freeAddressSpace.As<object>();
+        virtualAddressSpaces[freeAddressSpace] = obj == null ? null : /*new WeakRef<object>*/(obj);
+        if (obj != null && NetJs.Script.TypeOf(obj).NativeNotEquals("string"))
+            obj["$virtualAddress"] = handle != 0 ? (handle + virtualObjectAddressOffset).As<object>() : freeAddressSpace.As<object>();
         return virtualObjectAddressOffset + freeAddressSpace;
     }
 
-    public static object castAddress2Object(uint address)
+    public static object? castAddress2Object(uint address)
     {
         address = NetJs.Script.AsUnsigned(address);
         if (address < virtualObjectAddressOffset)
@@ -104,11 +118,27 @@ public static class InteropUtility
             throw new InvalidOperationException("Not an object virtual address");
         }
         address -= virtualObjectAddressOffset;
-        return virtualAddressSpaces[address].deref();
+        var data = virtualAddressSpaces[address];
+        if (NetJs.Script.Write<bool>("data instanceof WeakRef"))
+        {
+            return data.As<WeakRef<object>>().deref();
+        }
+        return data;
     }
 
     public static uint castPtr2Address(RefOrPointer<object> pointer)
     {
+        if (pointer._dataSource == null && pointer._setter == null && pointer._getter == null)
+        {
+            //if (pointer == Unsafe._nullRef)
+            //{
+            return 0;
+            //}
+            //if (pointer == RefOrPointer._pinnedPointer)
+            //{
+            return 1;
+            //}
+        }
         if (pointer._virtualAddress > 0)
             return pointer._virtualAddress;
         Array? array = null;
@@ -118,13 +148,13 @@ public static class InteropUtility
         while (cur is not null)
         {
             root = cur;
-            if (cur._parentRef != null && cur._arrayOffset > 0)
+            if (cur._parentRef != null && cur._byteOffset > 0)
             {
-                byteOffset += cur._byteOffset;
+                byteOffset += cur._byteOffset ?? 0;
             }
             else if (cur._array != null)
             {
-                byteOffset += cur._byteOffset;
+                byteOffset += cur._byteOffset ?? 0;
                 array = cur._array;
                 break;
             }
@@ -162,9 +192,18 @@ public static class InteropUtility
         {
             address -= virtualBlockAddressOffset;
             var block = address / virtualAddressSpaceSlotSize;
-            var ptr = virtualAddressSpaces[block].deref().As<RefOrPointer<object>>();
+            var data = virtualAddressSpaces[block];
+            RefOrPointer<object> ptr;
+            if (NetJs.Script.Write<bool>("data instanceof WeakRef"))
+            {
+                ptr = data.As<WeakRef<object>>().deref().As<RefOrPointer<object>>();
+            }
+            else
+            {
+                ptr = data.As<RefOrPointer<object>>();
+            }
             var toModel = ptrType != null ? ptrType.Arguments![0] : null;
-            var fromModel = ptr.GetClassPrototype().Arguments![0];
+            var fromModel = ptr == null ? null : ptr.GetClassPrototype().Arguments![0];
             if (fromModel != null && toModel != null)
             {
                 //If both are numeric type, create a new TTo ref such that it can read from the TFrom ref
@@ -198,7 +237,15 @@ public static class InteropUtility
     {
         virtualAddressSpaces.ForEach((key, value) =>
         {
-            var v = value.deref();
+            object? v;
+            if (NetJs.Script.Write<bool>("value instanceof WeakRef"))
+            {
+                v = value.As<WeakRef<object>>().deref();
+            }
+            else
+            {
+                v = value;
+            }
             if (NetJs.Script.IsUndefined(v))
             {
                 virtualAddressSpaces.Remove(key);
@@ -221,7 +268,18 @@ public static class InteropUtility
         throw new OverflowException();
     }
 
-
+    public static T[] ToArray<T>(IEnumerable<T> spreadItems)
+    {
+        T[] ts = NetJs.Script.NewArray<T>();
+        Array.AddMetadata(ts, typeof(T));
+        var enumerator = spreadItems.GetEnumerator();
+        while (enumerator.MoveNext())
+        {
+            T current = enumerator.Current;
+            ts.Push(current);
+        }
+        return ts;
+    }
     //public static int IntegerWrap(int value, int signed)
     //{
     //    if (signed == 0)

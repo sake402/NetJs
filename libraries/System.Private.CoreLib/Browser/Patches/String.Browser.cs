@@ -57,16 +57,16 @@ namespace System
         public static readonly string EmptyImpl = "";
 
         [NetJs.Name(NetJs.Constants.IsTypeName)]
-        public static bool Is(object? value, out string? result)
+        public static bool Is(object? value, NativeAction<string> result)
         {
-            result = NetJs.Script.Write<string>("undefined");
+            //result ( NetJs.Script.Write<string>("undefined"));
             if (value == null)
                 return false;
             if (NetJs.Script.TypeOf(value).NativeEquals("string"))
                 return true;
             if (NetJs.Script.InstanceOf(value, typeof(string))) //boxed string
             {
-                result = NetJs.Script.Write<string>("value");
+                result(NetJs.Script.Write<string>("value"));
                 return true;
             }
             return false;
@@ -150,11 +150,17 @@ namespace System
         [NetJs.MemberReplace(nameof(Length))]
         [NetJs.StaticCallConvention(false)]
         [NetJs.Name("length")]
-        public extern int LengthImpl
+        public int LengthImpl
         {
             [NetJs.Template("{this}.length")]
-            get;
+            get
+            {
+                if (NetJs.Script.TypeOf(this).NativeEquals("string"))
+                    return this.As<string>().Length;
+                return NetJs.Script.Unbox(this).As<string>().Length;
+            }
         }
+
         public static bool IsProxy(string s) => s["$isProxy"].As<bool>() == true;
         public static StringProxyHandler EnsureIsProxy(string s)
         {
@@ -189,11 +195,13 @@ namespace System
         [NetJs.MemberReplace("this[int].get")]
         public char GetChar(int index)
         {
-            if ((uint)index >= (uint)this.Length)
+            var _this = NetJs.Script.Unbox(this).As<string>();
+            if ((uint)index >= (uint)_this.Length)
                 ThrowHelper.ThrowIndexOutOfRangeException();
             //return Unsafe.Add(ref _firstChar, (nint)(uint)index /* force zero-extension */);
             return this.NativeCharCodeAt(index);
         }
+
         [NetJs.MemberReplace(nameof(GetRawStringData))]
         internal ref char GetRawStringDataImpl()
         {
@@ -205,10 +213,12 @@ namespace System
             }
             else
             {
-                var array = NetJs.Script.Write<char[]>("Array.from(this, char => char.charCodeAt(0))");
+                var _this = NetJs.Script.Unbox(this).As<string>();
+                var array = NetJs.Script.Write<char[]>("Array.from(_this, char => char.charCodeAt(0))");
+                array.Push(0);// add the dotnet expected null terminator, some algorithms expect to read from this location a zero
                 Array.AddMetadata(array, typeof(char));
-                var rref = RuntimeHelpers.CreateArrayReference(array);
-                rref["$originalString"] = this;
+                var rref = RuntimeHelpers.CreateArrayReferenceT(array);
+                //rref["$originalString"] = this.As<object>();
                 NetJs.Script.Write("return rref");
                 throw null!;
             }
@@ -224,7 +234,8 @@ namespace System
             }
             else
             {
-                var array = NetJs.Script.Write<char[]>("Array.from(this, char => char.charCodeAt(0))");
+                var _this = NetJs.Script.Unbox(this).As<string>();
+                var array = NetJs.Script.Write<char[]>("Array.from(_this, char => char.charCodeAt(0))");
                 Array.AddMetadata(array, typeof(char));
                 var bArray = new byte[array.Length * 2];
                 unchecked
@@ -235,7 +246,9 @@ namespace System
                         bArray[i * 2 + 1] = ((array[i] >> 8) & 0xFF).As<byte>();
                     }
                 }
-                var rref = RuntimeHelpers.CreateArrayReference(bArray);
+                array.Push(0);// add the dotnet expected null terminator, some algorithms expect to read from this location a zero
+                array.Push(0);// add the dotnet expected null terminator, some algorithms expect to read from this location a zero
+                var rref = RuntimeHelpers.CreateArrayReferenceT(bArray);
                 NetJs.Script.Write("return rref");
                 throw null!;
             }
@@ -252,9 +265,11 @@ namespace System
             }
             else
             {
-                var array = NetJs.Script.Write<char[]>("Array.from(this, char => char.charCodeAt(0))");
+                var _this = NetJs.Script.Unbox(this).As<string>();
+                var array = NetJs.Script.Write<char[]>("Array.from(_this, char => char.charCodeAt(0))");
+                array.Push(0);// add the dotnet expected null terminator, some algorithms expect to read from this location a zero
                 Array.AddMetadata(array, typeof(char));
-                var rref = RuntimeHelpers.CreateArrayReference(array);
+                var rref = RuntimeHelpers.CreateArrayReferenceT(array);
                 NetJs.Script.Write("return rref");
                 throw null!;
             }
@@ -271,7 +286,8 @@ namespace System
             }
             else
             {
-                array = NetJs.Script.Write<char[]>("Array.from(this, char => char.charCodeAt(0))");
+                var _this = NetJs.Script.Unbox(this).As<string>();
+                array = NetJs.Script.Write<char[]>("Array.from(_this, char => char.charCodeAt(0))");
             }
             return RuntimeHelpers.CreateArrayT<char>(array);
         }
@@ -287,9 +303,10 @@ namespace System
             }
             else
             {
-                array = NetJs.Script.Write<char[]>("Array.from(this, char => char.charCodeAt(0))");
+                var _this = NetJs.Script.Unbox(this).As<string>();
+                array = NetJs.Script.Write<char[]>("Array.from(_this, char => char.charCodeAt(0))");
             }
-            return RuntimeHelpers.CreateArrayT<char>(array.Slice(startIndex, length).As<char[]>());
+            return RuntimeHelpers.CreateArrayT<char>(array.ArraySlice(startIndex, length).As<char[]>());
         }
 
         [NetJs.Template("window.String.fromCharCode({code})")]

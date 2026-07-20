@@ -1,6 +1,6 @@
 ﻿
 using NetJs;
 
+[assembly: AssemblySlug("scsl")]
 
-//[assembly: Attached(typeof(System.SR), typeof(ReflectableAttribute), false)]
-[assembly: AssemblySlug("scs")]
+[assembly: AssemblyHandle(AssemblyHandleAttribute.SystemConsole)]

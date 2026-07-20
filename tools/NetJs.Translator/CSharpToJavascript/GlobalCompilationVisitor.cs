@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Operations;
 using NetJs.Translator.OneOf.Types;
 using Newtonsoft.Json.Linq;
 using NuGet.ContentModel;
@@ -17,6 +18,7 @@ using System.Threading;
 using System.Threading.Tasks.Sources;
 using System.Xml.Linq;
 using YamlDotNet.Core.Tokens;
+using YamlDotNet.Serialization.NodeDeserializers;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxTokenParser;
 
 namespace NetJs.Translator.CSharpToJavascript
@@ -202,7 +204,7 @@ namespace NetJs.Translator.CSharpToJavascript
             Compilation = compilation;
             Project = project;
             _isSystemPrivateCoreLib = isSystemPrivateCoreLib;
-            GlobalName = Evaluate("Global") ?? "$";
+            GlobalName = Evaluate("Global", null) ?? "$";
             AllSymbols = new Dictionary<string, SymbolMetadata>();
             SymbolMetadatas = new Dictionary<ISymbol, SymbolMetadata>(SymbolEqualityComparer.Default);
             ExtensionMethods = new Dictionary<string, IEnumerable<IMethodSymbol>>();
@@ -263,128 +265,283 @@ namespace NetJs.Translator.CSharpToJavascript
             //    Syntax = e.Cast<MemberDeclarationSyntax>().ToList()
             //});
             //ReversedTypeNodes = TypeNodes.ToDictionary(e => e.Value.Syntax.First(), e => e.Value);
-            IEnumerable<ISymbol> GetConstructorsInType(ISymbol type, bool publicOnly)
+            //IEnumerable<ISymbol> GetConstructorsInType(ISymbol type, bool publicOnly)
+            //{
+            //    if (type.Kind == SymbolKind.NamedType && type is ITypeSymbol t)
+            //    {
+            //        foreach (var child in t.GetMembers(".cctor")) //static constructor
+            //            if (child.Kind == SymbolKind.Method/* is IMethodSymbol method*/)
+            //                yield return child;
+            //        foreach (var child in t.GetMembers(".ctor"))
+            //            if (child.Kind == SymbolKind.Method/* is IMethodSymbol method*/)
+            //                yield return child;
+            //    }
+            //}
+            //IEnumerable<ISymbol> GetImplicitOperatorsInType(ITypeSymbol type, bool publicOnly)
+            //{
+            //    foreach (var child in type.GetMembers("op_Implicit"))
+            //        if (child.Kind == SymbolKind.Method/* is IMethodSymbol method*/)
+            //            yield return child;
+            //}
+            //IEnumerable<IMethodSymbol> GetMethodsInMethod(IMethodSymbol type)
+            //{
+            //    var decl = type.DeclaringSyntaxReferences;
+            //    foreach (var d in decl)
+            //    {
+            //        var localMethod = d.GetSyntax().DescendantNodes().Where(e => e.IsKind(SyntaxKind.LocalFunctionStatement)/* is LocalFunctionStatementSyntax*/).FastCast<LocalFunctionStatementSyntax>();
+            //        foreach (var lm in localMethod)
+            //        {
+            //            var symbol = compilation.GetSemanticModel(lm.SyntaxTree).GetDeclaredSymbol(lm);
+            //            if (symbol != null)
+            //                yield return symbol;
+            //        }
+            //    }
+            //}
+            //IEnumerable<IMethodSymbol> GetMethodsInType(ITypeSymbol type, bool publicOnly)
+            //{
+            //    foreach (var child in type.GetMembers())
+            //        if (child.Kind == SymbolKind.Method/* is IMethodSymbol method*/)
+            //        {
+            //            var method = Unsafe.As<IMethodSymbol>(child);
+            //            yield return method;
+            //            if (!publicOnly)
+            //                foreach (var localMethod in GetMethodsInMethod(method))
+            //                    yield return localMethod;
+            //        }
+            //}
+            //IEnumerable<IPropertySymbol> GetPropertiesInType(ITypeSymbol type, bool publicOnly)
+            //{
+            //    foreach (var child in type.GetMembers())
+            //        if (child.Kind == SymbolKind.Property/* is IPropertySymbol property*/)
+            //            yield return Unsafe.As<IPropertySymbol>(child);
+            //}
+            //IEnumerable<IFieldSymbol> GetFieldInType(ITypeSymbol type, bool publicOnly)
+            //{
+            //    foreach (var child in type.GetMembers())
+            //        if (child.Kind == SymbolKind.Field/* is IFieldSymbol field*/)
+            //            yield return Unsafe.As<IFieldSymbol>(child);
+            //}
+            //IEnumerable<IEventSymbol> GetEventInType(ITypeSymbol type, bool publicOnly)
+            //{
+            //    foreach (var child in type.GetMembers())
+            //        if (child.Kind == SymbolKind.Event/* is IEventSymbol _event*/)
+            //            yield return Unsafe.As<IEventSymbol>(child);
+            //}
+            //IEnumerable<ISymbol> GetMembersInType(ITypeSymbol type, bool publicOnly)
+            //{
+            //    yield return type;
+            //    foreach (var child in type.GetTypeMembers())
+            //        foreach (var innerType in GetMembersInType(child, publicOnly))
+            //            yield return innerType;
+            //    foreach (var method in GetMethodsInType(type, publicOnly))
+            //        yield return method;
+            //    foreach (var method in GetImplicitOperatorsInType(type, publicOnly))
+            //        yield return method;
+            //    foreach (var property in GetPropertiesInType(type, publicOnly))
+            //        yield return property;
+            //    foreach (var field in GetFieldInType(type, publicOnly))
+            //        yield return field;
+            //    foreach (var _event in GetEventInType(type, publicOnly))
+            //        yield return _event;
+            //}
+            //IEnumerable<ISymbol> GetAllInNamespaces(INamespaceSymbol @namespace, bool publicOnly)
+            //{
+            //    //if (deep && @namespace.Kind == SymbolKind.Namespace && @namespace is INamespaceSymbol ns)
+            //    //{
+            //    yield return @namespace;
+            //    foreach (var child in @namespace.GetNamespaceMembers())
+            //    {
+            //        foreach (var namespace2 in GetAllInNamespaces(child, publicOnly))
+            //            yield return namespace2;
+            //    }
+            //    //}
+            //    foreach (var type in @namespace.GetTypeMembers())
+            //    {
+            //        //if (publicOnly && (type.DeclaredAccessibility != Accessibility.Public|| type.DeclaredAccessibility == Accessibility.Protected))
+            //        //continue;
+            //        foreach (var itype in GetMembersInType(type, publicOnly))
+            //            yield return itype;
+            //    }
+            //}
+            //IEnumerable<ISymbol> SplitPropertySymbol(ISymbol symbol)
+            //{
+            //    yield return symbol;
+            //    if (symbol.Kind == SymbolKind.Property/* is IPropertySymbol property*/)
+            //    {
+            //        var property = Unsafe.As<IPropertySymbol>(symbol);
+            //        if (property.GetMethod != null && !property.GetMethod.Equals(property, SymbolEqualityComparer.Default))
+            //            yield return property.GetMethod;
+            //        if (property.SetMethod != null && !property.SetMethod.Equals(property, SymbolEqualityComparer.Default))
+            //            yield return property.SetMethod;
+            //    }
+            //}
+            void GetMethodsInType(ITypeSymbol type, bool publicOnly, HashSet<ISymbol> list)
             {
-                if (type.Kind == SymbolKind.NamedType && type is ITypeSymbol t)
+                foreach (var child in type.GetMembers())
                 {
-                    foreach (var child in t.GetMembers(".cctor")) //static constructor
-                        if (child.Kind == SymbolKind.Method/* is IMethodSymbol method*/)
-                            yield return child;
-                    foreach (var child in t.GetMembers(".ctor"))
-                        if (child.Kind == SymbolKind.Method/* is IMethodSymbol method*/)
-                            yield return child;
+                    if (child.Kind == SymbolKind.Method)
+                    {
+                        var method = Unsafe.As<IMethodSymbol>(child);
+                        AddSymbolWithExtras(method, list); // Route through helper for constructors/properties
+
+                        if (!publicOnly)
+                        {
+                            GetMethodsInMethod(method, list);
+                        }
+                    }
                 }
             }
-            IEnumerable<ISymbol> GetImplicitOperatorsInType(ITypeSymbol type, bool publicOnly)
-            {
-                foreach (var child in type.GetMembers("op_Implicit"))
-                    if (child.Kind == SymbolKind.Method/* is IMethodSymbol method*/)
-                        yield return child;
-            }
-            IEnumerable<IMethodSymbol> GetMethodsInMethod(IMethodSymbol type)
+
+            void GetMethodsInMethod(IMethodSymbol type, HashSet<ISymbol> list)
             {
                 var decl = type.DeclaringSyntaxReferences;
                 foreach (var d in decl)
                 {
-                    var localMethod = d.GetSyntax().DescendantNodes().Where(e => e.IsKind(SyntaxKind.LocalFunctionStatement)/* is LocalFunctionStatementSyntax*/).FastCast<LocalFunctionStatementSyntax>();
-                    foreach (var lm in localMethod)
+                    // Avoid using LINQ .Where().FastCast() chains if possible for even higher speed
+                    var localMethods = d.GetSyntax()
+                        .DescendantNodes()
+                        .Where(e => e.IsKind(SyntaxKind.LocalFunctionStatement))
+                        .FastCast<LocalFunctionStatementSyntax>();
+
+                    foreach (var lm in localMethods)
                     {
                         var symbol = compilation.GetSemanticModel(lm.SyntaxTree).GetDeclaredSymbol(lm);
                         if (symbol != null)
-                            yield return symbol;
+                        {
+                            AddSymbolWithExtras(symbol, list);
+                        }
                     }
                 }
             }
-            IEnumerable<IMethodSymbol> GetMethodsInType(ITypeSymbol type, bool publicOnly)
+
+            void GetImplicitOperatorsInType(ITypeSymbol type, bool publicOnly, HashSet<ISymbol> list)
             {
-                foreach (var child in type.GetMembers())
-                    if (child.Kind == SymbolKind.Method/* is IMethodSymbol method*/)
+                foreach (var child in type.GetMembers("op_Implicit"))
+                {
+                    if (child.Kind == SymbolKind.Method)
                     {
-                        var method = Unsafe.As<IMethodSymbol>(child);
-                        yield return method;
-                        if (!publicOnly)
-                            foreach (var localMethod in GetMethodsInMethod(method))
-                                yield return localMethod;
+                        AddSymbolWithExtras(child, list);
                     }
+                }
             }
-            IEnumerable<IPropertySymbol> GetPropertiesInType(ITypeSymbol type, bool publicOnly)
+
+            void GetPropertiesInType(ITypeSymbol type, bool publicOnly, HashSet<ISymbol> list)
             {
                 foreach (var child in type.GetMembers())
-                    if (child.Kind == SymbolKind.Property/* is IPropertySymbol property*/)
-                        yield return Unsafe.As<IPropertySymbol>(child);
+                {
+                    if (child.Kind == SymbolKind.Property)
+                    {
+                        AddSymbolWithExtras(Unsafe.As<IPropertySymbol>(child), list);
+                    }
+                }
             }
-            IEnumerable<IFieldSymbol> GetFieldInType(ITypeSymbol type, bool publicOnly)
+
+            void GetFieldInType(ITypeSymbol type, bool publicOnly, HashSet<ISymbol> list)
             {
                 foreach (var child in type.GetMembers())
-                    if (child.Kind == SymbolKind.Field/* is IFieldSymbol field*/)
-                        yield return Unsafe.As<IFieldSymbol>(child);
+                {
+                    if (child.Kind == SymbolKind.Field)
+                    {
+                        AddSymbolWithExtras(Unsafe.As<IFieldSymbol>(child), list);
+                    }
+                }
             }
-            IEnumerable<IEventSymbol> GetEventInType(ITypeSymbol type, bool publicOnly)
+
+            void GetEventInType(ITypeSymbol type, bool publicOnly, HashSet<ISymbol> list)
             {
                 foreach (var child in type.GetMembers())
-                    if (child.Kind == SymbolKind.Event/* is IEventSymbol _event*/)
-                        yield return Unsafe.As<IEventSymbol>(child);
+                {
+                    if (child.Kind == SymbolKind.Event)
+                    {
+                        AddSymbolWithExtras(Unsafe.As<IEventSymbol>(child), list);
+                    }
+                }
             }
-            IEnumerable<ISymbol> GetMembersInType(ITypeSymbol type, bool publicOnly)
+
+            void GetAllInNamespaces(INamespaceSymbol @namespace, bool publicOnly, HashSet<ISymbol> list)
             {
-                yield return type;
-                foreach (var child in type.GetTypeMembers())
-                    foreach (var innerType in GetMembersInType(child, publicOnly))
-                        yield return innerType;
-                foreach (var method in GetMethodsInType(type, publicOnly))
-                    yield return method;
-                foreach (var method in GetImplicitOperatorsInType(type, publicOnly))
-                    yield return method;
-                foreach (var property in GetPropertiesInType(type, publicOnly))
-                    yield return property;
-                foreach (var field in GetFieldInType(type, publicOnly))
-                    yield return field;
-                foreach (var _event in GetEventInType(type, publicOnly))
-                    yield return _event;
-            }
-            IEnumerable<ISymbol> GetAllInNamespaces(INamespaceSymbol @namespace, bool publicOnly)
-            {
-                //if (deep && @namespace.Kind == SymbolKind.Namespace && @namespace is INamespaceSymbol ns)
-                //{
-                yield return @namespace;
+                //list.Add(@namespace);
+
                 foreach (var child in @namespace.GetNamespaceMembers())
                 {
-                    foreach (var namespace2 in GetAllInNamespaces(child, publicOnly))
-                        yield return namespace2;
+                    GetAllInNamespaces(child, publicOnly, list);
                 }
-                //}
+
                 foreach (var type in @namespace.GetTypeMembers())
                 {
-                    //if (publicOnly && (type.DeclaredAccessibility != Accessibility.Public|| type.DeclaredAccessibility == Accessibility.Protected))
-                    //continue;
-                    foreach (var itype in GetMembersInType(type, publicOnly))
-                        yield return itype;
+                    GetMembersInType(type, publicOnly, list);
                 }
             }
-            IEnumerable<ISymbol> SplitPropertySymbol(ISymbol symbol)
+
+            void GetMembersInType(ITypeSymbol type, bool publicOnly, HashSet<ISymbol> list)
             {
-                yield return symbol;
-                if (symbol.Kind == SymbolKind.Property/* is IPropertySymbol property*/)
+                AddSymbolWithExtras(type, list);
+
+                foreach (var child in type.GetTypeMembers())
+                {
+                    GetMembersInType(child, publicOnly, list);
+                }
+
+                GetMethodsInType(type, publicOnly, list);
+                GetImplicitOperatorsInType(type, publicOnly, list);
+                GetPropertiesInType(type, publicOnly, list);
+                GetFieldInType(type, publicOnly, list);
+                GetEventInType(type, publicOnly, list);
+            }
+
+            void AddSymbolWithExtras(ISymbol symbol, HashSet<ISymbol> list)
+            {
+                list.Add(symbol);
+
+                if (symbol.Kind == SymbolKind.Property)
                 {
                     var property = Unsafe.As<IPropertySymbol>(symbol);
                     if (property.GetMethod != null && !property.GetMethod.Equals(property, SymbolEqualityComparer.Default))
-                        yield return property.GetMethod;
+                        list.Add(property.GetMethod);
                     if (property.SetMethod != null && !property.SetMethod.Equals(property, SymbolEqualityComparer.Default))
-                        yield return property.SetMethod;
+                        list.Add(property.SetMethod);
+                }
+
+                if (symbol.Kind == SymbolKind.NamedType && symbol is ITypeSymbol t)
+                {
+                    foreach (var child in t.GetMembers(".cctor"))
+                        if (child.Kind == SymbolKind.Method) list.Add(child);
+
+                    foreach (var child in t.GetMembers(".ctor"))
+                        if (child.Kind == SymbolKind.Method) list.Add(child);
                 }
             }
-            var referencedSymbols = compilation.SourceModule.ReferencedAssemblySymbols
-                        .SelectMany(a => GetAllInNamespaces(a.GlobalNamespace, true));
+
+            //var finalizedSymbols = resultList
+            //.Where(e => e.Kind != SymbolKind.Namespace || !e.Name.StartsWith("global::"))
+            //.Distinct(SymbolEqualityComparer.Default);
+
+            //var referencedSymbols = compilation.SourceModule.ReferencedAssemblySymbols
+            //            .SelectMany(a => GetAllInNamespaces(a.GlobalNamespace, true));
             usedKeys = new();
             $"Collecting symbols".Profile(() =>
             {
+
+                var resultList = new HashSet<ISymbol>(SymbolEqualityComparer.Default);
+                foreach (var a in compilation.SourceModule.ReferencedAssemblySymbols)
+                {
+                    GetAllInNamespaces(a.GlobalNamespace, true, resultList);
+                }
+
+                foreach (var a in compilation.GetSymbolsWithName(e => true, SymbolFilter.Namespace))
+                {
+                    GetAllInNamespaces(Unsafe.As<INamespaceSymbol>(a), false, resultList);
+                }
+
                 AllSymbols =
-                    compilation.GetSymbolsWithName(e => true, SymbolFilter.Namespace)
-                    .SelectMany(a => GetAllInNamespaces(Unsafe.As<INamespaceSymbol>(a), false))
-                    .Concat(referencedSymbols)
-                    .SelectMany(SplitPropertySymbol)
-                    .SelectMany(c => (ISymbol[])[c, .. GetConstructorsInType(c, false)])
-                    .Distinct(SymbolEqualityComparer.Default)
+                    resultList
+                    //compilation.GetSymbolsWithName(e => true, SymbolFilter.Namespace)
+                    //.SelectMany(a => GetAllInNamespaces(Unsafe.As<INamespaceSymbol>(a), false))
+                    //.Concat(referencedSymbols)
+                    //.SelectMany(SplitPropertySymbol)
+                    //.SelectMany(c => (ISymbol[])[c, .. GetConstructorsInType(c, false)])
+                    //.Where(e => e.Kind != SymbolKind.Namespace || !e.Name.StartsWith("global::"))
+                    //.Distinct(SymbolEqualityComparer.Default)
 
                     //compilation.GetSymbolsWithName(e => true, SymbolFilter.All)
                     //.Concat(referencedSymbols)
@@ -484,77 +641,103 @@ namespace NetJs.Translator.CSharpToJavascript
                     //.GroupBy(e => e.Value.Symbol, SymbolEqualityComparer.Default)
                     .ToDictionary(e => e.Value.Symbol, e => e.Value, SymbolEqualityComparer.Default);
             });
-            //resolve class name overloads. Only generic ones may class though
-            ConventionAttribute? GetConvention(ISymbol symbol)
-            {
-                foreach (var a in symbol.GetAttributes().Select(a => (a, a.AttributeClass)).Where(e => e.AttributeClass != null))
-                {
-                    var aName = a.AttributeClass!.CreateSignature(this, withGlobalNamespace: false)!;
-                    if (!aName.EndsWith("Attribute"))
-                        aName += "Attribute";
-                    if (aName == typeof(ConventionAttribute).FullName)
-                    {
-                        var notation = a.a.ConstructorArguments.Count() > 0 ? a.a.ConstructorArguments.ElementAt(0).Value : a.a.NamedArguments.FirstOrDefault(c => c.Key == nameof(ConventionAttribute.Notation)).Value.Value;
-                        var target = a.a.ConstructorArguments.Count() > 1 ? a.a.ConstructorArguments.ElementAt(1).Value : a.a.NamedArguments.FirstOrDefault(c => c.Key == nameof(ConventionAttribute.Target)).Value.Value;
-                        var member = a.a.NamedArguments.FirstOrDefault(c => c.Key == nameof(ConventionAttribute.Member)).Value.Value;
-                        return new ConventionAttribute
-                        {
-                            Notation = notation != null ? (Notation)int.Parse(notation.ToString()!) : Notation.None,
-                            Target = target != null ? (ConventionTarget)int.Parse(target.ToString()!) : ConventionTarget.All,
-                            Member = member != null ? (ConventionMember)int.Parse(member.ToString()!) : ConventionMember.All,
-                        };
-                    }
-                }
-                if (symbol.ContainingSymbol != null)
-                {
-                    if (symbol is INamedTypeSymbol && symbol.ContainingSymbol is INamedTypeSymbol) //dont inherit conventions for inner class
-                    {
-
-                    }
-                    else
-                        return GetConvention(symbol.ContainingSymbol);
-                }
-                return null;
-            }
             string ToNotation(string s, Notation n)
             {
+                if (string.IsNullOrEmpty(s))
+                    return s;
+
                 switch (n)
                 {
                     case Notation.LowerCase:
                         return s.ToLower();
+
                     case Notation.UpperCase:
                         return s.ToUpper();
+
                     case Notation.CamelCase:
-                        return new string(s.ToCharArray().Select((ss, i) => i == 0 ? char.ToLower(ss) : ss).ToArray());
+                        // Fast Path: If the first char is already lowercase, return the original string pointer directly
+                        if (char.IsLower(s[0]))
+                            return s;
+
+                        char[] camelChars = s.ToCharArray();
+                        camelChars[0] = char.ToLower(camelChars[0]);
+                        return new string(camelChars);
+
                     case Notation.PascalCase:
-                        return new string(s.ToCharArray().Select((ss, i) => i == 0 ? char.ToUpper(ss) : ss).ToArray());
+                        // Fast Path: If the first char is already uppercase, return the original string pointer directly
+                        if (char.IsUpper(s[0]))
+                            return s;
+
+                        char[] pascalChars = s.ToCharArray();
+                        pascalChars[0] = char.ToUpper(pascalChars[0]);
+                        return new string(pascalChars);
                 }
+
                 return s;
             }
 
+
+            //string ToNotation(string s, Notation n)
+            //{
+            //    switch (n)
+            //    {
+            //        case Notation.LowerCase:
+            //            return s.ToLower();
+            //        case Notation.UpperCase:
+            //            return s.ToUpper();
+            //        case Notation.CamelCase:
+            //            return new string(s.ToCharArray().Select((ss, i) => i == 0 ? char.ToLower(ss) : ss).ToArray());
+            //        case Notation.PascalCase:
+            //            return new string(s.ToCharArray().Select((ss, i) => i == 0 ? char.ToUpper(ss) : ss).ToArray());
+            //    }
+            //    return s;
+            //}
+
             int Hierachy(INamedTypeSymbol t)
             {
-                if (t.TypeKind == TypeKind.Interface)
-                    return 1;
+                if (t.TypeKind == TypeKind.Interface) return 1;
+
                 int depth = 2;
-                while (t?.BaseType != null)
+                var currentBase = t.BaseType;
+
+                while (currentBase != null)
                 {
                     depth++;
-                    t = t.BaseType;
+                    currentBase = currentBase.BaseType;
                 }
+
                 return depth;
             }
+
 
             var assemblyNamespace = GetAssemblyGlobalSlug(Compilation.Assembly);
             Dictionary<ITypeSymbol, Dictionary<string, HashSet<string>>> usedMemberNames = new(SymbolEqualityComparer.Default);
             var reversMemberNames = ImportedNames.Members.ToDictionary(e => e.Key, e => e.Value.ToDictionary(ee => ee.Value.Signature ?? "Null"/*The yaml deserializer deserializes Null value as null*/, ee => ee.Key));
 
-            bool IsMemberNameUsed(ITypeSymbol type, string overloadName, string tryUseName, out HashSet<string> overloadUsedNames)
+            void MarkMemberNameUsed(ITypeSymbol type, string overloadName, string nameUsed)
             {
                 if (!usedMemberNames.TryGetValue(type, out var typeUsedMemberNames))
                 {
                     typeUsedMemberNames = new();
                     usedMemberNames[type] = typeUsedMemberNames;
+                }
+                if (!typeUsedMemberNames.TryGetValue(overloadName, out var overloadUsedNames))
+                {
+                    overloadUsedNames = new HashSet<string>();
+                    typeUsedMemberNames[overloadName] = overloadUsedNames;
+                }
+                overloadUsedNames.Add(nameUsed);
+            }
+
+            bool IsMemberNameUsed(ITypeSymbol type, string overloadName, string tryUseName, out HashSet<string> overloadUsedNames, bool create = true)
+            {
+                if (!usedMemberNames.TryGetValue(type, out var typeUsedMemberNames))
+                {
+                    if (create)
+                    {
+                        typeUsedMemberNames = new();
+                        usedMemberNames[type] = typeUsedMemberNames;
+                    }
                     ////pre populate with every names the base type has used, so they dont get reused, unless overriden
                     //var baseType = pproperty.ContainingType.BaseType;
                     //while (baseType != null)
@@ -575,18 +758,30 @@ namespace NetJs.Translator.CSharpToJavascript
                     //    baseType = baseType.BaseType;
                     //}
                 }
-                if (!typeUsedMemberNames.TryGetValue(overloadName, out overloadUsedNames))
+                HashSet<string>? localOverloadUsedNames = null;
+                if (typeUsedMemberNames != null && !typeUsedMemberNames.TryGetValue(overloadName, out localOverloadUsedNames))
                 {
-                    overloadUsedNames = new HashSet<string>();
-                    typeUsedMemberNames[overloadName] = overloadUsedNames;
+                    if (create)
+                    {
+                        overloadUsedNames = localOverloadUsedNames = new HashSet<string>();
+                        typeUsedMemberNames[overloadName] = overloadUsedNames;
+                    }
+                    else
+                    {
+                        overloadUsedNames = null!;
+                    }
                 }
-                if (overloadUsedNames.Contains(tryUseName))
+                else
+                {
+                    overloadUsedNames = localOverloadUsedNames!;
+                }
+                if (localOverloadUsedNames != null && localOverloadUsedNames.Contains(tryUseName))
                 {
                     return true;
                 }
                 if (type.BaseType != null)
                 {
-                    return IsMemberNameUsed(type.BaseType.OriginalDefinition, overloadName, tryUseName, out _);
+                    return IsMemberNameUsed(type.BaseType.OriginalDefinition, overloadName, tryUseName, out _, false);
                 }
                 return false;
             }
@@ -649,7 +844,7 @@ namespace NetJs.Translator.CSharpToJavascript
                                 var name = (string)args![0]!;
                                 if (!HasAttribute(type.Symbol, typeof(ExternalAttribute).FullName!, null, false, out _))
                                 {
-                                    var prefix = GlobalName + "." + assemblyNamespace + ".";
+                                    var prefix = GlobalName + "." + (!isImportedType ? assemblyNamespace : GetAssemblyGlobalSlug(ttype.ContainingAssembly)) + ".";
                                     name = name.StartsWith(prefix) ? name : prefix + name;
                                 }
                                 type.OriginalOverloadName = name;
@@ -691,7 +886,7 @@ namespace NetJs.Translator.CSharpToJavascript
                                         //}
                                         //else
                                         //{
-                                        var prefix = GlobalName + "." + assemblyNamespace + ".";
+                                        var prefix = GlobalName + "." + (!isImportedType ? assemblyNamespace : GetAssemblyGlobalSlug(ttype.ContainingAssembly)) + ".";
                                         var fn = type.UniqueFullName.Replace(",", "$").Replace("<", "$").Replace(">", "$").Replace(" ", "");
                                         overloadedName = (fn.StartsWith(prefix) ? null : prefix) + fn;
                                         //}
@@ -749,11 +944,13 @@ namespace NetJs.Translator.CSharpToJavascript
                         {
                             field.OriginalOverloadName = overloadNames[0];
                             field.OverloadName = overloadNames[1];
+                            MarkMemberNameUsed(ffield.ContainingType, ffield.Name, overloadNames[0]);
                         }
                         else
                         {
                             field.OriginalOverloadName = overloadNames[0];
                             field.OverloadName = overloadNames[0];
+                            MarkMemberNameUsed(ffield.ContainingType, ffield.Name, overloadNames[0]);
                         }
                     }
                     else
@@ -774,7 +971,7 @@ namespace NetJs.Translator.CSharpToJavascript
                             {
                                 if (!name.Contains(".")) //doesnt apply to explicit interface implementations
                                 {
-                                    var convention = GetConvention(field.Symbol);
+                                    var convention = field.Symbol.GetConvention(this);
                                     if (convention?.Member == ConventionMember.All || (convention?.Member.HasFlag(ConventionMember.Property) ?? false))
                                     {
                                         name = ToNotation(name, convention.Notation);
@@ -868,11 +1065,13 @@ namespace NetJs.Translator.CSharpToJavascript
                         {
                             @event.OriginalOverloadName = overloadNames[0];
                             @event.OverloadName = overloadNames[1];
+                            MarkMemberNameUsed(eevent.ContainingType, eevent.Name, overloadNames[0]);
                         }
                         else
                         {
                             @event.OriginalOverloadName = overloadNames[0];
                             @event.OverloadName = overloadNames[0];
+                            MarkMemberNameUsed(eevent.ContainingType, eevent.Name, overloadNames[0]);
                         }
                     }
                     else
@@ -903,7 +1102,7 @@ namespace NetJs.Translator.CSharpToJavascript
                             {
                                 if (!name.Contains(".")) //doesnt apply to explicit interface implementations
                                 {
-                                    var convention = GetConvention(@event.Symbol);
+                                    var convention = @event.Symbol.GetConvention(this);
                                     if (convention?.Member == ConventionMember.All || (convention?.Member.HasFlag(ConventionMember.Property) ?? false))
                                     {
                                         name = ToNotation(name, convention.Notation);
@@ -939,22 +1138,6 @@ namespace NetJs.Translator.CSharpToJavascript
                                 }
                                 overloadedName = tryName;
                                 usedNames.Add(tryName);
-
-                                //if (!usedMemberNames.TryGetValue(eevent.ContainingType, out var usedFieldNames))
-                                //{
-                                //    usedFieldNames = new();
-                                //    usedMemberNames[eevent.ContainingType] = usedFieldNames;
-                                //}
-                                //if (!usedFieldNames.TryGetValue(overloadedName, out var usedName))
-                                //{
-                                //    usedName = new HashSet<string>();
-                                //    usedFieldNames[overloadedName] = usedName;
-                                //}
-                                //if (!usedName.Add(overloadedName))
-                                //{
-                                //    overloadedName = $"{overloadedName}${usedName.Count}";
-                                //    usedName.Add(overloadedName);
-                                //}
                             }
                         }
                         bool export = !hasNameAttribute && !isExtern && !isImportedType;
@@ -983,33 +1166,35 @@ namespace NetJs.Translator.CSharpToJavascript
                     )
                 {
                     var pproperty = Unsafe.As<IPropertySymbol>(property.Symbol);
-                    if (pproperty.IsOverride) //a property that overrides a base property must use exactly the same overload name as its base
+                    bool isImportedType = !SymbolEqualityComparer.Default.Equals(pproperty.ContainingAssembly, compilation.Assembly);
+                    var declaringType = property.Symbol.ContainingType;
+                    var declaringTypeMetadata = SymbolMetadatas![declaringType.OriginalDefinition];
+                    if (isImportedType && reversMemberNames.TryGetValue(declaringTypeMetadata.Signature, out var m) && m.TryGetValue(property.Signature, out var ovName))
                     {
-                        var baseProperty = pproperty.OverriddenProperty!;
-                        while (baseProperty.IsOverride)
-                            baseProperty = baseProperty.OverriddenProperty!;
-                        var overriddenMetadata = GetRequiredMetadata(baseProperty);
-                        property.OriginalOverloadName = overriddenMetadata.OriginalOverloadName;
-                        property.OverloadName = overriddenMetadata.OverloadName;
+                        var overloadNames = ovName.Split('|');
+                        if (overloadNames.Length == 2)
+                        {
+                            property.OriginalOverloadName = overloadNames[0];
+                            property.OverloadName = overloadNames[1];
+                            MarkMemberNameUsed(pproperty.ContainingType, pproperty.Name, overloadNames[0]);
+                        }
+                        else
+                        {
+                            property.OriginalOverloadName = overloadNames[0];
+                            property.OverloadName = overloadNames[0];
+                            MarkMemberNameUsed(pproperty.ContainingType, pproperty.Name, overloadNames[0]);
+                        }
                     }
                     else
                     {
-                        bool isImportedType = !SymbolEqualityComparer.Default.Equals(pproperty.ContainingAssembly, compilation.Assembly);
-                        var declaringType = property.Symbol.ContainingType;
-                        var declaringTypeMetadata = SymbolMetadatas![declaringType.OriginalDefinition];
-                        if (isImportedType && reversMemberNames.TryGetValue(declaringTypeMetadata.Signature, out var m) && m.TryGetValue(property.Signature, out var ovName))
+                        if (pproperty.IsOverride) //a property that overrides a base property must use exactly the same overload name as its base
                         {
-                            var overloadNames = ovName.Split('|');
-                            if (overloadNames.Length == 2)
-                            {
-                                property.OriginalOverloadName = overloadNames[0];
-                                property.OverloadName = overloadNames[1];
-                            }
-                            else
-                            {
-                                property.OriginalOverloadName = overloadNames[0];
-                                property.OverloadName = overloadNames[0];
-                            }
+                            var baseProperty = pproperty.OverriddenProperty!;
+                            while (baseProperty.IsOverride)
+                                baseProperty = baseProperty.OverriddenProperty!;
+                            var overriddenMetadata = GetRequiredMetadata(baseProperty);
+                            property.OriginalOverloadName = overriddenMetadata.OriginalOverloadName;
+                            property.OverloadName = overriddenMetadata.OverloadName;
                         }
                         else
                         {
@@ -1038,16 +1223,12 @@ namespace NetJs.Translator.CSharpToJavascript
                                 {
                                     name = "Item";
                                 }
-                                //name = name.Replace(".", "$").Replace(",", "$").Replace("<", "$").Replace(">", "$").Replace(" ", "");
-                                //if (!isExtern)
+                                if (!name.Contains(".")) //doesnt apply to explicit interface implementations
                                 {
-                                    if (!name.Contains(".")) //doesnt apply to explicit interface implementations
+                                    var convention = property.Symbol.GetConvention(this);
+                                    if (convention?.Member == ConventionMember.All || (convention?.Member.HasFlag(ConventionMember.Property) ?? false))
                                     {
-                                        var convention = GetConvention(property.Symbol);
-                                        if (convention?.Member == ConventionMember.All || (convention?.Member.HasFlag(ConventionMember.Property) ?? false))
-                                        {
-                                            name = ToNotation(name, convention.Notation);
-                                        }
+                                        name = ToNotation(name, convention.Notation);
                                     }
                                 }
                                 overloadedName = name;
@@ -1057,17 +1238,12 @@ namespace NetJs.Translator.CSharpToJavascript
                                     {
                                         if (!overloadedName.Contains("."))
                                         {
-                                            //overloadedName = declaringTypeMetadata.OverloadName + "." + overloadedName;
                                             var declaringTypeMetadataOverloadName = declaringTypeMetadata.OriginalFullName.Replace(",", "$").Replace("<", "$").Replace(">", "$").Replace(" ", "");
                                             overloadedName = declaringTypeMetadataOverloadName + "." + overloadedName;
                                             var assemblySlug = GetAssemblyGlobalSlug(declaringType.ContainingAssembly);
                                             if (overloadedName.StartsWith(GlobalName + "." + assemblySlug + "."))
                                             {
                                                 overloadedName = overloadedName.Substring(GlobalName.Length + 1 + assemblySlug.Length + 1);
-                                                //if (overloadedName.StartsWith(assemblyNamespace + "."))
-                                                //{
-                                                //    overloadedName = overloadedName.Substring(assemblyNamespace.Length + 1);
-                                                //}
                                             }
                                         }
                                     }
@@ -1076,35 +1252,6 @@ namespace NetJs.Translator.CSharpToJavascript
                                 //If we are using shortnames, overload resolution will be handled by the shortname
                                 if (!isExtern && !OutputMode.HasFlag(OutputMode.ShortNames))
                                 {
-                                    //if (!usedMemberNames.TryGetValue(pproperty.ContainingType, out var usedPropertyNames))
-                                    //{
-                                    //    usedPropertyNames = new();
-                                    //    usedMemberNames[pproperty.ContainingType] = usedPropertyNames;
-                                    //    ////pre populate with every names the base type has used, so they dont get reused, unless overriden
-                                    //    //var baseType = pproperty.ContainingType.BaseType;
-                                    //    //while (baseType != null)
-                                    //    //{
-                                    //    //    if (usedMemberNames.TryGetValue(baseType, out var baseUsedBaseNames))
-                                    //    //    {
-                                    //    //        foreach (var kv in baseUsedBaseNames)
-                                    //    //        {
-                                    //    //            if (!usedPropertyNames.TryGetValue(kv.Key, out var upn))
-                                    //    //            {
-                                    //    //                upn = new HashSet<string>();
-                                    //    //                usedPropertyNames[kv.Key] = upn;
-                                    //    //            }
-                                    //    //            upn.AddRange(kv.Value);
-                                    //    //        }
-                                    //    //        //usedPropertyNames.AddRange(usedBaseNames);
-                                    //    //    }
-                                    //    //    baseType = baseType.BaseType;
-                                    //    //}
-                                    //}
-                                    //if (!usedPropertyNames.TryGetValue(overloadedName, out var usedName))
-                                    //{
-                                    //    usedName = new HashSet<string>();
-                                    //    usedPropertyNames[overloadedName] = usedName;
-                                    //}
                                     int iNameSlug = 1;
                                     string tryName = overloadedName;
                                     HashSet<string>? usedNames = null;
@@ -1115,11 +1262,6 @@ namespace NetJs.Translator.CSharpToJavascript
                                     }
                                     overloadedName = tryName;
                                     usedNames.Add(tryName);
-                                    //if (!usedName.Add(overloadedName))
-                                    //{
-                                    //    overloadedName = $"{overloadedName}${usedName.Count}";
-                                    //    usedName.Add(overloadedName);
-                                    //}
                                 }
                             }
                             bool export = !hasNameAttribute && !isExtern && !isImportedType;
@@ -1160,66 +1302,72 @@ namespace NetJs.Translator.CSharpToJavascript
             $"Preprocessing method symbols".Profile(() =>
             {
                 foreach (var method in AllSymbols!.Values.Where(e => e.Symbol.Kind == SymbolKind.Method)
-                    //foreach (var group in AllSymbols.Values.Where(e => e.Symbol.Kind == SymbolKind.Method)
-                    //.OrderBy(m => ((IMethodSymbol)m.Symbol).IsOverride ? 2 : 1)
-                    //.GroupBy<SymbolMetadata, INamedTypeSymbol>(e => e.Symbol.ContainingType, SymbolEqualityComparer.Default)
-                    //.OrderBy(o => Hierachy(o.Key))// //make sure we process base/virtual methods before overrides once, since we want to use the base overload name for all
                     .OrderBy(m => Hierachy(Unsafe.As<IMethodSymbol>(m.Symbol).ContainingType)) //make sure we process base/virtual methods before overrides ones, since we want to use the base overload name for all
                     )
                 {
                     var mmethod = Unsafe.As<IMethodSymbol>(method.Symbol);
-                    if (mmethod.Name == ".ctor" && mmethod.ContainingType.BaseType != null)
-                    {
-                        if (!usedMemberNames.TryGetValue(mmethod.ContainingType, out var usedMethodNames))
-                        {
-                            usedMethodNames = new();
-                            usedMemberNames[mmethod.ContainingType] = usedMethodNames;
-                        }
-                        if (!usedMethodNames.TryGetValue("$ctor", out var usedName))
-                        {
-                            usedName = new HashSet<string>();
-                            usedMethodNames["$ctor"] = usedName;
-                        }
-                        //All constructor of a class hierachy must have a unique name
-                        //Constructors are not overloadable/overidable anyway.
-                        //Load all lower class contructor names from lower hierachy class into this hashset to make sure we dont resuse the same name
-                        var ctorNames = GetConstructorNames(mmethod.ContainingType.BaseType);
-                        foreach (var name in ctorNames)
-                            usedName.Add(name);
-                    }
-                    //if (mmethod.Name=="GetHashCode" && mmethod.ContainingType.Name== "StringEqualityComparer")
-                    //{
+                    bool isImportedType = !SymbolEqualityComparer.Default.Equals(mmethod.ContainingAssembly, compilation.Assembly);
+                    var declaringType = method.Symbol.ContainingType;
+                    var declaringTypeMetadata = SymbolMetadatas![declaringType.OriginalDefinition];
 
-                    //}
-                    //foreach (var method in group)
-                    //{
-                    if (mmethod.IsOverride) //a method that overrides a base method must use exactly the same overload name as its base
+                    if (mmethod.ContainingType.Name == "Hashtable" && mmethod.ContainingType.Arity == 0 && mmethod.Name == ".ctor")
                     {
-                        var baseMethod = mmethod.OverriddenMethod!;
-                        while (baseMethod.IsOverride)
-                            baseMethod = baseMethod.OverriddenMethod!;
-                        var overriddenMetadata = GetRequiredMetadata(baseMethod);
-                        method.OriginalOverloadName = overriddenMetadata.OriginalOverloadName;
-                        method.OverloadName = overriddenMetadata.OverloadName;
+
+                    }
+                    if (isImportedType && reversMemberNames.TryGetValue(declaringTypeMetadata.Signature, out var m) && m.TryGetValue(method.Signature, out var ovName))
+                    {
+                        var overloadNames = ovName.Split('|');
+                        if (overloadNames.Length == 2)
+                        {
+                            method.OriginalOverloadName = overloadNames[0];
+                            method.OverloadName = overloadNames[1];
+                            MarkMemberNameUsed(mmethod.ContainingType, mmethod.Name, overloadNames[1]);
+                        }
+                        else
+                        {
+                            method.OriginalOverloadName = overloadNames[0];
+                            method.OverloadName = overloadNames[0];
+                            MarkMemberNameUsed(mmethod.ContainingType, mmethod.Name, overloadNames[0]);
+                        }
                     }
                     else
                     {
-                        bool isImportedType = !SymbolEqualityComparer.Default.Equals(mmethod.ContainingAssembly, compilation.Assembly);
-                        var declaringType = method.Symbol.ContainingType;
-                        var declaringTypeMetadata = SymbolMetadatas![declaringType.OriginalDefinition];
-                        if (isImportedType && reversMemberNames.TryGetValue(declaringTypeMetadata.Signature, out var m) && m.TryGetValue(method.Signature, out var ovName))
+                        if (mmethod.Name == ".ctor")
                         {
-                            var overloadNames = ovName.Split('|');
-                            if (overloadNames.Length == 2)
+                            if (mmethod.ContainingType.BaseType != null)
                             {
-                                method.OriginalOverloadName = overloadNames[0];
-                                method.OverloadName = overloadNames[1];
+                                MarkMemberNameUsed(mmethod.ContainingType, ".ctor", Constants.DefaultConstructorName);
+                                if (!usedMemberNames.TryGetValue(mmethod.ContainingType, out var usedMethodNames))
+                                {
+                                    usedMethodNames = new();
+                                    usedMemberNames[mmethod.ContainingType] = usedMethodNames;
+                                }
+                                if (!usedMethodNames.TryGetValue(Constants.DefaultConstructorName, out var usedName))
+                                {
+                                    usedName = new HashSet<string>();
+                                    usedMethodNames[Constants.DefaultConstructorName] = usedName;
+                                }
+                                //All constructor of a class hierachy must have a unique name
+                                //Constructors are not overloadable/overidable anyway.
+                                //Load all lower class contructor names from lower hierachy class into this hashset to make sure we dont resuse the same name
+                                var ctorNames = GetConstructorNames(mmethod.ContainingType.BaseType);
+                                foreach (var name in ctorNames)
+                                    usedName.Add(name);
                             }
-                            else
+                            if (mmethod.Parameters.Length == 0)//default constructor must always have a predictable name $ctor, even in child classes
                             {
-                                method.OriginalOverloadName = overloadNames[0];
-                                method.OverloadName = overloadNames[0];
+                                method.OriginalOverloadName = Constants.DefaultConstructorName;
+                                method.OverloadName = Constants.DefaultConstructorName;
                             }
+                        }
+                        if (mmethod.IsOverride) //a method that overrides a base method must use exactly the same overload name as its base
+                        {
+                            var baseMethod = mmethod.OverriddenMethod!;
+                            while (baseMethod.IsOverride)
+                                baseMethod = baseMethod.OverriddenMethod!;
+                            var overriddenMetadata = GetRequiredMetadata(baseMethod);
+                            method.OriginalOverloadName = overriddenMetadata.OriginalOverloadName;
+                            method.OverloadName = overriddenMetadata.OverloadName;
                         }
                         else
                         {
@@ -1252,7 +1400,7 @@ namespace NetJs.Translator.CSharpToJavascript
                                 overloadedName = GetOverloadName().RemoveGenericParameterNames(out _);
                                 if (!overloadedName.Contains(".")) //doesnt apply to explicit interface implementations
                                 {
-                                    var convention = GetConvention(method.Symbol);
+                                    var convention = method.Symbol.GetConvention(this);
                                     if (convention?.Member == ConventionMember.All || (convention?.Member.HasFlag(ConventionMember.Method) ?? false))
                                     {
                                         overloadedName = ToNotation(overloadedName, convention.Notation);
@@ -1269,10 +1417,6 @@ namespace NetJs.Translator.CSharpToJavascript
                                             if (overloadedName.StartsWith(GlobalName + "." + assemblySlug + "."))
                                             {
                                                 overloadedName = overloadedName.Substring(GlobalName.Length + 1 + assemblySlug.Length + 1);
-                                                //if (overloadedName.StartsWith(assemblyNamespace + "."))
-                                                //{
-                                                //    overloadedName = overloadedName.Substring(assemblyNamespace.Length + 1);
-                                                //}
                                             }
                                         }
                                     }
@@ -1282,44 +1426,6 @@ namespace NetJs.Translator.CSharpToJavascript
                                 //If we are using shortnames, overload resolution will be handled by the shortname
                                 if (!isExtern && !OutputMode.HasFlag(OutputMode.ShortNames))
                                 {
-                                    //if (!usedMemberNames.TryGetValue(mmethod.ContainingType, out var usedMethodNames))
-                                    //{
-                                    //    usedMethodNames = new();
-                                    //    usedMemberNames[mmethod.ContainingType] = usedMethodNames;
-                                    //    //pre populate with every names the base type has used, so they dont get reused, unless overriden
-                                    //    var baseType = mmethod.ContainingType.BaseType;
-                                    //    if (mmethod.ContainingType.Name == "Boolean")
-                                    //    {
-
-                                    //    }
-                                    //    while (baseType != null)
-                                    //    {
-                                    //        if (usedMemberNames.TryGetValue(baseType, out var baseUsedBaseNames))
-                                    //        {
-                                    //            foreach (var kv in baseUsedBaseNames)
-                                    //            {
-                                    //                if (!usedMethodNames.TryGetValue(kv.Key, out var upn))
-                                    //                {
-                                    //                    upn = new HashSet<string>();
-                                    //                    usedMethodNames[kv.Key] = upn;
-                                    //                }
-                                    //                upn.AddRange(kv.Value);
-                                    //            }
-                                    //            //usedPropertyNames.AddRange(usedBaseNames);
-                                    //        }
-                                    //        baseType = baseType.BaseType;
-                                    //    }
-                                    //}
-                                    //if (!usedMethodNames.TryGetValue(overloadedName, out var usedName))
-                                    //{
-                                    //    usedName = new HashSet<string>();
-                                    //    usedMethodNames[overloadedName] = usedName;
-                                    //}
-                                    //if (!usedName.Add(overloadedName))
-                                    //{
-                                    //    overloadedName = $"{overloadedName}${usedName.Count}";
-                                    //    usedName.Add(overloadedName);
-                                    //}
                                     int iNameSlug = 1;
                                     string tryName = overloadedName;
                                     HashSet<string>? usedNames = null;
@@ -1331,24 +1437,6 @@ namespace NetJs.Translator.CSharpToJavascript
                                     overloadedName = tryName;
                                     usedNames.Add(tryName);
                                 }
-                                //no overload resolution on extern
-                                //if (!isExtern)
-                                //{
-                                //    //If we are using shortnames, overload resolution will be handled by the shortname
-                                //    if (!OutputMode.HasFlag(OutputMode.ShortNames))
-                                //    {
-                                //        if (!usedNames.TryGetValue(originalName, out var usedName))
-                                //        {
-                                //            usedName = new HashSet<string>();
-                                //            usedNames[originalName] = usedName;
-                                //        }
-                                //        if (!usedName.Add(overloadedName))
-                                //        {
-                                //            overloadedName = $"{overloadedName}${usedName.Count}";
-                                //            usedName.Add(overloadedName);
-                                //        }
-                                //    }
-                                //}
                             }
                             bool export = !hasNameAttribute && !isExtern && !isImportedType && mmethod.MethodKind != MethodKind.LocalFunction;
                             Dictionary<string, SymbolValue> exportNames;
@@ -1508,8 +1596,8 @@ namespace NetJs.Translator.CSharpToJavascript
             //var rbi = ibi.OutputRank(0);
         }
 
-        Dictionary<BaseTypeDeclarationSyntax, string> _fullTypeNameCache = new();
-        Dictionary<NamespaceDeclarationSyntax, string> _fullNamespaceCache = new();
+        ConcurrentDictionary<BaseTypeDeclarationSyntax, string> _fullTypeNameCache = new();
+        ConcurrentDictionary<NamespaceDeclarationSyntax, string> _fullNamespaceCache = new();
 
         //const string ShortenedNameIdentitfier = "\\";
         //string ShortName(string? shortPrefix, string? longPrefix, string signature, string name, Dictionary<string, string> usedNames, bool generate = true)
@@ -1827,6 +1915,8 @@ namespace NetJs.Translator.CSharpToJavascript
         public INamedTypeSymbol SystemUInt16 => field ??= (INamedTypeSymbol)GetSymbol("System.UInt16", null/*, out _, out _*/);
         public INamedTypeSymbol SystemInt32 => field ??= (INamedTypeSymbol)GetSymbol("System.Int32", null/*, out _, out _*/);
         public INamedTypeSymbol SystemUInt32 => field ??= (INamedTypeSymbol)GetSymbol("System.UInt32", null/*, out _, out _*/);
+        public INamedTypeSymbol SystemIntPtr => field ??= (INamedTypeSymbol)GetSymbol("System.IntPtr", null/*, out _, out _*/);
+        public INamedTypeSymbol SystemUIntPtr => field ??= (INamedTypeSymbol)GetSymbol("System.UIntPtr", null/*, out _, out _*/);
         public INamedTypeSymbol SystemInt64 => field ??= (INamedTypeSymbol)GetSymbol("System.Int64", null/*, out _, out _*/);
         public INamedTypeSymbol SystemUInt64 => field ??= (INamedTypeSymbol)GetSymbol("System.UInt64", null/*, out _, out _*/);
         public INamedTypeSymbol SystemDouble => field ??= (INamedTypeSymbol)GetSymbol("System.Double", null/*, out _, out _*/);
@@ -1842,6 +1932,10 @@ namespace NetJs.Translator.CSharpToJavascript
         public INamedTypeSymbol SystemIEnumerable => field ??= (INamedTypeSymbol)GetSymbol("System.Collections.IEnumerable", null);
         public INamedTypeSymbol SystemIEnumerableT => field ??= (INamedTypeSymbol)GetSymbol("System.Collections.Generic.IEnumerable<>", null);
         public INamedTypeSymbol SystemIDisposable => field ??= (INamedTypeSymbol)GetSymbol("System.IDisposable", null);
+        public INamedTypeSymbol SystemIAsyncDisposable => field ??= (INamedTypeSymbol)GetSymbol("System.IAsyncDisposable", null);
+        public INamedTypeSymbol SystemBaseRefOrPointer => field ??= (INamedTypeSymbol)GetSymbol("NetJs.RefOrPointer", null);
+        public INamedTypeSymbol SystemReference => field ??= (INamedTypeSymbol)GetSymbol("NetJs.Ref<>", null);
+        public INamedTypeSymbol SystemPointer => field ??= (INamedTypeSymbol)GetSymbol("NetJs.Pointer<>", null);
         public INamedTypeSymbol SystemDynamic => field ??= (INamedTypeSymbol)GetSymbol("NetJs.DynamicType", null);
         public INamedTypeSymbol SystemT1 => field ??= (INamedTypeSymbol)GetSymbol("T1", null);
         public INamedTypeSymbol SystemT2 => field ??= (INamedTypeSymbol)GetSymbol("T2", null);
@@ -2253,7 +2347,9 @@ namespace NetJs.Translator.CSharpToJavascript
                 if (semanticModel.SyntaxTree == expression.SyntaxTree)
                 {
                     var ret = semanticModel.GetConstantValue(expression);
-                    return ret;
+                    if (ret.HasValue)
+                        return ret;
+                    break;
                 }
             }
             if (expression is IdentifierNameSyntax id)
@@ -2278,12 +2374,20 @@ namespace NetJs.Translator.CSharpToJavascript
             Pointer
         }
 
-        List<SyntaxNode> _gettingSyntax = new();
+        ThreadLocal<List<SyntaxNode>> _gettingSyntax = new(() => new());
         public ISymbol? TryGetSymbol(SyntaxNode syntax, TranslatorSyntaxVisitor? visitor/*, out ISymbol? declaringSymbol, out SymbolKind declaringKind*/)
         {
-            if (_gettingSyntax.Contains(syntax))
+            while (syntax.IsKind(SyntaxKind.ParenthesizedExpression))
+            {
+                syntax = ((ParenthesizedExpressionSyntax)syntax).Expression;
+            }
+            if (syntax.IsKind(SyntaxKind.SimpleAssignmentExpression))
+            {
+                syntax = ((AssignmentExpressionSyntax)syntax).Left;
+            }
+            if (_gettingSyntax.Value.Contains(syntax))
                 return null;
-            _gettingSyntax.Add(syntax);
+            _gettingSyntax.Value.Add(syntax);
             try
             {
                 var ret = SyntaxSymbols.GetValueOrDefault(syntax)?.First().Symbol;
@@ -2306,6 +2410,13 @@ namespace NetJs.Translator.CSharpToJavascript
                                 ret = semanticModel.GetSymbolInfo(syntax).Symbol;
                             if (ret != null)
                                 break;
+                            //only means of getting null type is checking what it is converted to
+                            if (syntax.IsKind(SyntaxKind.NullLiteralExpression))
+                            {
+                                ret = (semanticModel.GetOperation(syntax)?.Parent as IConversionOperation)?.Type;
+                                if (ret != null)
+                                    break;
+                            }
                         }
                     }
                 }
@@ -2395,7 +2506,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 //declaringKind = SymbolKind.ErrorType;
                 return null;
             }
-            finally { _gettingSyntax.Remove(syntax); }
+            finally { _gettingSyntax.Value.Remove(syntax); }
         }
 
         public ITypeSymbol? TryGetTypeSymbol(SyntaxNode syntax, TranslatorSyntaxVisitor? visitor/*, out ISymbol? declaringType, out SymbolKind declaringKind*/)
@@ -2513,6 +2624,39 @@ namespace NetJs.Translator.CSharpToJavascript
         }
 
         Dictionary<string, Dictionary<string, Dictionary<object, object?>>>? _attachedAttributesCache;
+        private Dictionary<string, Dictionary<string, Dictionary<object, object?>>>? _exactMatchCache;
+        private WildcardPattern[]? _wildcardPatterns;
+
+        // Inline struct definition optimized for zero heap-allocations during lookups
+        private readonly struct WildcardPattern
+        {
+            public readonly string Prefix;
+            public readonly string Suffix;
+            public readonly Regex CompiledRegex;
+            public readonly Dictionary<string, Dictionary<object, object?>> Values;
+
+            public WildcardPattern(string rawPattern, Dictionary<string, Dictionary<object, object?>> values)
+            {
+                Values = values;
+                // Strip out the leading '*'
+                var pattern = rawPattern.Substring(1);
+
+                // Extract plain text prefix/suffix before the first wildcard to skip Regex processing when possible
+                int firstWildcard = pattern.IndexOfAny(['.', '+', '?', '*', '^', '$', '[', '(']);
+                Prefix = firstWildcard > 0
+                    ? pattern.Substring(0, firstWildcard).Replace("\\", "")
+                    : string.Empty;
+
+                int lastWildcard = pattern.LastIndexOfAny(['.', '+', '?', '*', '^', '$', ']', ')']);
+                Suffix = (lastWildcard >= 0 && lastWildcard < pattern.Length - 1)
+                    ? pattern.Substring(lastWildcard + 1).Replace("\\", "")
+                    : string.Empty;
+
+                // Pre-compile to native IL. CultureInvariant speeds up character parsing.
+                CompiledRegex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.CultureInvariant);
+            }
+        }
+
         bool HasAttachedAttribute(string fullSymbolName, string attributeTypeName, out Dictionary<object, object?> constructorArgs)
         {
             if (!ready)
@@ -2520,118 +2664,230 @@ namespace NetJs.Translator.CSharpToJavascript
                 constructorArgs = null!;
                 return false;
             }
-            if (_attachedAttributesCache == null)
-            {
-                var attachedAttribute = GetSymbol(typeof(AttachedAttribute).FullName!, null/*, out _, out _*/);
-                _attachedAttributesCache = Compilation.SourceModule.ReferencedAssemblySymbols.Concat([Compilation.Assembly])
-                    .SelectMany(e => e.GetAttributes().Where(a => a.AttributeClass?.Equals(attachedAttribute, SymbolEqualityComparer.Default) ?? false))
-                    .GroupBy(e =>
-                    {
-                        string typeName;
-                        var type = e.ConstructorArguments[0].Value;
-                        if (type is ITypeSymbol ts)
-                        {
-                            typeName = ts.CreateSignature(this, withGlobalNamespace: false);
-                        }
-                        else
-                        {
-                            typeName = type?.ToString() ?? "";
-                        }
-                        return typeName;
-                    }).ToDictionary(e => e.Key, e =>
-                    {
-                        return e.Select(a =>
-                        {
-                            if (a.ConstructorArguments.Length < 2)
-                                return (null!, null!);
-                            var attType = (ITypeSymbol)a.ConstructorArguments[1].Value!;
-                            var ctors = attType.GetMembers(".ctor");
-                            var attValues = a.ConstructorArguments.Length > 2 ? a.ConstructorArguments[2].Values.Select((v, i) => ((object)i, v.Value)).ToDictionary(e => e.Item1, e => e.Value) : new Dictionary<object, object?>();
-                            return (attType, attValues);
-                        }).Where(a => a.attType != null)
-                        .ToDictionary(e => e.attType.CreateSignature(this, withGlobalNamespace: false), e => e.attValues);
-                    })!;
-            }
-            var noGeneric = fullSymbolName.RemoveGenericParameterNames(out _);
-            if (_attachedAttributesCache.TryGetValue(fullSymbolName, out var values))
-            {
-                if (values.TryGetValue(attributeTypeName, out var args))
-                {
-                    constructorArgs = args;
-                    return true;
-                }
-            }
-            if (_attachedAttributesCache.TryGetValue(noGeneric, out values))
-            {
-                if (values.TryGetValue(attributeTypeName, out var args))
-                {
-                    constructorArgs = args;
-                    return true;
-                }
-            }
-            var patternValues = _attachedAttributesCache.FirstOrDefault(p =>
-            {
-                if (p.Key.StartsWith("*"))
-                {
-                    //The regex.Match is too costly, use string search to do most of the matching that can simply be matched
-                    //Fallback to regex if all fails
-                    var pattern = p.Key.Substring(1);
-                    var countDotPlus = 0;
-                    int where = 0;
-                    while (true)
-                    {
-                        var dotPlus = pattern.IndexOf(".+", where);
-                        if (dotPlus < 0)
-                            dotPlus = pattern.IndexOf(".?", where);
-                        if (dotPlus < 0)
-                            break;
-                        countDotPlus++;
-                        where = dotPlus + 2;
-                    }
-                    //if (fullSymbolName.Contains("System.Reflection.Emit") && pattern.Contains("System\\.Reflection\\.Emit\\."))
-                    //{
 
-                    //}
-                    if (countDotPlus == 0)
-                        return pattern == fullSymbolName;
-                    if (countDotPlus >= 1)
-                    {
-                        var firstDotPlus = pattern.IndexOf(".+");
-                        if (firstDotPlus < 0)
-                            firstDotPlus = pattern.IndexOf(".?");
-                        if (firstDotPlus >= 0)
-                        {
-                            var fixedPattern = pattern.Substring(0, firstDotPlus).Replace("\\", "");
-                            if (fixedPattern.Length > 0 && !fullSymbolName.StartsWith(fixedPattern))
-                            {
-                                return false;
-                            }
-                        }
-                        var lastDotPlus = pattern.LastIndexOf(".+");
-                        if (lastDotPlus < 0)
-                            lastDotPlus = pattern.LastIndexOf(".?");
-                        if (lastDotPlus >= 0)
-                        {
-                            var fixedPattern = pattern.Substring(lastDotPlus + 2, pattern.Length - lastDotPlus - 2).Replace("\\", "");
-                            if (fixedPattern.Length > 0 && !fullSymbolName.EndsWith(fixedPattern))
-                            {
-                                return false;
-                            }
-                        }
-                        return true;
-                    }
-                    return Regex.IsMatch(fullSymbolName, pattern);
-                }
-                return false;
-            }).Value;
-            if (patternValues != null && patternValues.TryGetValue(attributeTypeName, out var args2))
+            if (_exactMatchCache == null)
             {
-                constructorArgs = args2;
+                lock (this)
+                {
+                    if (_exactMatchCache == null) // Double-check lock pattern
+                    {
+                        var attachedAttribute = GetSymbol(typeof(AttachedAttribute).FullName!, null);
+
+                        // 1. Build the baseline raw dictionary from your original Linq setup
+                        var rawCache = Compilation.SourceModule.ReferencedAssemblySymbols.Concat([Compilation.Assembly])
+                            .SelectMany(e => e.GetAttributes().Where(a => a.AttributeClass?.Equals(attachedAttribute, SymbolEqualityComparer.Default) ?? false))
+                            .GroupBy(e =>
+                            {
+                                var type = e.ConstructorArguments[0].Value;
+                                return type is ITypeSymbol ts
+                                    ? ts.CreateSignature(this, withGlobalNamespace: false)
+                                    : (type?.ToString() ?? "");
+                            }).ToDictionary(e => e.Key, e =>
+                            {
+                                return e.Select(a =>
+                                {
+                                    if (a.ConstructorArguments.Length < 2) return (null!, null!);
+                                    var attType = (ITypeSymbol)a.ConstructorArguments[1].Value!;
+                                    var attValues = a.ConstructorArguments.Length > 2
+                                        ? a.ConstructorArguments[2].Values.Select((v, i) => ((object)i, v.Value)).ToDictionary(e => e.Item1, e => e.Value)
+                                        : [];
+                                    return (attType, attValues);
+                                }).Where(a => a.attType != null)
+                                .ToDictionary(e => e.attType.CreateSignature(this, withGlobalNamespace: false), e => e.attValues);
+                            })!;
+
+                        // 2. Separate into Exact and Pre-Compiled Wildcard Buckets
+                        var exact = new Dictionary<string, Dictionary<string, Dictionary<object, object?>>>(rawCache.Count, StringComparer.Ordinal);
+                        var wildcards = new List<WildcardPattern>();
+
+                        foreach (var kvp in rawCache)
+                        {
+                            if (kvp.Key.StartsWith("*"))
+                            {
+                                wildcards.Add(new WildcardPattern(kvp.Key, kvp.Value));
+                            }
+                            else
+                            {
+                                exact[kvp.Key] = kvp.Value;
+                            }
+                        }
+
+                        _wildcardPatterns = [.. wildcards];
+                        _exactMatchCache = exact;
+                    }
+                }
+            }
+
+            // --- EXECUTION PHASE: ZERO ALLOCATIONS FOR EXACT PATHS ---
+
+            // Look up exact matches
+            if (_exactMatchCache.TryGetValue(fullSymbolName, out var values) && values.TryGetValue(attributeTypeName, out constructorArgs))
+            {
                 return true;
             }
+
+            // Look up non-generic matches
+            var noGeneric = fullSymbolName.RemoveGenericParameterNames(out _);
+            if (_exactMatchCache.TryGetValue(noGeneric, out values) && values.TryGetValue(attributeTypeName, out constructorArgs))
+            {
+                return true;
+            }
+
+            // --- WILDCARD EVALUATION PASS ---
+            var patternSpan = _wildcardPatterns.AsSpan();
+            for (int i = 0; i < patternSpan.Length; i++)
+            {
+                ref readonly var pattern = ref patternSpan[i];
+
+                // Fast-path evaluation 1: Short circuit if plain-text prefix string doesn't match
+                if (pattern.Prefix.Length > 0 && !fullSymbolName.StartsWith(pattern.Prefix, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                // Fast-path evaluation 2: Short circuit if plain-text suffix string doesn't match
+                if (pattern.Suffix.Length > 0 && !fullSymbolName.EndsWith(pattern.Suffix, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                // Ultimate Check: Fast IL execution via pre-compiled engine instance
+                if (pattern.CompiledRegex.IsMatch(fullSymbolName))
+                {
+                    if (pattern.Values.TryGetValue(attributeTypeName, out constructorArgs))
+                    {
+                        return true;
+                    }
+                }
+            }
+
             constructorArgs = null!;
             return false;
         }
+
+
+        //bool HasAttachedAttribute(string fullSymbolName, string attributeTypeName, out Dictionary<object, object?> constructorArgs)
+        //{
+        //    if (!ready)
+        //    {
+        //        constructorArgs = null!;
+        //        return false;
+        //    }
+        //    if (_attachedAttributesCache == null)
+        //    {
+        //        lock (this)
+        //        {
+        //            var attachedAttribute = GetSymbol(typeof(AttachedAttribute).FullName!, null/*, out _, out _*/);
+        //            _attachedAttributesCache = Compilation.SourceModule.ReferencedAssemblySymbols.Concat([Compilation.Assembly])
+        //                .SelectMany(e => e.GetAttributes().Where(a => a.AttributeClass?.Equals(attachedAttribute, SymbolEqualityComparer.Default) ?? false))
+        //                .GroupBy(e =>
+        //                {
+        //                    string typeName;
+        //                    var type = e.ConstructorArguments[0].Value;
+        //                    if (type is ITypeSymbol ts)
+        //                    {
+        //                        typeName = ts.CreateSignature(this, withGlobalNamespace: false);
+        //                    }
+        //                    else
+        //                    {
+        //                        typeName = type?.ToString() ?? "";
+        //                    }
+        //                    return typeName;
+        //                }).ToDictionary(e => e.Key, e =>
+        //                {
+        //                    return e.Select(a =>
+        //                    {
+        //                        if (a.ConstructorArguments.Length < 2)
+        //                            return (null!, null!);
+        //                        var attType = (ITypeSymbol)a.ConstructorArguments[1].Value!;
+        //                        var ctors = attType.GetMembers(".ctor");
+        //                        var attValues = a.ConstructorArguments.Length > 2 ? a.ConstructorArguments[2].Values.Select((v, i) => ((object)i, v.Value)).ToDictionary(e => e.Item1, e => e.Value) : new Dictionary<object, object?>();
+        //                        return (attType, attValues);
+        //                    }).Where(a => a.attType != null)
+        //                    .ToDictionary(e => e.attType.CreateSignature(this, withGlobalNamespace: false), e => e.attValues);
+        //                })!;
+        //        }
+        //    }
+        //    var noGeneric = fullSymbolName.RemoveGenericParameterNames(out _);
+        //    if (_attachedAttributesCache.TryGetValue(fullSymbolName, out var values))
+        //    {
+        //        if (values.TryGetValue(attributeTypeName, out var args))
+        //        {
+        //            constructorArgs = args;
+        //            return true;
+        //        }
+        //    }
+        //    if (_attachedAttributesCache.TryGetValue(noGeneric, out values))
+        //    {
+        //        if (values.TryGetValue(attributeTypeName, out var args))
+        //        {
+        //            constructorArgs = args;
+        //            return true;
+        //        }
+        //    }
+        //    var patternValues = _attachedAttributesCache.FirstOrDefault(p =>
+        //    {
+        //        if (p.Key.StartsWith("*"))
+        //        {
+        //            //The regex.Match is too costly, use string search to do most of the matching that can simply be matched
+        //            //Fallback to regex if all fails
+        //            var pattern = p.Key.Substring(1);
+        //            var countDotPlus = 0;
+        //            int where = 0;
+        //            while (true)
+        //            {
+        //                var dotPlus = pattern.IndexOf(".+", where);
+        //                if (dotPlus < 0)
+        //                    dotPlus = pattern.IndexOf(".?", where);
+        //                if (dotPlus < 0)
+        //                    break;
+        //                countDotPlus++;
+        //                where = dotPlus + 2;
+        //            }
+        //            //if (fullSymbolName.Contains("System.Reflection.Emit") && pattern.Contains("System\\.Reflection\\.Emit\\."))
+        //            //{
+
+        //            //}
+        //            if (countDotPlus == 0)
+        //                return pattern == fullSymbolName;
+        //            if (countDotPlus >= 1)
+        //            {
+        //                var firstDotPlus = pattern.IndexOf(".+");
+        //                if (firstDotPlus < 0)
+        //                    firstDotPlus = pattern.IndexOf(".?");
+        //                if (firstDotPlus >= 0)
+        //                {
+        //                    var fixedPattern = pattern.Substring(0, firstDotPlus).Replace("\\", "");
+        //                    if (fixedPattern.Length > 0 && !fullSymbolName.StartsWith(fixedPattern))
+        //                    {
+        //                        return false;
+        //                    }
+        //                }
+        //                var lastDotPlus = pattern.LastIndexOf(".+");
+        //                if (lastDotPlus < 0)
+        //                    lastDotPlus = pattern.LastIndexOf(".?");
+        //                if (lastDotPlus >= 0)
+        //                {
+        //                    var fixedPattern = pattern.Substring(lastDotPlus + 2, pattern.Length - lastDotPlus - 2).Replace("\\", "");
+        //                    if (fixedPattern.Length > 0 && !fullSymbolName.EndsWith(fixedPattern))
+        //                    {
+        //                        return false;
+        //                    }
+        //                }
+        //                return true;
+        //            }
+        //            return Regex.IsMatch(fullSymbolName, pattern);
+        //        }
+        //        return false;
+        //    }).Value;
+        //    if (patternValues != null && patternValues.TryGetValue(attributeTypeName, out var args2))
+        //    {
+        //        constructorArgs = args2;
+        //        return true;
+        //    }
+        //    constructorArgs = null!;
+        //    return false;
+        //}
 
         public bool HasAnyAttribute(ISymbol symbol, TranslatorSyntaxVisitor? visitor, bool inherits, params string[] attributeNames)
         {
@@ -2673,58 +2929,173 @@ namespace NetJs.Translator.CSharpToJavascript
             if (symbol.Kind == SymbolKind.Namespace ||
                 (Constants.DisableBootClass && attributeName == typeof(BootAttribute).FullName))
             {
-                constructorArgs = null;
+                constructorArgs = null!;
                 return false;
             }
-            //constructorArgs = null;
-            //if (attributeName == typeof(BootAttribute).FullName)
-            //return false;
-            if (HasAttachedAttribute(symbol.CreateSignature(this, withGlobalNamespace: false), attributeName, out var args))
+
+            // Ensure the attribute target has its suffix standardized once right here
+            // This allows us to do exact string comparisons inside the tight loop
+            if (!attributeName.EndsWith("Attribute", StringComparison.Ordinal))
+            {
+                attributeName += "Attribute";
+            }
+
+            // Check attached cache attributes safely
+            var symbolSignature = symbol.CreateSignature(this, withGlobalNamespace: false);
+            if (HasAttachedAttribute(symbolSignature, attributeName, out var args))
             {
                 constructorArgs = args;
                 return true;
             }
-            constructorArgs = null!;
-            Dictionary<object, object?> cArgs = new Dictionary<object, object?>();
-            var attrSymbol = TryGetSymbol(attributeName, visitor/*, out _, out _*/);
+
+            var attrSymbol = TryGetSymbol(attributeName, visitor);
             if (attrSymbol == null)
-                return false;
-            if (symbol.GetAttributes().Select(a => (a, a.AttributeClass)).Where(e => e.AttributeClass != null).Any(a =>
             {
-                var aName = a.AttributeClass!.CreateSignature(this, withGlobalNamespace: false)!;
-                if (!aName.EndsWith("Attribute"))
-                    aName += "Attribute";
-                if (aName != attributeName)
-                    return false;
-                var aSymbol = a.AttributeClass;// GetTypeSymbol(aName, visitor/*, out _, out _*/);
-                if (attrSymbol.Equals(aSymbol, SymbolEqualityComparer.Default))
+                constructorArgs = null!;
+                return false;
+            }
+
+            var attributes = symbol.GetAttributes();
+            for (int i = 0; i < attributes.Length; i++)
+            {
+                var a = attributes[i];
+                var attributeClass = a.AttributeClass;
+                if (attributeClass == null) continue;
+
+                // Perform fast reference equality first using Roslyn's comparer
+                if (attrSymbol.Equals(attributeClass, SymbolEqualityComparer.Default))
                 {
-                    //cArgs = a.a.ConstructorArguments.Select(c => c.Kind == TypedConstantKind.Array ? c.Values : c.Value!).ToArray();
-                    cArgs = a.a.ConstructorArguments.Select((c, i) => ((object)i, c.Value))
-                    .Concat(a.a.NamedArguments.Select(a => ((object)a.Key, a.Value.Value)))
-                    .ToDictionary(kv => kv.Item1, kv => kv.Value);
+                    // Build the arguments dictionary strictly on-demand (Lazy initialization)
+                    var cArgs = new Dictionary<object, object?>(a.ConstructorArguments.Length + a.NamedArguments.Length);
+
+                    // Map positional constructor arguments cleanly
+                    var positionalArgs = a.ConstructorArguments;
+                    for (int j = 0; j < positionalArgs.Length; j++)
+                    {
+                        cArgs[j] = positionalArgs[j].Value;
+                    }
+
+                    // Map explicitly named arguments cleanly
+                    var namedArgs = a.NamedArguments;
+                    for (int j = 0; j < namedArgs.Length; j++)
+                    {
+                        var namedPair = namedArgs[j];
+                        cArgs[namedPair.Key] = namedPair.Value.Value;
+                    }
+
+                    constructorArgs = cArgs;
                     return true;
                 }
-                return false;
-            }))
-            {
-                constructorArgs = cArgs;
-                return true;
+
+                // Fallback string signature validation if reference matching isn't direct
+                var aName = attributeClass.CreateSignature(this, withGlobalNamespace: false);
+                if (aName != null)
+                {
+                    // Instead of allocating a concatenation string, check standard endings cleanly
+                    bool isMatch = aName.Equals(attributeName, StringComparison.Ordinal) ||
+                                  (!aName.EndsWith("Attribute", StringComparison.Ordinal) &&
+                                   (aName.Length + 9 == attributeName.Length) &&
+                                   attributeName.StartsWith(aName, StringComparison.Ordinal));
+
+                    if (isMatch)
+                    {
+                        var cArgs = new Dictionary<object, object?>(a.ConstructorArguments.Length + a.NamedArguments.Length);
+
+                        var positionalArgs = a.ConstructorArguments;
+                        for (int j = 0; j < positionalArgs.Length; j++)
+                        {
+                            cArgs[j] = positionalArgs[j].Value;
+                        }
+
+                        var namedArgs = a.NamedArguments;
+                        for (int j = 0; j < namedArgs.Length; j++)
+                        {
+                            var namedPair = namedArgs[j];
+                            cArgs[namedPair.Key] = namedPair.Value.Value;
+                        }
+
+                        constructorArgs = cArgs;
+                        return true;
+                    }
+                }
             }
-            if (inherits && symbol.Kind == SymbolKind.NamedType && symbol is ITypeSymbol ns && ns.BaseType != null)
+
+            if (inherits)
             {
-                return HasAttribute(ns.BaseType, attributeName, visitor, inherits, out constructorArgs);
+                switch (symbol)
+                {
+                    case ITypeSymbol ns when ns.BaseType != null:
+                        return HasAttribute(ns.BaseType, attributeName, visitor, inherits, out constructorArgs);
+
+                    case IMethodSymbol ms when ms.OverriddenMethod != null:
+                        return HasAttribute(ms.OverriddenMethod, attributeName, visitor, inherits, out constructorArgs);
+
+                    case IPropertySymbol ps when ps.OverriddenProperty != null:
+                        return HasAttribute(ps.OverriddenProperty, attributeName, visitor, inherits, out constructorArgs);
+                }
             }
-            if (inherits && symbol.Kind == SymbolKind.Method && symbol is IMethodSymbol ms && ms.OverriddenMethod != null)
-            {
-                return HasAttribute(ms.OverriddenMethod, attributeName, visitor, inherits, out constructorArgs);
-            }
-            if (inherits && symbol.Kind == SymbolKind.Property && symbol is IPropertySymbol ps && ps.OverriddenProperty != null)
-            {
-                return HasAttribute(ps.OverriddenProperty, attributeName, visitor, inherits, out constructorArgs);
-            }
+
+            constructorArgs = null!;
             return false;
         }
+
+        //public bool HasAttribute(ISymbol symbol, string attributeName, TranslatorSyntaxVisitor? visitor, bool inherits, out Dictionary<object, object?> constructorArgs)
+        //{
+        //    if (symbol.Kind == SymbolKind.Namespace ||
+        //        (Constants.DisableBootClass && attributeName == typeof(BootAttribute).FullName))
+        //    {
+        //        constructorArgs = null;
+        //        return false;
+        //    }
+        //    //constructorArgs = null;
+        //    //if (attributeName == typeof(BootAttribute).FullName)
+        //    //return false;
+        //    if (HasAttachedAttribute(symbol.CreateSignature(this, withGlobalNamespace: false), attributeName, out var args))
+        //    {
+        //        constructorArgs = args;
+        //        return true;
+        //    }
+        //    constructorArgs = null!;
+        //    Dictionary<object, object?> cArgs = new Dictionary<object, object?>();
+        //    var attrSymbol = TryGetSymbol(attributeName, visitor/*, out _, out _*/);
+        //    if (attrSymbol == null)
+        //        return false;
+        //    if (symbol.GetAttributes().Select(a => (a, a.AttributeClass)).Where(e => e.AttributeClass != null).Any(a =>
+        //    {
+        //        var aName = a.AttributeClass!.CreateSignature(this, withGlobalNamespace: false)!;
+        //        if (!aName.EndsWith("Attribute"))
+        //            aName += "Attribute";
+        //        if (aName != attributeName)
+        //            return false;
+        //        var aSymbol = a.AttributeClass;// GetTypeSymbol(aName, visitor/*, out _, out _*/);
+        //        if (attrSymbol.Equals(aSymbol, SymbolEqualityComparer.Default))
+        //        {
+        //            //cArgs = a.a.ConstructorArguments.Select(c => c.Kind == TypedConstantKind.Array ? c.Values : c.Value!).ToArray();
+        //            cArgs = a.a.ConstructorArguments.Select((c, i) => ((object)i, c.Value))
+        //            .Concat(a.a.NamedArguments.Select(a => ((object)a.Key, a.Value.Value)))
+        //            .ToDictionary(kv => kv.Item1, kv => kv.Value);
+        //            return true;
+        //        }
+        //        return false;
+        //    }))
+        //    {
+        //        constructorArgs = cArgs;
+        //        return true;
+        //    }
+        //    if (inherits && symbol.Kind == SymbolKind.NamedType && symbol is ITypeSymbol ns && ns.BaseType != null)
+        //    {
+        //        return HasAttribute(ns.BaseType, attributeName, visitor, inherits, out constructorArgs);
+        //    }
+        //    if (inherits && symbol.Kind == SymbolKind.Method && symbol is IMethodSymbol ms && ms.OverriddenMethod != null)
+        //    {
+        //        return HasAttribute(ms.OverriddenMethod, attributeName, visitor, inherits, out constructorArgs);
+        //    }
+        //    if (inherits && symbol.Kind == SymbolKind.Property && symbol is IPropertySymbol ps && ps.OverriddenProperty != null)
+        //    {
+        //        return HasAttribute(ps.OverriddenProperty, attributeName, visitor, inherits, out constructorArgs);
+        //    }
+        //    return false;
+        //}
 
 
         public bool IsExtern(ISymbol type)
@@ -2962,6 +3333,8 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             if (type.BaseType?.SpecialType == SpecialType.System_Enum)
             {
+                if (((INamedTypeSymbol)type).EnumUnderlyingType!.IsLongNumericType())
+                    return "0n";
                 return "0";
             }
             //if (IsInlineArray(type, out var inlineSize, out var fieldType))
@@ -3053,40 +3426,17 @@ namespace NetJs.Translator.CSharpToJavascript
             return result;
         }
 
-        Dictionary<string, int> pragmas = new Dictionary<string, int>();
-        public IDisposable DefinePragma(string keyword)
-        {
-            int n = 0;
-            if (pragmas.TryGetValue(keyword, out n))
-            {
-                n++;
-            }
-            else
-            {
-                n = 1;
-            }
-            pragmas[keyword] = n;
-            return new DelegateDispose(() =>
-            {
-                n--;
-                if (n == 0)
-                {
-                    pragmas.Remove(keyword);
-                }
-            });
-        }
-
-        public string? Evaluate(string keyword)
+        public string? Evaluate(string keyword, TranslatorSyntaxVisitor? visitor)
         {
             var value = Project.Evaluate(keyword);
-            if (string.IsNullOrEmpty(value) && pragmas.TryGetValue(keyword, out var n))
+            if (string.IsNullOrEmpty(value) && visitor != null && visitor.Pragmas.TryGetValue(keyword, out var n))
             {
                 return n.ToString();
             }
             return value;
         }
 
-        Dictionary<string, string> assemblyGlobalNamespaceCache = new Dictionary<string, string>();
+        ConcurrentDictionary<string, string> assemblyGlobalNamespaceCache = new ConcurrentDictionary<string, string>();
         public string GetAssemblyGlobalSlug(IAssemblySymbol assembly)
         {
             if (assemblyGlobalNamespaceCache.TryGetValue(assembly.Name, out var slug))
@@ -3094,6 +3444,8 @@ namespace NetJs.Translator.CSharpToJavascript
             if (HasAttribute(assembly, typeof(AssemblySlugAttribute).FullName, null, false, out var args))
             {
                 slug = (string)args![0]!;
+                if (!slug.StartsWith("$"))
+                    slug = "$" + slug;
             }
             else
             {
@@ -3112,6 +3464,8 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public int? SizeOf(ITypeSymbol type)
         {
+            if (type.IsStatic)
+                return null;
             switch (type.SpecialType)
             {
                 case SpecialType.System_Boolean:
@@ -3153,7 +3507,7 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 return 4;
             }
-            if (type.IsValueType)
+            if (type.IsValueType && type.TypeKind != TypeKind.TypeParameter)
             {
                 if (IsInlineArray(type, out var iSize, out var fieldType))
                 {
@@ -3162,13 +3516,18 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
                 if (HasAttribute(type, typeof(StructLayoutAttribute).FullName, null, false, out var structLayoutAttribute))
                 {
-                    var layoutKind = (LayoutKind)(int)structLayoutAttribute![0];
+                    //var layoutKind = (LayoutKind)(int)structLayoutAttribute![0];
                     var size = structLayoutAttribute.GetValueOrDefault("Size");
                     if (size != null)
                         return (int)size;
                 }
                 var layout = StructLayout(type);
-                return layout.Sum(kv => kv.Value.Size);
+                if (layout.Count == 0)
+                    return 0;
+                //W'd rather do sum of size, but sum of size will not work if there are holes in FieldOffset definition
+                //return layout.Sum(kv => kv.Value.Size);
+                var maxOffset = layout.MaxBy(e => e.Value.Offset);
+                return maxOffset.Value.Offset + maxOffset.Value.Size;
             }
             //if (type.TypeKind == TypeKind.Enum && type.BaseType != null)
             //{
@@ -3189,66 +3548,77 @@ namespace NetJs.Translator.CSharpToJavascript
             return false;
         }
 
+        ConcurrentDictionary<ISymbol, Dictionary<ISymbol, (int Offset, int Size)>> _staticStructLayoutCache = new ConcurrentDictionary<ISymbol, Dictionary<ISymbol, (int Offset, int Size)>>(SymbolEqualityComparer.Default);
+        ConcurrentDictionary<ISymbol, Dictionary<ISymbol, (int Offset, int Size)>> _instanceStructLayoutCache = new ConcurrentDictionary<ISymbol, Dictionary<ISymbol, (int Offset, int Size)>>(SymbolEqualityComparer.Default);
         public Dictionary<ISymbol, (int Offset, int Size)> StructLayout(ITypeSymbol type, bool isStatic = false)
         {
-            int nextOffset = 0;
-            return type.GetMembers().Where(m => m.IsStatic == isStatic).Where(m =>
-                (m.Kind == SymbolKind.Field && ((IFieldSymbol)m).AssociatedSymbol == null && !((IFieldSymbol)m).IsConst) ||
-                (m.Kind == SymbolKind.Event) ||
-                (m.Kind == SymbolKind.Property && ((IPropertySymbol)m).IsAutoProperty()))
-                .Select(field =>
-                {
-                    if (HasAttribute(field, typeof(FieldOffsetAttribute).FullName!, null, false, out var fieldOffsetAttribute))
+            return (isStatic ? _staticStructLayoutCache : _instanceStructLayoutCache).GetOrAdd(type, (__) =>
+            {
+                int nextOffset = 0;
+                return type.GetMembers().Where(m => m.IsStatic == isStatic).Where(m =>
+                    (m.Kind == SymbolKind.Field && ((IFieldSymbol)m).AssociatedSymbol == null && !((IFieldSymbol)m).IsConst) ||
+                    (m.Kind == SymbolKind.Event) ||
+                    (m.Kind == SymbolKind.Property && ((IPropertySymbol)m).IsAutoProperty()))
+                    .Select(field =>
                     {
-                        //var arg = fieldOffsetAttribute.Single().Value;
-                        var offsetArg = fieldOffsetAttribute[0];
-                        return (field, (int)fieldOffsetAttribute[0]!);
-                    }
-                    if (field.Kind == SymbolKind.Field)
-                        return (field, int.MaxValue / 2);
-                    return (field: field, int.MaxValue);
-                }).OrderBy(o => o.Item2)
-                .Select(e =>
-                {
-                    if (e.Item2 < int.MaxValue / 2)
-                    {
-                        nextOffset = e.Item2;
-                        return (e.field, e.Item2, 1);
-                    }
-                    else
-                    {
-                        if (IsFixedSizeField(e.field, out var iSize, out _))
+                        if (HasAttribute(field, typeof(FieldOffsetAttribute).FullName!, null, false, out var fieldOffsetAttribute))
                         {
-                            var selfOffset = nextOffset;
-                            nextOffset += iSize;
-                            return (e.field, selfOffset, iSize);
+                            //var arg = fieldOffsetAttribute.Single().Value;
+                            var offsetArg = fieldOffsetAttribute[0];
+                            return (field, (int)fieldOffsetAttribute[0]!);
                         }
+                        if (field.Kind == SymbolKind.Field)
+                            return (field, int.MaxValue / 2);
+                        return (field: field, int.MaxValue);
+                    }).OrderBy(o => o.Item2)
+                    .Select(e =>
+                    {
                         var type = (e.field as IFieldSymbol)?.Type ??
                         (e.field as IEventSymbol)?.Type ??
                         (e.field as IPropertySymbol)?.Type ??
                         throw new InvalidOperationException();
-                        if (IsInlineArray(type!, out iSize, out _))
+                        if (e.Item2 < int.MaxValue / 2)
                         {
-                            var selfOffset = nextOffset;
-                            nextOffset += iSize;
-                            return (e.field, selfOffset, iSize);
-                        }
-                        else
-                        {
-                            var selfOffset = nextOffset;
                             var size = SizeOf(type) ?? 1;
                             if (size == 0)
                             {
                                 size = 1;
                                 //throw new InvalidOperationException($"SizeOf {type} returns 0");
                             }
-                            nextOffset += size;
-                            return (e.field, selfOffset, size);
-                            //lastOffset += _global.Get(type!, this);
+                            nextOffset = e.Item2 + size;
+                            return (e.field, e.Item2, size);
                         }
-                    }
-                })
-                .ToDictionary(kv => kv.field, kv => (kv.Item2, kv.Item3), SymbolEqualityComparer.Default);
+                        else
+                        {
+                            if (IsFixedSizeField(e.field, out var iSize, out _))
+                            {
+                                var selfOffset = nextOffset;
+                                nextOffset += iSize;
+                                return (e.field, selfOffset, iSize);
+                            }
+                            if (IsInlineArray(type!, out iSize, out _))
+                            {
+                                var selfOffset = nextOffset;
+                                nextOffset += iSize;
+                                return (e.field, selfOffset, iSize);
+                            }
+                            else
+                            {
+                                var selfOffset = nextOffset;
+                                var size = SizeOf(type) ?? 1;
+                                if (size == 0)
+                                {
+                                    size = 1;
+                                    //throw new InvalidOperationException($"SizeOf {type} returns 0");
+                                }
+                                nextOffset += size;
+                                return (e.field, selfOffset, size);
+                                //lastOffset += _global.Get(type!, this);
+                            }
+                        }
+                    })
+                    .ToDictionary(kv => kv.field, kv => (kv.Item2, kv.Item3), SymbolEqualityComparer.Default);
+            });
         }
 
         public TypeKindModel MapTypeKind(Microsoft.CodeAnalysis.TypeKind roslynKind) =>
@@ -3267,24 +3637,28 @@ namespace NetJs.Translator.CSharpToJavascript
         public KnownTypeHandle KnownTypeFromName(string t)
         {
             return t == "System.Void" ? KnownTypeHandle.SystemVoid :
-                t == "System.Object" ? KnownTypeHandle.SystemObject :
-                        t == "System.Boolean" ? KnownTypeHandle.SystemBool :
-                        t == "System.Char" ? KnownTypeHandle.SystemChar :
-                        t == "System.SByte" ? KnownTypeHandle.SystemSByte :
-                        t == "System.Byte" ? KnownTypeHandle.SystemByte :
-                        t == "System.Int16" ? KnownTypeHandle.SystemInt16 :
-                        t == "System.UInt16" ? KnownTypeHandle.SystemUInt16 :
-                        t == "System.Int32" ? KnownTypeHandle.SystemInt32 :
-                        t == "System.UInt32" ? KnownTypeHandle.SystemUint32 :
-                        t == "System.IntPtr" ? KnownTypeHandle.SystemIntPtr :
-                        t == "System.UIntPtr" ? KnownTypeHandle.SystemUintPtr :
-                        t == "System.Int64" ? KnownTypeHandle.SystemInt64 :
-                        t == "System.UInt64" ? KnownTypeHandle.SystemUint64 :
-                        t == "System.Single" ? KnownTypeHandle.SystemSingle :
-                        t == "System.Double" ? KnownTypeHandle.SystemDouble :
-                        t == "System.String" ? KnownTypeHandle.SystemString :
-                        t == "System.Enum" ? KnownTypeHandle.SystemEnum :
-                        t == "System.Array" ? KnownTypeHandle.SystemArray : KnownTypeHandle.Unknown;
+                    t == "System.Object" ? KnownTypeHandle.SystemObject :
+                    t == "System.ValueType" ? KnownTypeHandle.SystemValueType :
+                    t == "System.Boolean" ? KnownTypeHandle.SystemBool :
+                    t == "System.SByte" ? KnownTypeHandle.SystemSByte :
+                    t == "System.Byte" ? KnownTypeHandle.SystemByte :
+                    t == "System.Char" ? KnownTypeHandle.SystemChar :
+                    t == "System.Int16" ? KnownTypeHandle.SystemInt16 :
+                    t == "System.UInt16" ? KnownTypeHandle.SystemUInt16 :
+                    t == "System.Int32" ? KnownTypeHandle.SystemInt32 :
+                    t == "System.UInt32" ? KnownTypeHandle.SystemUint32 :
+                    t == "System.IntPtr" ? KnownTypeHandle.SystemIntPtr :
+                    t == "System.UIntPtr" ? KnownTypeHandle.SystemUIntPtr :
+                    t == "System.Int64" ? KnownTypeHandle.SystemInt64 :
+                    t == "System.UInt64" ? KnownTypeHandle.SystemUint64 :
+                    t == "System.Single" ? KnownTypeHandle.SystemSingle :
+                    t == "System.Double" ? KnownTypeHandle.SystemDouble :
+                    t == "System.String" ? KnownTypeHandle.SystemString :
+                    t == "System.Enum" ? KnownTypeHandle.SystemEnum :
+                    t == "System.Array" ? KnownTypeHandle.SystemArray :
+                    t == "NetJs.Pointer<>" ? KnownTypeHandle.SystemPointer :
+                    t == "NetJs.Ref<>" ? KnownTypeHandle.SystemReference :
+                    KnownTypeHandle.SystemDynamic;
         }
 
         public KnownTypeHandle KnownTypeFrom(ITypeSymbol t)
@@ -3313,6 +3687,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     var mtype = GetTypeSymbol(m);
                     return mtype.IsNumberNumericType() ||
                     mtype.IsLongNumericType() ||
+                    mtype.TypeKind == TypeKind.Enum ||
                     //(IsFixedSizeField(mtype, out _, out var element) && IsPureStructType(element)) ||
                     IsPureStructType(mtype);
                 }))

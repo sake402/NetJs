@@ -9,6 +9,11 @@ namespace Window
     [NetJs.External]
     public class Document : Node
     {
+        public extern static Document Instance
+        {
+            [NetJs.Template("document")]
+            get;
+        }
         public extern string? title { get; set; }
         public extern Element? documentElement { get; }
         public extern Element? body { get; set; }

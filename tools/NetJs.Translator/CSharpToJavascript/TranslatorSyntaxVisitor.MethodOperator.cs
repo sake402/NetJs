@@ -16,11 +16,16 @@ namespace NetJs.Translator.CSharpToJavascript
         public const string ImplicitOperatorName = "op_Implicit";
         //operators we can safely rewite like a += b => a = a + b
         static readonly string[] RewitableOperators = ["+=", "-=", "*=", "/=", "%=", ">>=", "<<=", "|=", "&=", "^="];
-        public bool TryInvokeMethodOperator(CSharpSyntaxNode node, string _operator, ITypeSymbol? leftOperandType, CSharpSyntaxNode? leftOperand, IEnumerable<CSharpSyntaxNode> arguments, Action? prologue = null)
+        public bool TryInvokeMethodOperator(CSharpSyntaxNode node,
+            string _operator, 
+            ITypeSymbol? leftOperandType, 
+            CSharpSyntaxNode? leftOperand,
+            ITypeSymbol? rightOperandType,
+            IEnumerable<CSharpSyntaxNode> arguments, 
+            Action? prologue = null)
         {
             var conversion = node.FindClosestParent<ConversionOperatorDeclarationSyntax>();
             var conversionMethod = conversion != null ? _global.GetSymbol(conversion, this) : null;
-            ITypeSymbol? rightOperandType = null;
             var rightOperand = arguments.FirstOrDefault();
             if (leftOperand != null)
             {
@@ -31,7 +36,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 if (leftOperand == rightOperand)
                 {
                     rightOperand = arguments.Last();
-                    rightOperandType = _global.TryGetTypeSymbol(rightOperand, this);
+                    rightOperandType ??= _global.TryGetTypeSymbol(rightOperand, this);
                 }
             }
             else if (leftOperandType == null)
@@ -39,13 +44,19 @@ namespace NetJs.Translator.CSharpToJavascript
                 leftOperand = arguments.First();
                 rightOperand = arguments.Last();
                 leftOperandType = _global.TryGetTypeSymbol(leftOperand, this);
-                rightOperandType = _global.TryGetTypeSymbol(rightOperand, this);
+                rightOperandType ??= _global.TryGetTypeSymbol(rightOperand, this);
                 leftOperandType = leftOperandType ?? rightOperandType;
             }
             if (rightOperandType == null && rightOperand != null)
             {
                 rightOperandType = _global.TryGetTypeSymbol(rightOperand, this);
             }
+            //js can handle native numeric operation, no need to call operator
+            if (leftOperandType != null &&
+                rightOperandType != null &&
+                (leftOperandType.IsNumberNumericType() || leftOperandType.IsLongNumericType()) &&
+                (rightOperandType.IsNumberNumericType() || rightOperandType.IsLongNumericType()))
+                return false;
             bool IsAssignmentRewriteCandidate()
             {
                 return true;
@@ -64,11 +75,12 @@ namespace NetJs.Translator.CSharpToJavascript
                 //    return true;
                 //return false;
             }
-            Action? mprologue = null;
+            Action? localPrologue = null;
+            Action? localEpilogue = null;
             ///if we have an operator such as a+=b and the datatype is not a jsprimitive, rewrite it to a=a+b and visit it
             if (RewitableOperators.Contains(_operator) && leftOperand != null && leftOperandType != null && rightOperand != null && IsAssignmentRewriteCandidate())
             {
-                mprologue = () =>
+                localPrologue = () =>
                 {
                     Visit(leftOperand);
                     CurrentTypeWriter.Write(node, " = ");
@@ -105,17 +117,42 @@ namespace NetJs.Translator.CSharpToJavascript
                 //    return true;
                 //}
             }
-            else
+            else if (_operator == "++" || _operator == "--")
             {
-                //js can handle native numeric operation, no need to call operator
-                if (leftOperandType != null && rightOperandType != null && leftOperandType.IsNumberNumericType() && rightOperandType.IsNumberNumericType())
-                    return false;
+                if (node.IsKind(SyntaxKind.PreIncrementExpression)) //++value
+                {
+                    localPrologue = () =>
+                    {
+                        Visit(leftOperand);
+                        CurrentTypeWriter.Write(node, " = ");
+                    };
+                }
+                else if (node.IsKind(SyntaxKind.PostIncrementExpression)) //value++ => (()=>{ var oldp = value; value = value+1; return oldp; })()
+                {
+                    localPrologue = () =>
+                    {
+                        CurrentTypeWriter.WriteLine(node, $"(() => //{leftOperand}++");
+                        CurrentTypeWriter.WriteLine(node, "{", true);
+                        CurrentTypeWriter.Write(node, "const $old = ", true);
+                        Visit(leftOperand);
+                        CurrentTypeWriter.WriteLine(node, ";");
+                        CurrentTypeWriter.Write(node, "", true);
+                        Visit(rightOperand);
+                        CurrentTypeWriter.Write(node, " = ");
+                    };
+                    localEpilogue = () =>
+                    {
+                        CurrentTypeWriter.WriteLine(node, ";");
+                        CurrentTypeWriter.WriteLine(node, "return $old;", true);
+                        CurrentTypeWriter.Write(node, "})()", true);
+                    };
+                }
             }
             if (leftOperandType is ITypeSymbol ts)
             {
                 if (ts.IsNullable(out var t))
                     ts = t!;
-                bool isChecked = _global.Evaluate("checked") != null;
+                bool isChecked = _global.Evaluate("checked", this) != null;
                 List<IMethodSymbol>? operators = null;
                 if (isChecked)
                 {
@@ -134,8 +171,13 @@ namespace NetJs.Translator.CSharpToJavascript
                 if (operatorMethod is IMethodSymbol ms && ms.IsInvokable(_global))
                 {
                     prologue?.Invoke();
-                    mprologue?.Invoke();
-                    WriteMethodInvocation(node, ms, null, arguments.Select(a => new CodeNode(a)), null, null, null, false);
+                    localPrologue?.Invoke();
+                    //If the operator is defined static on a Typeparameter, we make sure we write it as T.method()
+                    WriteMethodInvocation(node, ms, null, arguments.Select(a => new CodeNode(a)), ms.IsStatic && ts is ITypeParameterSymbol ttp ? new CodeNode(() =>
+                    {
+                        CurrentTypeWriter.Write(node, ts.Name);
+                    }) : null, ms.IsStatic ? ts as ITypeParameterSymbol : null, null, false);
+                    localEpilogue?.Invoke();
                     return true;
                 }
             }
@@ -147,7 +189,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     if (rts.IsNullable(out var t))
                         rts = t!;
-                    bool isChecked = _global.Evaluate("checked") != null;
+                    bool isChecked = _global.Evaluate("checked", this) != null;
                     List<IMethodSymbol>? operators = null;
                     if (isChecked)
                     {
@@ -163,8 +205,9 @@ namespace NetJs.Translator.CSharpToJavascript
                     if (operatorMethod is IMethodSymbol ms && ms.IsInvokable(_global))
                     {
                         prologue?.Invoke();
-                        mprologue?.Invoke();
+                        localPrologue?.Invoke();
                         WriteMethodInvocation(node, ms, null, arguments.Select(a => new CodeNode(a)), null, null, null, false);
+                        localEpilogue?.Invoke();
                         return true;
                     }
                 }
@@ -175,7 +218,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     if (rts.IsNullable(out var t))
                         rts = t!;
-                    bool isChecked = _global.Evaluate("checked") != null;
+                    bool isChecked = _global.Evaluate("checked", this) != null;
                     List<IMethodSymbol>? operators = null;
                     if (isChecked)
                     {
@@ -191,8 +234,9 @@ namespace NetJs.Translator.CSharpToJavascript
                     if (operatorMethod is IMethodSymbol ms && ms.IsInvokable(_global))
                     {
                         prologue?.Invoke();
-                        mprologue?.Invoke();
+                        localPrologue?.Invoke();
                         WriteMethodInvocation(node, ms, null, arguments.Select(a => new CodeNode(a)), null, null, null, false);
+                        localEpilogue?.Invoke();
                         return true;
                     }
                 }
@@ -203,7 +247,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 //if we get here, its because we cant find an explicit operator on both lhs(double) and rhs(long) that satisfy this conversion
                 //But if there is an implicit converter operator defined, the the cast was not actually neccessary and we can do it implicitly
                 //Call this method again with implicit operator
-                return TryInvokeMethodOperator(node, ImplicitOperatorName, leftOperandType, leftOperand, arguments, prologue);
+                return TryInvokeMethodOperator(node, ImplicitOperatorName, leftOperandType, leftOperand, rightOperandType, arguments, prologue);
             }
             return false;
         }

@@ -17,7 +17,7 @@ namespace System.Runtime.Loader
         [NetJs.MemberReplace(nameof(GetLoadContextForAssembly))]
         private static IntPtr GetLoadContextForAssemblyImpl(RuntimeAssembly rtAsm)
         {
-            return (IntPtr)rtAsm.As<RuntimeAssembly_Partial>()._model.Handle;
+            return IntPtr.Zero;// (IntPtr)rtAsm.As<RuntimeAssembly_Partial>()._model.Handle;
         }
 
         [NetJs.MemberReplace(nameof(InternalLoadFile))]

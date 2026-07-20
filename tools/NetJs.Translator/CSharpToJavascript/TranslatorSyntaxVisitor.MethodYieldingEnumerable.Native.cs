@@ -13,19 +13,8 @@ namespace NetJs.Translator.CSharpToJavascript
 {
     public partial class TranslatorSyntaxVisitor
     {
-        bool HasYield(CSharpSyntaxNode node)
+        public bool HasYield(SyntaxNode node)
         {
-            var kk = node.ToString();
-            if (kk.Contains("Node? current = head;"))
-            {
-                if (kk.Contains("while (current != null)"))
-                {
-                    if (kk.Contains("yield return current._value;"))
-                    {
-
-                    }
-                }
-            }
             bool has = false;
             node.VisitHierachy((n, d) =>
             {
@@ -89,6 +78,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     VisitChildren(body);
                     if (!bodyIsBlock)
                         CurrentTypeWriter.Write(node, "}");
+                    CurrentTypeWriter.TrimEnd();
                     CurrentTypeWriter.Write(node, ".bind(this)");
                 })], null);
                 if (isObjectEnumerator)

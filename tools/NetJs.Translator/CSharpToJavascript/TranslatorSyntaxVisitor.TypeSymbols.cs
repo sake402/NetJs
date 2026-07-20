@@ -1,8 +1,9 @@
-﻿using NetJs.Translator.CSharpToJavascript;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using NetJs.Translator.CSharpToJavascript;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -188,7 +189,7 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             if (syntaxExpression is RefExpressionSyntax rref)
                 syntaxExpression = rref.Expression;
-            if (syntaxExpression is ArgumentSyntax arg)
+            if (syntaxExpression is ArgumentSyntax arg)//TODO: we could be returing IParameterSymbol if arg is not unwrapped
                 syntaxExpression = arg.Expression;
             if (syntaxExpression is CastExpressionSyntax cast)
                 syntaxExpression = cast.Expression;
@@ -272,6 +273,10 @@ namespace NetJs.Translator.CSharpToJavascript
                         return CodeSymbol.From(target);
                     }
                     var info = s.GetTypeInfo(syntaxExpression);
+                    if (expression.IsKind(SyntaxKind.NumericLiteralExpression) && info.ConvertedType != null)
+                    {
+                        return CodeSymbol.From(info.ConvertedType);
+                    }
                     if ((info.Type/* ?? info.ConvertedType*/) != null)
                     {
                         return CodeSymbol.From(info.Type ?? info.ConvertedType);
@@ -806,5 +811,30 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
             }
         }
+
+
+        public Dictionary<string, int> Pragmas { get; } = new Dictionary<string, int>();
+        public IDisposable DefinePragma(string keyword)
+        {
+            int n = 0;
+            if (Pragmas.TryGetValue(keyword, out n))
+            {
+                n++;
+            }
+            else
+            {
+                n = 1;
+            }
+            Pragmas[keyword] = n;
+            return new DelegateDispose(() =>
+            {
+                n--;
+                if (n == 0)
+                {
+                    Pragmas.Remove(keyword);
+                }
+            });
+        }
+
     }
 }

@@ -1,6 +1,7 @@
 ﻿using NetJs;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace System.Reflection
@@ -14,13 +15,15 @@ namespace System.Reflection
         //For generic method
         internal RuntimeMethodInfo? _genericMethod;
         internal Type[]? _typeArguments;
+        internal RuntimePropertyInfo? _fromProperty;
 
-        internal RuntimeMethodInfo(MethodModel model) : base(model)
+        internal RuntimeMethodInfo(MethodModel model, RuntimePropertyInfo? fromProperty = null) : base(model)
         {
             mhandle = model.Handle.As<IntPtr>();
             name = model.Name;
             //reftype = model.ReturnType != null ? AppDomain.GetType(model.ReturnType.Value) : null;
             _model = model;
+            _fromProperty = fromProperty;
         }
 
         [NetJs.MemberReplace(nameof(GetMethodBodyInternal))]
@@ -60,7 +63,7 @@ namespace System.Reflection
         {
             var prototype = DeclaringType.As<RuntimeType>()._prototype;
             object[]? parameters = RuntimeHelpers.GetParametersFromPointer(args);
-            if (parameters == null && _model.As<MethodModel>().Parameters!.Length > 0)
+            if (parameters == null && NetJs.Script.IsDefined(_model.As<MethodModel>().Parameters) && _model.As<MethodModel>().Parameters!.Length > 0)
             {
                 throw null!;
             }
@@ -81,6 +84,25 @@ namespace System.Reflection
         [NetJs.MemberReplace(nameof(MakeGenericMethod_impl))]
         private MethodInfo MakeGenericMethod_implImpl(Type[] types)
         {
+            //var model = _model.As<MethodModel>();
+            //var parameters = model.Parameters;
+            //bool modelCloned = false;
+            //if (NetJs.Script.IsDefined(parameters))
+            //{
+            //    for (int i = 0; i < parameters!.Length; i++)
+            //    {
+            //        var parameterType = parameters[i].ParameterType;
+            //        //if (NetJs.Script.TypeOf(parameterType).NativeEquals("function"))
+            //        //{
+            //        //    var args = types.Map(t => t.As<RuntimeType>()._prototype);
+            //        //    parameterType = NetJs.Script.Write<uint>("parameterType(...args)");
+            //        //    if (!modelCloned)
+            //        //    {
+            //        //        model=NetJs.Script.JSONParse<>
+            //        //    }
+            //        //}
+            //    }
+            //}
             return new RuntimeMethodInfo(_model.As<MethodModel>())
             {
                 _genericMethod = this,
@@ -91,7 +113,15 @@ namespace System.Reflection
         [NetJs.MemberReplace(nameof(GetGenericArguments))]
         public Type[] GetGenericArgumentsImpl()
         {
-            return _typeArguments ?? Type.EmptyTypes;
+            if (_typeArguments != null)
+                return _typeArguments;
+            if (_model.Flags.TypeHasFlag(MemberFlagsModel.IsGeneric))
+            {
+                var len = _model.As<MethodModel>().GenericArguments!.Length;
+                var genericTypes = AppDomain.GenericTypeParameters.ArraySlice(0, len).Map(e => e.Type!);
+                return genericTypes;
+            }
+            return Type.EmptyTypes;
         }
 
         [NetJs.MemberReplace(nameof(GetGenericMethodDefinition_impl))]

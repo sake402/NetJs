@@ -32,10 +32,10 @@ namespace NetJs.Translator.CSharpToJavascript
             return default;
         }
 
-        public List<(Action Write, bool Static)> TypeInitializers = new();
-        public void RegisterTypeInitializer(Action action, bool _static)
+        public List<(Action Write, TypeInitializerLocation Location)> TypeInitializers = new();
+        public void RegisterTypeInitializer(Action action, TypeInitializerLocation initializerType)
         {
-            TypeInitializers.Add((action, _static));
+            TypeInitializers.Add((action, initializerType));
         }
 
 
@@ -92,10 +92,14 @@ namespace NetJs.Translator.CSharpToJavascript
         public Dictionary<string, string> Tags { get; } = new Dictionary<string, string>();
         public string? JumpStartLabelName { get; set; }
         public string? JumpStateMachineVariableName { get; set; }
+        public string[]? SwitchExpressionCacheVariableNames { get; set; }
+        public CodeLineWriter? SwitchStartLine { get; set; }
         public Dictionary<CSharpSyntaxNode, string> JumpLabels { get; } = new Dictionary<CSharpSyntaxNode, string>();
         public List<string> GotoJumpLabels { get; } = new List<string>();
         public Dictionary<string, List<StatementSyntax>> GotoInsertInlineStatements { get; } = new();
         Stack<IEnumerable<ISymbol>> _anonymousMethodParameterTypes = new Stack<IEnumerable<ISymbol>>();
+
+        //public List<Id> SwitchTupleNames { get; }
         public IDisposable DefineAnonymousMethodParameterTypes(IEnumerable<ISymbol> types)
         {
             _anonymousMethodParameterTypes.Push(types);

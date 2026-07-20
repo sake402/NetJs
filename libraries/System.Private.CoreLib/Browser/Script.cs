@@ -24,12 +24,16 @@ namespace NetJs
         public static unsafe extern ref T PointerARef<T>(T* value) where T : allows ref struct;
         [Template("{0}")]
         public static unsafe extern T* RefAsPointer<T>(ref readonly T value) where T : allows ref struct;
+        [Template("({0}._ === true)")]
+        public static extern bool IsDiscardRef<T>(ref readonly T value) where T : allows ref struct;
+        [Template("({0}._ === true)")]
+        public static extern bool IsDiscardRef<T>(RefOrPointer<T> value);
         //[Template("{0}")]
         //public static extern ref T ArrayRef<T>(ArrayRef<T> value);
         //[Template("{0}")]
         //public static extern ArrayRef<T> ArrayRef<T>(ref T value);
         [Template("JSON.stringify({obj})")]
-        public static extern string JSONStringify(object obj);
+        public static extern string JSONStringify(object? obj);
         [Template("JSON.parse({obj})")]
         public static extern T JSONParse<T>(string obj);
         [Template("{function}.apply({_this}, {values})")]
@@ -58,7 +62,7 @@ namespace NetJs
         public extern static bool HasValue(object? value);
         [Template("{value} === undefined")]
         public static extern bool IsUndefined(object? value);
-        [Template("!{value}")]
+        [Template("{value} == null")]
         public static extern bool IsUndefinedOrNull(object? value);
         [Template("{key} in {value}")]
         public static extern bool KeyIn(string key, object value);
@@ -131,6 +135,7 @@ namespace NetJs
         /// <returns>true for all cases except when the property is an own non-configurable property, in which case, false is returned in non-strict mode.</returns>
         [Template("delete {0}[{1}]")]
         public static extern bool Delete(object obj, string prop);
+        public static extern bool Delete(object obj, Window.Symbol prop);
 
         [Template("dotnetJs.is({0}, {1})")]
         public static extern bool Is(object type, string typeName);
@@ -160,6 +165,8 @@ namespace NetJs
         public static extern T GetDefaultValue<T>(Type type);
 
         [Template("{global.}" + Constants.DefaultTypeName + "({0})")]
+        public static extern object GetDefaultValue(TypePrototype type);
+        [Template("{global.}" + Constants.DefaultTypeName + "({0}._prototype)")]
         public static extern object GetDefaultValue(Type type);
         /// <summary>
         /// Checks if the specified object is undefined. The object passed in should be a local variable, and not a member of a class (to avoid potential script warnings).
@@ -199,6 +206,8 @@ namespace NetJs
         /// <returns>true if member in object; false otherwise.</returns>
         [Template("{member} in {obj}")]
         public static extern bool In(object obj, string member);
+        [Template("{member} in {obj}")]
+        public static extern bool In(object obj, Window.Symbol member);
 
         /// <summary>
         /// Invoke a method on an object
@@ -352,6 +361,8 @@ namespace NetJs
         [Template("encodeURIComponent({0})")]
         public static extern string EncodeURIComponent(string component);
 
+        [Template("{global.}" + Constants.BoxName + "({0}, {1})")]
+        public static extern object Box(object? value, TypePrototype type);
         [Template("{global.}" + NetJs.Constants.UnboxName + "({0})")]
         public static extern object Unbox(object? obj);
         [Template("typeof {0}")]

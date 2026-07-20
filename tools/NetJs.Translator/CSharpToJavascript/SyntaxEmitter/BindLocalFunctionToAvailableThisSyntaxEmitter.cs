@@ -93,7 +93,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
         {
             if (node.Parent.IsKind(SyntaxKind.InvocationExpression)) //method identifier already invoked, no need to bind as the VisitInvocation will create a .call already
                 return false;
-            if (_processing.Contains(node))
+            if (_processing.Value.Contains(node))
                 return false;
             var identifierSymbol = visitor.Global.TryGetSymbol(node, visitor);
             if (identifierSymbol?.Kind == SymbolKind.Method && !identifierSymbol.IsStatic && ((IMethodSymbol)identifierSymbol).MethodKind == MethodKind.LocalFunction)
@@ -102,14 +102,14 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                     return false;
                 if (!LocalMethodReferencesThis((IMethodSymbol)identifierSymbol, visitor.Global.Compilation)) //no this reference by the local method, no need to bind
                     return false;
-                _processing.Push(node);
+                _processing.Value.Push(node);
                 try
                 {
                     visitor.Visit(node);
                     visitor.CurrentTypeWriter.Write(node, ".bind(this)");
                     return true;
                 }
-                finally { _processing.Pop(); }
+                finally { _processing.Value.Pop(); }
             }
             return false;
         }

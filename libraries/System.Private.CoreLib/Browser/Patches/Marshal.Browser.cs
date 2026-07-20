@@ -28,11 +28,11 @@ namespace System.Runtime.InteropServices
             //marsalTable[reference] = *(object*)value;
             //return reference.As<IntPtr>();
         }
-
+        
         internal static IntPtr MarshalObject(object? value, IntPtr handle = 0, bool deleteOld = false)
         {
-            if (value == null)
-                return 0;
+            //if (value == null)
+                //return 0;
             if (Script.TypeOf(value).NativeEquals("number"))
                 return value.As<IntPtr>();
             return InteropUtility.castObject2Address(value, handle.As<uint>(), deleteOld).As<IntPtr>();

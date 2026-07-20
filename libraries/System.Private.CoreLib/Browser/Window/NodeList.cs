@@ -11,6 +11,8 @@ namespace Window
     {
         public extern int length { get; }
         public extern Node? item(int index);
+        public extern Node this[int i] { get; }
+        public extern void forEach(NativeAction<Node> action);
     }
 
     /// <summary>

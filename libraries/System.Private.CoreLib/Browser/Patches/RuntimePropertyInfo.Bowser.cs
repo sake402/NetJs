@@ -29,9 +29,10 @@ namespace System.Reflection
                         model.GetMethod!.OutputName = "get_" + model.OutputName;
                     model.GetMethod!.DeclaringType = model.DeclaringType;
                     model.GetMethod!.ReturnType = model.PropertyType;
+                    //we skipped generating parameters for methods on a property, since we can infer those at runtime
                     model.GetMethod!.Parameters = model.IndexParameters;
                 }
-                info.get_method = NetJs.Script.IsDefined(model.GetMethod) ? new RuntimeMethodInfo(model.GetMethod!) : null!;
+                info.get_method = NetJs.Script.IsDefined(model.GetMethod) ? new RuntimeMethodInfo(model.GetMethod!, prop) : null!;
             }
             if (req_info.HasFlag(PInfo.SetMethod))
             {
@@ -41,9 +42,30 @@ namespace System.Reflection
                     if (NetJs.Script.IsDefined(model.OutputName))
                         model.SetMethod!.OutputName = "set_" + model.OutputName;
                     model.SetMethod!.DeclaringType = model.DeclaringType;
-                    //model.SetMethod!.Parameters =[ ..model.IndexParameters, model.PropertyType];
+                    //we skipped generating parameters for methods on a property, since we can infer those at runtime
+                    if (NetJs.Script.IsDefined(model.IndexParameters))
+                    {
+                        var newArray = NetJs.Script.NewArray<ParameterModel>();
+                        newArray.Push(model.IndexParameters!);
+                        newArray.Push(new ParameterModel
+                        {
+                            Name = "value",
+                            ParameterType = model.PropertyType
+                        });
+                        model.SetMethod!.Parameters = newArray;
+                    }
+                    else
+                    {
+                        model.SetMethod!.Parameters = NetJs.Script.CreateArrayFromValues(
+                            new ParameterModel
+                            {
+                                Name = "value",
+                                ParameterType = model.PropertyType
+                            }
+                        );
+                    }
                 }
-                info.set_method = NetJs.Script.IsDefined(model.SetMethod) ? new RuntimeMethodInfo(model.SetMethod!) : null!;
+                info.set_method = NetJs.Script.IsDefined(model.SetMethod) ? new RuntimeMethodInfo(model.SetMethod!, prop) : null!;
             }
             if (req_info.HasFlag(PInfo.ReflectedType))
                 info.parent = AppDomain.GetType(model.DeclaringType.As<uint>()) ?? throw new InvalidOperationException();

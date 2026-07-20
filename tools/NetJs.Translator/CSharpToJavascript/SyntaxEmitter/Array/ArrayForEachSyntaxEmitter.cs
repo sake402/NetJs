@@ -24,7 +24,8 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Array
                 visitor.CurrentTypeWriter.Write(node, $"let ", true);
                 visitor.CurrentTypeWriter.Write(node, node.Identifier.ResolveIdentifierName());
                 visitor.CurrentTypeWriter.Write(node, $" = ");
-                visitor.CurrentTypeWriter.WriteLine(node, $"{array}[{index}];");
+                visitor.CurrentTypeWriter.WriteLine(node, $"{array}[{index}++];");
+                //visitor.CurrentTypeWriter.WriteLine(node, $"{index}++;", true);
                 if (node.Statement.IsKind(SyntaxKind.Block))
                 {
                     visitor.VisitChildren(node.Statement.ChildNodes());
@@ -33,7 +34,6 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Array
                 {
                     visitor.Visit(node.Statement);
                 }
-                visitor.CurrentTypeWriter.WriteLine(node, $"{index}++;", true);
                 visitor.CloseClosure(node);
                 visitor.CurrentTypeWriter.WriteLine(node, "}", true);
                 return true;

@@ -11,9 +11,8 @@ internal static partial class Interop
         private static unsafe partial byte* GetCwd(byte* buffer, int bufferLength)
         {
             RefOrPointer<byte> ptr = Script.Ref(buffer);
-            "".TryCopyTo(new Span<char>((void*)buffer, bufferLength));
+            "/".TryCopyTo(new Span<char>((void*)buffer, bufferLength));
             return buffer;
         }
-
     }
 }

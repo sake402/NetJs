@@ -48,7 +48,7 @@ namespace System
         public static extern bool Some<T>(this T[] array, [NativeDelegate] Func<T, bool> callback);
 
         [NetJs.Template("{source}.push({value})")]
-        public static extern void Push(this Array source, [Box(false)]object? value);
+        public static extern void Push(this Array source, [Box(false)] object? value);
         [NetJs.Template("{source}.push({value})")]
         public static extern void Push<T>(this T[] source, T value);
         [NetJs.Template("{source}.push( ...{values})")]
@@ -87,10 +87,10 @@ namespace System
         [NetJs.Template("{array}.slice()")]
         public static extern Array ArrayClone(this Array array);
         [NetJs.Template("{array}.slice({start})")]
-        public static extern T[] Slice<T>(this T[] array, int start);
+        public static extern T[] ArraySlice<T>(this T[] array, int start);
 
         [NetJs.Template("{array}.slice({start}, {end})")]
-        public static extern T[] Slice<T>(this T[] array, int start, int end);
+        public static extern T[] ArraySlice<T>(this T[] array, int start, int end);
 
         [NetJs.Template("{array}.splice({start}, {deleteCount})")]
         public static extern T[] Splice<T>(this T[] array, int start, int deleteCount);
@@ -102,6 +102,8 @@ namespace System
 
         [NetJs.Template("{array1}.concat({array2})")]
         public static extern Array ArrayConcat(this Array array1, Array array2);
+        [NetJs.Template("{array}.indexOf({item})")]
+        public static extern int NativeIndexOf(this Array array, [Box(false)] object item);
 
         public static T[] EnumerableToArray<T>(this IEnumerable<T> enumerable)
         {

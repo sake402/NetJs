@@ -75,6 +75,11 @@ namespace NetJs.Translator.CSharpToJavascript
                     (toType.TypeKind == TypeKind.Interface && fromType.Kind == SymbolKind.TypeParameter))
                     return true;
             }
+            //If casting an declared enum (a number) to Enum, cause a box too
+            if (fromType.TypeKind == TypeKind.Enum && SymbolEqualityComparer.Default.Equals(toType, _global.SystemEnum))
+            {
+                return true;
+            }
             return false;
         }
 
@@ -327,23 +332,23 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     //TryDereference(rhsExpression!);
                 }
-                if (rhsType != null &&
-                    rhsType.SpecialType != SpecialType.System_Void &&
-                    rhsType.SpecialType != SpecialType.System_Array &&
-                    rhsType.TypeKind != TypeKind.TypeParameter &&
-                    !rhsType.IsNumericType() &&
-                    !rhsType.IsJsPrimitive() && //value type (except js primitive) must copy to assign to a new value
-                    !rhsType.IsPointer(out _) && //pointer is a value type, no need to clone though since our implementation of RefOrPointer is immutable by default
-                    rhsType.IsValueType &&
+                //if (rhsType != null &&
+                //    rhsType.SpecialType != SpecialType.System_Void &&
+                //    rhsType.SpecialType != SpecialType.System_Array &&
+                //    rhsType.TypeKind != TypeKind.TypeParameter &&
+                //    !rhsType.IsNumericType() &&
+                //    !rhsType.IsJsPrimitive() && //value type (except js primitive) must copy to assign to a new value
+                //    !rhsType.IsPointer(out _) && //pointer is a value type, no need to clone though since our implementation of RefOrPointer is immutable by default
+                //    rhsType.IsValueType &&
 
-                    lhsType != null &&
-                    (lhsType.Kind == SymbolKind.Field || lhsType.Kind == SymbolKind.Local || lhsType.Kind == SymbolKind.Parameter))
-                {
-                    if (rhsExpression.IsKind(SyntaxKind.IdentifierName))
-                    {
-                        CurrentTypeWriter.Write(node, ".Clone()"); //we generated this method (ICloneable.Clone) for all valuetypes, if they didnt implement ICloneable
-                    }
-                }
+                //    lhsType != null &&
+                //    (lhsType.Kind == SymbolKind.Field || lhsType.Kind == SymbolKind.Local || lhsType.Kind == SymbolKind.Parameter))
+                //{
+                //    if (rhsExpression.IsKind(SyntaxKind.IdentifierName))
+                //    {
+                //        CurrentTypeWriter.Write(node, ".Clone()"); //we generated this method (ICloneable.Clone) for all valuetypes, if they didnt implement ICloneable
+                //    }
+                //}
                 if (doBoxing)
                 {
                     CurrentTypeWriter.Write(node, $", ");
@@ -418,7 +423,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitAssignmentExpression(AssignmentExpressionSyntax node)
         {
-            if (TryInvokeMethodOperator(node, node.OperatorToken.ValueText, null, node.Left, [node.Left, node.Right]))
+            if (TryInvokeMethodOperator(node, node.OperatorToken.ValueText, null, node.Left, null, [node.Left, node.Right]))
                 return;
             var rhsType = _global.TryGetSymbol(node.Right, this);// GetExpressionBoundTarget(node.Right).TypeSyntaxOrSymbol as ISymbol;
             //if (rhsType == null)

@@ -8,7 +8,8 @@ namespace System.Reflection
     public abstract partial class MemberInfo
     {
         internal MemberModel _model;
-
+        internal MonoMethodInfo? _monoInfo;
+        internal ParameterInfo[]? _parameters;
         protected MemberInfo(MemberModel model)
         {
             _model = model;

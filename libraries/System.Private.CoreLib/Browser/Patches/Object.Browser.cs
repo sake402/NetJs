@@ -1,4 +1,6 @@
 ﻿using NetJs;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.Versioning;
 using Window;
@@ -13,6 +15,14 @@ namespace System
         [NetJs.Template("{T}._model")]
         public static extern TypeModel? GetTypeModel<T>() where T : allows ref struct;
         public extern object? this[string name]
+        {
+            [NetJs.External]
+            get;
+            [NetJs.External]
+            [param: NetJs.Box(false)]
+            set;
+        }
+        public extern object? this[Window.Symbol name]
         {
             [NetJs.External]
             get;
@@ -61,7 +71,9 @@ namespace System
         public static extern PropertyDescriptor GetOwnPropertyDescriptor(object value, string key);
         [NetJs.Convention(NetJs.Notation.CamelCase)]
         [NetJs.Template("Object.getOwnPropertyDescriptors({value})")]
-        public static extern PropertyDescriptor[] GetOwnPropertyDescriptors(object value);
+        public static extern SimpleDictionary<PropertyDescriptor> GetOwnPropertyDescriptors(object value);
+        [NetJs.Template("Object.keys({value})")]
+        public static extern string[] Keys(object value);
         [NetJs.Convention(NetJs.Notation.CamelCase)]
         [NetJs.Template("Object.defineProperty({value}, {name}, {descriptor})")]
         public static extern TypePrototype DefineProperty(object value, string name, PropertyDescriptor descriptor);
@@ -161,7 +173,6 @@ namespace System
 
         [NetJs.MemberReplace(nameof(GetHashCode))]
         [NetJs.StaticCallConvention]
-        //[NetJs.Template("{global.}" + NetJs.Constants.GetHashCodeName + "({this:!super})")] //make sure we dont pass super keyword in here. JS doesnt support it
         public virtual int GetHashCodeImpl()
         {
             var callerName = NetJs.Script.Write<string>("{global.}getCallerName()");
@@ -170,11 +181,30 @@ namespace System
                 var method = this["GetHashCode"];
                 if (NetJs.Script.IsDefined(method))
                 {
-                    var hashCode = NetJs.Script.Write<int>("method.call(this)");
+                    var unboxedThis = NetJs.Script.Unbox(this);
+                    var hashCode = NetJs.Script.Write<int>("method.call(unboxedThis)");
                     return hashCode;
                 }
             }
             return RuntimeHelpers.GetHashCode(this);
+        }
+
+        [NetJs.MemberReplace(nameof(Equals) + "(object?)")]
+        [NetJs.StaticCallConvention]
+        public virtual bool EqualsImpl(object? obj)
+        {
+            var callerName = NetJs.Script.Write<string>("{global.}getCallerName()");
+            if (callerName.NativeNotEquals("Equals")) //not called by subclass? call the subsclass GetHashCode if there is one
+            {
+                var method = this["Equals"];
+                if (NetJs.Script.IsDefined(method))
+                {
+                    var unboxedThis = NetJs.Script.Unbox(this);
+                    var equals = NetJs.Script.Write<bool>("method.call(unboxedThis, obj)");
+                    return equals;
+                }
+            }
+            return this == obj;
         }
 
         //[NetJs.Reflectable(false)]
@@ -449,14 +479,109 @@ namespace System
 
         //A struct whose member is only numeric type, safe to use DataView for its backing fields
         [NetJs.Name("$pureStruct")]
-        public bool IsPureStruct => Object.GetClassPrototypeOf(this).Flags.TypeHasFlag(TypeFlagsModel.IsPureStruct);
-        public object[] fieldsAsArray => (_fields ??= NetJs.Script.NewArray<object>()).As<object[]>();
-        public DataView fieldsAsDataView => (_fields ??= new DataView(new ArrayBuffer(GetClassPrototype().Size))).As<DataView>();
+        internal bool IsPureStruct => Object.GetClassPrototypeOf(this).Flags.TypeHasFlag(TypeFlagsModel.IsPureStruct);
+        internal object[] fieldsAsArray => (_fields ??= NetJs.Script.NewArray<object>()).As<object[]>();
+        internal DataView fieldsAsDataView => (_fields ??= new DataView(new ArrayBuffer(GetClassPrototype().Size))).As<DataView>();
+        internal Array fieldsToObjectArray => IsPureStruct ? Array.from(new Uint8Array(fieldsAsDataView.buffer)) : fieldsAsArray;
 
-        public Array fieldsToObjectArray => IsPureStruct ? Array.from(new Uint8Array(fieldsAsDataView.buffer)) : fieldsAsArray;
+        [NetJs.Name("$fieldRefs")]
+        internal SimpleDictionary<RefOrPointer> fieldRefs;
 
-        [NetJs.Name("$offsetObjects")]
-        internal SimpleDictionary<object>? offsetObjects;
+        [NetJs.Name("$getFieldRefOrP")]
+        public RefOrPointer<T> GetFieldRefOrPointer<T>(int byteOffset, bool pointer = false)
+        {
+            Debug.Assert(IsPureStruct);
+            var knownType = typeof(T).As<RuntimeType>()._prototype.KnownType;
+            if (knownType == KnownTypeHandle.SystemEnum)
+            {
+                knownType = typeof(T).As<RuntimeType>()._prototype.As<EnumPrototype>().UnderlyingType.KnownType;
+            }
+            T Get(int? i)
+            {
+                var totalByteOffset = byteOffset + (i ?? 0);
+                var value = knownType switch
+                {
+                    KnownTypeHandle.SystemSByte => fieldsAsDataView.getInt8(totalByteOffset).As<T>(),
+                    KnownTypeHandle.SystemByte => fieldsAsDataView.getUint8(totalByteOffset).As<T>(),
+                    KnownTypeHandle.SystemInt16 => fieldsAsDataView.getInt16(totalByteOffset, true).As<T>(),
+                    KnownTypeHandle.SystemUInt16 or KnownTypeHandle.SystemChar => fieldsAsDataView.getUint16(totalByteOffset, true).As<T>(),
+                    KnownTypeHandle.SystemInt32 or KnownTypeHandle.SystemIntPtr => fieldsAsDataView.getInt32(totalByteOffset, true).As<T>(),
+                    KnownTypeHandle.SystemUint32 or KnownTypeHandle.SystemUIntPtr => fieldsAsDataView.getUint32(totalByteOffset, true).As<T>(),
+                    KnownTypeHandle.SystemInt64 => fieldsAsDataView.getBigInt64(totalByteOffset, true).As<T>(),
+                    KnownTypeHandle.SystemUint64 => fieldsAsDataView.getBigUint64(totalByteOffset, true).As<T>(),
+                    KnownTypeHandle.SystemSingle => fieldsAsDataView.getFloat32(totalByteOffset, true).As<T>(),
+                    KnownTypeHandle.SystemDouble => fieldsAsDataView.getFloat64(totalByteOffset, true).As<T>(),
+                    _ => throw null!
+                };
+                return value;
+            }
+            void Set(T value, int? i)
+            {
+                var totalByteOffset = byteOffset + (i ?? 0);
+                switch (knownType)
+                {
+                    case KnownTypeHandle.SystemByte:
+                        fieldsAsDataView.setUint8(totalByteOffset, value.As<byte>());
+                        break;
+                    case KnownTypeHandle.SystemSByte:
+                        fieldsAsDataView.setInt8(totalByteOffset, value.As<sbyte>());
+                        break;
+                    case KnownTypeHandle.SystemChar:
+                    case KnownTypeHandle.SystemUInt16:
+                        fieldsAsDataView.setUint16(totalByteOffset, value.As<ushort>(), true);
+                        break;
+                    case KnownTypeHandle.SystemInt16:
+                        fieldsAsDataView.setInt16(totalByteOffset, value.As<short>(), true);
+                        break;
+                    case KnownTypeHandle.SystemUint32:
+                    case KnownTypeHandle.SystemUIntPtr:
+                        fieldsAsDataView.setUint32(totalByteOffset, value.As<uint>(), true);
+                        break;
+                    case KnownTypeHandle.SystemInt32:
+                    case KnownTypeHandle.SystemIntPtr:
+                        fieldsAsDataView.setInt32(totalByteOffset, value.As<int>(), true);
+                        break;
+                    case KnownTypeHandle.SystemUint64:
+                        fieldsAsDataView.setBigUint64(totalByteOffset, value.As<ulong>(), true);
+                        break;
+                    case KnownTypeHandle.SystemInt64:
+                        fieldsAsDataView.setBigInt64(totalByteOffset, value.As<long>(), true);
+                        break;
+                    case KnownTypeHandle.SystemSingle:
+                        fieldsAsDataView.setFloat32(totalByteOffset, value.As<float>(), true);
+                        break;
+                    case KnownTypeHandle.SystemDouble:
+                        fieldsAsDataView.setFloat64(totalByteOffset, value.As<double>(), true);
+                        break;
+                    default:
+                        throw null!;
+                }
+            }
+            fieldRefs ??= new();
+            if (pointer)
+            {
+                var existing = fieldRefs[byteOffset + 100000];
+                if (NetJs.Script.IsUndefinedOrNull(existing))
+                {
+                    existing = new Pointer<T>(Get, Set);
+                    fieldRefs[byteOffset + 100000] = existing;
+                }
+                return existing.As<Pointer<T>>();
+            }
+            else
+            {
+                var existing = fieldRefs[byteOffset + 200000];
+                if (NetJs.Script.IsUndefinedOrNull(existing))
+                {
+                    existing = new Ref<T>(Get, Set);
+                    fieldRefs[byteOffset + 200000] = existing;
+                }
+                return existing.As<Ref<T>>();
+            }
+        }
+
+        [NetJs.Name("$innerObjects")]
+        internal SimpleDictionary<object>? innerObjects;
 
         [NetJs.Name(NetJs.Constants.ObjectGetField)]
         internal object GetField(int offset, NetJs.Union<int, TypePrototype> size)
@@ -465,17 +590,21 @@ namespace System
             {
                 var prototype = size.As<TypePrototype>();
                 var knownType = prototype.KnownType;
+                if (knownType == KnownTypeHandle.SystemEnum)
+                {
+                    knownType = prototype.As<EnumPrototype>().UnderlyingType.KnownType;
+                }
                 var realSize = prototype.Size;
                 object InnerStruct()
                 {
-                    offsetObjects ??= new();
-                    var mobject = offsetObjects[offset];
+                    innerObjects ??= new();
+                    var mobject = innerObjects[offset];
                     if (NetJs.Script.IsUndefinedOrNull(mobject))
                     {
                         mobject = prototype.NewWithDefaultConstructor();
                         var ownDataView = new DataView(fieldsAsDataView.buffer, offset, realSize);
                         mobject._fields = ownDataView;
-                        offsetObjects[offset] = mobject;
+                        innerObjects[offset] = mobject;
                     }
                     return mobject;
                 }
@@ -486,7 +615,7 @@ namespace System
                     KnownTypeHandle.SystemInt16 => fieldsAsDataView.getInt16(offset, true).As<object>(),
                     KnownTypeHandle.SystemUInt16 or KnownTypeHandle.SystemChar => fieldsAsDataView.getUint16(offset, true).As<object>(),
                     KnownTypeHandle.SystemInt32 or KnownTypeHandle.SystemIntPtr => fieldsAsDataView.getInt32(offset, true).As<object>(),
-                    KnownTypeHandle.SystemUint32 or KnownTypeHandle.SystemUintPtr => fieldsAsDataView.getUint32(offset, true).As<object>(),
+                    KnownTypeHandle.SystemUint32 or KnownTypeHandle.SystemUIntPtr => fieldsAsDataView.getUint32(offset, true).As<object>(),
                     KnownTypeHandle.SystemInt64 => fieldsAsDataView.getBigInt64(offset, true).As<object>(),
                     KnownTypeHandle.SystemUint64 => fieldsAsDataView.getBigUint64(offset, true).As<object>(),
                     KnownTypeHandle.SystemSingle => fieldsAsDataView.getFloat32(offset, true).As<object>(),
@@ -502,15 +631,15 @@ namespace System
                 {
                     if (size.As<TypePrototype>().Flags.TypeHasFlag(TypeFlagsModel.IsValueType)) //struct in struct, collapse the fields into this fields
                     {
-                        offsetObjects ??= new();
-                        var mobject = offsetObjects[offset];
+                        innerObjects ??= new();
+                        var mobject = innerObjects[offset];
                         if (NetJs.Script.IsUndefinedOrNull(mobject))
                         {
                             var realSize = size.As<TypePrototype>().Size;
                             mobject = size.As<TypePrototype>().NewWithDefaultConstructor();
                             var fields = JSProxy.Create<object[]>(new ArrayWindowProxyHandler(fieldsAsArray, offset, realSize));
                             mobject._fields = fields;
-                            offsetObjects[offset] = mobject;
+                            innerObjects[offset] = mobject;
                         }
                         return mobject;
                     }
@@ -519,12 +648,12 @@ namespace System
                 if (isInlineArray) //Array type laid inside this object
                 {
                     size = (size.As<uint>() & 0x7FFFFFFF.As<uint>()).As<int>();
-                    offsetObjects ??= new();
-                    var arrayProxy = offsetObjects[offset];
+                    innerObjects ??= new();
+                    var arrayProxy = innerObjects[offset];
                     if (NetJs.Script.IsUndefinedOrNull(arrayProxy))
                     {
                         arrayProxy = JSProxy.Create<object[]>(new ArrayWindowProxyHandler(fieldsAsArray, offset, size.As<int>()));
-                        offsetObjects[offset] = arrayProxy;
+                        innerObjects[offset] = arrayProxy;
                     }
                     return arrayProxy;
                 }
@@ -538,6 +667,10 @@ namespace System
             {
                 var prototype = size.As<TypePrototype>();
                 var knownType = prototype.KnownType;
+                if (knownType == KnownTypeHandle.SystemEnum)
+                {
+                    knownType = prototype.As<EnumPrototype>().UnderlyingType.KnownType;
+                }
                 var realSize = prototype.Size;
                 switch (knownType)
                 {
@@ -555,7 +688,7 @@ namespace System
                         fieldsAsDataView.setInt16(offset, value.As<short>(), true);
                         break;
                     case KnownTypeHandle.SystemUint32:
-                    case KnownTypeHandle.SystemUintPtr:
+                    case KnownTypeHandle.SystemUIntPtr:
                         fieldsAsDataView.setUint32(offset, value.As<uint>(), true);
                         break;
                     case KnownTypeHandle.SystemInt32:
@@ -639,5 +772,66 @@ namespace System
 
         #endregion
 
+        //Make super keyword available in local function as this.$super
+        [NetJs.Name(NetJs.Constants.SuperClassAccessName)]
+        internal object Super => this["$$super"] ??= JSProxy.Create<object>(new SuperClassProxyHandler(this));
+
+
+        [NetJs.MemberReplace(nameof(ReferenceEquals))]
+        public static bool ReferenceEqualsImpl(object? objA, object? objB)
+        {
+            if (Constants.HandleStringAsValueTypePrimitive)
+            {
+                //String in c# is a reference type, but we box it in this port anyway because we use native js string
+                //and the only way we can make its object member accessible is by boxing
+                //Wen comparing two string reference though, sice they are boxed, they wont be equal as expected
+                //This is a workaround
+                if (objA is string sA && objB is string sB)
+                {
+                    return sA.NativeEquals(sB);
+                }
+            }
+            else
+            {
+                //Both are string, not boxed
+                if (NetJs.Script.TypeOf(objA).NativeEquals("string") && NetJs.Script.TypeOf(objB).NativeEquals("string"))
+                {
+                    //Unfortunately js doesnt allow us to test if the two string are same reference or not
+                }
+            }
+            return objA == objB;
+        }
+
+        public static int GetHashCodeT<T>(T value)
+        {
+            if (value == null)
+                return 0;
+            var type = typeof(T).As<RuntimeType>();
+            if (type.As<RuntimeType>()._prototype.Flags.TypeHasFlag(TypeFlagsModel.IsEnum))
+            {
+                type = type._prototype.As<EnumPrototype>().UnderlyingType.Type.As<RuntimeType>();
+            }
+            if (type == typeof(long) || type == typeof(ulong))
+            {
+                var lvalue = value.As<long>();
+                return (int)lvalue ^ (int)(lvalue >> 32);
+            }
+            if (type._model.As<TypeModel>().KnownType.IsIntegerNumeric())
+                return value.As<int>() | 0;
+            var method = value["GetHashCode"];
+            if (NetJs.Script.IsDefined(method))
+            {
+                var hashCode = NetJs.Script.Write<int>("method.call(value)");
+                return hashCode;
+            }
+            return RuntimeHelpers.GetHashCode(value);
+        }
+
+        [NetJs.Name("$$type")]
+        internal Type TypeView => GetType();
+        [NetJs.Name("$$hashCode")]
+        internal int HashCodeView => GetHashCode();
+        [NetJs.Name("$$string")]
+        internal string? StringView => ToString();
     }
 }

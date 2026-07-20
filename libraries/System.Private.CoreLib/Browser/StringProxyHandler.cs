@@ -24,7 +24,7 @@ namespace NetJs
                     strDirty = true;
                 }
             });
-            reff._array = _chars;
+            reff._dataSource = _chars;
         }
 
         public StringProxyHandler(int length)
@@ -49,7 +49,7 @@ namespace NetJs
             });
             //If someone mutate this array behind the scene, we need to know and update our dirty flag
             //Which is why it is a proxy exposed
-            reff._array = _proxyChars;
+            reff._dataSource = _proxyChars;
             handler.OnMutated += (s, e) =>
             {
                 if (reff._dataView != null)

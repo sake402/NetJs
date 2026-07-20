@@ -15,11 +15,11 @@ namespace NetJs
             [Template("arguments.length")]
             get;
         }
-
+        
         /// <summary>
         /// Retrieves the specified actual argument value passed to the
         /// function by index.
-        /// </summary>
+        /// </summary> 
         /// <param name="index">The index of the argument to retrieve.</param>
         /// <returns>The value of the specified argument.</returns>
         [Template("arguments[{index}]")]
@@ -27,7 +27,7 @@ namespace NetJs
 
         [Template("Array.prototype.slice.call(arguments)")]
         public static extern object[] ToArray();
-
+        
         [Template("Array.prototype.slice.call(arguments, {start})")]
         public static extern object[] ToArray(int start);
 
@@ -36,7 +36,7 @@ namespace NetJs
 
         [Template("Array.prototype.slice.call(arguments)")]
         public static extern T[] ToArray<T>();
-
+        
         [Template("Array.prototype.slice.call(arguments, {start})")]
         public static extern T[] ToArray<T>(int start);
 

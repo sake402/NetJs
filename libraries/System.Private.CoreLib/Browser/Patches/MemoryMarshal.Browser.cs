@@ -8,17 +8,17 @@ namespace System.Runtime.InteropServices
         [NetJs.MemberReplace(nameof(GetArrayDataReference) + "<>")]
         public static ref T GetArrayDataReferenceImpl<T>(T[] array)
         {
-            var reff = RuntimeHelpers.CreateArrayReference(array);
+            var reff = RuntimeHelpers.CreateArrayReferenceT(array);
             NetJs.Script.Write("return reff");
-            throw new NotImplementedException();
+            throw null!;
         }
 
         [NetJs.MemberReplace(nameof(GetArrayDataReference))]
         public static ref byte GetArrayDataReferenceImpl(Array array)
         {
-            var reff = RuntimeHelpers.CreateArrayReference(array);
+            var reff = RuntimeHelpers.CreateArrayReference<object>(array);
             NetJs.Script.Write("return reff");
-            throw new NotImplementedException();
+            throw null!;
         }
     }
 }

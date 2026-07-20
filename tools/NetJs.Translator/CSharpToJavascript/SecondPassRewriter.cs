@@ -664,10 +664,10 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override SyntaxNode? VisitMethodDeclaration(MethodDeclarationSyntax node)
         {
-            //if (node.Identifier.ValueText == "InternalInvoke")
-            //{
+            if (node.Identifier.ValueText == "GetStreamedResponseBytesUnsafe")
+            {
 
-            //}
+            }
             var memberOverride = (MethodDeclarationSyntax?)GetMemberOverride(node)?.SingleOrDefault().Value;
             // Check if the property is an expression-bodied property (has an arrow clause)
             // and there is a conditional expression in the body.
@@ -840,15 +840,15 @@ namespace NetJs.Translator.CSharpToJavascript
                 var methodBody = (memberOverride as MethodDeclarationSyntax)?.Body;
                 var getAttr = (memberOverride as MethodDeclarationSyntax)?.AttributeLists;
                 var propertyGetBody = (memberOverride as PropertyDeclarationSyntax)?.AccessorList?.Accessors.FirstOrDefault(e => e.IsKind(SyntaxKind.GetAccessorDeclaration))?.Body;
-                var propertySetBody = (memberOverride as PropertyDeclarationSyntax)?.AccessorList?.Accessors.FirstOrDefault(e => e.IsKind(SyntaxKind.SetAccessorDeclaration))?.Body;
+                var propertySetBody = (memberOverride as PropertyDeclarationSyntax)?.AccessorList?.Accessors.FirstOrDefault(e => e.IsKind(SyntaxKind.SetAccessorDeclaration) || e.IsKind(SyntaxKind.InitAccessorDeclaration))?.Body;
                 var propertyGetExpressionBody = (memberOverride as PropertyDeclarationSyntax)?.ExpressionBody ?? (memberOverride as PropertyDeclarationSyntax)?.AccessorList?.Accessors.FirstOrDefault(e => e.IsKind(SyntaxKind.GetAccessorDeclaration))?.ExpressionBody;
-                var propertySetExpressionBody = (memberOverride as PropertyDeclarationSyntax)?.AccessorList?.Accessors.FirstOrDefault(e => e.IsKind(SyntaxKind.SetAccessorDeclaration))?.ExpressionBody;
+                var propertySetExpressionBody = (memberOverride as PropertyDeclarationSyntax)?.AccessorList?.Accessors.FirstOrDefault(e => e.IsKind(SyntaxKind.SetAccessorDeclaration) || e.IsKind(SyntaxKind.InitAccessorDeclaration))?.ExpressionBody;
 
                 var propertyGetAttr = (memberOverride as PropertyDeclarationSyntax)?.AccessorList?.Accessors.FirstOrDefault(e => e.IsKind(SyntaxKind.GetAccessorDeclaration))?.AttributeLists ??
                     accessors?.Accessors.FirstOrDefault(e => e.IsKind(SyntaxKind.GetAccessorDeclaration))?.AttributeLists ??
                     default;
-                var propertySetAttr = (memberOverride as PropertyDeclarationSyntax)?.AccessorList?.Accessors.FirstOrDefault(e => e.IsKind(SyntaxKind.SetAccessorDeclaration))?.AttributeLists ??
-                    accessors?.Accessors.FirstOrDefault(e => e.IsKind(SyntaxKind.SetAccessorDeclaration))?.AttributeLists ??
+                var propertySetAttr = (memberOverride as PropertyDeclarationSyntax)?.AccessorList?.Accessors.FirstOrDefault(e => e.IsKind(SyntaxKind.SetAccessorDeclaration) || e.IsKind(SyntaxKind.InitAccessorDeclaration))?.AttributeLists ??
+                    accessors?.Accessors.FirstOrDefault(e => e.IsKind(SyntaxKind.SetAccessorDeclaration) || e.IsKind(SyntaxKind.InitAccessorDeclaration))?.AttributeLists ??
                     default;
 
                 AccessorDeclarationSyntax? getAccessor = null;
@@ -875,7 +875,7 @@ namespace NetJs.Translator.CSharpToJavascript
                         .WithAttributeLists(propertySetAttr)
                         //.WithModifiers(modifiers)
                         .WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken)) :
-                        accessors?.Accessors.FirstOrDefault(e => e.IsKind(SyntaxKind.SetAccessorDeclaration));
+                        accessors?.Accessors.FirstOrDefault(e => e.IsKind(SyntaxKind.SetAccessorDeclaration) || e.IsKind(SyntaxKind.InitAccessorDeclaration));
                 }
                 else
                 {
@@ -883,7 +883,7 @@ namespace NetJs.Translator.CSharpToJavascript
                         .WithAttributeLists(propertySetAttr)
                         //.WithModifiers(modifiers)
                         .WithSemicolonToken((methodBody ?? propertySetBody) == null ? SyntaxFactory.Token(SyntaxKind.SemicolonToken) : SyntaxFactory.MissingToken(SyntaxKind.SemicolonToken)) :
-                        accessors?.Accessors.FirstOrDefault(e => e.IsKind(SyntaxKind.SetAccessorDeclaration));
+                        accessors?.Accessors.FirstOrDefault(e => e.IsKind(SyntaxKind.SetAccessorDeclaration) || e.IsKind(SyntaxKind.InitAccessorDeclaration));
                 }
                 if (getAccessor?.Body != null || getAccessor?.ExpressionBody != null || setAccessor?.Body != null || setAccessor?.ExpressionBody != null)
                 {
@@ -1068,6 +1068,10 @@ namespace NetJs.Translator.CSharpToJavascript
                         //newNode = newNode.WithAttributeLists(atts);
                         newNode = newNode.WithLeadingTrivia(node.GetLeadingTrivia())
                            .WithTrailingTrivia(node.GetTrailingTrivia());
+                        if (newNode.Initializer != null)
+                        {
+                            newNode = newNode.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
+                        }
                         return newNode;
                     }
                     //    var atts = replacementType.HasFlag(MemberReplaceType.Attributes) ? SyntaxFactory.List([SyntaxFactory.AttributeList(SeparatedSyntaxList.Create([.. memberOverride.AttributeLists.SelectMany(a => a.Attributes).Concat(node.AttributeLists.SelectMany(a => a.Attributes))]))]) : node.AttributeLists;
@@ -1815,6 +1819,15 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             return base.VisitAssignmentExpression(node);
         }
+
+        public override SyntaxNode? VisitPostfixUnaryExpression(PostfixUnaryExpressionSyntax node)
+        {
+            //remove null forgivings as it will confuse some writers logic
+            if (node.IsKind(SyntaxKind.SuppressNullableWarningExpression))
+                return Visit(node.Operand);
+            return base.VisitPostfixUnaryExpression(node);
+        }
+
         //public /*override*/ SyntaxNode? VisitAssignmentExpression(AssignmentExpressionSyntax node)
         //{
         //    var rhsType = GetExpressionBoundMember(node.Right);

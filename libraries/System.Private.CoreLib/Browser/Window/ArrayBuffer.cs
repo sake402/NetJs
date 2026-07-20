@@ -26,5 +26,4 @@ namespace Window
 
         public extern ArrayBuffer transferToFixedLength(int newByteLength = -1);
     }
-
 }

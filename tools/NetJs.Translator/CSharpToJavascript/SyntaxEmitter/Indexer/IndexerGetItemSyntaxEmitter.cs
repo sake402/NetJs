@@ -32,16 +32,16 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Indexer
                             visitor.CurrentTypeWriter.Write(node, Constants.IfNotNullParameterName);
                         });
                     }
-                    var bestIndexer = visitor.GetGetIndexer(node is ElementAccessExpressionSyntax ? (ElementAccessExpressionSyntax)node : (ElementBindingExpressionSyntax)node);
-                    if (bestIndexer != null)
+                    var bestGetIndexer = visitor.GetGetIndexer(node is ElementAccessExpressionSyntax ? (ElementAccessExpressionSyntax)node : (ElementBindingExpressionSyntax)node);
+                    if (bestGetIndexer != null)
                     {
-                        bool isExtern = bestIndexer.IsExtern || visitor.Global.HasAttribute(bestIndexer, typeof(ExternalAttribute).FullName!, visitor, false, out _) ||
-                             (bestIndexer.AssociatedSymbol?.IsExtern ?? false) || (bestIndexer.AssociatedSymbol != null && visitor.Global.HasAttribute(bestIndexer.AssociatedSymbol, typeof(ExternalAttribute).FullName!, visitor, false, out _));
-                        bool hasTemplate = bestIndexer.GetTemplateAttribute(visitor.Global) != null;
+                        bool isExtern = bestGetIndexer.IsExtern || visitor.Global.HasAttribute(bestGetIndexer, typeof(ExternalAttribute).FullName!, visitor, false, out _) ||
+                             (bestGetIndexer.AssociatedSymbol?.IsExtern ?? false) || (bestGetIndexer.AssociatedSymbol != null && visitor.Global.HasAttribute(bestGetIndexer.AssociatedSymbol, typeof(ExternalAttribute).FullName!, visitor, false, out _));
+                        bool hasTemplate = bestGetIndexer.GetTemplateAttribute(visitor.Global, visitor) != null;
                         if (!isExtern || hasTemplate)
                         {
-                            visitor.WriteMethodInvocation(node, bestIndexer, null, arguments.Select(a => new CodeNode(a)), cExpression, lhsSymbol, null, false);
-                            if (bestIndexer.RefKind != RefKind.None)
+                            visitor.WriteMethodInvocation(node, bestGetIndexer, null, arguments.Select(a => new CodeNode(a)), cExpression, lhsSymbol, null, false);
+                            if (bestGetIndexer.RefKind != RefKind.None)
                             {
                                 if (node.Parent.IsKind(SyntaxKind.EqualsEqualsToken) ||
                                     node.Parent.IsKind(SyntaxKind.NotEqualsExpression) ||

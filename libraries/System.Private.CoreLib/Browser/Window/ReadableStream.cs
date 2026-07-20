@@ -17,7 +17,7 @@ namespace Window
     [NetJs.External]
     public class ReadableStreamDefaultReader<T>
     {
-        public extern Promise<object> read();
+        public extern Promise<GeneratorIteratorResult<Uint8Array>> read();
         public extern Promise<object> releaseLock();
     }
 }

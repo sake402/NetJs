@@ -14,6 +14,13 @@ namespace System.Reflection
                 uint v = (uint)value!;
                 return AppDomain.GetType(v);
             }
+            if (value != null && type != null)
+            {
+                if (type.As<RuntimeType>()._prototype.Flags.TypeHasFlag(TypeFlagsModel.IsValueType))//perform neccessary boxing
+                {
+                    value = NetJs.Script.Box(value, type.As<RuntimeType>()._prototype);
+                }
+            }
             return value;
         }
 
@@ -88,9 +95,17 @@ namespace System.Reflection
         [NetJs.MemberReplace]
         internal static Attribute[] GetCustomAttributesInternal(ICustomAttributeProvider obj, Type attributeType, bool pseudoAttrs)
         {
-            var attHandle = attributeType.As<RuntimeType>()._model.Handle;
+            var attHandle = attributeType.As<RuntimeType?>()?._prototype.TypeHandle;
             NetJs.AttributeModel[]? attributesModel = GetAttributeModel(obj);
-            return (attributesModel?.Filter(a => a.TypeHandle == attHandle).Map(a => CreateAttribute(a, attributeType)) ?? []).AsNetArray();
+            return (attributesModel?.Filter(a => attHandle == null || a.TypeHandle == attHandle).Map(a =>
+            {
+                if (attHandle == null)
+                {
+                    var type = AppDomain.GetType(a.TypeHandle.As<uint>()) ?? throw new InvalidOperationException();
+                    return CreateAttribute(a, type);
+                }
+                return CreateAttribute(a, attributeType);
+            }) ?? []).AsNetArray();
         }
 
         [NetJs.MemberReplace]
@@ -103,7 +118,7 @@ namespace System.Reflection
         [NetJs.MemberReplace]
         private static bool IsDefinedInternal(ICustomAttributeProvider obj, Type AttributeType)
         {
-            var attHandle = AttributeType.As<RuntimeType>()._model.Handle;
+            var attHandle = AttributeType.As<RuntimeType>()._prototype.TypeHandle;
             NetJs.AttributeModel[]? attributesModel = GetAttributeModel(obj);
             return attributesModel?.Some(a => a.TypeHandle == attHandle) ?? false;
         }

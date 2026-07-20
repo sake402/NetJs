@@ -2,6 +2,7 @@
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Operations;
+using System.Threading;
 
 namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
 {
@@ -14,8 +15,10 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                         conversion.Value.IsImplicit &&
                         (conversion.Value.IsNumeric || conversion.Value.IsConstantExpression))
             {
-                var from = semanticModel.GetOperation(node)?.Type;
-                var to = (semanticModel.GetOperation(node)?.Parent as IConversionOperation)?.Type;
+                var fromOperation = semanticModel.GetOperation(node);
+                var from = fromOperation?.Type;
+                var toOperation = fromOperation?.Parent as IConversionOperation;
+                var to = toOperation?.Type;
                 if (from != null && to != null)
                 {
                     bool skip = false;
@@ -45,8 +48,10 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                         conversion.Value.IsImplicit &&
                         (conversion.Value.IsNumeric || conversion.Value.IsConstantExpression))
             {
-                var from = semanticModel.GetOperation(node)?.Type;
-                var to = (semanticModel.GetOperation(node)?.Parent as IConversionOperation)?.Type;
+                var fromOperation = semanticModel.GetOperation(node);
+                var from = fromOperation?.Type;
+                var toOperation = fromOperation?.Parent as IConversionOperation;
+                var to = toOperation?.Type;
                 if (from != null && to != null)
                 {
                     bool skip = false;
@@ -69,17 +74,34 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
             return false;
         }
 
-        static List<CSharpSyntaxNode?> _disabled = new List<CSharpSyntaxNode?>();
+        static ThreadLocal<List<SyntaxNode?>> _disabled = new(() => new List<SyntaxNode?>());
         public static IDisposable Disable(CSharpSyntaxNode? node)
         {
-            _disabled.Add(node);
-            return new DelegateDispose(() => _disabled.Remove(node));
+            if (node.IsKind(SyntaxKind.ParenthesizedExpression))
+            {
+                SyntaxNode? snode = node;
+                List<SyntaxNode> nodes = new();
+                while (snode != null && snode.IsKind(SyntaxKind.ParenthesizedExpression))
+                {
+                    nodes.Add(snode);
+                    snode = ((ParenthesizedExpressionSyntax)snode).Expression;
+                }
+                if (snode != null)
+                    nodes.Add(snode);
+                _disabled.Value.AddRange(nodes);
+                return new DelegateDispose(() => nodes.ForEach(node => _disabled.Value.Remove(node)));
+            }
+            else
+            {
+                _disabled.Value.Add(node);
+                return new DelegateDispose(() => _disabled.Value.Remove(node));
+            }
         }
         public override bool TryEmit(CSharpSyntaxNode node, TranslatorSyntaxVisitor visitor)
         {
-            if (_disabled.Contains(node))
+            if (_disabled.Value.Contains(node))
                 return false;
-            if (_processing.TryPeek(out var top) && top == node)
+            if (_processing.Value.TryPeek(out var top) && top == node)
                 return false;
             foreach (var sm in visitor.SemanticModels)
             {
@@ -92,7 +114,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                         conversion.MethodSymbol != null &&
                         visitor.Global.ShouldExportType(conversion.MethodSymbol.ContainingType, visitor))
                     {
-                        _processing.Push(node);
+                        _processing.Value.Push(node);
                         try
                         {
                             visitor.WriteMethodInvocation(node, conversion.MethodSymbol, null, [node], null, null, null, false);
@@ -100,7 +122,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                         }
                         finally
                         {
-                            _processing.Pop();
+                            _processing.Value.Pop();
                         }
                         //visitor.TryInvokeMethodOperator(node, "op_Implicit", (ITypeSymbol?)lhsType, null, [rhsAsExpression]));
                     }
@@ -111,7 +133,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                         var operation = sm.GetOperation(node)?.Parent as IConversionOperation;
                         if (operation != null)
                         {
-                            _processing.Push(node);
+                            _processing.Value.Push(node);
                             try
                             {
                                 var sourceType = operation.Operand.Type!;
@@ -129,7 +151,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                             }
                             finally
                             {
-                                _processing.Pop();
+                                _processing.Value.Pop();
                             }
                         }
                     }
@@ -140,7 +162,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                         var operation = sm.GetOperation(node)?.Parent as IConversionOperation;
                         if (operation != null)
                         {
-                            _processing.Push(node);
+                            _processing.Value.Push(node);
                             try
                             {
                                 var sourceType = operation.Operand.Type!;
@@ -157,7 +179,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                             }
                             finally
                             {
-                                _processing.Pop();
+                                _processing.Value.Pop();
                             }
                         }
                     }
@@ -168,41 +190,61 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                         var operation = sm.GetOperation(node)?.Parent as IConversionOperation;
                         if (operation != null)
                         {
-                            bool IsCollectionExpressionTargetCandidateParameter(IParameterSymbol parameter)
+                            bool IsCollectionExpressionTargetCandidateParameter(IParameterSymbol parameter, out ITypeSymbol? elementType)
                             {
-                                if (parameter.Type.IsArray(out var ta))
+                                if (parameter.Type.IsArray(out elementType))
                                     return true;
-                                if (parameter.Type.IsEnumerable(out var te))
+                                if (parameter.Type.IsEnumerable(out elementType))
                                     return true;
                                 return false;
                             }
                             var targetType = operation.Type!;
+                            ITypeSymbol? elementType = null;
                             var implicitConverter = targetType.GetMembers("op_Implicit", visitor.Global)
                                 .Cast<IMethodSymbol>()
-                                .FirstOrDefault(e => e.Parameters.Length == 1 && IsCollectionExpressionTargetCandidateParameter(e.Parameters[0]) && e.ReturnType.Equals(targetType, SymbolEqualityComparer.Default));
+                                .FirstOrDefault(e => e.Parameters.Length == 1 && IsCollectionExpressionTargetCandidateParameter(e.Parameters[0], out elementType) && e.ReturnType.Equals(targetType, SymbolEqualityComparer.Default));
                             if (implicitConverter != null)
                             {
-                                _processing.Push(node);
+                                _processing.Value.Push(node);
                                 try
                                 {
                                     visitor.WriteMethodInvocation(node, implicitConverter, null, [new CodeNode(() =>
                                     {
-                                        visitor.CurrentTypeWriter.Write(node, "[");
-                                        int ix = 0;
-                                        foreach(var e in ((CollectionExpressionSyntax)node).Elements)
+                                        bool isBootCode = visitor.Global.HasAttribute(visitor.CurrentTypeSymbol, typeof(BootAttribute).FullName, visitor, false, out _);
+                                        if (!isBootCode)
                                         {
-                                            if (ix > 0)
-                                                visitor.CurrentTypeWriter.Write(node, ", ");
-                                            visitor.Visit(e);
-                                            ix++;
+                                            visitor.WriteCreateArray(node, elementType!, null, null, new CodeNode(() => {
+                                                visitor.CurrentTypeWriter.Write(node, "[");
+                                                int ix = 0;
+                                                foreach(var e in ((CollectionExpressionSyntax)node).Elements)
+                                                {
+                                                    if (ix > 0)
+                                                        visitor.CurrentTypeWriter.Write(node, ", ");
+                                                    visitor.Visit(e);
+                                                    ix++;
+                                                }
+                                                visitor.CurrentTypeWriter.Write(node, "]");
+                                            }));
                                         }
-                                        visitor.CurrentTypeWriter.Write(node, "]");
+                                        else
+                                        {
+                                            visitor.CurrentTypeWriter.Write(node, "[");
+                                            int ix = 0;
+                                            foreach(var e in ((CollectionExpressionSyntax)node).Elements)
+                                            {
+                                                if (ix > 0)
+                                                    visitor.CurrentTypeWriter.Write(node, ", ");
+                                                visitor.Visit(e);
+                                                ix++;
+                                            }
+                                            visitor.CurrentTypeWriter.Write(node, "]");
+                                        }
                                     })], null, null, null, false);
                                     return true;
                                 }
                                 finally
                                 {
-                                    _processing.Pop();
+                                    _processing.Value.Pop();
                                 }
                             }
                         }
@@ -216,21 +258,30 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                     {
                         var literalOperation = sm.GetOperation(node) as ILiteralOperation;
                         var convertOperation = literalOperation?.Parent as IConversionOperation;
+                        var assignOperation = literalOperation?.Parent as ICompoundAssignmentOperation;
+                        var convertType = convertOperation?.Type;
+                        if (convertType?.TypeKind == TypeKind.Enum)
+                        {
+                            convertType = ((INamedTypeSymbol)convertType).EnumUnderlyingType;
+                        }
                         if ((literalOperation != null &&
                             (SymbolEqualityComparer.Default.Equals(literalOperation.Type, visitor.Global.SystemUInt64) || SymbolEqualityComparer.Default.Equals(literalOperation.Type, visitor.Global.SystemInt64)))
                             ||
                             (convertOperation != null &&
-                            (SymbolEqualityComparer.Default.Equals(convertOperation.Type, visitor.Global.SystemUInt64) || SymbolEqualityComparer.Default.Equals(convertOperation.Type, visitor.Global.SystemInt64)))
+                            (SymbolEqualityComparer.Default.Equals(convertType, visitor.Global.SystemUInt64) || SymbolEqualityComparer.Default.Equals(convertType, visitor.Global.SystemInt64)))
+                            ||
+                            (assignOperation != null &&
+                            (SymbolEqualityComparer.Default.Equals(assignOperation.Type, visitor.Global.SystemUInt64) || SymbolEqualityComparer.Default.Equals(assignOperation.Type, visitor.Global.SystemInt64)))
                             )
                         {
-                            _processing.Push(node);
+                            _processing.Value.Push(node);
                             try
                             {
                                 visitor.Visit(node);
                                 visitor.CurrentTypeWriter.Write(node, "n");
                                 return true;
                             }
-                            finally { _processing.Pop(); }
+                            finally { _processing.Value.Pop(); }
                         }
                     }
                     //else if (conversion.Exists &&
@@ -239,7 +290,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                     //{
                     if (NumberImplicitlyConvertsToLong(node, sm, visitor, conversion))
                     {
-                        _processing.Push(node);
+                        _processing.Value.Push(node);
                         try
                         {
                             if (node.IsKind(SyntaxKind.NumericLiteralExpression))
@@ -260,11 +311,11 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                             }
                             return true;
                         }
-                        finally { _processing.Pop(); }
+                        finally { _processing.Value.Pop(); }
                     }
                     else if (LongImplicitlyConvertsToNumber(node, sm, visitor, conversion))
                     {
-                        _processing.Push(node);
+                        _processing.Value.Push(node);
                         try
                         {
                             //If we are inside the class Number, make sure to generate window.Number
@@ -277,9 +328,30 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                             visitor.CurrentTypeWriter.Write(node, ")");
                             return true;
                         }
-                        finally { _processing.Pop(); }
+                        finally { _processing.Value.Pop(); }
                     }
-                    //}
+                    else if (conversion.Exists &&
+                        conversion.IsImplicit &&
+                        conversion.IsNumeric)
+                    {
+                        var fromOperation = sm.GetOperation(node);
+                        var from = fromOperation?.Type;
+                        var toOperation = fromOperation?.Parent as IConversionOperation;
+                        var to = toOperation?.Type;
+                        if (from != null && to != null)
+                        {
+                            if ((!from.IsNumberNumericType() && !from.IsLongNumericType()) || (!to.IsNumberNumericType() && !to.IsLongNumericType()))
+                            {
+                                _processing.Value.Push(node);
+                                try
+                                {
+                                    if (visitor.TryInvokeMethodOperator(node, "op_Implicit", to, null, from, [node]))
+                                        return true;
+                                }
+                                finally { _processing.Value.Pop(); }
+                            }
+                        }
+                    }
                 }
             }
             return false;

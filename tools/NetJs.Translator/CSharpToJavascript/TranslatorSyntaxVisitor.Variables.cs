@@ -49,9 +49,21 @@ namespace NetJs.Translator.CSharpToJavascript
                             }));
                             CurrentTypeWriter.WriteLine(node, ";");
                         }
+                        else if (declarationType != null && declarationType.AllInterfaces.Any(it => SymbolEqualityComparer.Default.Equals(it, _global.SystemIAsyncDisposable)))
+                        {
+                            CurrentTypeWriter.WriteLine(node, $"if ({variable.Identifier.ResolveIdentifierName()} !== null)", true);
+                            CurrentTypeWriter.WriteLine(node, "{", true);
+                            CurrentTypeWriter.Write(node, "await ", true);
+                            WriteMethodInvocation(node, "System.IAsyncDisposable.DisposeAsync", lhsExpression: new CodeNode(() =>
+                            {
+                                CurrentTypeWriter.Write(node, $"{variable.Identifier.ResolveIdentifierName()}");
+                            }));
+                            CurrentTypeWriter.WriteLine(node, ";");
+                            CurrentTypeWriter.WriteLine(node, "}", true);
+                        }
                         else
                         {
-                            CurrentTypeWriter.WriteLine(node, $"{variable.Identifier.ResolveIdentifierName()}?.Dispose()", true);
+                            CurrentTypeWriter.WriteLine(node, $"{variable.Identifier.ResolveIdentifierName()}?.Dispose{(node.AwaitKeyword.Text.Length > 0 ? "Async" : "")}()", true);
                         }
                     }
                     CurrentTypeWriter.WriteLine(node, "}", true);
@@ -130,7 +142,7 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (node.Designation.IsKind(SyntaxKind.DiscardDesignation))
             {
-                CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.DiscardRefName}");
+                CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.DiscardRefName}()");
             }
             else
             {
@@ -147,27 +159,5 @@ namespace NetJs.Translator.CSharpToJavascript
             CurrentTypeWriter.Write(node, node.Identifier.ResolveIdentifierName());
             //base.VisitSingleVariableDesignation(node);
         }
-
-        public override void VisitDeclarationPattern(DeclarationPatternSyntax node)
-        {
-            var switchExpression = node.FindClosestParent<SwitchExpressionSyntax>();
-            if (switchExpression != null)
-            {
-                HandleDeclarationPatternInSwitchExpression(node);
-            }
-            else
-            {
-                var switchStatement = node.FindClosestParent<SwitchStatementSyntax>();
-                if (switchStatement != null)
-                {
-                    HandleDeclarationPatternInSwitchStatement(node);
-                }
-                else
-                {
-                    base.VisitDeclarationPattern(node);
-                }
-            }
-        }
-
     }
 }

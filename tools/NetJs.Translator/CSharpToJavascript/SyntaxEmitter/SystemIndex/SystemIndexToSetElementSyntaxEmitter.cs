@@ -52,7 +52,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.SystemIndex
                                     if (lenGetProperty != null)
                                     {
                                         bool isStaticCall = lenGetProperty.IsStaticCallConvention(visitor.Global);
-                                        bool hasTemplate = lenGetProperty.GetMethod?.GetTemplateAttribute(visitor.Global) != null;
+                                        bool hasTemplate = lenGetProperty.GetMethod?.GetTemplateAttribute(visitor.Global, visitor) != null;
                                         //if (true)
                                         //{
                                         CodeNode expressionNode;

@@ -8,8 +8,13 @@ namespace Window
     /// </summary>
     [NetJs.External]
     [NetJs.Name("window")]
-    public static class Window
+    public class Window
     {
+        public static extern Window Instance
+        {
+            [NetJs.Template("window")]
+            get;
+        }
         public static extern Document document { get; }
         public static extern Console console { get; }
         public static extern Navigator navigator { get; }
@@ -18,7 +23,7 @@ namespace Window
 
         public static extern double innerWidth { get; }
         public static extern double innerHeight { get; }
-        
+
         public static extern int setTimeout(Action handler, int timeout);
         public static extern int setInterval(Action handler, int timeout);
         public static extern void clearTimeout(int id);
@@ -31,5 +36,8 @@ namespace Window
         public static extern void addEventListener(string type, object listener, object? options = null);
         public static extern void removeEventListener(string type, object listener, object? options = null);
         public static extern bool dispatchEvent(Event evt);
+
+        public static extern Promise<Response> fetch(string input, FetchOption? init = null);
+        public static extern Promise<Response> fetch(Request request);
     }
 }

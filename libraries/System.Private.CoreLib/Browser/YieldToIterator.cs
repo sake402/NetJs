@@ -1,28 +1,15 @@
 using NetJs;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace NetJs
 {
-    public class YieldToIterator<T> : IEnumerable<T>
+    public class YieldToIterator<T> : IEnumerable<T>, IAsyncEnumerable<T>
     {
-        [ObjectLiteral]
-        public class IteratorResult
-        {
-            [Name("value")]
-            public T? Value { get; set; }
-            [Name("done")]
-            public bool Done { get; set; }
-        }
-
-        public interface IGenerator
-        {
-            [Name("next")]
-            IteratorResult Next();
-        }
-
-        NativeFunction<IGenerator> _getGenerator;
-        public YieldToIterator(NativeFunction<IGenerator> getGenerator)
+        NativeFunction<IGenerator<T>> _getGenerator;
+        public YieldToIterator(NativeFunction<IGenerator<T>> getGenerator)
         {
             _getGenerator = getGenerator;
         }
@@ -36,13 +23,20 @@ namespace NetJs
             return GetEnumerator();
         }
 
-        class Enumerator : IEnumerator<T>
+        public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
         {
-            IGenerator _generator;
+            return new Enumerator(_getGenerator(), cancellationToken);
+        }
+
+        class Enumerator : IEnumerator<T>, IAsyncEnumerator<T>
+        {
+            IGenerator<T> _generator;
             T? _current;
-            public Enumerator(IGenerator generator)
+            CancellationToken _cancellationToken;
+            public Enumerator(IGenerator<T> generator, CancellationToken cancellationToken = default)
             {
                 _generator = generator;
+                _cancellationToken = cancellationToken;
             }
 
             public T Current => _current!;
@@ -65,6 +59,22 @@ namespace NetJs
 
             public void Reset()
             {
+            }
+
+            public async ValueTask<bool> MoveNextAsync()
+            {
+                _cancellationToken.ThrowIfCancellationRequested();
+                if (alreadyDone)
+                    return false;
+                var nxt = await _generator.Next().As<Task<IGeneratorIteratorResult<T>>>();
+                alreadyDone = nxt.Done;
+                _current = nxt.Value;
+                return !nxt.Done;
+            }
+
+            public ValueTask DisposeAsync()
+            {
+                return ValueTask.CompletedTask;
             }
         }
     }

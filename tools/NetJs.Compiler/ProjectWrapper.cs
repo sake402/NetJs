@@ -18,6 +18,7 @@ namespace NetJs.Compiler
         public CSharpCompilation? Compilation { get; }
         public string DirectoryPath => msProject.DirectoryPath;
         public string FullPath => msProject.FullPath;
+        public string SDK => msProject.Xml.Sdk;
         public CompilationOptions? CompilationOptions => caProject.CompilationOptions;
         public ProjectWrapper(CodeAnalysisProject caProject, MsBuildProject project)
         {
@@ -36,7 +37,13 @@ namespace NetJs.Compiler
         }
         public string GetAssemblyName()
         {
-            return msProject.AllEvaluatedProperties.Last(e => e.Name == "AssemblyName").EvaluatedValue;
+            var aName = msProject.AllEvaluatedProperties.Last(e => e.Name == "AssemblyName").EvaluatedValue;
+            //We may have override assembly name back to default for some libraries, beacuase of vs intelissense
+            if (!aName.StartsWith(Constants.ProjectName))
+            {
+                aName = Constants.ProjectName + "." + aName;
+            }
+            return aName;
         }
         public string GetNamespace()
         {
@@ -81,10 +88,11 @@ namespace NetJs.Compiler
         {
             IList<string> sourceFiles = new List<string>();
 
-            foreach (var projectItem in msProject.AllEvaluatedItems.Where(i => i.ItemType == "Using"))
-            {
-                sourceFiles.Add(projectItem.EvaluatedInclude);
-            }
+            //Already part of source files
+            //foreach (var projectItem in msProject.AllEvaluatedItems.Where(i => i.ItemType == "Using"))
+            //{
+            //    sourceFiles.Add(projectItem.EvaluatedInclude);
+            //}
 
             return sourceFiles;
         }
@@ -101,6 +109,14 @@ namespace NetJs.Compiler
                     sourceFiles.Add(projectItem.EvaluatedInclude);
                 else
                     sourceFiles.Add(Path.Join(msProject.DirectoryPath, projectItem.EvaluatedInclude));
+            }
+
+            //Check for cs files like .NETCoreApp,Version=v10.0.AssemblyAttributes.cs
+            var sourceObjGenOutputPath = $"{msProject.DirectoryPath}/obj/{GetPlatform()}/{GetConfiguration()}/{GetTargetFramework()}";
+            if (Directory.Exists(sourceObjGenOutputPath))
+            {
+                var csFiles = Directory.EnumerateFiles(sourceObjGenOutputPath, "*.cs", SearchOption.TopDirectoryOnly);
+                sourceFiles.AddRange(csFiles);
             }
 
             //Check for source generated files
@@ -138,6 +154,14 @@ namespace NetJs.Compiler
                     else
                         sourceFiles.Add(Path.Join(msProject.DirectoryPath, projectItem.EvaluatedInclude));
                 }
+            }
+
+            //Check for css files scopedcss/bundle
+            var sourceGenOutputPath = $"{msProject.DirectoryPath}/obj/{GetPlatform()}/{GetConfiguration()}/{GetTargetFramework()}/scopedcss/bundle";
+            if (Directory.Exists(sourceGenOutputPath))
+            {
+                var csFiles = Directory.EnumerateFiles(sourceGenOutputPath, "*.css", SearchOption.AllDirectories);
+                sourceFiles.AddRange(csFiles);
             }
 
             return sourceFiles;

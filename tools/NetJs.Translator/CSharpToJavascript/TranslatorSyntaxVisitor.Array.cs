@@ -137,10 +137,14 @@ namespace NetJs.Translator.CSharpToJavascript
         public override void VisitArrayCreationExpression(ArrayCreationExpressionSyntax node)
         {
             EnsureImported(node.Type);
+            //var rankDepth = node.Type.RankSpecifiers.Count;
             var rankLiterals = node.Type.RankSpecifiers.First().Sizes.ToArray();//.Select(l => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(l)));
+            var arrayType = _global.GetTypeSymbol(node, this); //use the typesymbol version of create array, so we can easily detect jagged array
+            ITypeSymbol elementType;
+            arrayType.IsArray(out elementType);
             //var rank = SyntaxFactory.ArrayRankSpecifier(SyntaxFactory.SeparatedList<ExpressionSyntax>(rankLiterals));
             //var rank = SyntaxFactory.CollectionExpression(SyntaxFactory.SeparatedList(rankLiterals.Select(l => (CollectionElementSyntax)SyntaxFactory.ExpressionElement(l))));
-            WriteCreateArray(node, node.Type.ElementType, lengths: (Action)(() =>
+            WriteCreateArray(node, elementType, lengths: (Action)(() =>
             {
                 CurrentTypeWriter.Write(node, "[");
                 int ix = 0;
@@ -280,19 +284,25 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitSpreadElement(SpreadElementSyntax node)
         {
+            //CurrentTypeWriter.Write(node, Constants.GlobalName);
+            //CurrentTypeWriter.Write(node, ".");
+            //CurrentTypeWriter.Write(node, Constants.ToArray);
+            //CurrentTypeWriter.Write(node, "(");
+            //base.VisitSpreadElement(node);
+            //CurrentTypeWriter.Write(node, ")");
             CurrentTypeWriter.Write(node, "...");
             base.VisitSpreadElement(node);
         }
 
         ITypeSymbol? InferLeftHandSideType(CollectionExpressionSyntax node)
         {
-            if (node.Parent is EqualsValueClauseSyntax eq && eq.Parent is VariableDeclaratorSyntax vr)
+            if (node.Parent.IsKind(SyntaxKind.EqualsValueClause) && node.Parent is EqualsValueClauseSyntax eq && eq.Parent is VariableDeclaratorSyntax vr)
             {
                 var eqLeft = vr.Identifier.ValueText;
                 var variableType = GetIdentifierTypeInScope(eqLeft);
                 return _global.ResolveSymbol(variableType, this/*, out _, out _*/)?.GetTypeSymbol();
             }
-            else if (node.Parent is ArrowExpressionClauseSyntax ar && ar.Parent is MemberDeclarationSyntax member)
+            else if (node.Parent.IsKind(SyntaxKind.ArrowExpressionClause) && node.Parent is ArrowExpressionClauseSyntax ar && ar.Parent is MemberDeclarationSyntax member)
             {
                 if (member is PropertyDeclarationSyntax p)
                 {
@@ -302,6 +312,10 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     return _global.GetTypeSymbol(m.ReturnType, this);
                 }
+            }
+            else if (node.Parent.IsKind(SyntaxKind.Argument) && node.Parent is ArgumentSyntax arg)
+            {
+                return _global.TryGetTypeSymbol(arg, this);
             }
             return null;
         }
@@ -339,9 +353,9 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitCollectionExpression(CollectionExpressionSyntax node)
         {
-            var @class = node.FindClosestParent<BaseTypeDeclarationSyntax>();
-            var symbol = _global.GetSymbol(@class!, this/*, out _, out _*/);
-            bool isBootCode = _global.HasAttribute(symbol, typeof(BootAttribute).FullName, this, false, out _);
+            //var @class = node.FindClosestParent<BaseTypeDeclarationSyntax>();
+            //var symbol = _global.GetSymbol(@class!, this/*, out _, out _*/);
+            bool isBootCode = _global.HasAttribute(CurrentTypeSymbol, typeof(BootAttribute).FullName, this, false, out _);
 
             //Disable collection expression in boot code as other classes are not available
             var lhsType = isBootCode ? null : (InferLeftHandSideType(node) ?? _global.TryGetTypeSymbol(node, this));
@@ -351,11 +365,11 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 //isArrayLHS = true;
                 var typeMetadata = _global.GetMetadata(elementType!);
-                var typeName = typeMetadata?.InvocationName ?? elementType!.Name;
-                if (string.IsNullOrEmpty(typeName))
-                {
-                    typeName = elementType!.ComputeOutputTypeName(_global);
-                }
+                var typeName = elementType!.ComputeOutputTypeName(_global);// typeMetadata?.InvocationName ?? elementType!.Name;
+                //if (string.IsNullOrEmpty(typeName))
+                //{
+                //    typeName = elementType!.ComputeOutputTypeName(_global);
+                //}
                 WriteMethodInvocation(node, "System.Runtime.CompilerServices.RuntimeHelpers.CreateArray", arguments: [new CodeNode(() => {
                     CurrentTypeWriter.Write(node, $"{typeName}.{Constants.PrototypeTypeName}");
                 }), new CodeNode(()=>{
@@ -379,9 +393,9 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     if (lhsType.IsAbstract || lhsType.TypeKind == TypeKind.Interface)
                     {
-                        if (lhsType.Name == "IReadOnlyList")
+                        if (lhsType.Name == "IReadOnlyList" || lhsType.Name == "IList")
                         {
-                            lhsType = ((INamedTypeSymbol)_global.GetSymbol("System.Collections.Generic.List<>", this)).Construct(((INamedTypeSymbol)lhsType).TypeParameters.ToArray());
+                            lhsType = ((INamedTypeSymbol)_global.GetSymbol("System.Collections.Generic.List<>", this)).Construct(((INamedTypeSymbol)lhsType).TypeArguments.ToArray());
                         }
                     }
                     //if (TryInvokeMethodOperator(node, ImplicitOperatorName, lhsType, null, node.Elements))

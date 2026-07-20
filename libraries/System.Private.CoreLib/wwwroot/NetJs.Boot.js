@@ -851,6 +851,7 @@ window.classes = classes;
     //keep boot types in this array for retreiver by AppDomain when it starts
     let bootTypes = [];
     NetJs.$bts = bootTypes;
+    NetJs.$exports = {};
     // const GenericType0Placeholder = 20;
     // NetJs.$Ts = [];
     // for (let i = 0; i < 128; i++) { dont expect you to have up to 128 generic parameter on a class
@@ -908,30 +909,49 @@ window.classes = classes;
         //finalizer.register(myObject, "_");
     }
 
-    NetJs.getCallerName = function () {
+    NetJs.getCallerName = function getCallerName() {
         const error = new Error();
         const stack = error.stack;
 
         if (!stack) return 'unknown';
 
-        // Split stack by line breaks
-        const lines = stack.split('\n');
+        // Split stack by line breaks and clean empty lines
+        const lines = stack.split('\n').filter(line => line.trim().length > 0);
 
-        // Line 0 is Error message, Line 1 is getCallerName itself
-        // Line 2 is the actual function that called getCallerName
-        // Line 3 is the actual function that called getCallerName's caller, which is what we want
-        const callerLine = lines[3];
+        // Dynamic Indexing: Find where getCallerName itself sits in the stack array
+        // This removes the fragile guesswork of lines[3] vs lines[2]
+        const currentFuncIdx = lines.findIndex(line => line.includes('getCallerName'));
+
+        // If we can't find this function, fallback safely
+        if (currentFuncIdx === -1) return 'unknown';
+
+        // The target caller is 2 steps further down the stack trace array
+        // (Current Function -> Immediate Caller -> The Caller's Caller)
+        const callerLine = lines[currentFuncIdx + 2];
 
         if (!callerLine) return 'top-level';
 
-        // Clean up V8 engine style traces: " at CallerName (path...)"
-        const match = callerLine.match(/at\s+([^\s(]+)/);
-        if (match) {
-            var tokens = match[1].split('.');
+        // 1. Try V8 Engine Style (Chrome/Edge): " at CallerName (path...)"
+        const chromeMatch = callerLine.match(/at\s+([^\s(]+)/);
+        if (chromeMatch) {
+            const tokens = chromeMatch[1].split('.');
             return tokens[tokens.length - 1];
         }
+
+        // 2. Try SpiderMonkey Style (Firefox): "CallerName@path..."
+        const firefoxMatch = callerLine.match(/^([^@]+)@/);
+        if (firefoxMatch) {
+            // If the method is a class/object method, it might look like "Object.method"
+            const tokens = firefoxMatch[1].split('.');
+            const name = tokens[tokens.length - 1];
+
+            // Firefox marks anonymous functions with an empty string or <
+            return (name && name !== '<') ? name : 'anonymous';
+        }
+
         return 'anonymous';
     }
+
 
     NetJs.$nomix = class { }
 
@@ -1078,7 +1098,7 @@ window.classes = classes;
             return prototype.$default();
         if (prototype.Zero !== undefined) //test long and decimal type
             return prototype.Zero;
-        if (prototype.$is && prototype.$is(0, NetJs.$discardRef))
+        if (prototype.$is && prototype.$is(0, NetJs._))
             return 0;
         // var model = prototype.$model;
         if (isValueType(prototype) === false) {
@@ -1104,9 +1124,6 @@ window.classes = classes;
         //}
         return new prototype();
     }
-    NetJs.$ref = function (getter, setter, type) {
-        return $.$spc.RefOrPointer$$(type)(getter, setter);
-    }
     NetJs.$box = function (value, prototype) {
         if (value == null)
             return null;
@@ -1130,6 +1147,8 @@ window.classes = classes;
     }
 
     NetJs.$unbox = function (value, valueType) {
+        if (value === null)
+            return value;
         if (!valueType || NetJs.$is(value, valueType)) {
             if (!value.$boxed)
                 return value;
@@ -1146,7 +1165,15 @@ window.classes = classes;
         return null;
     }
 
-    NetJs.$discardRef = {
+    NetJs.$discardRef = function () {
+        let value;
+        return {
+            _:true,
+            get $v() { return value; },
+            set $v(v) { value = v; }
+        }
+    }
+    NetJs._ = {
         get $v() { },
         set $v(v) { }
     }
@@ -1158,10 +1185,10 @@ window.classes = classes;
         return prototype.$type ?? prototype;
     }
     NetJs.$sizeOf = function (prototype) {
-        return prototype.$md?.sz;
+        return prototype.$z;
     }
     NetJs.$firstOf = function (value, otherwise) {
-        if (value)
+        if (value !== null && value !== undefined)
             return value;
         if (typeof otherwise == 'function')
             return otherwise();
@@ -1195,19 +1222,28 @@ window.classes = classes;
                     outValue.$v = value;
             }
         }
-        var iOut = {
-            set $v(v) {
-                if (v !== undefined) {
-                    if (outValue) {
-                        if (value.$boxed)
-                            outValue.$v = value.m_value;
-                        else
-                            outValue.$v = v;
-                    }
-                    assigned = true;
+        const iOut = function (v) {
+            if (v !== undefined) {
+                if (outValue) {
+                    if (value.$boxed) outValue.$v = value.m_value;
+                    else outValue.$v = v;
                 }
+                assigned = true;
             }
-        }
+        };
+        // var iOut = {
+        //     set $v(v) {
+        //         if (v !== undefined) {
+        //             if (outValue) {
+        //                 if (value.$boxed)
+        //                     outValue.$v = value.m_value;
+        //                 else
+        //                     outValue.$v = v;
+        //             }
+        //             assigned = true;
+        //         }
+        //     }
+        // }
         if (type.$is && type.$is(value, iOut)) {
             assignOut();
             return true;
@@ -1221,7 +1257,11 @@ window.classes = classes;
             assignOut();
             return true;
         }
-        if (value.$prototype && value.$prototype.$fullName == type.$fullName) {
+        // if (value.$prototype && value.$prototype.$fullName == type.$fullName) {
+        //     assignOut();
+        //     return true;
+        // }
+        if (value.constructor === type) {
             assignOut();
             return true;
         }
@@ -1271,6 +1311,9 @@ window.classes = classes;
     }
     function typeIsIntegerNumber(T) {
         var fn = T.$fullName;
+        if (T.$k == 4) { //enum
+            fn = T.$eut.$fullName;
+        }
         return fn == "System.Byte" ||
             fn == "System.SByte" ||
             fn == "System.Char" ||
@@ -1283,11 +1326,17 @@ window.classes = classes;
     }
     function typeIsFloatingNumber(T) {
         var fn = T.$fullName;
+        if (T.$k == 4) { //enum
+            fn = T.$eut.$fullName;
+        }
         return fn == "System.Single" ||
             fn == "System.Double";
     }
     function typeIsLong(T) {
         var fn = T.$fullName;
+        if (T.$k == 4) { //enum
+            fn = T.$eut.$fullName;
+        }
         return fn == "System.Int64" ||
             fn == "System.UInt64";
     }
@@ -1445,7 +1494,25 @@ window.classes = classes;
     //    var block = Math.floor(address / virtualAddressSpaceSlotSize);
     //    return virtualAddressSpaces[block];
     //}
-
+    NetJs.$ref = function (getter, setter, type) {
+        //It is a common pattern to create a variable on the stack uninitialized and then pass the ref of such(via out or ref) to a method to provide the value
+        //By default in js the variable are undefined.
+        //If however the ref type is struct, it is possible the method being called try to access the properties of the uninitialized object on stack
+        //Make sure the ref variable is initialized to default here
+        //TODO: We probably should make the transpiler initialize an uinit variable on stack always to their default
+        if (type) {
+            var value = getter();
+            if (value === undefined) {
+                value = NetJs.$default(type);
+                setter(value);
+            }
+        }
+        return {
+            get $v() { return getter(); },
+            set $v(v) { setter(v); },
+            $type: type
+        }
+    }
     NetJs.$cast = function (value, toType, originalType) {
         if (value === null)
             return null;
@@ -1462,11 +1529,11 @@ window.classes = classes;
         }
         if (value instanceof NetJs.$spc.NetJs.RefOrPointer && (typeIsIntegerNumber(toType) || typeIsLong(toType))) { //casting pointer to number
             var number = NetJs.castPtr2Address(value, toType);
-            if (number) {
+            // if (number) {
                 if (typeIsLong(toType))
                     return BigInt(number);
                 return number;
-            }
+            // }
         }
         var tvalue = typeof (value);
         if ((tvalue == "number" || tvalue == "bigint") && value >= NetJs.virtualAddressOffset && (toType.name == "Pointer$$" || toType.name == "Ref$$")/*Object.getPrototypeListOf(type).contains(NetJs.$spc.System.IRefOrPointer)*/) { //casting number to pointer
@@ -1487,8 +1554,13 @@ window.classes = classes;
     }
     NetJs.$typePointer = function (type) {
         if (!type)
-            return NetJs.$spc.System.Pointer$$;
-        return NetJs.$spc.System.Pointer$$(type);
+            return NetJs.$spc.NetJs.Pointer$$;
+        return NetJs.$spc.NetJs.Pointer$$(type);
+    }
+    NetJs.$typeNullable = function (type) {
+        if (!type)
+            return NetJs.$spc.System.Nullable$$;
+        return NetJs.$spc.System.Nullable$$(type);
     }
     NetJs.$array = function (type, length) {
         return NetJs.$spc.System.Array.$array(NetJs.$typeOf(type), length);
@@ -1587,37 +1659,48 @@ window.classes = classes;
         }
         return a == b;
     }
-    NetJs.$destructure = function (tuple) {
+    NetJs.$destructure = function (tuple, ...refs) {
         var o = [];
         if (tuple.Deconstruct) {
-            o.length = 16;
-            tuple.Deconstruct(
-                { set $v(v) { o[0] = v; } },
-                { set $v(v) { o[1] = v; } },
-                { set $v(v) { o[2] = v; } },
-                { set $v(v) { o[3] = v; } },
-                { set $v(v) { o[4] = v; } },
-                { set $v(v) { o[5] = v; } },
-                { set $v(v) { o[6] = v; } },
-                { set $v(v) { o[7] = v; } },
-                { set $v(v) { o[8] = v; } },
-                { set $v(v) { o[9] = v; } },
-                { set $v(v) { o[10] = v; } },
-                { set $v(v) { o[11] = v; } },
-                { set $v(v) { o[12] = v; } },
-                { set $v(v) { o[13] = v; } },
-                { set $v(v) { o[14] = v; } },
-                { set $v(v) { o[15] = v; } });
+            if (refs.length > 0)
+                tuple.Deconstruct.apply(tuple, refs)
+            else {
+                o.length = 16;
+                tuple.Deconstruct(
+                    { set $v(v) { o[0] = v; } },
+                    { set $v(v) { o[1] = v; } },
+                    { set $v(v) { o[2] = v; } },
+                    { set $v(v) { o[3] = v; } },
+                    { set $v(v) { o[4] = v; } },
+                    { set $v(v) { o[5] = v; } },
+                    { set $v(v) { o[6] = v; } },
+                    { set $v(v) { o[7] = v; } },
+                    { set $v(v) { o[8] = v; } },
+                    { set $v(v) { o[9] = v; } },
+                    { set $v(v) { o[10] = v; } },
+                    { set $v(v) { o[11] = v; } },
+                    { set $v(v) { o[12] = v; } },
+                    { set $v(v) { o[13] = v; } },
+                    { set $v(v) { o[14] = v; } },
+                    { set $v(v) { o[15] = v; } });
+            }
         } else {
             for (let i = 1; ; i++) {
                 var property = "Item" + i;
                 var val = tuple[property];
-                if (val) {
-                    o.push(val);
+                if (val !== undefined) {
+                    if (refs.length > 0)
+                        refs[i - 1].$v = val;
+                    else
+                        o.push(val);
                 } else
                     break;
             }
         }
         return o;
+    }
+    NetJs.$require = function () {
+        //TODO:
+        return [];
     }
 })(window)

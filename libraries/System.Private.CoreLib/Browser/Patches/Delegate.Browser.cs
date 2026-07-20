@@ -8,37 +8,125 @@ using System.Text;
 
 namespace System
 {
-    //[NetJs.ForcePartial(typeof(Delegate))]
+    [NetJs.ForcePartial(typeof(Delegate))]
     public class Delegate_Partial : ForcedPartialBase<Delegate>
     {
-        public Delegate_Partial(object target, string method)
-        {
-            //Script.Write("super(target, method)");
-            Setup();
-        }
+        //public Delegate_Partial(object target, string method)
+        //{
+        //    //Script.Write("super(target, method)");
+        //    Setup();
+        //}
 
-        public Delegate_Partial(object target, MethodInfo method) : this(target, method, (parameters) =>
-        {
-            return method.Invoke(target, parameters);
-        })
-        {
-        }
+        //public Delegate_Partial(object target, MethodInfo method) : this(target, method, (parameters) =>
+        //{
+        //    return method.Invoke(target, parameters);
+        //})
+        //{
+        //}
 
-        public Delegate_Partial(object? target, MethodInfo method, Func<object[], object?> jsFunction)
-        {
-            //This._target = target
-            //Script.Write("super(target, method.Name)");
-            NetJs.Script.Write("this.method_info = method");
-            NetJs.Script.Write("this._target = target"); //assign a dummy handle to the method handle
-            this["$jsFunction"] = jsFunction;
-            Setup();
-        }
+        //public Delegate_Partial(object? target, MethodInfo method, Func<object[], object?> jsFunction)
+        //{
+        //    //This._target = target
+        //    //Script.Write("super(target, method.Name)");
+        //    NetJs.Script.Write("this.method_info = method");
+        //    NetJs.Script.Write("this._target = target"); //assign a dummy handle to the method handle
+        //    this["$jsFunction"] = jsFunction;
+        //    Setup();
+        //}
 
-        void Setup()
+        //void Setup()
+        //{
+        //    //This.method_info = method;
+        //    NetJs.Script.Write("this.method = 109848493483"); //assign a dummy handle to the method handle
+        //    NetJs.Script.Write("this.method_is_virtual = true"); //amke sure the GetVirtualMethod_internalImpl is called
+        //}
+
+        [NetJs.Name(NetJs.Constants.IsTypeName)]
+        public static bool Is(object instance)
         {
-            //This.method_info = method;
-            NetJs.Script.Write("this.method = 109848493483"); //assign a dummy handle to the method handle
-            NetJs.Script.Write("this.method_is_virtual = true"); //amke sure the GetVirtualMethod_internalImpl is called
+            var thisPrototype = NetJs.Script.Write<TypePrototype>("this");
+            var thatPrototype = instance.GetClassPrototype();
+            if (thisPrototype == thatPrototype)
+            {
+                return true;
+            }
+            //if a generic delegate like Func<int> and Func<long>, they wont equate, but the originals (Func<> and Func<>) must equate for this to pass
+            if (NetJs.Script.IsDefined(thisPrototype.OpenGenericPrototype) && NetJs.Script.IsDefined(thatPrototype.OpenGenericPrototype))
+            {
+                if (thisPrototype.OpenGenericPrototype == thatPrototype.OpenGenericPrototype &&
+                    NetJs.Script.IsDefined(thisPrototype.Metadata?.Methods) &&
+                    NetJs.Script.IsDefined(thatPrototype.Metadata?.Methods))
+                {
+                    unchecked
+                    {
+                        MethodModel? thisInvoke = null;
+                        for (int i = 0; i < thisPrototype.Metadata!.Methods!.Length; i++)
+                        {
+                            if (thisPrototype.Metadata!.Methods[i].Name == "Invoke")
+                            {
+                                thisInvoke = thisPrototype.Metadata!.Methods[i];
+                                break;
+                            }
+                        }
+                        if (thisInvoke == null)
+                            return false;
+                        MethodModel? thatInvoke = null;
+                        for (int i = 0; i < thatPrototype.Metadata!.Methods!.Length; i++)
+                        {
+                            if (thatPrototype.Metadata!.Methods[i].Name == "Invoke")
+                            {
+                                thatInvoke = thisPrototype.Metadata!.Methods[i];
+                                break;
+                            }
+                        }
+                        if (thatInvoke == null)
+                            return false;
+                        if ((thisInvoke.Parameters?.Length ?? 0) == (thatInvoke.Parameters?.Length ?? 0))
+                        {
+                            var len = thisInvoke.Parameters?.Length ?? 0;
+                            for (int i = 0; i < len; i++)
+                            {
+                                if (thisInvoke.Parameters![i].ParameterType == thatInvoke.Parameters![i].ParameterType)
+                                {
+                                    continue;
+                                }
+                                if (thisPrototype.Flags.TypeHasFlag(TypeFlagsModel.IsGenericType) && //Casting that Action<object>, to this Action<T> is allowed due to contravariance
+                                    !thisPrototype.Flags.TypeHasFlag(TypeFlagsModel.IsValueType))
+                                {
+                                    if (thisInvoke.Parameters![i].Flags.TypeHasFlag(ParameterFlagsModel.ContravariantIn) &&
+                                        thatInvoke.Parameters![i].Flags.TypeHasFlag(ParameterFlagsModel.ContravariantIn))
+                                    {
+                                        var thisParamType = AppDomain.GetType(thisInvoke.Parameters![i].ParameterType.As<uint>());
+                                        var thatParamType = AppDomain.GetType(thatInvoke.Parameters![i].ParameterType.As<uint>());
+                                        if (thatParamType!.IsAssignableFrom(thisParamType))
+                                            continue;
+                                    }
+                                }
+                                return false;
+                            }
+                        }
+                        //If we get here, the parameters match
+                        if (NetJs.Script.IsUndefined(thisInvoke.ReturnType) && NetJs.Script.IsUndefined(thatInvoke.ReturnType)) //No return type on both
+                        {
+                            return true;
+                        }
+                        if (NetJs.Script.IsDefined(thisInvoke.ReturnType) && NetJs.Script.IsDefined(thatInvoke.ReturnType)) //If we get here, the parameters match
+                        {
+                            if (thisInvoke.ReturnType == thatInvoke.ReturnType)
+                                return true;
+                            if (thisInvoke.Flags.TypeHasFlag(MemberFlagsModel.ReturnTypeIsCovariantOut) && //Casting that Func<T>, to this Func<object> is allowed due to contravariance
+                                thatInvoke.Flags.TypeHasFlag(MemberFlagsModel.ReturnTypeIsCovariantOut))
+                            {
+                                var thisReturnType = AppDomain.GetType(thisInvoke.ReturnType.As<uint>());
+                                var thatReturnType = AppDomain.GetType(thatInvoke.ReturnType.As<uint>());
+                                if (thisReturnType!.IsAssignableFrom(thatReturnType))
+                                    return true;
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
         }
     }
 
@@ -127,8 +215,11 @@ namespace System
                 var args = NetJs.Script.Write<object[]>("arguments");
                 do
                 {
-                    var del = delegates[i];
-                    r = NetJs.Script.Write<object?>("del.Invoke.apply(del, args)");
+                    unchecked
+                    {
+                        var del = delegates[i];
+                        r = NetJs.Script.Write<object?>("del.Invoke.apply(del, args)");
+                    }
                 } while (++i < len);
                 return r;
             }
@@ -147,7 +238,34 @@ namespace System
                 //TODO: More likely the delegate caller has already type checked parameters or enforced by the compiler
                 //We should consider invoking the native js method directly instead of calling info.Invoke()(slower) which does type checking again on the arguments
                 var prototype = info.DeclaringType.As<RuntimeType>()._prototype;
-                return RuntimeHelpers.NativeFunctionDispatch(info._model.Flags.TypeHasFlag(MemberFlagsModel.IsStatic) ? prototype : target!, info._model, NetJs.Script.Arguments());
+
+                //Our convention for a generic method is Method<T>(arg) => Method(T, arg)
+                //We therefore must insert the generic arg first
+                object[] args = NetJs.Script.NewArray<object>();
+                unchecked
+                {
+                    if (NetJs.Script.IsDefined(info._model.As<MethodModel>().GenericArguments) &&
+                        info._model.As<MethodModel>().GenericArguments!.Length > 0)
+                    {
+                        args = NetJs.Script.NewArray<object>();
+                        for (int i = 0; i < info.As<RuntimeMethodInfo>()._typeArguments!.Length; i++)
+                        {
+                            args.Push(info.As<RuntimeMethodInfo>()._typeArguments![i].As<RuntimeType>()._prototype);
+                        }
+                    }
+                    var methodArgs = NetJs.Script.Arguments();
+                    if (info._model.Flags.TypeHasFlag(MemberFlagsModel.IsStatic)
+                        && NetJs.Script.IsDefined(info._model.As<MethodModel>().Parameters)
+                        && methodArgs.Length == info._model.As<MethodModel>().Parameters!.Length - 1)//method expect an extra(this) parameter not known by the delegate signature, bind it to target
+                    {
+                        args.Push(target);
+                    }
+                    for (int i = 0; i < methodArgs.Length; i++)
+                    {
+                        args.Push(methodArgs[i]);
+                    }
+                }
+                return RuntimeHelpers.NativeFunctionDispatch(info._model.Flags.TypeHasFlag(MemberFlagsModel.IsStatic) ? prototype : target, info._model, args);
                 //return info.Invoke(target, NetJs.Script.Arguments());
             }
             RuntimeHelpers.NativeFunctionDispatch(_delegate, NetJs.Constants.DefaultConstructorName, target, trampoline);

@@ -14,7 +14,43 @@ namespace System.Threading
             return NetJs.Script.Write<bool>("obj[\"$monitor_entered\"] == true");
         }
 
-        [NetJs.MemberReplace(nameof(Enter))]
+        [NetJs.MemberReplace(nameof(TryEnter) + "(object, int, ref bool)")]
+        public static void TryEnterImpl(object obj, int millisecondsTimeout, ref bool lockTaken)
+        {
+            if (lockTaken)
+                throw new ArgumentException(SR.Argument_MustBeFalse, nameof(lockTaken));
+            //Cant wait on timeout in this port as it is single threaded and will block
+            if (IsEntered(obj))
+            {
+                lockTaken = false;
+            }
+            else
+            {
+                Enter(obj);
+                lockTaken = true;
+            }
+        }
+
+        [NetJs.MemberReplace(nameof(Enter) + "(object, ref bool)")]
+        public static void EnterImpl(object obj, ref bool lockTaken)
+        {
+            // TODO: Interpreter is missing this intrinsic
+            if (lockTaken)
+                throw new ArgumentException(SR.Argument_MustBeFalse, nameof(lockTaken));
+            //Cant wait on timeout in this port as it is single threaded and will block
+            if (IsEntered(obj))
+            {
+                lockTaken = false;
+            }
+            else
+            {
+                Enter(obj);
+                lockTaken = true;
+            }
+        }
+
+
+        [NetJs.MemberReplace(nameof(Enter)+"(object)")]
         public static void EnterImpl(object obj)
         {
             obj["$monitor_entered"] = true.As<object>();
@@ -42,7 +78,7 @@ namespace System.Threading
         {
 
         }
-        
+
         [NetJs.MemberReplace(nameof(Monitor_wait))]
         internal static bool Monitor_waitImpl(object obj, int ms, bool allowInterruption)
         {

@@ -4,6 +4,8 @@ using NetJs.Translator.CSharpToJavascript;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
+using System.Threading.Tasks;
 
 namespace NetJs.Compiler
 {
@@ -27,21 +29,33 @@ namespace NetJs.Compiler
             this.project = project;
         }
 
-        public void Output(GlobalCompilationVisitor global, string destinationRelativePath, OneOf<string, Stream> content)
+        public async Task Output(GlobalCompilationVisitor global, string destinationRelativePath, OneOf<string, Stream> content)
         {
+            bool debugLog = false;
+            List<Task> pendingTasks = new();
             if (!cleaned)
             {
                 var files = Directory.GetFiles(OutputPath, "*.*", SearchOption.AllDirectories);
                 foreach (var f in files)
                 {
-                    if (f.EndsWith(".js.dll") || f.EndsWith(".js.pdb") || f.EndsWith(".js.xml")) //clean only the ones we created, to avoid deleting files created by other tools (e.g. .NET build)
+                    if (f.EndsWith(".SymbolNames.yaml") ||
+                        f.EndsWith(".js") ||
+                        f.EndsWith(".js.dll") ||
+                        f.EndsWith(".js.pdb") ||
+                        f.EndsWith(".js.xml")) //clean only the ones we created, to avoid deleting files created by other tools (e.g. .NET build)
+                    {
+                        if (debugLog)
+                        Console.WriteLine($"Clean \"{f}\"");
                         File.Delete(f);
+                    }
                 }
                 var directories = Directory.GetDirectories(OutputPath);
                 foreach (var d in directories)
                 {
                     try
                     {
+                        if (debugLog)
+                            Console.WriteLine($"Clean \"{d}\"!");
                         Directory.Delete(d, true);
                     }
                     catch
@@ -49,11 +63,15 @@ namespace NetJs.Compiler
                         var mfiles = Directory.GetFiles(d, "*.*", SearchOption.AllDirectories);
                         foreach (var f in mfiles)
                         {
+                            if (debugLog)
+                                Console.WriteLine($"Clean \"{f}\"!");
                             File.Delete(f);
                         }
                         var mdirectories = Directory.GetDirectories(d);
                         foreach (var dd in mdirectories)
                         {
+                            if (debugLog)
+                                Console.WriteLine($"Clean \"{dd}\"!");
                             Directory.Delete(dd, true);
                         }
                     }
@@ -68,13 +86,21 @@ namespace NetJs.Compiler
                 var fileInfo = new FileInfo(content.AsT0);
                 sourceCreateTime = fileInfo.LastWriteTime;
                 existingInfo = new FileInfo(outputFile);
-                if (fileInfo.LastWriteTime < existingInfo.LastWriteTime)
+                if (existingInfo.LastWriteTime > fileInfo.LastWriteTime)
+                {
+                    if (debugLog)
+                        Console.WriteLine($"Skip copy to \"{outputFile}\" as {existingInfo.LastWriteTime} > {fileInfo.LastWriteTime}!");
                     return;
+                }
             }
             Stream stream;
+            bool ownStream = false;
             if (content.IsT0)
             {
                 stream = new FileStream(content.AsT0, FileMode.Open, FileAccess.Read);
+                ownStream = true;
+                if (debugLog)
+                    Console.WriteLine($"Open stream from \"{content.AsT0}\"!");
             }
             else
             {
@@ -83,9 +109,11 @@ namespace NetJs.Compiler
             if (destinationRelativePath.EndsWith(".dll") || destinationRelativePath.EndsWith(".pdb") || destinationRelativePath.EndsWith(".xml"))
             {
                 var output = new FileStream(outputFile, FileMode.Create, FileAccess.Write);
-                stream.CopyTo(output);
-                output.Flush();
+                await stream.CopyToAsync(output);
+                await output.FlushAsync();
                 output.Close();
+                if (debugLog)
+                    Console.WriteLine($"Copy stream to \"{outputFile}\"!");
             }
             else if (!global.OutputMode.HasFlag(OutputMode.SingleHtmlFile) || destinationRelativePath.EndsWith(".html"))
             {
@@ -93,25 +121,47 @@ namespace NetJs.Compiler
                 if (dir != null && !Directory.Exists(dir))
                     Directory.CreateDirectory(dir);
                 var output = new FileStream(outputFile, FileMode.Create, FileAccess.Write);
-                stream.CopyTo(output);
-                output.Flush();
+                await stream.CopyToAsync(output);
+                await output.FlushAsync();
                 output.Close();
+                if (debugLog)
+                    Console.WriteLine($"Copy stream to \"{outputFile}\"!");
                 if (existingInfo != null && sourceCreateTime != null)
+                {
                     existingInfo.LastWriteTime = sourceCreateTime.Value;
+                }
                 //File.WriteAllText(outputFile, content);
             }
             else
             {
                 if (destinationRelativePath.EndsWith(".js"))
-                    stream.CopyTo(htmlScriptContent);
+                {
+                    if (debugLog)
+                        await stream.CopyToAsync(htmlScriptContent);
+                    Console.WriteLine($"Copy stream to js stream!");
+                }
                 else if (destinationRelativePath.EndsWith(".css"))
-                    stream.CopyTo(htmlStyleContent);
+                {
+                    if (debugLog)
+                        await stream.CopyToAsync(htmlStyleContent);
+                    Console.WriteLine($"Copy stream to css stream!");
+                }
                 else
-                    stream.CopyTo(htmlBodyContent);
+                {
+                    if (debugLog)
+                        await stream.CopyToAsync(htmlBodyContent);
+                    Console.WriteLine($"Copy stream to html stream!");
+                }
             }
 
             if (!outputtedFiles.Contains(destinationRelativePath))
                 outputtedFiles.Add(destinationRelativePath);
+
+            if (ownStream)
+            {
+                stream.Close();
+                stream.Dispose();
+            }
         }
     }
 }

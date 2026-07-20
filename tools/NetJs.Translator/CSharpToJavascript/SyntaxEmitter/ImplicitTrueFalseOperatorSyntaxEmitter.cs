@@ -12,7 +12,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
     {
         public override bool TryEmit(CSharpSyntaxNode node, TranslatorSyntaxVisitor visitor)
         {
-            if (_processing.TryPeek(out var top) && top == node)
+            if (_processing.Value.TryPeek(out var top) && top == node)
                 return false;
             foreach (var sm in visitor.SemanticModels)
             {
@@ -26,7 +26,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                         var convertOperation = literalOperation?.Parent as IUnaryOperation;
                         if (convertOperation?.OperatorMethod != null && SymbolEqualityComparer.Default.Equals(convertOperation.Type, visitor.Global.SystemBoolean))
                         {
-                            _processing.Push(node);
+                            _processing.Value.Push(node);
                             try
                             {
                                 if (node is BinaryExpressionSyntax binary)
@@ -42,7 +42,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                                     visitor.WriteMethodInvocation(node, convertOperation.OperatorMethod, null, [node], null, null);
                                 }
                             }
-                            finally { _processing.Pop(); }
+                            finally { _processing.Value.Pop(); }
                             return true;
                         }
                     }

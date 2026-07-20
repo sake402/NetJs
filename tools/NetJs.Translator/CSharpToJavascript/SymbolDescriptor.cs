@@ -20,5 +20,9 @@
         public Dictionary<string, SymbolValue> Types { get; set; } = new();
         public Dictionary<string, Dictionary<string, SymbolValue>> Members { get; set; } = new();
         public List<ILLinkerAssembly> LinkerSubstitutions { get; set; } = new();
+        public override string ToString()
+        {
+            return AssemblySlug ?? base.ToString();
+        }
     }
 }

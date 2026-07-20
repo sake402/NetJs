@@ -11,7 +11,7 @@ namespace System
         //{
         //    return NetJs.Script.Write<int>("m_value");
         //}
-
+        
         readonly char _m_value;
         [NetJs.MemberReplace("m_value")]
         internal char MValue

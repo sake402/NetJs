@@ -64,13 +64,13 @@ Whenever we sync our forked dotnet runtime and aspnetcore with official repo, we
 	</Project>
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Runtime.Serialization.Formatters\src\System.Runtime.Serialization.Formatters.csproj">
 	</Project>
+	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Runtime.Serialization.Primitives\src\System.Runtime.Serialization.Primitives.csproj">
+	</Project>
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Runtime.Loader\src\System.Runtime.Loader.csproj">
 	</Project>
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Security.Cryptography\src\System.Security.Cryptography.csproj">
 		<PropertyGroup>
-			<NoWarn>$(NoWarn),CA5350,CA5351,CA5379,CA5384,SYSLIB0026</NoWarn>
-			<NoWarn>$(NoWarn),CS0809</NoWarn>
-			<NoWarn>$(NoWarn),SYSLIB5006</NoWarn>
+			<WarningsNotAsErrors>$(WarningsNotAsErrors);SYSLIB5006</WarningsNotAsErrors>
 		</PropertyGroup>
 		<ItemGroup>
 		  <Compile Include="$(NewLibrariesProjectRoot)System.Private.CoreLib\Browser\Interops\Interop.GetRandomBytes.cs" />
@@ -166,7 +166,15 @@ Whenever we sync our forked dotnet runtime and aspnetcore with official repo, we
 	</Project>
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Net.NetworkInformation\src\System.Net.NetworkInformation.csproj">
 	</Project>
-	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Net.Http\src\System.Net.Http.csproj">
+	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Net.Http\src\System.Net.Http.csproj" Remove="//ItemGroup/ProjectReference@Include=$(LibrariesProjectRoot)System.Runtime.InteropServices.JavaScript\gen\JSImportGenerator\JSImportGenerator.csproj">
+	</Project>
+	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Net.Http.Json\src\System.Net.Http.Json.csproj">
+		<ItemGroup>
+			<ProjectReference Include="$(NewLibrariesProjectRoot)System.Memory\NetJs.System.Memory.csproj" />
+			<!-- <ProjectReference Include="$(NewLibrariesProjectRoot)System.Buffers\NetJs.System.Buffers.csproj" /> -->
+			<!-- <ProjectReference Include="$(NewLibrariesProjectRoot)System.Threading.Tasks.Extensions\NetJs.System.Threading.Tasks.Extensions.csproj" /> -->
+		    <ProjectReference Include="$(NewLibrariesProjectRoot)System.Net.Http\NetJs.System.Net.Http.csproj" />
+		</ItemGroup>
 	</Project>
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Text.Encoding.Extensions\src\System.Text.Encoding.Extensions.csproj">
 	</Project>
@@ -228,6 +236,8 @@ Whenever we sync our forked dotnet runtime and aspnetcore with official repo, we
 	</Project>
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.IO.Pipelines\src\System.IO.Pipelines.csproj">
 	</Project>
+	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.IO.FileSystem.Watcher\src\System.IO.FileSystem.Watcher.csproj">
+	</Project>
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Security.AccessControl\src\System.Security.AccessControl.csproj">
 	</Project>
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Text.Json\src\System.Text.Json.csproj">
@@ -271,18 +281,77 @@ Whenever we sync our forked dotnet runtime and aspnetcore with official repo, we
 			<ProjectReference Include="$(NewLibrariesProjectRoot)System.Linq.Expressions\NetJs.System.Linq.Expressions.csproj" />
 		</ItemGroup>
 	</Project>
+	<Project Include="$(DotnetGitRoot)runtime\src\libraries\Microsoft.Extensions.Configuration\src\Microsoft.Extensions.Configuration.csproj">
+	</Project>
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\Microsoft.Extensions.Configuration.Binder\src\Microsoft.Extensions.Configuration.Binder.csproj">
 		<ItemGroup>
 			<ProjectReference Include="$(NewLibrariesProjectRoot)System.ComponentModel.TypeConverter\NetJs.System.ComponentModel.TypeConverter.csproj" />
 		</ItemGroup>
 	</Project>
-	<Project Include="$(DotnetGitRoot)runtime\src\libraries\Microsoft.Extensions.Configuration\src\Microsoft.Extensions.Configuration.csproj">
+	<Project Include="$(DotnetGitRoot)runtime\src\libraries\Microsoft.Extensions.Configuration.Json\src\Microsoft.Extensions.Configuration.Json.csproj">
+		<ItemGroup>
+			<ProjectReference Include="$(NewLibrariesProjectRoot)System.Text.Json\NetJs.System.Text.Json.csproj" />
+		</ItemGroup>	
+	</Project>
+	<Project Include="$(DotnetGitRoot)runtime\src\libraries\Microsoft.Extensions.Configuration.FileExtensions\src\Microsoft.Extensions.Configuration.FileExtensions.csproj">
+	</Project>
+	<Project Include="$(DotnetGitRoot)runtime\src\libraries\Microsoft.Extensions.FileProviders.Abstractions\src\Microsoft.Extensions.FileProviders.Abstractions.csproj">
+		<ItemGroup>
+			<ProjectReference Include="$(NewLibrariesProjectRoot)System.Linq\NetJs.System.Linq.csproj" />
+		</ItemGroup>
+	</Project>
+	<Project Include="$(DotnetGitRoot)runtime\src\libraries\Microsoft.Extensions.FileProviders.Physical\src\Microsoft.Extensions.FileProviders.Physical.csproj">
+		<ItemGroup>
+			<ProjectReference Include="$(NewLibrariesProjectRoot)System.IO.FileSystem.Watcher\NetJs.System.IO.FileSystem.Watcher.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)System.Security.Cryptography\NetJs.System.Security.Cryptography.csproj" />
+		</ItemGroup>
+	</Project>
+	<Project Include="$(DotnetGitRoot)runtime\src\libraries\Microsoft.Extensions.FileSystemGlobbing\src\Microsoft.Extensions.FileSystemGlobbing.csproj">
+		<ItemGroup>
+			<ProjectReference Include="$(CoreLibProject)" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)System.Linq\NetJs.System.Linq.csproj" />
+		</ItemGroup>
+	</Project>
+	
+	
+	
+	<Project Include="$(DotnetGitRoot)aspnetcore\src\Validation\src\Microsoft.Extensions.Validation.csproj">
+		<PropertyGroup>
+			<ImplicitUsings>enable</ImplicitUsings>
+		</PropertyGroup>
+		<ItemGroup>
+			<ProjectReference Include="$(CoreLibProject)" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)System.Linq\NetJs.System.Linq.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)System.Security.Claims\NetJs.System.Security.Claims.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)System.IO.Pipelines\NetJs.System.IO.Pipelines.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)System.ComponentModel.Annotations\NetJs.System.ComponentModel.Annotations.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.DependencyInjection.Abstractions\NetJs.Microsoft.Extensions.DependencyInjection.Abstractions.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.Options\NetJs.Microsoft.Extensions.Options.csproj" />
+
+		</ItemGroup>
+	</Project>
+	<Project Include="$(DotnetGitRoot)aspnetcore\src\JSInterop\Microsoft.JSInterop\src\Microsoft.JSInterop.csproj">
+		<PropertyGroup>
+			<ImplicitUsings>enable</ImplicitUsings>
+			<EnableDefaultItems>true</EnableDefaultItems>
+		</PropertyGroup>
+		<ItemGroup>
+			<ProjectReference Include="$(CoreLibProject)" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)System.Collections.Concurrent\NetJs.System.Collections.Concurrent.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)System.Text.Json\NetJs.System.Text.Json.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)System.Net.Http\NetJs.System.Net.Http.csproj" />
+		</ItemGroup>
 	</Project>
 	<Project Include="$(DotnetGitRoot)aspnetcore\src\Components\Components\src\Microsoft.AspNetCore.Components.csproj">
 		<PropertyGroup>
 			<ImplicitUsings>enable</ImplicitUsings>
 			<EnableDefaultItems>true</EnableDefaultItems>
+			<!--Otherwise we wont get intellisense in razor files. Seemed VS is looking for an assembly with this exact name.-->
+			<AssemblyName>Microsoft.AspNetCore.Components</AssemblyName>
 		</PropertyGroup>
+		<ItemGroup>
+			  <InternalsVisibleTo Include="Microsoft.AspNetCore.Components.Web" />
+		</ItemGroup>
 		<ItemGroup>
 			<ProjectReference Include="$(CoreLibProject)" />
 			<ProjectReference Include="$(NewLibrariesProjectRoot)System.Collections\NetJs.System.Collections.csproj" />
@@ -297,6 +366,73 @@ Whenever we sync our forked dotnet runtime and aspnetcore with official repo, we
 			<ProjectReference Include="$(NewLibrariesProjectRoot)System.Text.Json\NetJs.System.Text.Json.csproj" />
 			<ProjectReference Include="$(LoggingGenerator)" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 			<ProjectReference Include="$(RegexGenerator)" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		</ItemGroup>
+	</Project>
+	<Project Include="$(DotnetGitRoot)aspnetcore\src\Components\Forms\src\Microsoft.AspNetCore.Components.Forms.csproj">
+		<PropertyGroup>
+			<ImplicitUsings>enable</ImplicitUsings>
+			<EnableDefaultItems>true</EnableDefaultItems>
+			<!--Otherwise we wont get intellisense in razor files. Seemed VS is looking for an assembly with this exact name.-->
+			<AssemblyName>Microsoft.AspNetCore.Components.Forms</AssemblyName>
+		</PropertyGroup>
+		<ItemGroup>
+			<ProjectReference Include="$(CoreLibProject)" />
+		    <ProjectReference Include="$(NewLibrariesProjectRoot)System.Runtime.Serialization.Primitives\NetJs.System.Runtime.Serialization.Primitives.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.AspNetCore.Components\NetJs.Microsoft.AspNetCore.Components.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.Validation\NetJs.Microsoft.Extensions.Validation.csproj" />
+		</ItemGroup>
+	</Project>
+	<Project Include="$(DotnetGitRoot)aspnetcore\src\Components\Web\src\Microsoft.AspNetCore.Components.Web.csproj">
+		<PropertyGroup>
+			<ImplicitUsings>enable</ImplicitUsings>
+			<EnableDefaultItems>true</EnableDefaultItems>
+			<!--Otherwise we wont get intellisense in razor files. Seemed VS is looking for an assembly with this exact name.-->
+			<AssemblyName>Microsoft.AspNetCore.Components.Web</AssemblyName>
+		</PropertyGroup>
+		<ItemGroup>
+			<ProjectReference Include="$(CoreLibProject)" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.AspNetCore.Components\NetJs.Microsoft.AspNetCore.Components.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.AspNetCore.Components.Forms\NetJs.Microsoft.AspNetCore.Components.Forms.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.DependencyInjection\NetJs.Microsoft.Extensions.DependencyInjection.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.Primitives\NetJs.Microsoft.Extensions.Primitives.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.JSInterop\NetJs.Microsoft.JSInterop.csproj" />
+			<ProjectReference Include="$(JsonGenerator)" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		</ItemGroup>
+	</Project>
+	<Project Include="$(DotnetGitRoot)aspnetcore\src\Components\QuickGrid\Microsoft.AspNetCore.Components.QuickGrid\src\Microsoft.AspNetCore.Components.QuickGrid.csproj">
+		<PropertyGroup>
+			<ImplicitUsings>enable</ImplicitUsings>
+			<EnableDefaultItems>true</EnableDefaultItems>
+		</PropertyGroup>
+		<ItemGroup>
+			<ProjectReference Include="$(CoreLibProject)" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.AspNetCore.Components.Web\NetJs.Microsoft.AspNetCore.Components.Web.csproj" />
+		</ItemGroup>
+	</Project>
+	<Project Include="$(DotnetGitRoot)aspnetcore\src\Components\WebAssembly\JsInterop\src\Microsoft.JSInterop.WebAssembly.csproj">
+		<PropertyGroup>
+			<ImplicitUsings>enable</ImplicitUsings>
+			<EnableDefaultItems>true</EnableDefaultItems>
+		</PropertyGroup>
+		<ItemGroup>
+			<ProjectReference Include="$(CoreLibProject)" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.JsInterop\NetJs.Microsoft.JsInterop.csproj" />
+		</ItemGroup>
+	</Project>
+	<Project Include="$(DotnetGitRoot)aspnetcore\src\Components\WebAssembly\WebAssembly\src\Microsoft.AspNetCore.Components.WebAssembly.csproj" Remove="//ItemGroup/BlazorWebAssemblyJSFile,//ItemGroup/Content@Include=$(BlazorWebAssemblyJSFile),//ItemGroup/Content@Include=targets\*.props">
+		<PropertyGroup>
+			<ImplicitUsings>enable</ImplicitUsings>
+			<EnableDefaultItems>true</EnableDefaultItems>
+		</PropertyGroup>
+		<ItemGroup>
+			<ProjectReference Include="$(CoreLibProject)" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.AspNetCore.Components.Web\NetJs.Microsoft.AspNetCore.Components.Web.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.Configuration.Json\NetJs.Microsoft.Extensions.Configuration.Json.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.Configuration.Binder\NetJs.Microsoft.Extensions.Configuration.Binder.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.Logging\NetJs.Microsoft.Extensions.Logging.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.JSInterop.WebAssembly\NetJs.Microsoft.JSInterop.WebAssembly.csproj" />
+			<ProjectReference Include="$(JsonGenerator)" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+			<ProjectReference Include="$(LoggingGenerator)" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 		</ItemGroup>
 	</Project>
 </Projects>

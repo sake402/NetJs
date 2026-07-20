@@ -33,7 +33,7 @@ namespace NetJs.Translator.CSharpToJavascript
             set
             {
                 if (value == null)
-                    throw new InvalidOperationException("Original name canno be null");
+                    throw new InvalidOperationException("Original name cannot be null");
                 _originalOverloadName = value;
             }
         }
@@ -290,6 +290,74 @@ namespace NetJs.Translator.CSharpToJavascript
 
         static string ComputeInvocatioNameForType(ITypeSymbol type, string? overloadName, GlobalCompilationVisitor _global)
         {
+            static string MinifyNamespace(string fullName)
+            {
+                if (string.IsNullOrEmpty(fullName))
+                {
+                    return fullName;
+                }
+
+                // Allocate an adequate initial threshold buffer
+                var builder = new StringBuilder(fullName.Length);
+                int lastDotIndex = fullName.LastIndexOf('.');
+
+                // Fast Path: If there are no dots separating names, return the original string instantly
+                if (lastDotIndex < 0)
+                {
+                    return fullName;
+                }
+
+                int i = 0;
+                while (i <= lastDotIndex)
+                {
+                    char c = fullName[i];
+
+                    if (c == '$')
+                    {
+                        // If we hit a dollar-sign flag separator, append everything up to the next dot
+                        builder.Append(c);
+                        i++;
+
+                        while (i <= lastDotIndex)
+                        {
+                            char nextChar = fullName[i];
+                            builder.Append(nextChar);
+                            i++;
+                            if (nextChar == '.')
+                            {
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Standard Namespace Segment: Retain ONLY the first character (the minification step)
+                        builder.Append(c);
+                        i++;
+
+                        // Fast-forward past the rest of this current segment namespace word up to the next dot
+                        while (i <= lastDotIndex)
+                        {
+                            if (fullName[i] == '.')
+                            {
+                                builder.Append('.');
+                                i++; // Consume the dot character cleanly
+                                break;
+                            }
+                            i++;
+                        }
+                    }
+                }
+
+                // Append the final class name block in exactly one operation
+                if (lastDotIndex + 1 < fullName.Length)
+                {
+                    builder.Append(fullName, lastDotIndex + 1, fullName.Length - (lastDotIndex + 1));
+                }
+
+                return builder.ToString();
+            }
+
             //if (type is INamedTypeSymbol ts && ts.IsExtension)
             //{
 
@@ -350,6 +418,10 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
                 else
                 {
+                    if (overloadName != null && Constants.MinifyNamespace)
+                    {
+                        overloadName = MinifyNamespace(overloadName);
+                    }
                     invocationName = overloadName ?? type.Name;
                 }
             }

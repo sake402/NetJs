@@ -35,12 +35,21 @@ namespace System.Reflection
         [NetJs.MemberReplace]
         private static void get_method_info(IntPtr handle, out MonoMethodInfo info)
         {
-            MonoMethodInfo minfo = default!;
             var method = (MethodBase)AppDomain.GetMember(handle.As<uint>())!;
+            if (method._monoInfo != null)
+            {
+                info = method._monoInfo.Value;
+                return;
+            }
+            MonoMethodInfo minfo = default!;
             var dt = AppDomain.GetType(method._model.DeclaringType.As<uint>());
-            var rt = (NetJs.Script.IsDefined(method._model.As<MethodModel>().ReturnType) ?
-                AppDomain.GetType(method._model.As<MethodModel>().ReturnType!.Value.As<uint>()) :
-                null) ?? typeof(void);
+            var returnTypeHandle = method._model.As<MethodModel>().ReturnType;
+            if (NetJs.Script.TypeOf(returnTypeHandle).NativeEquals("function"))
+            {
+                var args = method.As<RuntimeMethodInfo>()._typeArguments!.Map(t => t.As<RuntimeType>()._prototype);
+                returnTypeHandle = NetJs.Script.Write<uint>("returnTypeHandle( ...args)");
+            }
+            var rt = (NetJs.Script.IsDefined(returnTypeHandle) ? AppDomain.GetType(returnTypeHandle.As<uint>()) : null) ?? typeof(void);
             NetJs.Script.Write("minfo.parent = dt");
             NetJs.Script.Write("minfo.ret = rt");
             if (NetJs.Script.IsDefined(method._model.Flags))
@@ -62,6 +71,7 @@ namespace System.Reflection
                     minfo.attrs |= MethodAttributes.Virtual;
                 }
             }
+            method._monoInfo = minfo;
             info = minfo;
         }
 
@@ -69,10 +79,21 @@ namespace System.Reflection
         private static ParameterInfo[] get_parameter_info(IntPtr handle, MemberInfo member)
         {
             var method = member.As<RuntimeMethodInfo>();
+            if (method._parameters != null)
+                return method._parameters;
             var parameters = method._model.As<MethodModel>().Parameters ?? null;
-            return parameters?.Map((p, i, all) => new RuntimeParameterInfo_Partial(p, AppDomain.GetType(p.ParameterType.As<uint>()) ?? throw new InvalidOperationException(), method, i).As<RuntimeParameterInfo>())
-                .AsNetArray() ??
+            var infos = parameters?.Map((p, i, all) =>
+            {
+                var parameterTypeHandle = p.ParameterType;
+                if (NetJs.Script.TypeOf(parameterTypeHandle).NativeEquals("function"))
+                {
+                    var args = method._typeArguments!.Map(t => t.As<RuntimeType>()._prototype);
+                    parameterTypeHandle = NetJs.Script.Write<uint>("parameterTypeHandle( ...args)");
+                }
+                return new RuntimeParameterInfo_Partial(p, AppDomain.GetType(parameterTypeHandle.As<uint>()) ?? throw new InvalidOperationException(), method, i).As<RuntimeParameterInfo>();
+            }).AsNetArray() ??
                 Array.Empty<ParameterInfo>();
+            return method._parameters = infos;
         }
 
         [NetJs.MemberReplace]

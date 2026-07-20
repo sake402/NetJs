@@ -9,7 +9,7 @@ namespace System.Reflection
     //[NetJs.Reflectable(false)]
     internal partial class RuntimeParameterInfo_Partial : ForcedPartialBase<RuntimeParameterInfo>
     {
-        internal ParameterModel _model;
+        internal ParameterModel _model = new(); //initialize to non null as there are other constructors on RuntimeParameterInfo
 
         public RuntimeParameterInfo_Partial(ParameterModel model, RuntimeType type, MemberInfo member, int position)
         {
@@ -33,12 +33,22 @@ namespace System.Reflection
                 //    attrs|= ParameterAttributes.Params;
             }
             Script.Write("this.AttrsImpl = attrs");
-            Script.Write("this.DefaultValueImpl = null");
+            //Script.Write("this.DefaultValueImpl = null");
             Script.Write("this.MemberImpl = member");
             //This.AttrsImpl = attrs;
             //This.DefaultValueImpl = defaultValue;
             //This.MemberImpl = member;
             //this.marshalAs = marshalAs;
+            if (model.Flags.TypeHasFlag(ParameterFlagsModel.HasDefaultValue))
+            {
+                var value = model.DefaultValue ?? null;
+                Script.Write("this.DefaultValueImpl = value");
+            }
+            else
+            {
+                var missing = Missing.Value;
+                Script.Write("this.DefaultValueImpl = missing");
+            }
             _model = model;
         }
 

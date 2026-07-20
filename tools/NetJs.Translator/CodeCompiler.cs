@@ -8,6 +8,8 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Reflection;
 using System.Text.Json;
+using System.Net.Http;
+using System.IO.Compression;
 
 namespace NetJs.Translator
 {
@@ -18,16 +20,21 @@ namespace NetJs.Translator
         //    //AppDomain.CurrentDomain.AssemblyResolve += ResolveAssembly;
         //}
 
-        //public CodeCompiler(string dotnetPath, string dotnetVersion, string sdkVersion)
-        //{
-        //    DotnetPath = dotnetPath;
-        //    DotnetVersion = dotnetVersion;
-        //    SDKVersion = sdkVersion;
-        //}
+        public CodeCompiler(string dotnetPath, string dotnetVersion, string sdkPath, string sdkVersion, string tempFolder)
+        {
+            DotnetPath = dotnetPath;
+            DotnetVersion = dotnetVersion;
+            SDKPath = sdkPath;
+            SDKVersion = sdkVersion;
+            this.tempFolder = tempFolder;
+        }
 
-        //string DotnetPath;
-        //string SDKVersion;
-        //string DotnetVersion;
+        string DotnetPath;
+        string DotnetVersion;
+        string SDKPath;
+        string SDKVersion;
+        string tempFolder;
+        public string LocalPackageCacheFolder => $"{tempFolder}{Path.DirectorySeparatorChar}@Packages";
         static MetadataReference[]? references;
         static MetadataReference[] References
         {
@@ -246,8 +253,8 @@ namespace NetJs.Translator
         //{
         //    return GetAssemblies(sourceCodes).SelectMany(ass => GetReferences(ass)).ToArray();
         //}
-
-        (MetadataReference[], string[]) GetReferencesForProject(IProject project)
+        static HttpClient http = new HttpClient();
+        async Task<(MetadataReference[], string[])> GetReferencesForProject(IProject project)
         {
             //var projectDepJson = Path.GetDirectoryName(project.Path) + "/bin/Debug/netstandard2.0/" + project.AssemblyName + ".deps.json";
             ////var projectDll = Path.GetDirectoryName(project.Path) + "/bin/Debug/netstandard2.0/" + project.AssemblyName + ".dll";
@@ -267,11 +274,12 @@ namespace NetJs.Translator
             //});
             //return GetReferences(Assembly.Load(projectDll));
 
+            List<MetadataReference> refs = new List<MetadataReference>();
+            List<string> symbols = new List<string>();
+
             var settings = NuGet.Configuration.Settings.LoadDefaultSettings(null);
             var nugetPackageFolder = NuGet.Configuration.SettingsUtility.GetGlobalPackagesFolder(settings);
 
-            List<MetadataReference> refs = new List<MetadataReference>();
-            List<string> symbols = new List<string>();
             var projectAsset = Path.GetDirectoryName(project.FullPath) + "/obj/project.assets.json";
             if (!File.Exists(projectAsset))
             {
@@ -374,19 +382,118 @@ namespace NetJs.Translator
             //    }
             //    return 0;
             //});
+
+            var disableImplicit = project.Evaluate("DisableImplicitFrameworkReferences");
+            bool enableImplicitImport = string.IsNullOrEmpty(disableImplicit);
+            if (disableImplicit?.Equals("true", StringComparison.InvariantCultureIgnoreCase) ?? false)
+            {
+                enableImplicitImport = false;
+            }
+            var dotnetFolder = Path.GetDirectoryName(DotnetPath);
+            var localPackageCacheFolder = LocalPackageCacheFolder;
+            if (!Directory.Exists(localPackageCacheFolder))
+                Directory.CreateDirectory(localPackageCacheFolder);
+            //Console.WriteLine($"Using Package Folder \"{localPackageCacheFolder}\"...");
+            async Task AddReference(string refName)
+            {
+                Console.WriteLine($"Adding implicitly \"{refName}\"...");
+                var refPackageFolder = $"{localPackageCacheFolder}{Path.DirectorySeparatorChar}{project.Evaluate("TargetFramework")}{Path.DirectorySeparatorChar}NetJs.{refName}";
+                var refPackageDll = $"{refPackageFolder}{Path.DirectorySeparatorChar}NetJs.{refName}.js.dll";
+                var refPackageYaml = $"{refPackageFolder}{Path.DirectorySeparatorChar}NetJs.{refName}.Symbols.yaml";
+                if (!File.Exists(refPackageDll))
+                {
+                    if (!Directory.Exists(refPackageFolder))
+                        Directory.CreateDirectory(refPackageFolder);
+                    var remoteUrl = $"https://github.com/sake402/NetJs/packages/{project.Evaluate("TargetFramework")}/NetJs.{refName}.package.zip";
+                    Console.WriteLine($"Downloading {remoteUrl}...");
+                    var zipStream = await http.GetStreamAsync(remoteUrl);
+                    Console.WriteLine($"Extracting...");
+                    using (ZipArchive archive = new ZipArchive(zipStream, ZipArchiveMode.Read))
+                    {
+                        archive.ExtractToDirectory(refPackageFolder);
+                    }
+                }
+                if (File.Exists(refPackageDll))
+                {
+                    refs.Add(MetadataReference.CreateFromFile(refPackageDll));
+                }
+                else
+                {
+                    Console.WriteLine($"No metadata file \"{refPackageDll}\"!");
+                }
+                if (File.Exists(refPackageYaml))
+                {
+                    symbols.Add(refPackageYaml);
+                }
+                else
+                {
+                    Console.WriteLine($"No symbol file \"{refPackageYaml}\"!");
+                }
+            }
+            if (enableImplicitImport)
+            {
+                await AddReference("System.Private.CoreLib");
+                await AddReference("System.Private.Uri");
+                await AddReference("System.Private.Xml");
+                await AddReference("System.Private.Xml.Linq");
+                foreach (var frm in lockFile.PackageSpec.TargetFrameworks)
+                {
+                    foreach (var fref in frm.FrameworkReferences)
+                    {
+                        var name = fref.Name;
+                        var packBaseFolder = $"{dotnetFolder}{Path.DirectorySeparatorChar}packs{Path.DirectorySeparatorChar}{name}.Ref";
+                        if (Directory.Exists(packBaseFolder))
+                        {
+                            var targetFramework = project.Evaluate("TargetFramework")!;
+                            string versionPrefix = targetFramework.Replace("net", "");
+                            var latestVersionFolder = Directory.GetDirectories(packBaseFolder, $"{versionPrefix}.*")
+                                .Select(Path.GetFileName)
+                                .OrderByDescending(v => v)
+                                .FirstOrDefault();
+                            if (latestVersionFolder != null)
+                            {
+                                var packFolder = $"{packBaseFolder}{Path.DirectorySeparatorChar}{latestVersionFolder}{Path.DirectorySeparatorChar}ref{Path.DirectorySeparatorChar}{targetFramework}";
+                                if (Directory.Exists(packFolder))
+                                {
+                                    var implicitReferences = Directory.GetFiles(packFolder, "*.dll");
+                                    foreach (var reff in implicitReferences)
+                                    {
+                                        var refName = Path.GetFileNameWithoutExtension(reff);
+                                       await AddReference(refName);
+                                    }
+                                }
+                                else
+                                {
+                                    Console.WriteLine($"No targeting pack at \"{packFolder}\"!");
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine($"No framework version \"{versionPrefix}\" in \"{packBaseFolder}\"!");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Framework reference folder not at \"{packBaseFolder}\"!");
+                        }
+                    }
+                }
+            }
+
             foreach (var lib in sortLibraries)
             {
                 if (lib.Type == "package")
                 {
-                    var nugetPath = $"{nugetPackageFolder}/{lib.Path}/{lib.Files.FirstOrDefault(e => e.EndsWith(".dll"))}";
-                    if (!File.Exists(nugetPath))
-                        throw new InvalidOperationException($"Expected nuget file not found at {nugetPath}");
-                    refs.Add(MetadataReference.CreateFromFile(nugetPath));
-                    var symbolFile = $"{nugetPackageFolder}/{lib.Path}/{lib.Files.FirstOrDefault(e => e.EndsWith(".SymbolNames.yaml"))}";
-                    if (File.Exists(symbolFile))
-                    {
-                        symbols.Add(symbolFile);
-                    }
+                    await AddReference(lib.Name);
+                    //var nugetPath = $"{nugetPackageFolder}/{lib.Path}/{lib.Files.FirstOrDefault(e => e.EndsWith(".dll"))}";
+                    //if (!File.Exists(nugetPath))
+                    //    throw new InvalidOperationException($"Expected nuget file not found at {nugetPath}");
+                    //refs.Add(MetadataReference.CreateFromFile(nugetPath));
+                    //var symbolFile = $"{nugetPackageFolder}/{lib.Path}/{lib.Files.FirstOrDefault(e => e.EndsWith(".Symbols.yaml"))}";
+                    //if (File.Exists(symbolFile))
+                    //{
+                    //    symbols.Add(symbolFile);
+                    //}
                 }
                 else if (lib.Type == "project")
                 {
@@ -398,13 +505,23 @@ namespace NetJs.Translator
                     if (!File.Exists(binPath) && !File.Exists(binPathJs))
                         throw new InvalidOperationException($"Expected dll file not found at {binPath} or {binPathJs}. Ensure that project has built successfully.");
                     refs.Add(MetadataReference.CreateFromFile(File.Exists(binPathJs) ? binPathJs : binPath));
-                    var symbolFile = libProjectFolder + $"/bin/wasm/{project.Evaluate("Configuration")}/{project.Evaluate("TargetFramework")}/" + Path.GetFileName(lib.Name) + ".SymbolNames.yaml";
+                    var symbolFile = libProjectFolder + $"/bin/wasm/{project.Evaluate("Configuration")}/{project.Evaluate("TargetFramework")}/" + Path.GetFileName(lib.Name) + ".Symbols.yaml";
                     if (File.Exists(symbolFile))
                     {
                         symbols.Add(symbolFile);
                     }
+                    else
+                    {
+                        //We may have override assembly name back to default for some libraries, beacuase of vs intelissense
+                        symbolFile = libProjectFolder + $"/bin/wasm/{project.Evaluate("Configuration")}/{project.Evaluate("TargetFramework")}/{Constants.ProjectName}." + Path.GetFileName(lib.Name) + ".Symbols.yaml";
+                        if (File.Exists(symbolFile))
+                        {
+                            symbols.Add(symbolFile);
+                        }
+                    }
                 }
             }
+
             return (refs.ToArray(), symbols.ToArray());
         }
 
@@ -479,12 +596,17 @@ namespace NetJs.Translator
             return syntaxTrees;
         }
 
-        public CSharpCompilation GenerateCode(IProject project, string[] sourceCodePath, string[]? sourceCodes, IEnumerable<string>? globalUsings, out IEnumerable<MetadataReference> references, out IEnumerable<string> symbols)
+        public async Task<CSharpCompilation> GenerateCode(IProject project,
+            string[] sourceCodePath,
+            string[]? sourceCodes,
+            IEnumerable<string>? globalUsings,
+            List<MetadataReference>? references,
+            List<string>? symbols)
         {
             var syntaxTrees = GetSyntaxTrees(project, sourceCodePath, sourceCodes, globalUsings);
-            var mreferences = GetReferencesForProject(project);
-            references = mreferences.Item1;
-            symbols = mreferences.Item2;
+            var mreferences = await GetReferencesForProject(project);
+            references?.AddRange(mreferences.Item1);
+            symbols?.AddRange(mreferences.Item2);
             var options = project.CompilationOptions as CSharpCompilationOptions ?? new CSharpCompilationOptions(
                     OutputKind.DynamicallyLinkedLibrary,
                     optimizationLevel: OptimizationLevel.Debug,

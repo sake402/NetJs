@@ -26,7 +26,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 var rightType = _global.TryGetTypeSymbol(right, this);
                 if (leftType != null && rightType != null && leftType.IsNumericType() && rightType.IsNumericType())
                 {
-                    if (TryInvokeMethodOperator(node, _operator, leftType, left, [left, right]))
+                    if (TryInvokeMethodOperator(node, _operator, leftType, left, null, [left, right]))
                         return true;
                     if ((leftType.Equals(rightType, SymbolEqualityComparer.Default)) || //if both math lhs and rhs are the same, nothing special to do
                         (leftType.IsNumberNumericType() && rightType.IsNumberNumericType()) // if we handle both types in native javascript, nothing special to do
@@ -57,7 +57,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     bool rightCasted = false;
                     if (lhsRank < rhsRank)
                     {
-                        if (TryInvokeMethodOperator(node, ImplicitOperatorName, higherPrecision, null, [left]))
+                        if (TryInvokeMethodOperator(node, ImplicitOperatorName, higherPrecision, null, null, [left]))
                         {
                             CurrentTypeWriter.Write(node, " ");
                             CurrentTypeWriter.Write(node, _operator);
@@ -72,7 +72,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     }
                     else
                     {
-                        if (TryInvokeMethodOperator(node, ImplicitOperatorName, higherPrecision, null, [right], () =>
+                        if (TryInvokeMethodOperator(node, ImplicitOperatorName, higherPrecision, null, null, [right], () =>
                         {
                             Visit(left);
                             CurrentTypeWriter.Write(node, " ");

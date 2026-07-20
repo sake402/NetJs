@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace NetJs.Translator
@@ -152,21 +153,40 @@ namespace NetJs.Translator
             logTo = writer ?? Console.Out;
         }
 
-        static int depth;
+        static ThreadLocal<int> depth = new ThreadLocal<int>();
         public static void Profile(this string message, Action action)
         {
             logTo.WriteLine();
-            logTo.Write(string.Join("", Enumerable.Range(1, depth).Select(i => "    ")) + message + "...");
+            logTo.Write(string.Join("", Enumerable.Range(1, depth.Value).Select(i => "    ")) + message + "...");
             Stopwatch sw = new();
             sw.Start();
-            depth++;
+            depth.Value++;
             try
             {
                 action();
             }
             finally
             {
-                depth--;
+                depth.Value--;
+            }
+            sw.Stop();
+            logTo.Write("  " + sw.ElapsedMilliseconds + "ms");
+        }
+
+        public static async Task ProfileAsync(this string message, Func<Task> action)
+        {
+            logTo.WriteLine();
+            logTo.Write(string.Join("", Enumerable.Range(1, depth.Value).Select(i => "    ")) + message + "...");
+            Stopwatch sw = new();
+            sw.Start();
+            depth.Value++;
+            try
+            {
+                await action();
+            }
+            finally
+            {
+                depth.Value--;
             }
             sw.Stop();
             logTo.Write("  " + sw.ElapsedMilliseconds + "ms");
@@ -196,18 +216,44 @@ namespace NetJs.Translator
             return sb.ToString();
         }
 
-        public static string EscapeString(this string str)
+        public static string EscapeString(this string input)
         {
-            return str.Replace(@"\", @"\\")
-                .Replace("\"", "\\\"")
-                .Replace("\r", "\\r")
-                .Replace("\n", "\\n")
-                .Replace("\t", "\\t")
-                .Replace("\b", "\\b")
-                .Replace("\f", "\\f")
-                .Replace("\v", "\\v")/*.Replace("\0", "\\0")*/;
-        }
 
+            if (string.IsNullOrEmpty(input)) return string.Empty;
+
+            // Allocate slightly larger buffer to handle expanded escape sequences
+            var sb = new StringBuilder(input.Length * 4);
+
+            foreach (char c in input)
+            {
+                // Keep standard readable printable ASCII literal characters as-is
+                if (c >= 32 && c <= 126 && c != '"' && c != '\\')
+                {
+                    sb.Append(c);
+                }
+                else if (c == '"') sb.Append("\\\""); // Escape literal quotes for JS
+                else if (c == '\\') sb.Append("\\\\"); // Escape literal backslashes
+                else if (c == '\n') sb.Append("\\n");
+                else if (c == '\r') sb.Append("\\r");
+                else if (c == '\t') sb.Append("\\t");
+                else
+                {
+                    // Force the character into the literal string format: \uXXXX
+                    sb.Append("\\u");
+                    sb.Append(((int)c).ToString("X4")); // "X4" outputs exactly 4 hex digits (padded)
+                }
+            }
+
+            return sb.ToString();
+            //return str.Replace(@"\", @"\\")
+            //    .Replace("\"", "\\\"")
+            //    .Replace("\r", "\\r")
+            //    .Replace("\n", "\\n")
+            //    .Replace("\t", "\\t")
+            //    .Replace("\b", "\\b")
+            //    .Replace("\f", "\\f")
+            //    .Replace("\v", "\\v")/*.Replace("\0", "\\0")*/;
+        }
 
     }
 }

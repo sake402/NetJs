@@ -1,0 +1,2 @@
+﻿
+[assembly:NetJs.AssemblySlug("sipl")]

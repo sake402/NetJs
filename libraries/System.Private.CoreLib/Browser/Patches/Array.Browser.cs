@@ -356,6 +356,16 @@ namespace System
             //return typeof(Array<>).MakeGenericType(elementType);
         }
 
+        internal static Type? GetArrayElementType(Array array)
+        {
+            var et = array[ElementTypeName].As<RuntimeType?>();
+            if (NetJs.Script.IsUndefined(et))
+            {
+                et = null;
+            }
+            return et;
+        }
+
         public static void AddMetadata(Array arr, Type elementType, int[]? sizes = null, int[]? lowerBounds = null)
         {
             arr[SizesName] = sizes ?? NetJs.Script.CreateArrayFromValues(arr.Length);
@@ -397,7 +407,12 @@ namespace System
                     if (!createJaggedArray)
                     {
                         len = 1;
-                        sizes.ForEach(s => len *= s);
+                        sizes.ForEach(s =>
+                        {
+                            //if (NetJs.Script.TypeOf(s) == "bigint")
+                            //    s = NetJs.Script.Write<int>("Number(s)");
+                            len *= s;
+                        });
                     }
                     else
                     {
@@ -694,15 +709,31 @@ namespace System
 
 
         [NetJs.Name(NetJs.Constants.IsTypeName)]
-        public static bool Is(object? instance)
+        public static bool Is(object? instance, NativeAction<Array>? arr)
         {
             if (instance == null)
                 return false;
             if (NetJs.Script.Write<bool>("window.Array.isArray(instance)"))
+            {
+                if (arr != null)
+                    arr(instance.As<Array>());
                 return true;
+            }
             if (NetJs.Script.InstanceOf(instance, typeof(Array)))
             {
+                if (arr != null)
+                    arr(instance.As<Array>());
                 return true;
+            }
+            if (instance[NetJs.Constants.IsProxy].As<bool>() == true) //IArrayProxyHandler
+            {
+                var handler = instance[NetJs.Constants.ProxyHandler];
+                if (handler is IArrayProxyHandler)
+                {
+                    if (arr != null)
+                        arr(instance.As<Array>());
+                    return true;
+                }
             }
             return false;
         }
@@ -886,9 +917,26 @@ namespace System
                 return true;
             if (NetJs.Script.InstanceOf(instance, typeof(Array)))
             {
-                var elementType = (RuntimeType?)instance[ElementTypeName];
+                var elementType = Array.GetArrayElementType(instance.As<Array>());
+                if (elementType == typeof(T))
+                    return true;
                 if (!elementType!.IsValueType && !elementType!.IsPointer)
                     return typeof(T).IsAssignableFrom(elementType);
+            }
+            if (instance[NetJs.Constants.IsProxy].As<bool>() == true) //ArrayWindowProxyHandler
+            {
+                var handler = instance[NetJs.Constants.ProxyHandler];
+                if (handler is IArrayProxyHandler hdl)
+                {
+                    var elementType = hdl.ElementType ?? Array.GetArrayElementType(hdl.Array);
+                    if (elementType != null)
+                    {
+                        if (elementType == typeof(T))
+                            return true;
+                        if (!elementType!.IsValueType && !elementType!.IsPointer)
+                            return typeof(T).IsAssignableFrom(elementType);
+                    }
+                }
             }
             return false;
         }

@@ -13,6 +13,8 @@ namespace NetJs.Translator.CSharpToJavascript
             Start = start;
         }
 
+        public HashSet<string> LinesInserted { get; } = new();
+
         public SyntaxNode Source { get; }
         public LinkedListNode<CodeLineWriter> Start { get; }
         public int Inserts { get; set; }

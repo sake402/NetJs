@@ -13,7 +13,7 @@ namespace NetJs.Translator.CSharpToJavascript
 {
     public partial class TranslatorSyntaxVisitor
     {
-        void WriteForEach(CommonForEachStatementSyntax node, object variable)
+        void WriteForEach(CommonForEachStatementSyntax node, object variable, TypeSyntax? variableType)
         {
             OpenClosure(node);
             bool isAsync = node.AwaitKeyword.ValueText.Length > 0;
@@ -112,31 +112,65 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 WriteVariableAssignment(node, null, enumerableTypeSymbol, null, node.Expression, enumerationTargetRhsTypeSymbol);
                 //Visit(node.Expression);
-                CurrentTypeWriter.WriteLine(node, $".{getEnumeratorInvocationName}();");
+                CurrentTypeWriter.Write(node, $".{getEnumeratorInvocationName}(");
+                if (isAsync)
+                {
+                    var cancellationToken = (INamedTypeSymbol)_global.GetSymbol("System.Threading.CancellationToken", this);
+                    WriteMemberAccess(node, null, cancellationToken, "None", null);
+                }
+                CurrentTypeWriter.WriteLine(node, $");");
             }
-            if (isAsync)
-            {
-                CurrentTypeWriter.Write(node, $"while (await ", true);
-                WriteMethodInvocation(node, "System.Runtime.CompilerServices.RuntimeHelpers.TaskToPromise", arguments: [new CodeNode(() => {
-                    CurrentTypeWriter.Write(node, enumarableName);
-                    CurrentTypeWriter.Write(node, ".");
-                    CurrentTypeWriter.Write(node, enumeratorMoveNextInvocationName!);
-                    CurrentTypeWriter.Write(node, "()");
-                })]);
-                CurrentTypeWriter.WriteLine(node, $")");
-            }
-            else
-                CurrentTypeWriter.WriteLine(node, $"while ({enumarableName}.{enumeratorMoveNextInvocationName}())", true);
+            //if (isAsync)
+            //{
+            //    CurrentTypeWriter.Write(node, $"while (await ", true);
+            //    WriteMethodInvocation(node, "System.Runtime.CompilerServices.RuntimeHelpers.TaskToPromise", arguments: [new CodeNode(() => {
+            //        CurrentTypeWriter.Write(node, enumarableName);
+            //        CurrentTypeWriter.Write(node, ".");
+            //        CurrentTypeWriter.Write(node, enumeratorMoveNextInvocationName!);
+            //        CurrentTypeWriter.Write(node, "()");
+            //    })]);
+            //    CurrentTypeWriter.WriteLine(node, $")");
+            //}
+            //else
+            CurrentTypeWriter.WriteLine(node, $"while ({(isAsync ? "await " : "")}{enumarableName}.{enumeratorMoveNextInvocationName}())", true);
             //if (!node.Statement.IsKind(SyntaxKind.Block))
             CurrentTypeWriter.WriteLine(node, "{", true);
+            var readCurrent = $"{enumarableName}.{enumeratorCurrentInvocationName}{(((variableType == null || !variableType.IsKind(SyntaxKind.RefType)) && (enumeratorCurrent?.GetRefKind() ?? RefKind.None) != RefKind.None) ? $".{Constants.RefValueName}" : "")}";
             if (variable is SyntaxToken identifierName2)
             {
-                CurrentTypeWriter.WriteLine(node, $"var {identifierName2.ResolveIdentifierName()} = {enumarableName}.{enumeratorCurrentInvocationName}{((enumeratorCurrent?.GetRefKind() ?? RefKind.None) != RefKind.None ? $".{Constants.RefValueName}" : "")};", true);
+                CurrentTypeWriter.WriteLine(node, $"var {identifierName2.ResolveIdentifierName()} = {readCurrent};", true);
+            }
+            else if (variable is DeclarationExpressionSyntax dp && dp.Designation is ParenthesizedVariableDesignationSyntax pv)
+            {
+                CurrentTypeWriter.Write(node, "let [ ", true);
+                int ix = 0;
+                foreach (var t in pv.Variables)
+                {
+                    if (ix > 0)
+                        CurrentTypeWriter.Write(node, ", ");
+                    if (t.IsKind(SyntaxKind.DiscardDesignation))
+                    {
+                        CurrentTypeWriter.Write(node, "_");
+                        CurrentTypeWriter.Write(node, ix.ToString());
+                    }
+                    else
+                    {
+                        CurrentTypeWriter.Write(node, ((SingleVariableDesignationSyntax)t).Identifier.ValueText);
+                    }
+                    ix++;
+                }
+                CurrentTypeWriter.Write(node, " ] = ");
+                CurrentTypeWriter.Write(node, Constants.GlobalName);
+                CurrentTypeWriter.Write(node, ".");
+                CurrentTypeWriter.Write(node, Constants.Destructure);
+                CurrentTypeWriter.Write(node, "(");
+                CurrentTypeWriter.Write(node, readCurrent);
+                CurrentTypeWriter.WriteLine(node, ");");
             }
             else if (variable is TupleExpressionSyntax tp)
             {
                 var i = ++CurrentTypeWriter.CurrentClosure.NameManglingSeed;
-                CurrentTypeWriter.WriteLine(node, $"var $t{i} = {enumarableName}.{enumeratorCurrentInvocationName};", true);
+                CurrentTypeWriter.WriteLine(node, $"var $t{i} = {readCurrent};", true);
                 int item = 0;
                 foreach (var t in tp.Arguments)
                 {
@@ -158,13 +192,13 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitForEachStatement(ForEachStatementSyntax node)
         {
-            WriteForEach(node, node.Identifier);
+            WriteForEach(node, node.Identifier, node.Type);
             //base.VisitForEachStatement(node);
         }
 
         public override void VisitForEachVariableStatement(ForEachVariableStatementSyntax node)
         {
-            WriteForEach(node, node.Variable);
+            WriteForEach(node, node.Variable, null);
             //base.VisitForEachVariableStatement(node);
         }
 

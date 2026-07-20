@@ -44,7 +44,7 @@ namespace System.Reflection
             if (NetJs.Script.IsDefined(ctor))
             {
                 object[]? parameters = RuntimeHelpers.GetParametersFromPointer(args);
-                if (parameters == null && _model.As<NetJs.ConstructorModel>().Parameters!.Length > 0)
+                if (parameters == null && NetJs.Script.IsDefined(_model.As<NetJs.ConstructorModel>().Parameters) && _model.As<NetJs.ConstructorModel>().Parameters!.Length > 0)
                 {
                     throw null!;
                 }

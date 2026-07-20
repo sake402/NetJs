@@ -46,20 +46,17 @@ namespace NetJs.Translator.CSharpToJavascript
                     ix++;
                 }
             }
-            var smodifiers = GetMethodModifier(node, modifiers, null);
+            var smodifiers = GetMethodModifier(node, modifiers, null, noStatic: true);
             var parameters = string.Join(", ", lamdaParameters?.Select((p, i) => $"/*{p.Type?.ToString().Trim() ?? _global.TryGetSymbol(p.Identifier.ValueText, this)?.Name}*/ {(p.Identifier.ValueText == "_" ? $"_{i}" : p.Identifier.ResolveIdentifierName())}") ?? Enumerable.Empty<string>());
-            CurrentTypeWriter.WriteLine(node, $"/*{smodifiers}*/ {(modifiers.IsAsync() ? "async " : "")} ({parameters}) =>");
-            CurrentTypeWriter.WriteLine(node, "{", true);
+            CurrentTypeWriter.WriteLine(node, $"{smodifiers} ({parameters}) =>");
+            if (!body.IsKind(SyntaxKind.Block))
+                CurrentTypeWriter.WriteLine(node, "{", true);
             //var child = node.ChildNodes().Where(t => !t.IsKind(SyntaxKind.ParameterList)/* is not ParameterListSyntax*/ && !t.IsKind(SyntaxKind.Parameter)/* is not ParameterSyntax*/);
             bool implicitReturn = false;
             bool isThrow = false;
             if (body.IsKind(SyntaxKind.ThrowExpression))
                 isThrow = true;
-            if (body is BlockSyntax block)
-            {
-                //body = block.Statements;
-            }
-            else
+            if (!body.IsKind(SyntaxKind.Block))
             {
                 implicitReturn = body is not ReturnStatementSyntax;
             }
@@ -79,7 +76,8 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 CurrentTypeWriter.EnsureNewLine();
             }
-            CurrentTypeWriter.Write(node, "}", true);
+            if (!body.IsKind(SyntaxKind.Block))
+                CurrentTypeWriter.Write(node, "}", true);
             CloseClosure(node);
         }
 

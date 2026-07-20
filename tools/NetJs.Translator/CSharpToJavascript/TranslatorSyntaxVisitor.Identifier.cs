@@ -54,7 +54,19 @@ namespace NetJs.Translator.CSharpToJavascript
                 foreach (var t in type.Interfaces)
                     yield return t;
             }
-            if (SymbolEqualityComparer.Default.Equals(symbol.ContainingType, currentType) || GetAllBaseTypes(currentType).Contains(symbol.ContainingType, SymbolEqualityComparer.Default))
+            bool IsOnBaseType(ITypeSymbol? type)
+            {
+                while (type?.BaseType != null)
+                {
+                    if (SymbolEqualityComparer.Default.Equals(symbol.ContainingType.OriginalDefinition, type.BaseType.OriginalDefinition))
+                    {
+                        return true;
+                    }
+                    type = type.BaseType;
+                }
+                return false;
+            }
+            if (SymbolEqualityComparer.Default.Equals(symbol.ContainingType.OriginalDefinition, currentType) ||/* IsOnBaseType(currentType)*/ GetAllBaseTypes(currentType).Contains(symbol.ContainingType, SymbolEqualityComparer.Default))
             {
                 if (symbol.ContainingSymbol?.Kind == SymbolKind.NamedType)
                 {
@@ -171,49 +183,49 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     CurrentTypeWriter.Write(node, identifier.ResolveIdentifierName());
                 }
-                var refKind = identifierSymbol?.GetRefKind();
-                if (refKind != null && refKind != RefKind.None)
-                {
-                    bool NeedsDereferenceAccess()
-                    {
-                        //if (symbolType?.Kind == SymbolKind.Field)
-                        //{
-                        //    var constructor = node.FindClosestParent<ConstructorDeclarationSyntax>();
-                        //    //if a field is assigned in a constructor, no dereference
-                        //    var method = node.FindClosestParent<MethodDeclarationSyntax>();
-                        //}
-                        //if (identifier.ValueText == "_reference")
-                        //{
+                //var refKind = identifierSymbol?.GetRefKind();
+                //if (refKind != null && refKind != RefKind.None)
+                //{
+                //    bool NeedsDereferenceAccess()
+                //    {
+                //        //if (symbolType?.Kind == SymbolKind.Field)
+                //        //{
+                //        //    var constructor = node.FindClosestParent<ConstructorDeclarationSyntax>();
+                //        //    //if a field is assigned in a constructor, no dereference
+                //        //    var method = node.FindClosestParent<MethodDeclarationSyntax>();
+                //        //}
+                //        //if (identifier.ValueText == "_reference")
+                //        //{
 
-                        //}
-                        if (refKind != RefKind.Out && node.Parent.IsKind(SyntaxKind.SimpleAssignmentExpression))
-                        {
-                            var ass = (AssignmentExpressionSyntax)node.Parent;
-                            var right = ass.Right;
-                            RefKind? rightRefKind = null;
-                            if (right.IsKind(SyntaxKind.RefExpression))
-                            {
-                                rightRefKind = RefKind.Ref;
-                            }
-                            else
-                            {
-                                var rsymbolType = _global.TryGetSymbol(right, this);
-                                rightRefKind = rsymbolType?.GetRefKind();
-                            }
-                            if (rightRefKind != null && rightRefKind != RefKind.None)
-                            {
-                                return false;
-                            }
-                        }
-                        return node.Parent is BinaryExpressionSyntax ||
-                            node.Parent.IsKind(SyntaxKind.SimpleMemberAccessExpression)/* is MemberAccessExpressionSyntax*/ ||
-                            node.Parent.IsKind(SyntaxKind.SimpleAssignmentExpression);
-                    }
-                    if (NeedsDereferenceAccess())
-                    {
-                        TryDereference(node);
-                    }
-                }
+                //        //}
+                //        if (refKind != RefKind.Out && node.Parent.IsKind(SyntaxKind.SimpleAssignmentExpression))
+                //        {
+                //            var ass = (AssignmentExpressionSyntax)node.Parent;
+                //            var right = ass.Right;
+                //            RefKind? rightRefKind = null;
+                //            if (right.IsKind(SyntaxKind.RefExpression))
+                //            {
+                //                rightRefKind = RefKind.Ref;
+                //            }
+                //            else
+                //            {
+                //                var rsymbolType = _global.TryGetSymbol(right, this);
+                //                rightRefKind = rsymbolType?.GetRefKind();
+                //            }
+                //            if (rightRefKind != null && rightRefKind != RefKind.None)
+                //            {
+                //                return false;
+                //            }
+                //        }
+                //        return node.Parent is BinaryExpressionSyntax ||
+                //            node.Parent.IsKind(SyntaxKind.SimpleMemberAccessExpression)/* is MemberAccessExpressionSyntax*/ ||
+                //            node.Parent.IsKind(SyntaxKind.SimpleAssignmentExpression);
+                //    }
+                //    if (NeedsDereferenceAccess())
+                //    {
+                //        TryDereference(node);
+                //    }
+                //}
                 //dereference ref or out keyword ulness we are passing it as parameter
                 //if (node.Parent is not ArgumentSyntax)
                 //{

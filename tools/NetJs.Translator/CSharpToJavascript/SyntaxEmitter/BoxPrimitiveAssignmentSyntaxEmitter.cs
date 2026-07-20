@@ -2,27 +2,28 @@
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Operations;
+using System.Threading;
 
 namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
 {
     /// <summary>
     /// Provides a syntax emitter that handles assignment expressions where a JS primitive is assigned to an
-    /// interface it implements in C#. eg IEnumerable enumerable = "foo" or object e = "foo";
+    /// interface it implements in C#. eg IEnumerable enumerable = "foo" or object e = "foo" or object i = 22;
     /// All we need is to box the js primitive into the .net type
     /// </summary>
     sealed class BoxPrimitiveAssignmentSyntaxEmitter : SyntaxEmitter<CSharpSyntaxNode>
     {
-        static List<CSharpSyntaxNode?> _disabled = new List<CSharpSyntaxNode?>();
+        static ThreadLocal<List<CSharpSyntaxNode?>> _disabled = new(() => new List<CSharpSyntaxNode?>());
         public static IDisposable Disable(CSharpSyntaxNode? node)
         {
-            _disabled.Add(node);
-            return new DelegateDispose(() => _disabled.Remove(node));
+            _disabled.Value.Add(node);
+            return new DelegateDispose(() => _disabled.Value.Remove(node));
         }
         public override bool TryEmit(CSharpSyntaxNode node, TranslatorSyntaxVisitor visitor)
         {
-            if (_disabled.Contains(node))
+            if (_disabled.Value.Contains(node))
                 return false;
-            if (_processing.TryPeek(out var top) && top == node)
+            if (_processing.Value.TryPeek(out var top) && top == node)
                 return false;
             foreach (var sm in visitor.SemanticModels)
             {
@@ -31,7 +32,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                     var conversion = sm.GetConversion(node);
                     if (conversion.Exists &&
                         conversion.IsImplicit &&
-                        conversion.IsReference)
+                        (conversion.IsReference || conversion.IsBoxing))
                     {
                         var thisOperation = sm.GetOperation(node);
                         var operation = thisOperation?.Parent as IConversionOperation;
@@ -57,7 +58,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                                     return false;
                                 }
                             }
-                            _processing.Push(node);
+                            _processing.Value.Push(node);
                             try
                             {
                                 visitor.CurrentTypeWriter.Write(node, visitor.Global.GlobalName);
@@ -72,7 +73,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                             }
                             finally
                             {
-                                _processing.Pop();
+                                _processing.Value.Pop();
                             }
                         }
                     }

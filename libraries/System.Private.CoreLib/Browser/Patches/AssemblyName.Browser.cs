@@ -27,7 +27,7 @@ namespace System.Reflection
                     bArray[i] = (array[i] & 0xFF).As<byte>();
                 }
             }
-            var rref = RuntimeHelpers.CreateArrayReference(bArray);
+            var rref = RuntimeHelpers.CreateArrayReferenceT(bArray);
             NetJs.Script.Write("return rref");
             throw null!;
         }
@@ -44,7 +44,8 @@ namespace System.Reflection
             var reff = NetJs.Script.Ref(in GetRawStringDataAsByte(model.FullName));
             name.name = InteropUtility.castPtr2Address(reff.As<RefOrPointer<object>>()).As<nint>();
             var reff2 = NetJs.Script.Ref(in GetRawStringDataAsByte(""));
-            NetJs.Script.Write("name.public_key_token = reff2");
+            var arr = reff2.ToArray();
+            NetJs.Script.Write("name.public_key_token = arr");
             //name.public_key_token[0] =  NetJs.Script.RefP<byte>(reff2);
             return &name;
         }

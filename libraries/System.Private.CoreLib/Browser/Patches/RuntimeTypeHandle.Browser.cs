@@ -56,6 +56,8 @@ namespace System
                     return CorElementType.ELEMENT_TYPE_R8;
                 case KnownTypeHandle.SystemPointer:
                     return CorElementType.ELEMENT_TYPE_PTR;
+                case KnownTypeHandle.SystemReference:
+                    return CorElementType.ELEMENT_TYPE_PTR;
             }
             if (runtimeType._prototype!.Flags.TypeHasFlag(TypeFlagsModel.IsPointer))
             {
@@ -131,6 +133,25 @@ namespace System
         [NetJs.MemberReplace]
         internal static bool HasReferences(QCallTypeHandle type)
         {
+            var runtimeType = type.QCallTypeHandleToRuntimeType();
+            var prototype = runtimeType._prototype;
+            //if (prototype.Flags.TypeHasFlag(TypeFlagsModel.IsValueType))
+            //{
+            if (prototype.Flags.TypeHasFlag(TypeFlagsModel.IsPureStruct))
+                return false;
+            if (prototype.Flags.TypeHasFlag(TypeFlagsModel.IsArray))
+            {
+                var elementType = runtimeType._arrayElementType;
+                if (elementType != null && elementType._prototype.KnownType.IsNumeric())
+                {
+                    return false;
+                }
+                if (elementType != null && !elementType._prototype.Flags.TypeHasFlag(TypeFlagsModel.IsValueType))
+                {
+                    return false;
+                }
+            }
+            //}
             return true;
         }
 
@@ -166,7 +187,7 @@ namespace System
         private static IntPtr GetMonoClass(QCallTypeHandle type)
         {
             var runtimeType = type.QCallTypeHandleToRuntimeType();
-            return (IntPtr)runtimeType._model.Handle;
+            return (IntPtr)runtimeType._prototype.TypeHandle;
         }
 
         [NetJs.MemberReplace]
@@ -196,7 +217,7 @@ namespace System
         internal static bool IsByRefLike(QCallTypeHandle type)
         {
             var mtype = type.QCallTypeHandleToRuntimeType();
-            return mtype._model.Flags.TypeHasFlag(TypeFlagsModel.IsByRef);
+            return mtype._prototype.Flags.TypeHasFlag(TypeFlagsModel.IsByRef);
         }
 
         [NetJs.MemberReplace]

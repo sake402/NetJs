@@ -17,9 +17,20 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Ref
                 node.IsKind(SyntaxKind.RefExpression) ||
                 node.IsKind(SyntaxKind.VariableDeclarator) ||
                 node.IsKind(SyntaxKind.MethodDeclaration) ||
+                node.IsKind(SyntaxKind.LocalFunctionStatement) ||
                 node.IsKind(SyntaxKind.PropertyDeclaration) ||
                 node.IsKind(SyntaxKind.IndexerDeclaration) ||
-                node.IsKind(SyntaxKind.ConditionalExpression))
+                node.IsKind(SyntaxKind.ForEachStatement) ||
+                node.IsKind(SyntaxKind.ConditionalExpression) ||
+                node.IsKind(SyntaxKind.UsingDirective) ||
+                node.IsKind(SyntaxKind.ClassDeclaration) ||
+                node.IsKind(SyntaxKind.StructDeclaration) ||
+                node.IsKind(SyntaxKind.InterfaceDeclaration) ||
+                node.IsKind(SyntaxKind.RecordDeclaration) ||
+                node.IsKind(SyntaxKind.SimpleAssignmentExpression)
+                //||
+                //node.Parent.IsKind(SyntaxKind.InvocationExpression)
+                )
                 return false;
             List<CSharpSyntaxNode>? inProcess = null;
             if (visitor.States.TryGetValue(nameof(RefTypeDereferenceOnAccessSyntaxEmitter), out var states))
@@ -205,6 +216,40 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Ref
                         {
                             return false;
                         }
+                        //maily to handle ref identifier in ref.ExtensionMethod() where first parameter is a ref
+                        if (node.Parent.IsKind(SyntaxKind.SimpleMemberAccessExpression))
+                        {
+                            var parentSymbol = visitor.Global.TryGetSymbol(node.Parent, visitor);
+                            if (parentSymbol?.Kind == SymbolKind.Method && parentSymbol is IMethodSymbol ms)
+                            {
+                                if (ms.IsExtensionMethod)
+                                {
+                                    IMethodSymbol mms = ms;
+                                    if (ms.ReducedFrom != null)
+                                        mms = ms.ReducedFrom;
+                                    if (mms.Parameters.Length > 0 && mms.Parameters[0].RefKind != RefKind.None)
+                                    {
+                                        return false;
+                                    }
+                                }
+                            }
+                        }
+                        //if (/*symbol?.Kind != SymbolKind.Parameter && */!node.IsKind(SyntaxKind.Argument) && !node.Parent.IsKind(SyntaxKind.Argument))
+                        //{
+                        //    foreach (var sm in visitor.SemanticModels)
+                        //    {
+                        //        if (node.SyntaxTree == sm.SyntaxTree)
+                        //        {
+                        //            var operation = sm.GetOperation(node) as IParameterReferenceOperation;
+                        //            if (operation != null)
+                        //            {
+                        //                if (!SymbolEqualityComparer.Default.Equals(operation.Parameter, symbol) && operation.Parameter.RefKind != RefKind.None)
+                        //                    return false;
+                        //            }
+                        //            break;
+                        //        }
+                        //    }
+                        //}
                         return true;
                         //return node.Parent is BinaryExpressionSyntax ||
                         //    node.Parent.IsKind(SyntaxKind.SimpleMemberAccessExpression)/* is MemberAccessExpressionSyntax*/ ||

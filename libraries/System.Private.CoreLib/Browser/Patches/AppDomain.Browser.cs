@@ -17,7 +17,7 @@ namespace System
         internal static SimpleDictionary<AssemblyModel> GlobalMetadataRegistry;
         internal static SimpleDictionary<RuntimeAssembly> GlobalAssemblyRegistry;
         internal static SimpleDictionary<RuntimeType> GlobalTypeRegistry;
-        internal static TypePrototype[] GenericTypes;
+        internal static TypePrototype[] GenericTypeParameters;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
         [Name("$initd")]
@@ -74,7 +74,7 @@ namespace System
             }
             NetJs.Script.Delete(GlobalPrototypeRegistry, "$bts");
             //Script.Write($"{Constants.GlobalName}.typesReady = true");
-            GenericTypes = Script.CreateArrayFromValues(
+            GenericTypeParameters = Script.CreateArrayFromValues(
                 Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T1"),
                 Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T2"),
                 Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.$T3"),
@@ -111,7 +111,7 @@ namespace System
             //Script.Write($"{Constants.GlobalName}.{Constants.AssemblyRegistryName} = this.{Constants.AssemblyRegistryName}");
             //Script.Write($"{Constants.GlobalName}.{Constants.AssemblyMetadataRegistryName} = this.{Constants.AssemblyMetadataRegistryName}");
             //Redirect subsequent BootDefine($bt) to DefineType($cls), lest we end up with an inner whose runtime type that is not initialized
-            NativeFunction<string, TypePrototype, TypePrototype?, NativeAction<TypePrototype>?, NetJs.Union<TypePrototype, TypePrototypeProvider>> redirectBootType = (name, prototype, parent, typePrototypeSink) =>
+            NativeFunction<string, TypePrototype, TypePrototype?, NativeAction<Union<TypePrototype, TypePrototypeProvider>>?, NetJs.Union<TypePrototype, TypePrototypeProvider>> redirectBootType = (name, prototype, parent, typePrototypeSink) =>
             {
                 bool isGenericType = NetJs.Script.TypeOf(prototype).NativeEquals("function") && NetJs.Script.Write<int>("prototype.length") != 0;
                 if (isGenericType) //generic type
@@ -130,6 +130,7 @@ namespace System
             Script.Write($"{Constants.GlobalName}.castAddress2Ptr = {Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.{nameof(InteropUtility)}.{nameof(InteropUtility.castAddress2Ptr)}");
             Script.Write($"{Constants.GlobalName}.virtualAddressOffset = {Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.{nameof(InteropUtility)}.{nameof(InteropUtility.virtualAddressOffset)}");
             Script.Write($"{Constants.GlobalName}.{Constants.IntegerChecked} = {Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.{nameof(InteropUtility)}.{nameof(InteropUtility.IntegerChecked)}");
+            Script.Write($"{Constants.GlobalName}.{Constants.ToArray} = {Constants.GlobalName}.{Constants.SystemPrivateCoreLib}.{nameof(InteropUtility)}.{nameof(InteropUtility.ToArray)}");
             //Script.Write($"$.{Constants.AssemblyStubName} = $.System.AppDomain.{Constants.AssemblyStubName}");
         }
 

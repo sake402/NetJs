@@ -54,14 +54,14 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitCastExpression(CastExpressionSyntax node)
         {
-            var toType = _global.GetTypeSymbol(node.Type, this);
+            var castToType = _global.GetTypeSymbol(node.Type, this);
             var parentIsEnum = node.FindClosestParent<EnumDeclarationSyntax>();
             //Don't generate cast for enum value initialization
-            var type = _global.GetSymbol(node.Type, this/*, out _, out _*/);
+            //var type = _global.GetSymbol(node.Type, this/*, out _, out _*/);
             if (parentIsEnum != null ||
                 node.Expression.IsKind(SyntaxKind.NullLiteralExpression) ||
-                !_global.ShouldExportType(type, this) ||
-                SymbolEqualityComparer.Default.Equals(toType, _global.Compilation.DynamicType))
+                !_global.ShouldExportType(castToType, this) ||
+                SymbolEqualityComparer.Default.Equals(castToType, _global.Compilation.DynamicType))
             {
                 Visit(node.Expression);
             }
@@ -69,16 +69,33 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 var fromType = _global.TryGetTypeSymbol(node.Expression, this);
 
+                //Casting a type to its implicit type is unneccessary at runtime
+                if (fromType != null &&
+                    SymbolEqualityComparer.Default.Equals(fromType, castToType))
+                {
+                    Visit(node.Expression);
+                    return;
+                }
+
+                //Casting a type to a base it inherits from or interface it already implements is unneccessary at runtime
+                if (fromType != null &&
+                    !fromType.IsJsPrimitive() &&
+                    (SymbolEqualityComparer.Default.Equals(fromType.BaseType, castToType) || fromType.AllInterfaces.Any(it => SymbolEqualityComparer.Default.Equals(it, castToType))))
+                {
+                    Visit(node.Expression);
+                    return;
+                }
+
                 var numFromType = fromType?.TypeKind == TypeKind.Enum ? ((INamedTypeSymbol)fromType).EnumUnderlyingType : fromType;
                 if (numFromType != null &&
-                    toType != null &&
-                    ((numFromType.IsIntegerNumericType() && toType.IsIntegerNumericType()) || 
-                    (numFromType.IsLongNumericType() && toType.IsLongNumericType())))
+                    //castToType != null &&
+                    ((numFromType.IsIntegerNumericType() && castToType.IsIntegerNumericType()) ||
+                    (numFromType.IsLongNumericType() && castToType.IsLongNumericType())))
                 {
                     //this type can just be assigned, no cast/conversion neccessary in js
                     int fromRank = numFromType.GetNumericRangeRank();
-                    int toRank = toType.GetNumericRangeRank();
-                    if (numFromType.IsSignedNumericType() == toType.IsSignedNumericType())
+                    int toRank = castToType.GetNumericRangeRank();
+                    if (numFromType.IsSignedNumericType() == castToType.IsSignedNumericType())
                     {
                         if (toRank >= fromRank)
                         {
@@ -87,14 +104,14 @@ namespace NetJs.Translator.CSharpToJavascript
                         }
                     }
                     else if (toRank == fromRank &&
-                        (SymbolEqualityComparer.Default.Equals(toType, _global.SystemInt32) || SymbolEqualityComparer.Default.Equals(numFromType, _global.SystemInt32))) //same rank but differ in signess. eg int and uint
+                        (SymbolEqualityComparer.Default.Equals(castToType, _global.SystemInt32) || SymbolEqualityComparer.Default.Equals(numFromType, _global.SystemInt32))) //same rank but differ in signess. eg int and uint
                     {
-                        var toMask = toType.GetNumericMask();
+                        var toMask = castToType.GetNumericMask();
                         var fromMask = numFromType.GetNumericMask();
                         bool useMask = toMask != fromMask;
                         CurrentTypeWriter.Write(node, "(");
                         Visit(node.Expression);
-                        if (toType.IsSignedNumericType())
+                        if (castToType.IsSignedNumericType())
                         {
                             CurrentTypeWriter.Write(node, " | 0)");
                         }
@@ -106,9 +123,9 @@ namespace NetJs.Translator.CSharpToJavascript
                     }
                 }
 
-                if (TryInvokeMethodOperator(node, ExplicitOperatorName, null, node.Type, [node.Expression]))
+                if (TryInvokeMethodOperator(node, ExplicitOperatorName, null, node.Type, null, [node.Expression]))
                     return;
-                if (TryCastUsingExternalInterface(node, toType, fromType, node.Expression))
+                if (TryCastUsingExternalInterface(node, castToType, fromType, node.Expression))
                     return;
                 //if ((toType?.Equals(_global.Compilation.ObjectType, SymbolEqualityComparer.Default) ?? false) && fromType != null && !fromType.IsValueType)
                 //{
@@ -119,7 +136,10 @@ namespace NetJs.Translator.CSharpToJavascript
                 //    return;
                 //}
                 EnsureImported(node.Type);
-                if (toType != null && fromType != null && NeedBoxing(toType, fromType))
+                if (
+                    //castToType != null && 
+                    fromType != null && 
+                    NeedBoxing(castToType, fromType))
                 {
                     var metadata = fromType.Kind != SymbolKind.TypeParameter ? _global.GetRequiredMetadata(fromType) : null;
                     CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.BoxName}(");
@@ -131,11 +151,17 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
                 else
                 {
+                    var metadata = _global.GetMetadata(castToType);
                     CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.CastName}(");
                     Visit(node.Expression);
                     CurrentTypeWriter.Write(node, ", ");
-                    Visit(node.Type);
-                    if (fromType?.TypeKind == TypeKind.TypeParameter) //if casting from a a generic parameter to Object, let the runtime decide if it need to box it into this T or not
+                    //if (node.Type.ToString() == "delegate* unmanaged[Cdecl]<void>")
+                    //{
+
+                    //}
+                    CurrentTypeWriter.Write(node, metadata?.InvocationName ?? castToType.ComputeOutputTypeName(_global));
+                    //Visit(node.Type);
+                    if (fromType?.TypeKind == TypeKind.TypeParameter) //if casting from a generic parameter to Object, let the runtime decide if it need to box it into this T or not
                     {
                         CurrentTypeWriter.Write(node, ", ");
                         CurrentTypeWriter.Write(node, fromType.Name);

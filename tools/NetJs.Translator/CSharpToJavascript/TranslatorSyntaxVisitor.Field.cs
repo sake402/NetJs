@@ -226,7 +226,12 @@ namespace NetJs.Translator.CSharpToJavascript
                 //else
                 //    CurrentClosure.DefineIdentifierType(fieldName, CodeType.From(node.Declaration.Type, SymbolKind.Field));
 
-                var defaultValue = var.Initializer == null ? _global.GetDefaultValue(node.Declaration.Type, this) : null;
+                var refKind = symbol.GetRefKind() ?? RefKind.None;
+                //if (refKind != RefKind.None)
+                //{
+
+                //}
+                var defaultValue = _global.GetDefaultValue(node.Declaration.Type, this);
                 bool useStaticPropertyFunction = false;
                 //if ((node.Modifiers.IsStatic() || node.Modifiers.IsConst()) &&
                 //    (defaultValue.EndsWith("()")/*eg T.default() ot Guid.default()*/ ||
@@ -240,45 +245,75 @@ namespace NetJs.Translator.CSharpToJavascript
                 //bool fieldTypeIsInlineArray = _global.IsInlineArray(fieldType, out var inlineArraySize, out var inlineArrayFieldType);
                 bool fieldContainingTypeIsInlineArray = _global.IsInlineArray(symbol.ContainingType, out var inlineArraySize, out var inlineArrayFieldType);
                 bool isPureStructMember = _global.IsPureStructType(symbol.ContainingType);
+
                 void RegisterMemberInitializer()
                 {
-                    //if (fieldContainingTypeIsInlineArray)
-                    //return;
-                    bool isStaticInit = node.Modifiers.IsStatic() || node.Modifiers.IsConst();
-                    CurrentClosure.RegisterTypeInitializer(() =>
+                    if (MemberWasMarkedInitializedByPrimaryConstructor(node, var.Initializer))
                     {
-                        if (_global.IsFixedSizeField(symbol, out var fSize, out _))
+                    }
+                    else
+                    {
+                        bool isStaticInit = node.Modifiers.IsStatic() || node.Modifiers.IsConst();
+                        var initLocation = isStaticInit ? TypeInitializerLocation.DefaultStaticConstructor : TypeInitializerLocation.DefaultInstanceConstructor;
+
+                        // if class has primary constructor and the field being initialized needs a parameter from the constructor, we initialize that field in the primary constructor
+                        if (var.Initializer?.Value != null && ((CurrentType is ClassDeclarationSyntax cls && cls.ParameterList != null) || (CurrentType is StructDeclarationSyntax str && str.ParameterList != null)))
                         {
-                            CurrentTypeWriter.WriteLine(node, $"//FixedSizeArray({fieldType}, {fSize})", true);
-                            var variableName = $"$t{++CurrentTypeWriter.CurrentClosure.NameManglingSeed}";
-                            CurrentTypeWriter.Write(node, "let ", true);
-                            CurrentTypeWriter.Write(node, variableName);
-                            CurrentTypeWriter.Write(node, " = ");
-                            CurrentTypeWriter.Write(node, $"{(isStaticInit ? "this"/*declaringSymbolMeta.InvocationName + "."*/ : "this")}");
-                            CurrentTypeWriter.Write(node, ".");
-                            CurrentTypeWriter.Write(node, fieldName);
-                            CurrentTypeWriter.WriteLine(node, ";");
-                            CurrentTypeWriter.WriteLine(node, $"for (let $i = 0; $i < {fSize}; $i++)", true);
-                            CurrentTypeWriter.WriteLine(node, "{", true);
-                            CurrentTypeWriter.WriteLine(node, $"{variableName}[$i] = {defaultValue};", true);
-                            CurrentTypeWriter.WriteLine(node, "}", true);
-                        }
-                        else
-                        {
-                            if (fieldContainingTypeIsInlineArray)
+                            var parameters = (CurrentType as ClassDeclarationSyntax)?.ParameterList ?? (CurrentType as StructDeclarationSyntax)!.ParameterList;
+                            if (MemberReferencesPrimaryConstructorParameter(var.Initializer.Value, parameters!.Parameters))
                             {
-                                var defaultValue = _global.GetDefaultValue(fieldType, true);
-                                CurrentTypeWriter.WriteLine(node, $"//InlineArray({fieldType}, {inlineArraySize})", true);
-                                CurrentTypeWriter.WriteLine(node, $"for (let $i = {inlineArraySize - 1}; $i >= 0; $i--)", true);
+                                initLocation = TypeInitializerLocation.PrimaryConstructor;
+                            }
+                        }
+
+                        CurrentClosure.RegisterTypeInitializer(() =>
+                        {
+                            if (_global.IsFixedSizeField(symbol, out var fSize, out _))
+                            {
+                                CurrentTypeWriter.WriteLine(node, $"//FixedSizeArray({fieldType}, {fSize})", true);
+                                var variableName = $"$t{++CurrentTypeWriter.CurrentClosure.NameManglingSeed}";
+                                CurrentTypeWriter.Write(node, "let ", true);
+                                CurrentTypeWriter.Write(node, variableName);
+                                CurrentTypeWriter.Write(node, " = ");
+                                CurrentTypeWriter.Write(node, $"{(isStaticInit ? "this"/*declaringSymbolMeta.InvocationName + "."*/ : "this")}");
+                                CurrentTypeWriter.Write(node, ".");
+                                CurrentTypeWriter.Write(node, fieldName);
+                                CurrentTypeWriter.WriteLine(node, ";");
+                                if (fieldType.IsPointer(out var pointedType))
+                                {
+                                    //Array.AddMetadata to the proxy serving this fixed array
+                                    CurrentTypeWriter.Write(node, "", true);
+                                    WriteMethodInvocation(node, "System.Array.AddMetadata", arguments: [
+                                        new CodeNode(()=> CurrentTypeWriter.Write(node, variableName)),
+                                    new CodeNode(()=> {
+                                        CurrentTypeWriter.Write(node, pointedType.ComputeOutputTypeName(_global));
+                                        CurrentTypeWriter.Write(node, ".");
+                                        CurrentTypeWriter.Write(node, Constants.PrototypeTypeName);
+                                    })
+                                    ]);
+                                    CurrentTypeWriter.WriteLine(node, ";");
+                                }
+                                CurrentTypeWriter.WriteLine(node, $"for (let $i = 0; $i < {fSize}; $i++)", true);
                                 CurrentTypeWriter.WriteLine(node, "{", true);
-                                if (isPureStructMember)
-                                    CurrentTypeWriter.WriteLine(node, $"this.{Constants.ObjectSetField}($i, {fieldType.ComputeOutputTypeName(_global)}, {defaultValue});", true);
-                                else
-                                    CurrentTypeWriter.WriteLine(node, $"this.{Constants.ObjectSetField}($i, 1, {defaultValue});", true);
+                                CurrentTypeWriter.WriteLine(node, $"{variableName}[$i] = {defaultValue};", true);
                                 CurrentTypeWriter.WriteLine(node, "}", true);
-                                CurrentTypeWriter.Write(node, "", true);
-                                WriteMethodInvocation(node, "System.Array.AddMetadata", arguments: [
-                                    new CodeNode(()=>
+                            }
+                            else
+                            {
+                                if (fieldContainingTypeIsInlineArray)
+                                {
+                                    var defaultValue = _global.GetDefaultValue(fieldType, true);
+                                    CurrentTypeWriter.WriteLine(node, $"//InlineArray({fieldType}, {inlineArraySize})", true);
+                                    CurrentTypeWriter.WriteLine(node, $"for (let $i = {inlineArraySize - 1}; $i >= 0; $i--)", true);
+                                    CurrentTypeWriter.WriteLine(node, "{", true);
+                                    if (isPureStructMember)
+                                        CurrentTypeWriter.WriteLine(node, $"this.{Constants.ObjectSetField}($i, {fieldType.ComputeOutputTypeName(_global)}, {defaultValue});", true);
+                                    else
+                                        CurrentTypeWriter.WriteLine(node, $"this.{Constants.ObjectSetField}($i, 1, {defaultValue});", true);
+                                    CurrentTypeWriter.WriteLine(node, "}", true);
+                                    CurrentTypeWriter.Write(node, "", true);
+                                    WriteMethodInvocation(node, "System.Array.AddMetadata", arguments: [
+                                        new CodeNode(()=>
                                     {
                                         CurrentTypeWriter.Write(node, $"this.{Constants.StructFieldsLayoutName}");
                                     }),
@@ -286,42 +321,69 @@ namespace NetJs.Translator.CSharpToJavascript
                                     {
                                         CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.TypeOf}({fieldType.ComputeOutputTypeName(_global)})");
                                     })
-                                ]);
-                                CurrentTypeWriter.WriteLine(node, "");
-                            }
-                            else
-                            {
-                                //If we are in a static initilizer, it is safe to use this as it reference the class prototype itself
-                                CurrentTypeWriter.Write(node, $"{(isStaticInit ? "this"/*declaringSymbolMeta.InvocationName + "."*/ : "this")}", true);
-                                CurrentTypeWriter.Write(node, ".");
-                                CurrentTypeWriter.Write(node, fieldName);
-                                CurrentTypeWriter.Write(node, " = ");
-                                //Visit(var.Initializer);
-                                if (var.Initializer != null)
-                                {
-                                    if (!TryWriteConstant(node, fieldType, var.Initializer.Value))
-                                        WriteVariableAssignment(node, null, symbol, null, var.Initializer.Value, null);
+                                    ]);
+                                    CurrentTypeWriter.WriteLine(node, "");
                                 }
                                 else
                                 {
-                                    if (defaultValue != null)
-                                        CurrentTypeWriter.Write(node, defaultValue);
+                                    if (initLocation == TypeInitializerLocation.PrimaryConstructor)
+                                    {
+                                        CurrentTypeWriter.WriteLine(node, $"//depends on primary constructor parameter", true);
+                                    }
+                                    //If we are in a static initilizer, it is safe to use this as it reference the class prototype itself
+                                    CurrentTypeWriter.Write(node, $"{(isStaticInit ? "this"/*declaringSymbolMeta.InvocationName + "."*/ : "this")}", true);
+                                    CurrentTypeWriter.Write(node, ".");
+                                    CurrentTypeWriter.Write(node, fieldName);
+                                    CurrentTypeWriter.Write(node, " = ");
+                                    //Visit(var.Initializer);
+                                    if (var.Initializer != null)
+                                    {
+                                        if (!TryWriteConstant(node, fieldType, var.Initializer.Value))
+                                        {
+                                            ////We are inside js default constructor, if the node.Initializer.Value is a primary constructor parameter, we should not write it as that variable is undefined here
+                                            //var symbol = _global.TryGetSymbol(var.Initializer.Value, this);
+                                            //if (symbol != null && symbol.Kind == SymbolKind.Parameter)
+                                            //{
+                                            //    if (defaultValue != null)
+                                            //        CurrentTypeWriter.Write(node, defaultValue);
+                                            //    else
+                                            //    {
+                                            //        CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.DefaultTypeName}({fieldType.ComputeOutputTypeName(_global)})");
+                                            //    }
+                                            //}
+                                            //else
+                                            WriteVariableAssignment(node, null, symbol, null, var.Initializer.Value, null);
+                                        }
+                                    }
                                     else
                                     {
-                                        CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.DefaultTypeName}({fieldType.ComputeOutputTypeName(_global)})");
+                                        if (defaultValue != null)
+                                            CurrentTypeWriter.Write(node, defaultValue);
+                                        else
+                                        {
+                                            if (refKind != RefKind.None)
+                                            {
+                                                WriteMethodInvocation(node, "System.Runtime.CompilerServices.Unsafe.NullRef", null, null, [fieldType]);
+                                            }
+                                            else
+                                            {
+                                                CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.DefaultTypeName}({fieldType.ComputeOutputTypeName(_global)})");
+                                            }
+                                        }
                                     }
+                                    CurrentTypeWriter.WriteLine(node, ";");
                                 }
-                                CurrentTypeWriter.WriteLine(node, ";");
                             }
-                        }
-                    }, isStaticInit);
+                        }, initLocation);
+                    }
                 }
+
                 bool memberInitialized = false;
                 if (var.Initializer != null || (fieldType.IsValueType && !fieldType.IsJsPrimitive()))
                 {
                     //If we initialize a field from a primary constructor parameter, this is already handled in the primary constructor generator (WritePrimaryConstructor)
                     //We should skip it here
-                    if (MemberWasInitializedByPrimaryConstructor(var, var.Initializer))
+                    if (MemberWasMarkedInitializedByPrimaryConstructor(var, var.Initializer))
                     {
                     }
                     else if (isLiteralInit && !isFieldLayout)

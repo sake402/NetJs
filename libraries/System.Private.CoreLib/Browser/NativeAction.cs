@@ -54,5 +54,7 @@ namespace NetJs
         {
             return NetJs.Script.Write<T>("func.call(thisArg)");
         }
+        [NetJs.Template("{func}.length")]
+        public static extern int NativeFunctionParametersCount(this Delegate func);
     }
 }

@@ -114,7 +114,7 @@ namespace System
                 NetJs.Script.Write("this._m_value = value");
             }
         }
-
+        
         [NetJs.Name(NetJs.Constants.IsTypeName)]
         public static bool Is(object? value)
         {

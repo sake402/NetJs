@@ -85,7 +85,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     if (token is InterpolatedStringTextSyntax str)
                     {
-                        CurrentTypeWriter.Write(node, str/*.ToFullString()*/.TextToken.ValueText.EscapeString());
+                        CurrentTypeWriter.Write(node, str/*.ToFullString()*/.TextToken.ValueText.EscapeString().Replace("`", "\\`").Replace("$", "\\$"));
                     }
                     else if (token is InterpolationSyntax format)
                     {

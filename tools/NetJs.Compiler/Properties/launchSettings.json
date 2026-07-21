@@ -9,6 +9,11 @@
       "commandName": "Project",
       "commandLineArgs": "--doctor E:\\Apps\\NetJs\\doctor.libraries.xml",
       "workingDirectory": "E:\\Apps\\NetJs"
+    },
+    "NetJs.Compiler.SPC": {
+      "commandName": "Project",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Private.CoreLib\\NetJs.System.Private.CoreLib.csproj\" --configuration \"Debug\"",
+      "workingDirectory": "E:\\Apps\\NetJs"
     }
   }
 }

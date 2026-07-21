@@ -15,6 +15,8 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 using CodeAnalysisProject = Microsoft.CodeAnalysis.Project;
 using MsBuildProject = Microsoft.Build.Evaluation.Project;
 
@@ -36,6 +38,8 @@ var sdkVersion = match.Groups[1].Value;
 var sdkPath = match.Groups[2].Value; ;
 var dotnetFolder = Path.GetDirectoryName(dotnetPath) + "\\";
 var directory = Directory.GetCurrentDirectory();
+var tempFolder = Path.GetTempPath() + "NetJs";
+Console.WriteLine();
 Console.WriteLine($"Using dotnet {dotnetVersion} @ {dotnetPath}. SDK {sdkVersion} @ {sdkPath}");
 
 var rootCommand = new RootCommand("NetJs");
@@ -43,7 +47,47 @@ var rootCommand = new RootCommand("NetJs");
 var doctorCommand = new Command("doctor", "Creates csproj files from dotnet runtime and aspnetcore from official dotnet repo");
 doctorCommand.Aliases.Add("--doctor");
 var fileArgument = new Argument<FileInfo>("file") { Description = "Path to the doctor.libraries.xml file" };
-doctorCommand.SetAction(async parseResult =>
+doctorCommand.SetAction(Doctor);
+
+
+var watchCommand = new Command("watch", "Watch directory for file changes and build accordingly");
+watchCommand.Aliases.Add("--watch");
+watchCommand.SetAction(Watch);
+
+
+var buildCommand = new Command("build", "Build a project");
+buildCommand.Aliases.Add("--build");
+var projectOption = new Option<FileInfo>("--project") { Description = "Path to the project to build" };
+projectOption.Aliases.Add("-p");
+var configOption = new Option<FileInfo>("--configuration") { Description = "Path to the project to build" };
+configOption.Aliases.Add("-c");
+buildCommand.Options.Add(projectOption);
+buildCommand.Options.Add(configOption);
+buildCommand.SetAction(Build);
+
+var cleanCommand = new Command("cleanCache", "Clean the package cache folder in temp folder");
+cleanCommand.SetAction(CleanPackageCache);
+
+var pullCacheCommand = new Command("cachePull", "Pull the project package cache from github to this PC");
+buildCommand.Options.Add(projectOption);
+buildCommand.SetAction(PullPackageCache);
+
+rootCommand.Subcommands.Add(doctorCommand);
+rootCommand.Subcommands.Add(watchCommand);
+rootCommand.Subcommands.Add(buildCommand);
+rootCommand.Subcommands.Add(cleanCommand);
+rootCommand.Subcommands.Add(pullCacheCommand);
+return await rootCommand.Parse(args).InvokeAsync();
+
+Dictionary<string, string> GetBuildProperties()
+{
+    var globalProperties = new Dictionary<string, string>();
+    globalProperties.Add("Configuration", "Debug");
+    globalProperties.Add("Platform", "wasm");
+    return globalProperties;
+}
+
+async Task Doctor(ParseResult parseResult)
 {
     FileInfo targetedFile = parseResult.GetValue(fileArgument)!;
     if (targetedFile.Exists)
@@ -78,12 +122,9 @@ doctorCommand.SetAction(async parseResult =>
     {
         Console.WriteLine("File not found");
     }
-});
+}
 
-
-var watchCommand = new Command("watch", "Watch directory for file changes and build accordingly");
-watchCommand.Aliases.Add("--watch");
-watchCommand.SetAction(async parseResult =>
+async Task Watch(ParseResult parseResult)
 {
     MSBuildLocator.RegisterDefaults();
 
@@ -262,14 +303,9 @@ watchCommand.SetAction(async parseResult =>
             }
         }
     }
-});
+}
 
-var buildCommand = new Command("build", "Build a project");
-buildCommand.Aliases.Add("--build");
-var projectOption = new Option<FileInfo>("--project") { Description = "Path to the project to build" };
-projectOption.Aliases.Add("-p");
-buildCommand.Options.Add(projectOption);
-buildCommand.SetAction(async (parseResult, cancellationToken) =>
+async Task Build(ParseResult parseResult, CancellationToken cancellationToken)
 {
     MSBuildLocator.RegisterDefaults();
 
@@ -333,17 +369,43 @@ buildCommand.SetAction(async (parseResult, cancellationToken) =>
             File.WriteAllText(logFile, logWriter.ToString());
         }
     }
-});
+}
 
-rootCommand.Subcommands.Add(doctorCommand);
-rootCommand.Subcommands.Add(watchCommand);
-rootCommand.Subcommands.Add(buildCommand);
-return await rootCommand.Parse(args).InvokeAsync();
-
-Dictionary<string, string> GetBuildProperties()
+void CleanPackageCache(ParseResult parseResult)
 {
-    var globalProperties = new Dictionary<string, string>();
-    globalProperties.Add("Configuration", "Debug");
-    globalProperties.Add("Platform", "wasm");
-    return globalProperties;
+    var deSerializer = new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
+    var compiler = new CodeCompiler(dotnetPath, dotnetVersion, sdkPath, sdkVersion, tempFolder, deSerializer);
+    compiler.CleanPackageCache();
+}
+
+
+async Task PullPackageCache(ParseResult parseResult)
+{
+    MSBuildLocator.RegisterDefaults();
+
+    string? csProjectFile = null;
+    var projectFileInfo = parseResult.GetValue(projectOption);
+
+    if (projectFileInfo != null)
+    {
+        csProjectFile = projectFileInfo.FullName;
+    }
+    else
+    {
+        var projects = Directory.EnumerateFiles(directory, "*.csproj", SearchOption.AllDirectories);
+        var project = (projects.Count() == 1 ? projects.FirstOrDefault() :
+        projects.Count() > 1 ? throw new InvalidOperationException($"Multiple project file found in directory {directory}. Specify the one to build using --project") :
+        throw new InvalidOperationException($"No project file found in directory {directory}"));
+        csProjectFile = project;
+    }
+    //var csProjectFile = projectFile;
+    var workspace = MSBuildWorkspace.Create();
+    var projectCollection = new Microsoft.Build.Evaluation.ProjectCollection();
+    var codeAnalysisProject = await workspace.OpenProjectAsync(csProjectFile!);
+    var msBuildProject = new MsBuildProject(csProjectFile, GetBuildProperties(), null, projectCollection);
+    var wProject = new ProjectWrapper(codeAnalysisProject, msBuildProject);
+
+    var deSerializer = new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
+    var compiler = new CodeCompiler(dotnetPath, dotnetVersion, sdkPath, sdkVersion, tempFolder, deSerializer);
+    compiler.PullPackageCache(wProject);
 }

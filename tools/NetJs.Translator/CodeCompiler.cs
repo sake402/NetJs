@@ -70,13 +70,13 @@ namespace NetJs.Translator
                 if (!project.Build())
                     throw new InvalidOperationException($"Expected projectasset.json file not found at {projectAsset} and autobuild fails. Ensure that project restore has run.");
             }
-             content = File.ReadAllText(projectAsset);
+            content = File.ReadAllText(projectAsset);
             var lockFileFormat = new LockFileFormat();
             var lockFile = lockFileFormat.Parse(content, "In Memory");
             return lockFile;
         }
 
-        HashSet<string> added = new();
+        HashSet<string> addedReference = new();
         async Task AddReference(IProject project, string refName, List<MetadataReference>? refs = null, List<string>? symbols = null)
         {
             //if (refName == "mscrolib" ||
@@ -102,7 +102,7 @@ namespace NetJs.Translator
                 refName = "System.Drawing.Primitives";
             else if (refName == "System.Net")
                 refName = "System.Net.Primitives";
-            if (!added.Add(refName))
+            if (!addedReference.Add(refName))
                 return;
             //Console.WriteLine($"Adding implicit \"{refName}\"...");
             var targetFramework = project.Evaluate("TargetFramework") ?? "net10.0";
@@ -116,11 +116,20 @@ namespace NetJs.Translator
             var refPackagePackageYaml = $"{refPackageFolder}{Path.DirectorySeparatorChar}package.yaml";
             if (!File.Exists(refPackageDll))
             {
-                var remoteUrl = $"https://raw.githubusercontent.com/sake402/NetJs/master/zpackages/{targetFramework}/NetJs.{refName}.package.zip";
+                var packageFeedUrl = "E:\\Apps\\NetJs\\zpackages";// "https://raw.githubusercontent.com/sake402/NetJs/master/zpackages";
+                var remoteUrl = $"{packageFeedUrl}/{targetFramework}/NetJs.{refName}.package.zip";
                 Console.WriteLine($"Downloading {remoteUrl}...");
                 try
                 {
-                    var zipStream = await http.GetStreamAsync(remoteUrl);
+                    Stream zipStream;
+                    if (remoteUrl.StartsWith("http"))
+                        zipStream = await http.GetStreamAsync(remoteUrl);
+                    else
+                    {
+                        if (!File.Exists(remoteUrl))
+                            throw new HttpRequestException("404");
+                        zipStream = new FileStream(remoteUrl, FileMode.Open, FileAccess.Read);
+                    }
                     Console.WriteLine($"Extracting...");
                     using (ZipArchive archive = new ZipArchive(zipStream, ZipArchiveMode.Read))
                     {
@@ -160,7 +169,7 @@ namespace NetJs.Translator
                             dpackage = Path.GetFileNameWithoutExtension(dpackage);
                         if (dpackage.StartsWith("NetJs."))
                             dpackage = dpackage.Substring(6);
-                        await AddReference(project, dpackage);
+                        await AddReference(project, dpackage, refs, symbols);
                     }
                 }
             }
@@ -194,6 +203,7 @@ namespace NetJs.Translator
 
         public async Task PullPackageCache(IProject project, LockFile? projectAssetJson = null, List<MetadataReference>? refs = null, List<string>? symbols = null)
         {
+            addedReference.Clear();
             projectAssetJson ??= GetLockFile(project, out _);
             var dotnetFolder = Path.GetDirectoryName(DotnetPath);
             var localPackageCacheFolder = LocalPackageCacheFolder;
@@ -510,7 +520,7 @@ namespace NetJs.Translator
 
             var model = JsonSerializer.Deserialize<ProjectAssetModel>(content);
             model!.Targets = model.Targets.ToDictionary(e => e.Key, e => e.Value.ToDictionary(ee => ee.Key.Split('/')[0], ee => ee.Value));
-            var dic = model.Targets.Values.Single();
+            var dic = model.Targets.Count == 1 ? model.Targets.Values.Single() : model.Targets.Where(e => e.Key.Contains("browser")).Single().Value;
 
             // 1. Build an adjacency list (who depends on whom) and track in-degrees
             var adjacencyList = sortLibraries.ToDictionary(l => l.Name, _ => new List<string>());
@@ -613,25 +623,29 @@ namespace NetJs.Translator
                 {
                     var libProjectPath = Path.GetFullPath(Path.GetDirectoryName(project.FullPath) + "/" + lib.Path);
                     var libProjectFolder = Path.GetDirectoryName(libProjectPath);
+                    var libName = Path.GetFileName(lib.Name);
+                    //We may have override assembly name back to default for some libraries, beacuase of vs intelissense
+                    if (!libName.StartsWith($"{Constants.ProjectName}."))
+                        libName = Constants.ProjectName + "." + libName;
                     //var config="wasm";//project.Evaluate("Configuration");
-                    var binPathJs = libProjectFolder + $"/bin/wasm/{project.Evaluate("Configuration")}/{project.Evaluate("TargetFramework")}/" + Path.GetFileName(lib.Name) + ".js.dll";
-                    var binPath = libProjectFolder + $"/bin/wasm/{project.Evaluate("Configuration")}/{project.Evaluate("TargetFramework")}/" + Path.GetFileName(lib.Name) + ".dll";
-                    if (!File.Exists(binPath) && !File.Exists(binPathJs))
-                        throw new InvalidOperationException($"Expected dll file not found at {binPath} or {binPathJs}. Ensure that project has built successfully.");
-                    refs.Add(MetadataReference.CreateFromFile(File.Exists(binPathJs) ? binPathJs : binPath));
-                    var symbolFile = libProjectFolder + $"/bin/wasm/{project.Evaluate("Configuration")}/{project.Evaluate("TargetFramework")}/" + Path.GetFileName(lib.Name) + ".Symbols.yaml";
-                    if (File.Exists(symbolFile))
+                    var platform = project.GetPlatform();
+                    if (platform.Equals("AnyCPU", StringComparison.InvariantCultureIgnoreCase))
                     {
-                        symbols.Add(symbolFile);
+                        platform = "";
                     }
                     else
                     {
-                        //We may have override assembly name back to default for some libraries, beacuase of vs intelissense
-                        symbolFile = libProjectFolder + $"/bin/wasm/{project.Evaluate("Configuration")}/{project.Evaluate("TargetFramework")}/{Constants.ProjectName}." + Path.GetFileName(lib.Name) + ".Symbols.yaml";
-                        if (File.Exists(symbolFile))
-                        {
-                            symbols.Add(symbolFile);
-                        }
+                        platform = "/" + platform;
+                    }
+                    var binPathJs = libProjectFolder + $"/bin/wasm/{project.Evaluate("Configuration")}/{project.Evaluate("TargetFramework")}/" + libName + ".js.dll";
+                    var binPath = libProjectFolder + $"/bin/wasm/{project.Evaluate("Configuration")}/{project.Evaluate("TargetFramework")}/" + libName + ".dll";
+                    if (!File.Exists(binPath) && !File.Exists(binPathJs))
+                        throw new InvalidOperationException($"Expected dll file not found at {binPath} or {binPathJs}. Ensure that project has built successfully.");
+                    refs.Add(MetadataReference.CreateFromFile(File.Exists(binPathJs) ? binPathJs : binPath));
+                    var symbolFile = libProjectFolder + $"/bin/wasm/{project.Evaluate("Configuration")}/{project.Evaluate("TargetFramework")}/" + libName + ".Symbols.yaml";
+                    if (File.Exists(symbolFile))
+                    {
+                        symbols.Add(symbolFile);
                     }
                 }
             }
@@ -726,6 +740,9 @@ namespace NetJs.Translator
                     optimizationLevel: OptimizationLevel.Debug,
                     assemblyIdentityComparer: DesktopAssemblyIdentityComparer.Default,
                     allowUnsafe: true);
+            var name = project.GetName();
+            if (name != options.ModuleName)
+                options = options.WithModuleName(name);
             return CSharpCompilation.Create(project.GetName(),
                 syntaxTrees.ToArray(),
                 references: referenceAndSymbols.Value.Item1,

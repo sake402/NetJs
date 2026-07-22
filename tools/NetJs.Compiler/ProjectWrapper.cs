@@ -105,14 +105,23 @@ namespace NetJs.Compiler
             {
                 if (projectItem.EvaluatedInclude.Contains(".NETCoreApp,"))
                     continue;
-                if (projectItem.EvaluatedInclude.Contains(':')) //check if it has volume label already
+                if (Path.IsPathRooted(projectItem.EvaluatedInclude)) //check if it has volume label already
                     sourceFiles.Add(projectItem.EvaluatedInclude);
                 else
                     sourceFiles.Add(Path.Join(msProject.DirectoryPath, projectItem.EvaluatedInclude));
             }
 
+            var platform = GetPlatform();
+            if (platform.Equals("AnyCPU", StringComparison.InvariantCultureIgnoreCase))
+            {
+                platform = "";
+            }
+            else
+            {
+                platform = "/" + platform;
+            }
             //Check for cs files like .NETCoreApp,Version=v10.0.AssemblyAttributes.cs
-            var sourceObjGenOutputPath = $"{msProject.DirectoryPath}/obj/{GetPlatform()}/{GetConfiguration()}/{GetTargetFramework()}";
+            var sourceObjGenOutputPath = $"{msProject.DirectoryPath}/obj{platform}/{GetConfiguration()}/{GetTargetFramework()}";
             if (Directory.Exists(sourceObjGenOutputPath))
             {
                 var csFiles = Directory.EnumerateFiles(sourceObjGenOutputPath, "*.cs", SearchOption.TopDirectoryOnly);
@@ -120,7 +129,7 @@ namespace NetJs.Compiler
             }
 
             //Check for source generated files
-            var sourceGenOutputPath = $"{msProject.DirectoryPath}/obj/{GetPlatform()}/{GetConfiguration()}/{GetTargetFramework()}/generated";
+            var sourceGenOutputPath = $"{msProject.DirectoryPath}/obj{platform}/{GetConfiguration()}/{GetTargetFramework()}/generated";
             if (Directory.Exists(sourceGenOutputPath))
             {
                 var csFiles = Directory.EnumerateFiles(sourceGenOutputPath, "*.cs", SearchOption.AllDirectories);
@@ -137,7 +146,7 @@ namespace NetJs.Compiler
             {
                 if (projectItem.EvaluatedInclude.Contains(".NETCoreApp,"))
                     continue;
-                if (projectItem.EvaluatedInclude.Contains(':')) //check if it has volume label already
+                if (Path.IsPathRooted(projectItem.EvaluatedInclude)) //check if it has volume label already
                     sourceFiles.Add(projectItem.EvaluatedInclude);
                 else
                     sourceFiles.Add(Path.Join(msProject.DirectoryPath, projectItem.EvaluatedInclude));
@@ -149,15 +158,24 @@ namespace NetJs.Compiler
                 var extension = Path.GetExtension(projectItem.EvaluatedInclude);
                 if (extension == ".js" || extension == ".css" || extension == ".html")
                 {
-                    if (projectItem.EvaluatedInclude.Contains(':')) //check if it has volume label already
+                    if (Path.IsPathRooted(projectItem.EvaluatedInclude))  //check if it has volume label already
                         sourceFiles.Add(projectItem.EvaluatedInclude);
                     else
                         sourceFiles.Add(Path.Join(msProject.DirectoryPath, projectItem.EvaluatedInclude));
                 }
             }
 
+            var platform = GetPlatform();
+            if (platform.Equals("AnyCPU", StringComparison.InvariantCultureIgnoreCase))
+            {
+                platform = "";
+            }
+            else
+            {
+                platform = "/" + platform;
+            }
             //Check for css files scopedcss/bundle
-            var sourceGenOutputPath = $"{msProject.DirectoryPath}/obj/{GetPlatform()}/{GetConfiguration()}/{GetTargetFramework()}/scopedcss/bundle";
+            var sourceGenOutputPath = $"{msProject.DirectoryPath}/obj{platform}/{GetConfiguration()}/{GetTargetFramework()}/scopedcss/bundle";
             if (Directory.Exists(sourceGenOutputPath))
             {
                 var csFiles = Directory.EnumerateFiles(sourceGenOutputPath, "*.css", SearchOption.AllDirectories);
@@ -175,7 +193,7 @@ namespace NetJs.Compiler
             {
                 if (projectItem.EvaluatedInclude.Contains(".NETCoreApp,"))
                     continue;
-                if (projectItem.EvaluatedInclude.Contains(':')) //check if it has volume label already
+                if (Path.IsPathRooted(projectItem.EvaluatedInclude))  //check if it has volume label already
                     sourceFiles.Add(projectItem.EvaluatedInclude);
                 else
                     sourceFiles.Add(Path.Join(msProject.DirectoryPath, projectItem.EvaluatedInclude));
@@ -192,7 +210,7 @@ namespace NetJs.Compiler
             {
                 if (projectItem.EvaluatedInclude.Contains(".NETCoreApp,"))
                     continue;
-                if (projectItem.EvaluatedInclude.Contains(':')) //check if it has volume label already
+                if (Path.IsPathRooted(projectItem.EvaluatedInclude))  //check if it has volume label already
                     sourceFiles.Add(projectItem.EvaluatedInclude);
                 else
                     sourceFiles.Add(Path.Join(msProject.DirectoryPath, projectItem.EvaluatedInclude));

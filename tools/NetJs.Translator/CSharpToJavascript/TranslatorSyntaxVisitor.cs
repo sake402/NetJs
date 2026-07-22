@@ -281,7 +281,34 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitCompilationUnit(CompilationUnitSyntax node)
         {
-            base.VisitCompilationUnit(node);
+            if (node.ChildNodes().Any(e => e.IsKind(SyntaxKind.GlobalStatement)))
+            {
+                var mainEntry = _global.MainEntry ?? throw new InvalidOperationException("Expected a main entry for global statements");
+                var typeSymbol = mainEntry.ContainingType;
+                var classMetadata = _global.GetRequiredMetadata(typeSymbol);
+                var methodMetadata = _global.GetRequiredMetadata(mainEntry);
+                CurrentTypeWriter = new ScriptWriter();
+                TypeWriters.Add(typeSymbol, CurrentTypeWriter);
+                _global.TypeVisitors.Add(typeSymbol, this);
+                _global.TypeWriters.Add(typeSymbol, CurrentTypeWriter);
+                OpenClosure(node);
+                CurrentTypeWriter.WriteLine(node, $"{Constants.AssemblyRegistryName}.{Constants.AssemblyDefineClassName}(\"{typeSymbol.CreateSignature(_global, withGlobalNamespace: false, withAssemblySlugNamespace: true)}\", ($self) => class {typeSymbol.Name}", true);
+                CurrentTypeWriter.WriteLine(node, "{", true);
+                CurrentTypeWriter.WriteLine(node, $"static{(mainEntry.IsAsync ? " async" : "")} {methodMetadata.OverloadName}(args)", true);
+                CurrentTypeWriter.WriteLine(node, "{", true);
+                base.VisitCompilationUnit(node);
+                CurrentTypeWriter.WriteLine(node, "}", true);
+                WriteTypeMetadata(node, typeSymbol);
+                CurrentTypeWriter.WriteLine(node, "});", true);
+                CloseClosure(node);
+            }
+            else
+                base.VisitCompilationUnit(node);
+        }
+
+        public override void VisitGlobalStatement(GlobalStatementSyntax node)
+        {
+            base.VisitGlobalStatement(node);
         }
 
         public override void VisitUsingDirective(UsingDirectiveSyntax node)

@@ -757,7 +757,8 @@ namespace NetJs.Translator
                 {
                     var text = File.ReadAllText(indexFile);
                     text = text.Replace("</head>", insertHead + "\r\n</head>")
-                        .Replace("</body>", insertScripts + "\r\n</body>");
+                        .Replace("</body>", insertScripts + "\r\n</body>")
+                        .Replace("_framework/blazor.webassembly#[.{fingerprint}].js", "_framework/blazor.netjs.js");
                     var relativePath = Utility.GetRelativePath(project.GetFolder(), indexFile);
                     pendingTask.Add(output.Output(global,
                         !relativePath.StartsWith(Constants.OutputFolderName + Path.DirectorySeparatorChar) ? Constants.OutputFolderName + Path.DirectorySeparatorChar + relativePath : relativePath,
@@ -843,7 +844,7 @@ namespace NetJs.Translator
             }
         }
 
-        public async Task Build()
+        public async Task<bool> Build()
         {
             compiler = new CodeCompiler(dotnetPath, dotnetVersion, dotnetSdkPath, dotnetSdkVersion, TempFolder, deSerializer);
             if (!Directory.Exists(output.OutputPath))
@@ -866,7 +867,7 @@ namespace NetJs.Translator
             RunSourceGenerators();
 
             if (!EmitDll())
-                return;
+                return false;
 
             PrepareToTranspile();
 
@@ -887,6 +888,8 @@ namespace NetJs.Translator
             WritePackages();
 
             await Task.WhenAll(pendingTask);
+
+            return true;
         }
     }
 }

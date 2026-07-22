@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.MSBuild;
 using NetJs.Compiler;
 using NetJs.Translator;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.Globalization;
@@ -20,11 +21,13 @@ using YamlDotNet.Serialization.NamingConventions;
 using CodeAnalysisProject = Microsoft.CodeAnalysis.Project;
 using MsBuildProject = Microsoft.Build.Evaluation.Project;
 
+MSBuildLocator.RegisterDefaults();
 
 TextWriter originalConsole = Console.Out;
-TextWriter logWriter = new StringWriter();
-using var twinWriter = TextWriter.Synchronized(new DuplicityWriter(originalConsole, logWriter));
-Console.SetOut(twinWriter);
+TextWriter defaultLogWriter = new StringWriter();
+var consoleWriter = new DuplicityWriter(originalConsole, defaultLogWriter);
+using var duplicityWriter = TextWriter.Synchronized(consoleWriter);
+Console.SetOut(duplicityWriter);
 
 string dotnetPath = (await "where dotnet".CLI()).StdOut.Trim();
 string dotnetVersion = (await "dotnet --version".CLI()).StdOut.Trim();
@@ -59,18 +62,24 @@ var buildCommand = new Command("build", "Build a project");
 buildCommand.Aliases.Add("--build");
 var projectOption = new Option<FileInfo>("--project") { Description = "Path to the project to build" };
 projectOption.Aliases.Add("-p");
-var configOption = new Option<FileInfo>("--configuration") { Description = "Path to the project to build" };
+var configOption = new Option<FileInfo>("--configuration") { Description = "Build configuration. Debug/Release" };
 configOption.Aliases.Add("-c");
+var singleBuildOption = new Option<bool>("--single") { Description = "Build only this project" };
+singleBuildOption.Aliases.Add("-s");
+var forceBuildOption = new Option<bool>("--force") { Description = "Build this project even if up to date" };
+forceBuildOption.Aliases.Add("-f");
 buildCommand.Options.Add(projectOption);
 buildCommand.Options.Add(configOption);
+buildCommand.Options.Add(singleBuildOption);
+buildCommand.Options.Add(forceBuildOption);
 buildCommand.SetAction(Build);
 
 var cleanCommand = new Command("cleanCache", "Clean the package cache folder in temp folder");
 cleanCommand.SetAction(CleanPackageCache);
 
 var pullCacheCommand = new Command("cachePull", "Pull the project package cache from github to this PC");
-buildCommand.Options.Add(projectOption);
-buildCommand.SetAction(PullPackageCache);
+pullCacheCommand.Options.Add(projectOption);
+pullCacheCommand.SetAction(PullPackageCache);
 
 rootCommand.Subcommands.Add(doctorCommand);
 rootCommand.Subcommands.Add(watchCommand);
@@ -82,8 +91,9 @@ return await rootCommand.Parse(args).InvokeAsync();
 Dictionary<string, string> GetBuildProperties()
 {
     var globalProperties = new Dictionary<string, string>();
-    globalProperties.Add("Configuration", "Debug");
-    globalProperties.Add("Platform", "wasm");
+    //globalProperties.Add("Configuration", "Debug");
+    //if (addWasmPlatform)
+    //globalProperties.Add("Platform", "wasm");
     return globalProperties;
 }
 
@@ -126,8 +136,6 @@ async Task Doctor(ParseResult parseResult)
 
 async Task Watch(ParseResult parseResult)
 {
-    MSBuildLocator.RegisterDefaults();
-
     var workspace = MSBuildWorkspace.Create();
     await Watch(directory);
 
@@ -307,10 +315,10 @@ async Task Watch(ParseResult parseResult)
 
 async Task Build(ParseResult parseResult, CancellationToken cancellationToken)
 {
-    MSBuildLocator.RegisterDefaults();
-
     string? csProjectFile = null;
     var projectFileInfo = parseResult.GetValue(projectOption);
+    var singleBuild = parseResult.GetValue(singleBuildOption);
+    var forceBuild = parseResult.GetValue(forceBuildOption);
 
     if (projectFileInfo != null)
     {
@@ -326,48 +334,159 @@ async Task Build(ParseResult parseResult, CancellationToken cancellationToken)
     }
     //var csProjectFile = projectFile;
     var workspace = MSBuildWorkspace.Create();
+    Dictionary<string, TaskCompletionSource<Exception?>> building = new();
+    SemaphoreSlim slock = new(1);
+    SemaphoreSlim maxParallelBuild = new(4);
     await "Building".ProfileAsync(async () =>
     {
-        await Build();
+        var exception = await BuildWithDependencies(csProjectFile!, singleBuild, forceBuild);
+        if (exception != null)
+            throw exception;
     });
-    async Task Build()
+    async Task<Exception?> BuildWithDependencies(string csProjectFile, bool singleBuild, bool forceBuild)
     {
-        var projectCollection = new Microsoft.Build.Evaluation.ProjectCollection();
-        var codeAnalysisProject = await workspace.OpenProjectAsync(csProjectFile!);
-        var msBuildProject = new MsBuildProject(csProjectFile, GetBuildProperties(), null, projectCollection);
-        var wProject = new ProjectWrapper(codeAnalysisProject, msBuildProject);
-        Translator translator = default!;
-        try
+        if (csProjectFile.Contains("WebAssembly"))
         {
-            translator = new Translator(dotnetPath, dotnetVersion, sdkPath, sdkVersion, wProject, new ProjectBinOutputProvider(wProject));
-            //translator.LogTo = logWriter;
-            await translator.Build();
-            Console.WriteLine();
-            Console.WriteLine();
-            Console.WriteLine("BUILD SUCCESS!");
+
         }
-        catch (Exception e)
+        var projectFolder = Path.GetDirectoryName(csProjectFile)!;
+        await slock.WaitAsync();
+        if (building.TryGetValue(csProjectFile, out var tcs))
         {
-            Console.WriteLine();
-            Console.WriteLine();
-            Console.WriteLine("BUILD ERROR!!!");
-            while (e != null)
+            slock.Release();
+            return await tcs.Task;
+        }
+        tcs = new TaskCompletionSource<Exception?>();
+        building.Add(csProjectFile, tcs);
+        var codeAnalysisProject = workspace.CurrentSolution.Projects.FirstOrDefault(f => f.FilePath?.Equals(csProjectFile, StringComparison.InvariantCultureIgnoreCase) ?? false) ?? await workspace.OpenProjectAsync(csProjectFile!);
+        slock.Release();
+        Exception? result = null;
+        do
+        {
+            var logDestination = defaultLogWriter;
+            if (!singleBuild)
             {
-                Console.WriteLine(e.GetType().FullName);
-                Console.WriteLine(e.Message);
-                Console.WriteLine(e.StackTrace);
-                e = e.InnerException!;
+                logDestination = new StringWriter();
+                consoleWriter.AsyncLocalWriter.Value = logDestination;
             }
-            throw;
-        }
-        finally
-        {
-            var logFile = Path.Combine(translator.TempFolder, Path.GetFileNameWithoutExtension(csProjectFile)!, $"__build.log.txt");
-            var directory = Path.GetDirectoryName(logFile);
-            if (!Directory.Exists(directory))
-                Directory.CreateDirectory(directory!);
-            File.WriteAllText(logFile, logWriter.ToString());
-        }
+            var projectCollection = new Microsoft.Build.Evaluation.ProjectCollection();
+            var msBuildProject = new MsBuildProject(csProjectFile, GetBuildProperties(), null, projectCollection);
+            bool dependencyBuilt = false;
+            if (!singleBuild)
+            {
+                var csProjectDependencies = msBuildProject.Items.Where(i => i.ItemType == "ProjectReference" && !i.GetMetadataValue("OutputItemType").Equals("Analyzer", StringComparison.InvariantCultureIgnoreCase) && !i.GetMetadataValue("ReferenceOutputAssembly").Equals("false", StringComparison.InvariantCultureIgnoreCase)).Select(e => e.EvaluatedInclude);
+                var tasks = new List<Task<Exception?>>();
+                foreach (var _csProj in csProjectDependencies)
+                {
+                    var csProj = _csProj;
+                    if (!Path.IsPathRooted(csProj))
+                        csProj = Path.GetFullPath(Path.Combine(projectFolder, csProj));
+                    var task = BuildWithDependencies(csProj!, singleBuild, forceBuild);
+                    //if (!task.IsCompleted)
+                    //{
+                    //    dependencyBuilt = true;
+                    //}
+                    tasks.Add(task);
+                }
+                await Task.WhenAll(tasks);
+                var analyzerProjectDependencies = msBuildProject.Items.Where(i => i.ItemType == "ProjectReference" && i.GetMetadataValue("OutputItemType").Equals("Analyzer", StringComparison.InvariantCultureIgnoreCase)).Select(e => e.EvaluatedInclude);
+                //if this project has a source generator, we need to do dotnet build on it first to make sure source generator run and generate their files
+                //We know we are not invoked by dotnet itself as it passes --single through our Directory.Build.props
+                if (analyzerProjectDependencies.Any())
+                {
+                    //Console.WriteLine();
+                    Console.WriteLine($"Doing dotnet build \"{csProjectFile}\" to run source generator");
+                    var c = await $"cd \"{projectFolder}\" && dotnet build /p:NoNetJs=true".CLI();
+                    Console.WriteLine($"Done dotnet build \"{csProjectFile}\"");
+                    if (c.ExitCode != 0)
+                    {
+                        result = new Exception(c.StdOut);
+                        break;
+                    }
+                }
+                var taskExceptions = tasks.Where(e => e.Exception != null).Select(e => e.Exception!);
+                var exceptions = tasks.Where(e => e.Result != null).Select(e => e.Result!);
+                if (taskExceptions.Any() || exceptions.Any())
+                {
+                    result = new AggregateException(taskExceptions.Concat(exceptions).ToArray());
+                    break;
+                }
+            }
+            //var sourceFiles = msBuildProject.Items.Where(i => i.ItemType == "Compile").Select(e =>
+            //{
+            //    var include = e.EvaluatedInclude;
+            //    if (Path.IsPathRooted(include))
+            //        return include;
+            //    return Path.Join(projectFolder, include);
+            //});
+            var wProject = new ProjectWrapper(codeAnalysisProject, msBuildProject);
+            var sources = wProject.GetSourceFiles();
+            var objFolder = msBuildProject.Evaluate("IntermediateOutputPath");
+            var timeStampFile = $"{projectFolder}{Path.DirectorySeparatorChar}{objFolder}{Path.DirectorySeparatorChar}NetJsBuild.timestamp";
+            DateTime? lastBuildTime = null;
+            if (File.Exists(timeStampFile))
+            {
+                lastBuildTime = new FileInfo(timeStampFile).LastWriteTime;
+            }
+            if (forceBuild /*|| dependencyBuilt*/ || lastBuildTime == null || sources.Any(s => new FileInfo(s).LastWriteTime > lastBuildTime))
+            {
+                Translator translator = default!;
+                try
+                {
+                    await maxParallelBuild.WaitAsync();
+                    Console.WriteLine($"Building \"{csProjectFile}\"");
+                    translator = new Translator(dotnetPath, dotnetVersion, sdkPath, sdkVersion, wProject, new ProjectBinOutputProvider(wProject));
+                    //translator.LogTo = logWriter;
+                    if (!await translator.Build())
+                    {
+                        result = new Exception("Build Failed");
+                        break;
+                    }
+                    Console.WriteLine();
+                    Console.WriteLine();
+                    Console.WriteLine($"BUILD \"{csProjectFile}\" SUCCESS!");
+                    if (!File.Exists(timeStampFile))
+                    {
+                        var fs = File.Create(timeStampFile);
+                        fs.Flush();
+                        fs.Close();
+                    }
+                    var fi = new FileInfo(timeStampFile);
+                    fi.LastWriteTime = DateTime.Now;
+                }
+                catch (Exception e)
+                {
+                    var ex = e;
+                    Console.WriteLine();
+                    Console.WriteLine();
+                    Console.WriteLine($"BUILD \"{csProjectFile}\" ERROR!!!");
+                    while (e != null)
+                    {
+                        Console.WriteLine(e.GetType().FullName);
+                        Console.WriteLine(e.Message);
+                        Console.WriteLine(e.StackTrace);
+                        e = e.InnerException!;
+                    }
+                    result = ex;
+                }
+                finally
+                {
+                    maxParallelBuild.Release();
+                    var logFile = Path.Combine(translator.TempFolder, Path.GetFileNameWithoutExtension(csProjectFile)!, $"__build.log.txt");
+                    var directory = Path.GetDirectoryName(logFile);
+                    if (!Directory.Exists(directory))
+                        Directory.CreateDirectory(directory!);
+                    File.WriteAllText(logFile, logDestination.ToString() + "\r\n" + result?.Message + "\r\n" + result?.StackTrace);
+                }
+            }
+            else
+            {
+                Console.WriteLine($"Build \"{csProjectFile}\" up to date!");
+                Console.WriteLine($"BUILD \"{csProjectFile}\" SUCCESS!");
+            }
+        } while (false);
+        tcs.SetResult(result);
+        return result;
     }
 }
 
@@ -381,8 +500,6 @@ void CleanPackageCache(ParseResult parseResult)
 
 async Task PullPackageCache(ParseResult parseResult)
 {
-    MSBuildLocator.RegisterDefaults();
-
     string? csProjectFile = null;
     var projectFileInfo = parseResult.GetValue(projectOption);
 
@@ -407,5 +524,5 @@ async Task PullPackageCache(ParseResult parseResult)
 
     var deSerializer = new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
     var compiler = new CodeCompiler(dotnetPath, dotnetVersion, sdkPath, sdkVersion, tempFolder, deSerializer);
-    compiler.PullPackageCache(wProject);
+    await compiler.PullPackageCache(wProject);
 }

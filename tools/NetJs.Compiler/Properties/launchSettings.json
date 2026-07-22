@@ -12,7 +12,22 @@
     },
     "NetJs.Compiler.SPC": {
       "commandName": "Project",
-      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Private.CoreLib\\NetJs.System.Private.CoreLib.csproj\" --configuration \"Debug\"",
+      "commandLineArgs": "build -p \"E:\\Apps\\NetJs\\libraries\\System.Private.CoreLib\\NetJs.System.Private.CoreLib.csproj\" -c \"Debug\" -s -f",
+      "workingDirectory": "E:\\Apps\\NetJs"
+    },
+    "NetJs.Compiler.TestApp": {
+      "commandName": "Project",
+      "commandLineArgs": "build -p \"E:\\Apps\\NetJs\\tests\\NetJs.Tests.App\\NetJs.Tests.App.csproj\" -c \"Debug\"",
+      "workingDirectory": "E:\\Apps\\NetJs"
+    },
+    "NetJs.Compiler.BareMetal": {
+      "commandName": "Project",
+      "commandLineArgs": "build -p \"E:\\Apps\\NetJs\\tests\\NetJs.Tests.BareMetal\\NetJs.Tests.BareMetal.csproj\" -c \"Debug\" -f",
+      "workingDirectory": "E:\\Apps\\NetJs"
+    },
+    "NetJs.Ext": {
+      "commandName": "Project",
+      "commandLineArgs": "build -p \"C:\\Users\\User\\Desktop\\blzw\\blzw.csproj\" -c \"Debug\" -f",
       "workingDirectory": "E:\\Apps\\NetJs"
     }
   }

@@ -69,12 +69,12 @@
 	
 		<ZipPackageFolder>$(NetJsFolder)zpackages</ZipPackageFolder>
 	
-		<CoreBuildDependsOn>
+		<!--CoreBuildDependsOn Condition="'$(NoNetJs)' != 'true'">
 			$(CoreBuildDependsOn);
-			!CoreCompile;
+			CoreCompile;
 			NetJsBuild;
 			PostBuildEvent
-		</CoreBuildDependsOn>
+		</CoreBuildDependsOn-->
 	</PropertyGroup>
 	
 	<ItemGroup>
@@ -85,16 +85,36 @@
 		</Content>-->
 	</ItemGroup>
 
-	<Target Name="CoreCompile" />
+	<!--Target Name="CoreCompile"  Condition="'$(NoNetJs)' != 'true'"/-->
 
-	<Target Name="NetJsBuild" BeforeTargets="Build" 
+	<Target Name="NetJsBuild" 
+		AfterTargets="CoreCompile" 
         Inputs="@(Compile)"
-        Outputs="$(IntermediateOutputPath)NetJsBuild.timestamp">
-		<Message Importance="high" Text="NetJs compiling..." />
-		<Exec Command="NetJs build --project &quot;$(ProjectPath)&quot; --configuration &quot;$(Configuration)&quot;" ConsoleToMsBuild="true" YieldDuringToolExecution="true" WorkingDirectory="$(ProjectDir)" ContinueOnError="ErrorAndStop" IgnoreExitCode="false"/>			
+        Outputs="$(IntermediateOutputPath)NetJsBuild.timestamp"
+		Condition="'$(NoNetJs)' != 'true' and '$(BuildingProject)' == 'true' and '$(DesignTimeBuild)' != 'true'">
+		<Message Importance="high" Text="NetJs compiling..."/>
+		<Exec Command="NetJs build -p &quot;$(ProjectPath)&quot; -c &quot;$(Configuration)&quot; -s" ConsoleToMsBuild="true" YieldDuringToolExecution="true" WorkingDirectory="$(ProjectDir)" ContinueOnError="ErrorAndStop" IgnoreExitCode="false"/>			
 		<Touch Files="$(IntermediateOutputPath)NetJsBuild.timestamp" AlwaysCreate="true" />
+		<ItemGroup>
+			<FileWrites Include="$(IntermediateOutputPath)NetJsBuild.timestamp" />
+		</ItemGroup>
 		<Message Importance="high" Text="NetJs compilation success!" />
 
 	</Target>
 
+	<Target Name="CleanNetJsGeneratedFiles" BeforeTargets="Clean">
+		<Message Importance="high" Text="Cleaning NetJs generated binaries and web assets..." />
+		
+		<RemoveDir Directories="$(TargetDir)wwwroot" Condition="Exists('$(TargetDir)wwwroot')" />
+
+		<ItemGroup>
+			<NetJsFilesToDelete Include="$(TargetDir)*.js.dll" />
+			<NetJsFilesToDelete Include="$(TargetDir)*.js.pdb" />
+			<NetJsFilesToDelete Include="$(TargetDir)*.js.xml" />
+			<NetJsFilesToDelete Include="$(TargetDir)*.Symbols.yaml" />
+			<NetJsFilesToDelete Include="$(TargetDir)*.package.zip" />
+		</ItemGroup>
+
+		<Delete Files="@(NetJsFilesToDelete)" Condition="'@(NetJsFilesToDelete)' != ''" />
+	</Target>
 </Project>

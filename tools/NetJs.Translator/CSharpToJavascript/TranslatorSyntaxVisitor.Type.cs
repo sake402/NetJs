@@ -189,6 +189,170 @@ namespace NetJs.Translator.CSharpToJavascript
             }
         }
 
+        void WriteTypeMetadata(CSharpSyntaxNode node, INamedTypeSymbol typeSymbol)
+        {
+            bool isDefinedTypeParameter = _global.IsDefinedTypeParameter(typeSymbol);
+            string GetFullName(MemberDeclarationSyntax type)
+            {
+                string? parent = null;
+                if (type.Parent is BaseTypeDeclarationSyntax ts)
+                {
+                    parent = GetFullName(ts) + ".";
+                }
+                else if (type.Parent is NamespaceDeclarationSyntax ns)
+                {
+                    parent = _global.ResolveFullNamespace(ns) + ".";
+                }
+                var ret = parent +
+                    (type is BaseTypeDeclarationSyntax bt ?
+                    bt.Identifier.ValueText.Trim().TrimEnd('?') :
+                    type is DelegateDeclarationSyntax dt ? dt.Identifier.ValueText :
+                    throw new InvalidOperationException());
+                string? nameGArgs = null;
+                var nameArg =
+                    type is TypeDeclarationSyntax btt ? btt.TypeParameterList?.Parameters.Select(p => $"${{{p.Identifier.ValueText}?.{Constants.PrototypeFullName}}}") :
+                    type is DelegateDeclarationSyntax dtt ? dtt.TypeParameterList?.Parameters.Select(p => $"${{{p.Identifier.ValueText}?.{Constants.PrototypeFullName}}}") :
+                    null;
+                if (nameArg != null)
+                {
+                    nameGArgs = $"<{string.Join(",", nameArg)}>";
+                }
+                return ret + nameGArgs;
+            }
+            //string GetFullName(BaseTypeDeclarationSyntax node)
+            //{
+            //    string? nameGArgs = null;
+            //    var nameArg = (node as TypeDeclarationSyntax)?.TypeParameterList?.Parameters.Select(p => $"({p.Identifier.ValueText}?.{Constants.PrototypeFullName}??\"\")");
+            //    if (nameArg != null)
+            //    {
+            //        nameGArgs = " + \"<\" + " + string.Join(" + \",\" + ", nameArg) + " + \">\"";
+            //    }
+            //    string name = "";
+            //    if (node.Parent is BaseTypeDeclarationSyntax par)
+            //    {
+            //        name = GetFullName(par);
+            //    }
+            //    name += (name.Length > 0 ? "+ " : "") + "\"" + _global.ResolveFullTypeName(node) + "\"";
+            //    return $"{name}{nameGArgs}";
+            //}
+
+            //lets generic a runtime type handle for a generic type, so we can change it at runtime when a concrete type is made from the generic type
+            CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeTypeHandle} = {_global.Reflection.NumericTypeHandle(typeSymbol)};", true);
+            //if (typeSymbol.BaseType != null)
+            //CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeBaseTypeHandle} = {_global.Reflection.NumericTypeHandle(typeSymbol.BaseType)};", true);
+            if (typeSymbol.Arity > 0)
+            {
+                CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeGenericArgumentCount} = {typeSymbol.Arity};", true);
+            }
+            if (typeSymbol.IsValueType)
+            {
+                var sz = _global.SizeOf(typeSymbol);
+                if (sz != null)
+                {
+                    CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeStructSize} = {sz};", true);
+                }
+            }
+            var knownType = _global.KnownTypeFrom(typeSymbol);
+            if (knownType != KnownTypeHandle.SystemDynamic)
+            {
+                CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeKnownType} = {(int)knownType};", true);
+            }
+            CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeTypeFlags} = 0b{(int)_global.GetTypeFlags(typeSymbol):B};", true);
+            CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeKind} = {(int)_global.MapTypeKind(typeSymbol.TypeKind)};", true);
+            if (typeSymbol.TypeKind == TypeKind.Enum)
+            {
+                CurrentTypeWriter.WriteLine(node, $"static get {Constants.EnumUnderlyingName}() {{ return {typeSymbol.EnumUnderlyingType!.ComputeOutputTypeName(_global)}; }}", true);
+            }
+            CurrentTypeWriter.WriteLine(node, $"static ${Constants.PrototypeMetadata};", true);
+            if (isDefinedTypeParameter || _global.IsReflectable(typeSymbol, null))
+                CurrentTypeWriter.WriteLine(node, $"static get {Constants.PrototypeMetadata}() {{ return this.${Constants.PrototypeMetadata} ??= {_global.Reflection.FromTypeSymbolAsJson(typeSymbol, this)}; }}", true);
+            else
+                CurrentTypeWriter.WriteLine(node, $"static get {Constants.PrototypeMetadata}() {{ return this.${Constants.PrototypeMetadata} ??= {_global.Reflection.FromTypeSymbolAsJson(typeSymbol, this, minimal: true)}; }}", true);
+
+            if (typeSymbol.BaseType != null && _global.ShouldExportType(typeSymbol.BaseType, this))
+            {
+                CurrentTypeWriter.WriteLine(node, $"static get {Constants.PrototypeBaseType}() {{ return {typeSymbol.BaseType.ComputeOutputTypeName(_global)}; }}", true);
+            }
+            //if (useInterfaceMixin == InterfaceMixinMode.None)
+            //{
+            var interfaces = typeSymbol.AllInterfaces;
+            var _interfaces = interfaces.Concat(typeSymbol.IsAwaitable() ? [_global.AwaitableInterface] : [])
+                .Where(i => _global.ShouldExportType(i, this));
+            var mInterfaces = _interfaces
+                .Select(e =>
+                {
+                    var ret = e.ComputeOutputTypeName(_global);
+                    return ret;
+                });
+            if (mInterfaces.Any())
+            {
+                CurrentTypeWriter.WriteLine(node, $"static ${Constants.PrototypeInterfaces};", true);
+                CurrentTypeWriter.WriteLine(node, $"static get {Constants.PrototypeInterfaces}() {{ return this.${Constants.PrototypeInterfaces} ??= [ {string.Join(", ", mInterfaces)} ]; }}", true);
+            }
+            //}
+            //else if (isBootClass)
+            //{
+            //    CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeMetadata} = {JsonSerializer.Serialize(new TypeModel { Flags = typeSymbol.GetTypeFlags() }, ReflectionMetadataBuilder.SerializationOption)};", true);
+            //    //CurrentTypeWriter.WriteLine(node, "static $bf()", true);
+            //    //CurrentTypeWriter.WriteLine(node, "{", true);
+            //    //CurrentTypeWriter.WriteLine(node, $"return {(int)typeSymbol.GetTypeFlags()};", true);
+            //    //CurrentTypeWriter.WriteLine(node, "}", true);
+            //}
+            //else
+            //{
+            //    //We must write a metadata, else we will be using the base prototype metadata for this class. We write it as undefined
+            //    CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeMetadata};", true);
+            //}
+
+            if (isDefinedTypeParameter)
+            {
+                CurrentTypeWriter.WriteLine(node, $"static get {Constants.PrototypeFullName}() {{ return \"\"; }}", true);
+            }
+            else
+            {
+                CurrentTypeWriter.WriteLine(node, $"static get {Constants.PrototypeFullName}() {{ return `{(node is MemberDeclarationSyntax mnode ? GetFullName(mnode) : typeSymbol.Name)}`; }}", true);
+            }
+            //if (!_static && !typeSymbol.GetMembers("Is", _global).Any())
+            //{
+            //    Writer.WriteLine(node, "static $is(value)", true);
+            //    Writer.WriteLine(node, "{", true);
+            //    Writer.WriteLine(node, $"if (value instanceof {typeMetadata.InvocationName})", true);
+            //    Writer.WriteLine(node, "    return true;", true);
+            //    if (hasMixin)
+            //    {
+            //        Writer.WriteLine(node, $"if (Mixin.$is(value))", true);
+            //        Writer.WriteLine(node, "    return true;", true);
+            //    }
+            //    Writer.WriteLine(node, "return false;", true);
+            //    Writer.WriteLine(node, "}", true);
+            //}
+
+            //if (!_static && !node.IsKind(SyntaxKind.EnumDeclaration) && !typeSymbol.GetMembers("Default", _global).Any())
+            //{
+            //    var defaultValue = _global.GetDefaultValue(typeSymbol, true);
+            //    if (defaultValue != null && defaultValue != "null")
+            //    {
+            //        CurrentTypeWriter.WriteLine(node, $"static {Constants.DefaultTypeName}() {{ return {defaultValue}; }}", true);
+            //    }
+            //}
+
+            //if (!isInnerClass)
+            //{
+            //    Writer.WriteLine(node, $"}});", true);
+            //}
+
+            //if (isBootClass) //run the static initializer and constructor immmediately as the runtime wont run it for boot class
+            //{
+            //    if (CurrentClosure.TypeInitializers.Any(e => e.Static))
+            //        Writer.WriteLine(node, $"{_global.GlobalName}.{fullClassName}.{Constants.StaticInitializerName}();", true);
+            //    if (members.Where(e => e.IsKind(SyntaxKind.ConstructorDeclaration)/* is ConstructorDeclarationSyntax*/).Cast<ConstructorDeclarationSyntax>()
+            //        .Where(c => c.Modifiers.IsStatic()).Any())
+            //    {
+            //        Writer.WriteLine(node, $"{_global.GlobalName}.{fullClassName}.{Constants.StaticConstructorName}();", true);
+            //    }
+            //}
+
+        }
         public void WriteTypeDeclaration(MemberDeclarationSyntax node, IEnumerable<ParameterSyntax>? primaryConstructorParameters, IEnumerable<MemberDeclarationSyntax>? members, Action? writePrologue = null, Action? writeEpilogue = null)
         {
             var previousClosure = CurrentClosure;
@@ -1100,154 +1264,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 //    CurrentTypeWriter.WriteLine(node, $"}}", true);
                 //}
 
-                string GetFullName(MemberDeclarationSyntax type)
-                {
-                    string? parent = null;
-                    if (type.Parent is BaseTypeDeclarationSyntax ts)
-                    {
-                        parent = GetFullName(ts) + ".";
-                    }
-                    else if (type.Parent is NamespaceDeclarationSyntax ns)
-                    {
-                        parent = _global.ResolveFullNamespace(ns) + ".";
-                    }
-                    var ret = parent +
-                        (type is BaseTypeDeclarationSyntax bt ?
-                        bt.Identifier.ValueText.Trim().TrimEnd('?') :
-                        type is DelegateDeclarationSyntax dt ? dt.Identifier.ValueText :
-                        throw new InvalidOperationException());
-                    string? nameGArgs = null;
-                    var nameArg =
-                        type is TypeDeclarationSyntax btt ? btt.TypeParameterList?.Parameters.Select(p => $"${{{p.Identifier.ValueText}?.{Constants.PrototypeFullName}}}") :
-                        type is DelegateDeclarationSyntax dtt ? dtt.TypeParameterList?.Parameters.Select(p => $"${{{p.Identifier.ValueText}?.{Constants.PrototypeFullName}}}") :
-                        null;
-                    if (nameArg != null)
-                    {
-                        nameGArgs = $"<{string.Join(",", nameArg)}>";
-                    }
-                    return ret + nameGArgs;
-                }
-                //string GetFullName(BaseTypeDeclarationSyntax node)
-                //{
-                //    string? nameGArgs = null;
-                //    var nameArg = (node as TypeDeclarationSyntax)?.TypeParameterList?.Parameters.Select(p => $"({p.Identifier.ValueText}?.{Constants.PrototypeFullName}??\"\")");
-                //    if (nameArg != null)
-                //    {
-                //        nameGArgs = " + \"<\" + " + string.Join(" + \",\" + ", nameArg) + " + \">\"";
-                //    }
-                //    string name = "";
-                //    if (node.Parent is BaseTypeDeclarationSyntax par)
-                //    {
-                //        name = GetFullName(par);
-                //    }
-                //    name += (name.Length > 0 ? "+ " : "") + "\"" + _global.ResolveFullTypeName(node) + "\"";
-                //    return $"{name}{nameGArgs}";
-                //}
-                //if (typeSymbol.ToString().Contains("Entry") && typeSymbol.ContainingType != null && typeSymbol.ContainingType.ToString().Contains("Dictionary"))
-                //{
-
-                //}
-                //if (typeSymbol.IsGenericType)
-                //{
-                //lets generic a runtime type handle for a generic type, so we can change it at runtime when a concrete type is made from the generic type
-                CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeTypeHandle} = {_global.Reflection.NumericTypeHandle(typeSymbol)};", true);
-                //if (typeSymbol.BaseType != null)
-                //CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeBaseTypeHandle} = {_global.Reflection.NumericTypeHandle(typeSymbol.BaseType)};", true);
-                if (typeSymbol.Arity > 0)
-                {
-                    CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeGenericArgumentCount} = {typeSymbol.Arity};", true);
-                }
-                if (typeSymbol.IsValueType)
-                {
-                    var sz = _global.SizeOf(typeSymbol);
-                    if (sz != null)
-                    {
-                        CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeStructSize} = {sz};", true);
-                    }
-                }
-                var knownType = _global.KnownTypeFrom(typeSymbol);
-                if (knownType != KnownTypeHandle.SystemDynamic)
-                {
-                    CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeKnownType} = {(int)knownType};", true);
-                }
-                CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeTypeFlags} = 0b{(int)_global.GetTypeFlags(typeSymbol):B};", true);
-                CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeKind} = {(int)_global.MapTypeKind(typeSymbol.TypeKind)};", true);
-                if (typeSymbol.TypeKind == TypeKind.Enum)
-                {
-                    CurrentTypeWriter.WriteLine(node, $"static get {Constants.EnumUnderlyingName}() {{ return {typeSymbol.EnumUnderlyingType!.ComputeOutputTypeName(_global)}; }}", true);
-                }
-                CurrentTypeWriter.WriteLine(node, $"static ${Constants.PrototypeMetadata};", true);
-                if (isDefinedTypeParameter || _global.IsReflectable(typeSymbol, null))
-                    CurrentTypeWriter.WriteLine(node, $"static get {Constants.PrototypeMetadata}() {{ return this.${Constants.PrototypeMetadata} ??= {_global.Reflection.FromTypeSymbolAsJson(typeSymbol, this)}; }}", true);
-                else
-                    CurrentTypeWriter.WriteLine(node, $"static get {Constants.PrototypeMetadata}() {{ return this.${Constants.PrototypeMetadata} ??= {_global.Reflection.FromTypeSymbolAsJson(typeSymbol, this, minimal: true)}; }}", true);
-
-                if (typeSymbol.BaseType != null && _global.ShouldExportType(typeSymbol.BaseType, this))
-                {
-                    CurrentTypeWriter.WriteLine(node, $"static get {Constants.PrototypeBaseType}() {{ return {typeSymbol.BaseType.ComputeOutputTypeName(_global)}; }}", true);
-                }
-                //if (useInterfaceMixin == InterfaceMixinMode.None)
-                //{
-                var interfaces = typeSymbol.AllInterfaces;
-                var _interfaces = interfaces.Concat(typeSymbol.IsAwaitable() ? [_global.AwaitableInterface] : [])
-                    .Where(i => _global.ShouldExportType(i, this));
-                var mInterfaces = _interfaces
-                    .Select(e =>
-                    {
-                        var ret = e.ComputeOutputTypeName(_global);
-                        return ret;
-                    });
-                if (mInterfaces.Any())
-                {
-                    CurrentTypeWriter.WriteLine(node, $"static ${Constants.PrototypeInterfaces};", true);
-                    CurrentTypeWriter.WriteLine(node, $"static get {Constants.PrototypeInterfaces}() {{ return this.${Constants.PrototypeInterfaces} ??= [ {string.Join(", ", mInterfaces)} ]; }}", true);
-                }
-                //}
-                //else if (isBootClass)
-                //{
-                //    CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeMetadata} = {JsonSerializer.Serialize(new TypeModel { Flags = typeSymbol.GetTypeFlags() }, ReflectionMetadataBuilder.SerializationOption)};", true);
-                //    //CurrentTypeWriter.WriteLine(node, "static $bf()", true);
-                //    //CurrentTypeWriter.WriteLine(node, "{", true);
-                //    //CurrentTypeWriter.WriteLine(node, $"return {(int)typeSymbol.GetTypeFlags()};", true);
-                //    //CurrentTypeWriter.WriteLine(node, "}", true);
-                //}
-                //else
-                //{
-                //    //We must write a metadata, else we will be using the base prototype metadata for this class. We write it as undefined
-                //    CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeMetadata};", true);
-                //}
-
-                if (isDefinedTypeParameter)
-                {
-                    CurrentTypeWriter.WriteLine(node, $"static get {Constants.PrototypeFullName}() {{ return \"\"; }}", true);
-                }
-                else
-                {
-                    CurrentTypeWriter.WriteLine(node, $"static get {Constants.PrototypeFullName}() {{ return `{GetFullName(node)}`; }}", true);
-                }
-                //if (!_static && !typeSymbol.GetMembers("Is", _global).Any())
-                //{
-                //    Writer.WriteLine(node, "static $is(value)", true);
-                //    Writer.WriteLine(node, "{", true);
-                //    Writer.WriteLine(node, $"if (value instanceof {typeMetadata.InvocationName})", true);
-                //    Writer.WriteLine(node, "    return true;", true);
-                //    if (hasMixin)
-                //    {
-                //        Writer.WriteLine(node, $"if (Mixin.$is(value))", true);
-                //        Writer.WriteLine(node, "    return true;", true);
-                //    }
-                //    Writer.WriteLine(node, "return false;", true);
-                //    Writer.WriteLine(node, "}", true);
-                //}
-
-                //if (!_static && !node.IsKind(SyntaxKind.EnumDeclaration) && !typeSymbol.GetMembers("Default", _global).Any())
-                //{
-                //    var defaultValue = _global.GetDefaultValue(typeSymbol, true);
-                //    if (defaultValue != null && defaultValue != "null")
-                //    {
-                //        CurrentTypeWriter.WriteLine(node, $"static {Constants.DefaultTypeName}() {{ return {defaultValue}; }}", true);
-                //    }
-                //}
+                WriteTypeMetadata(node, typeSymbol);
 
                 CurrentTypeWriter.WriteLine(node, $"}}{(!closingClassDeclaration.StartsWith("}") ? closingClassDeclaration : "")}", true);
                 if (closingClassDeclaration.StartsWith("}"))
@@ -1258,21 +1275,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     CurrentTypeWriter.WriteLine(node, closingClassDeclaration2, true);
                 }
-                //if (!isInnerClass)
-                //{
-                //    Writer.WriteLine(node, $"}});", true);
-                //}
 
-                //if (isBootClass) //run the static initializer and constructor immmediately as the runtime wont run it for boot class
-                //{
-                //    if (CurrentClosure.TypeInitializers.Any(e => e.Static))
-                //        Writer.WriteLine(node, $"{_global.GlobalName}.{fullClassName}.{Constants.StaticInitializerName}();", true);
-                //    if (members.Where(e => e.IsKind(SyntaxKind.ConstructorDeclaration)/* is ConstructorDeclarationSyntax*/).Cast<ConstructorDeclarationSyntax>()
-                //        .Where(c => c.Modifiers.IsStatic()).Any())
-                //    {
-                //        Writer.WriteLine(node, $"{_global.GlobalName}.{fullClassName}.{Constants.StaticConstructorName}();", true);
-                //    }
-                //}
                 CurrentTypeSymbols.Pop();
                 if (node is BaseTypeDeclarationSyntax)
                     CurrentTypes.Pop();

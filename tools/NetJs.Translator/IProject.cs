@@ -20,6 +20,7 @@ namespace NetJs.Translator
         string GetAssemblyName();
         string GetNamespace();
         string GetOutputPath();
+        string GetPlatform();
         OutputMode GetOutputMode();
         IList<string> GetSourceFiles();
         IList<string> GetContentFiles();

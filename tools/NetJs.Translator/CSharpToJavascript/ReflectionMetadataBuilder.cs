@@ -162,17 +162,25 @@ namespace NetJs.Translator.CSharpToJavascript
                 else
                 {
                     var declaringMethod = tp.DeclaringMethod!;
-                    var methodParams = declaringMethod.TypeParameters;
-                    int index = -1;
-                    for (int i = 0; i < methodParams.Length; i++)
-                    {
-                        if (methodParams[i].Equals(tp, SymbolEqualityComparer.Default))
-                        {
-                            index = i;
-                            break;
-                        }
-                    }
-                    return GenericMethodHandle(declaringMethod, index);
+                    return GenericMethodTypeParameterHandle(declaringMethod, tp);
+                    ////var methodParams = declaringMethod.TypeParameters;
+                    ////int index = -1;
+                    ////for (int i = 0; i < methodParams.Length; i++)
+                    ////{
+                    ////    if (methodParams[i].Equals(tp, SymbolEqualityComparer.Default))
+                    ////    {
+                    ////        index = i;
+                    ////        break;
+                    ////    }
+                    ////}
+                    //var typeParams = declaringMethod.TypeParameters;
+                    //var paramNames = new string[typeParams.Length];
+                    //for (int i = 0; i < typeParams.Length; i++)
+                    //{
+                    //    paramNames[i] = typeParams[i].Name;
+                    //}
+                    //return $"({string.Join(", ", paramNames)}) => {tp.ComputeOutputTypeName(global)}.{Constants.PrototypeTypeHandle}";
+                    ////return GenericMethodHandle(declaringMethod, index);
                 }
             }
 
@@ -236,6 +244,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
                     if (declaringMethod != null)
                     {
+                        //return GenericMethodTypeParameterHandle(declaringMethod, nt);
                         var typeParams = declaringMethod.TypeParameters;
                         var paramNames = new string[typeParams.Length];
                         for (int i = 0; i < typeParams.Length; i++)
@@ -470,6 +479,17 @@ namespace NetJs.Translator.CSharpToJavascript
 
             return ((ulong)typeHandle << ReflectionHandleExtension.TypeShift) |
                    ((ulong)memberIndex << ReflectionHandleExtension.MemberShift);
+        }
+
+        Handle GenericMethodTypeParameterHandle(IMethodSymbol declaringMethod, ITypeParameterSymbol typeParameter)
+        {
+            var typeParams = declaringMethod.TypeParameters;
+            var paramNames = new string[typeParams.Length];
+            for (int i = 0; i < typeParams.Length; i++)
+            {
+                paramNames[i] = typeParams[i].Name;
+            }
+            return $"({string.Join(", ", paramNames)}) => {typeParameter.ComputeOutputTypeName(global)}.{Constants.PrototypeTypeHandle}";
         }
 
         //Handle GenericMethodHandle(IMethodSymbol method, int typeIndex)

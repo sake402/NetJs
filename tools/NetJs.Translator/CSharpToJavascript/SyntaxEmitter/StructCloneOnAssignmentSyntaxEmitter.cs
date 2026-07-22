@@ -63,6 +63,8 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                                 visitor.CurrentTypeWriter.Write(node, Constants.Clone);
                                 visitor.CurrentTypeWriter.Write(node, "(");
                                 visitor.CurrentTypeWriter.Write(node, ")");
+                                if (type.IsNullable(out _))
+                                    visitor.CurrentTypeWriter.Write(node, " ?? null");
                             }
                             finally { _processing.Value.Pop(); }
                             return true;

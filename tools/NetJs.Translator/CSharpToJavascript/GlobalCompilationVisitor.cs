@@ -917,6 +917,10 @@ namespace NetJs.Translator.CSharpToJavascript
                     .OrderBy(m => Hierachy(Unsafe.As<IFieldSymbol>(m.Symbol).ContainingType)))
                 {
                     var ffield = Unsafe.As<IFieldSymbol>(field.Symbol);
+                    if (ffield.Name == "OnChange" && ffield.ContainingType.TypeKind == TypeKind.Interface)
+                    {
+
+                    }
                     //skip compiler generated backing fields. We dont need it
                     if (ffield.IsImplicitlyDeclared)
                         continue;
@@ -985,11 +989,13 @@ namespace NetJs.Translator.CSharpToJavascript
                                 {
                                     if (!overloadedName.Contains("."))
                                     {
-                                        //overloadedName = declaringTypeMetadata.OverloadName + "." + overloadedName;
                                         var declaringTypeMetadataOverloadName = declaringTypeMetadata.OriginalFullName.Replace(",", "$").Replace("<", "$").Replace(">", "$").Replace(" ", "");
                                         overloadedName = declaringTypeMetadataOverloadName + "." + overloadedName;
-                                        if (overloadedName.StartsWith(GlobalName + "."))
-                                            overloadedName = overloadedName.Substring(GlobalName.Length + 1);
+                                        var assemblySlug = GetAssemblyGlobalSlug(declaringType.ContainingAssembly);
+                                        if (overloadedName.StartsWith(GlobalName + "." + assemblySlug + "."))
+                                        {
+                                            overloadedName = overloadedName.Substring(GlobalName.Length + 1 + assemblySlug.Length + 1);
+                                        }
                                     }
                                 }
                             }
@@ -1116,11 +1122,13 @@ namespace NetJs.Translator.CSharpToJavascript
                                 {
                                     if (!overloadedName.Contains("."))
                                     {
-                                        //overloadedName = declaringTypeMetadata.OverloadName + "." + overloadedName;
                                         var declaringTypeMetadataOverloadName = declaringTypeMetadata.OriginalFullName.Replace(",", "$").Replace("<", "$").Replace(">", "$").Replace(" ", "");
                                         overloadedName = declaringTypeMetadataOverloadName + "." + overloadedName;
-                                        if (overloadedName.StartsWith(GlobalName + "."))
-                                            overloadedName = overloadedName.Substring(GlobalName.Length + 1);
+                                        var assemblySlug = GetAssemblyGlobalSlug(declaringType.ContainingAssembly);
+                                        if (overloadedName.StartsWith(GlobalName + "." + assemblySlug + "."))
+                                        {
+                                            overloadedName = overloadedName.Substring(GlobalName.Length + 1 + assemblySlug.Length + 1);
+                                        }
                                     }
                                 }
                             }

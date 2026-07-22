@@ -32,7 +32,7 @@ namespace NetJs.Translator
         //public TextWriter? LogTo { get; set; }
         public string TempFolder { get; set; }
 
-        CodeCompiler compiler = default!;
+        MetadataProvider metadataProvider = default!;
         CSharpCompilation csCompilation = default!;
 
         IEnumerable<string> globalUsings = Enumerable.Empty<string>();
@@ -121,7 +121,7 @@ namespace NetJs.Translator
             var csFiles = sourceFiles.Where(e => e.EndsWith(".cs")).ToList();
             return $"Prebuilding Syntax Tree".ProfileAsync(async () =>
             {
-                csCompilation = await compiler.GenerateCode(project, csFiles.ToArray(), null, globalUsings, sortedReferences, null);
+                csCompilation = await metadataProvider.CreateCompilation(project, csFiles.ToArray(), null, globalUsings, sortedReferences, null);
                 syntaxTrees = csCompilation.SyntaxTrees.ToArray();
             });
         }
@@ -139,7 +139,7 @@ namespace NetJs.Translator
                     syntaxTrees[tree.i] = newTree;
                 });
                 sortedReferences.Clear();
-                csCompilation = await compiler.GenerateCode(project, syntaxTrees.Select(c => c.FilePath).ToArray(), syntaxTrees.Select(c => c.GetText().ToString()).ToArray(), null, sortedReferences, null);
+                csCompilation = await metadataProvider.CreateCompilation(project, syntaxTrees.Select(c => c.FilePath).ToArray(), syntaxTrees.Select(c => c.GetText().ToString()).ToArray(), null, sortedReferences, null);
                 syntaxTrees = csCompilation.SyntaxTrees.ToArray();
             });
         }
@@ -214,7 +214,7 @@ namespace NetJs.Translator
             {
                 sortedReferences.Clear();
                 symbolFiles.Clear();
-                csCompilation = await compiler.GenerateCode(project, replacements.Select(s => s.FilePath).ToArray(), replacements.Select(s => s.Source).ToArray(), null, sortedReferences, symbolFiles);
+                csCompilation = await metadataProvider.CreateCompilation(project, replacements.Select(s => s.FilePath).ToArray(), replacements.Select(s => s.Source).ToArray(), null, sortedReferences, symbolFiles);
                 //var errors = csCompilation.GetDiagnostics().Where(e => e.Severity == DiagnosticSeverity.Error);
             });
         }
@@ -792,7 +792,7 @@ namespace NetJs.Translator
 
         void WritePackages()
         {
-            var localPackageCacheFolder = $"{compiler.LocalPackageCacheFolder}{Path.DirectorySeparatorChar}{project.GetName()}";
+            var localPackageCacheFolder = $"{metadataProvider.LocalPackageCacheFolder}{Path.DirectorySeparatorChar}{project.GetName()}";
             if (Directory.Exists(localPackageCacheFolder))
                 Directory.Delete(localPackageCacheFolder, true);
             Directory.CreateDirectory(localPackageCacheFolder);
@@ -846,7 +846,7 @@ namespace NetJs.Translator
 
         public async Task<bool> Build()
         {
-            compiler = new CodeCompiler(dotnetPath, dotnetVersion, dotnetSdkPath, dotnetSdkVersion, TempFolder, deSerializer);
+            metadataProvider = new MetadataProvider(dotnetPath, dotnetVersion, dotnetSdkPath, dotnetSdkVersion, TempFolder, deSerializer);
             if (!Directory.Exists(output.OutputPath))
                 Directory.CreateDirectory(output.OutputPath);
 

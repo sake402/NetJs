@@ -24,7 +24,7 @@ namespace NetJs.Translator
                 {
                     await $"Precompiling {rcsFiles.Count} files for razor generator...".ProfileAsync(async () =>
                     {
-                        compilation = await compiler.GenerateCode(project, rcsFiles.ToArray(), null, globalUsings, null, null);
+                        compilation = await metadataProvider.CreateCompilation(project, rcsFiles.ToArray(), null, globalUsings, null, null);
                     });
                 }
 

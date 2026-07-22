@@ -489,14 +489,14 @@ namespace NetJs.Translator.CSharpToJavascript
                     CurrentTypeWriter.Write(node, "value");
                 });
 
-                CurrentTypeWriter.WriteLine(node, $"{modifier} {metadata.OverloadName}$add(/*{node.Declaration.Type.ToString().Trim()}*/ value)", true);
+                CurrentTypeWriter.WriteLine(node, $"{modifier}add_{metadata.OverloadName}(/*{node.Declaration.Type.ToString().Trim()}*/ value)", true);
                 CurrentTypeWriter.WriteLine(node, "{", true);
                 CurrentTypeWriter.Write(node, "", true);
                 WriteDelegateCombine(node, left, right);
                 CurrentTypeWriter.WriteLine(node, ";");
                 CurrentTypeWriter.WriteLine(node, "}", true);
 
-                CurrentTypeWriter.WriteLine(node, $"{modifier} {metadata.OverloadName}$remove(/*{node.Declaration.Type.ToString().Trim()}*/ value)", true);
+                CurrentTypeWriter.WriteLine(node, $"{modifier}remove_{metadata.OverloadName}(/*{node.Declaration.Type.ToString().Trim()}*/ value)", true);
                 CurrentTypeWriter.WriteLine(node, "{", true);
                 CurrentTypeWriter.Write(node, "", true);
                 WriteDelegateRemove(node, left, right);
@@ -508,6 +508,8 @@ namespace NetJs.Translator.CSharpToJavascript
         public override void VisitEventFieldDeclaration(EventFieldDeclarationSyntax node)
         {
             if (node.Modifiers.IsPartial())
+                return;
+            if (node.Parent.IsKind(SyntaxKind.InterfaceDeclaration))
                 return;
             WriteField(node);
             WriteEventAddRemove(node);

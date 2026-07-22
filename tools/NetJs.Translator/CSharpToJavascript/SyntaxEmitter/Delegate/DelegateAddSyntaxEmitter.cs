@@ -35,7 +35,6 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Delegate
                     {
                         //var metadata = visitor.Global.GetMetadata(leftSymbol);
                         visitor.Visit(node.Left);
-                        visitor.CurrentTypeWriter.Write(node, "$add");
                         visitor.CurrentTypeWriter.Write(node, "(");
                         visitor.Visit(node.Right);
                         visitor.CurrentTypeWriter.Write(node, ")");

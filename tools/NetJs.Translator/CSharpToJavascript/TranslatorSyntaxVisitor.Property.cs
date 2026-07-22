@@ -187,12 +187,12 @@ namespace NetJs.Translator.CSharpToJavascript
                     //EnsureWriteBackingField();
                     if (accessor.IsKind(SyntaxKind.AddAccessorDeclaration))
                     {
-                        CurrentTypeWriter.WriteLine(node, $"/*{node.Type.ToString().Trim()}*/{modifier} {metadata.OverloadName}$add(value)", true);
+                        CurrentTypeWriter.WriteLine(node, $"/*{node.Type.ToString().Trim()}*/{modifier} add_{metadata.OverloadName}(value)", true);
                         WritePropertyGetAccessor(node, node.Identifier.ValueText, accessor, symbol);
                     }
                     else if (accessor.IsKind(SyntaxKind.RemoveAccessorDeclaration))
                     {
-                        CurrentTypeWriter.WriteLine(node, $"/*{node.Type.ToString().Trim()}*/{modifier} {metadata.OverloadName}$remove(value)", true);
+                        CurrentTypeWriter.WriteLine(node, $"/*{node.Type.ToString().Trim()}*/{modifier} remove_{metadata.OverloadName}(value)", true);
                         WritePropertySetAccessor(node, node.Identifier.ValueText, accessor, symbol);
                     }
                 }

@@ -230,8 +230,26 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
                 else
                 {
-                    var memberMetadata = member.Kind != SymbolKind.DynamicType ? _global.GetMetadata(member) : null;
-                    memberName = memberMetadata?.InvocationName ?? memberName;
+                    var assignmentParent = node.FindClosestParent<AssignmentExpressionSyntax>();
+                    if (member.Kind == SymbolKind.Event && assignmentParent != null)
+                    {
+                        var eevent = (IEventSymbol)member;
+                        if (assignmentParent.IsKind(SyntaxKind.AddAssignmentExpression) && eevent.AddMethod != null)
+                        {
+                            var memberMetadata = _global.GetMetadata(eevent.AddMethod);
+                            memberName = memberMetadata?.InvocationName ?? memberName;
+                        }
+                        else if (assignmentParent.IsKind(SyntaxKind.SubtractAssignmentExpression) && eevent.RemoveMethod != null)
+                        {
+                            var memberMetadata = _global.GetMetadata(eevent.RemoveMethod);
+                            memberName = memberMetadata?.InvocationName ?? memberName;
+                        }
+                    }
+                    else
+                    {
+                        var memberMetadata = member.Kind != SymbolKind.DynamicType ? _global.GetMetadata(member) : null;
+                        memberName = memberMetadata?.InvocationName ?? memberName;
+                    }
                 }
             }
             var initialCurrentNamespace = currentExpressionNamespace;

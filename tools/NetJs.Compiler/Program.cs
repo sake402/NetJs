@@ -396,7 +396,7 @@ async Task Build(ParseResult parseResult, CancellationToken cancellationToken)
                 {
                     //Console.WriteLine();
                     Console.WriteLine($"Doing dotnet build \"{csProjectFile}\" to run source generator");
-                    var c = await $"cd \"{projectFolder}\" && dotnet build /p:NoNetJs=true".CLI();
+                    var c = await $"cd \"{projectFolder}\" && dotnet build /p:NoNetJs=true /p:EmitCompilerGeneratedFiles=true".CLI();
                     Console.WriteLine($"Done dotnet build \"{csProjectFile}\"");
                     if (c.ExitCode != 0)
                     {
@@ -493,8 +493,8 @@ async Task Build(ParseResult parseResult, CancellationToken cancellationToken)
 void CleanPackageCache(ParseResult parseResult)
 {
     var deSerializer = new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
-    var compiler = new CodeCompiler(dotnetPath, dotnetVersion, sdkPath, sdkVersion, tempFolder, deSerializer);
-    compiler.CleanPackageCache();
+    var metadataProvider = new MetadataProvider(dotnetPath, dotnetVersion, sdkPath, sdkVersion, tempFolder, deSerializer);
+    metadataProvider.CleanPackageCache();
 }
 
 
@@ -523,6 +523,6 @@ async Task PullPackageCache(ParseResult parseResult)
     var wProject = new ProjectWrapper(codeAnalysisProject, msBuildProject);
 
     var deSerializer = new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
-    var compiler = new CodeCompiler(dotnetPath, dotnetVersion, sdkPath, sdkVersion, tempFolder, deSerializer);
-    await compiler.PullPackageCache(wProject);
+    var metadataProvider = new MetadataProvider(dotnetPath, dotnetVersion, sdkPath, sdkVersion, tempFolder, deSerializer);
+    await metadataProvider.PullPackageCache(wProject);
 }

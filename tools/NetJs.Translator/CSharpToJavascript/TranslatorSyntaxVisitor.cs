@@ -187,10 +187,10 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (node != null)
             {
-                //if (node.ToString().StartsWith("val is not JsonConstants.Space and"))
-                //{
+                if (node.ToString().StartsWith("TaskService.OnChange += HandleStateChanged"))
+                {
 
-                //}
+                }
                 Type nodeType = node.GetType();
 
                 List<ISyntaxEmitter> matchingEmitters;

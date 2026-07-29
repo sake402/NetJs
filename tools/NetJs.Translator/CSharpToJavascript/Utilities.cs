@@ -3579,6 +3579,7 @@ namespace NetJs.Translator.CSharpToJavascript
             if (symbol.IsOverride) flags |= MemberFlagsModel.IsOverride;
             if (symbol is IMethodSymbol method)
             {
+                if (method.MethodKind == MethodKind.AnonymousFunction) flags |= MemberFlagsModel.IsAnonymous;
                 if (method.IsAsync) flags |= MemberFlagsModel.IsAsync;
                 if (method.IsGenericMethod) flags |= MemberFlagsModel.IsGeneric;
                 if (method.ReturnType.Kind == SymbolKind.TypeParameter && method.ReturnType is ITypeParameterSymbol tp && tp.Variance == VarianceKind.Out)

@@ -187,7 +187,7 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (node != null)
             {
-                if (node.ToString().StartsWith("TaskService.OnChange += HandleStateChanged"))
+                if (node.ToString().StartsWith("(ushort _, byte codePageFlags)"))
                 {
 
                 }
@@ -1169,8 +1169,10 @@ namespace NetJs.Translator.CSharpToJavascript
             //base.VisitSizeOfExpression(node);
         }
 
-        bool IsRewiteCandidate(ConditionalAccessExpressionSyntax node)
+        bool IsConditionalAccessRewriteCandidate(ConditionalAccessExpressionSyntax node)
         {
+            if (!Constants.RewriteConditionalAccessExpressions)
+                return false;
             //if (node.WhenNotNull.IsKind(SyntaxKind.ConditionalAccessExpression))
             //    return true;
             //var rhsSymbol = _global.GetSymbol(node.WhenNotNull, this);
@@ -1220,7 +1222,7 @@ namespace NetJs.Translator.CSharpToJavascript
             void CheckNode(ExpressionSyntax node)
             {
                 var nodeType = _global.GetSymbol(node, this);
-                if (nodeType is IMethodSymbol ms && ms.IsStaticCallConvention(_global))
+                if (nodeType is IMethodSymbol ms && (ms.IsExtensionMethod || ms.IsStaticCallConvention(_global)))
                 {
                     useIfNotNull |= true;
                 }
@@ -1248,6 +1250,11 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     rhsExpression = inv.Expression;
                 }
+                else if (rhsExpression.IsKind(SyntaxKind.ConditionalAccessExpression) && rhsExpression is ConditionalAccessExpressionSyntax ce)
+                {
+                    rhsExpression = ce.WhenNotNull;
+                    CheckNode(rhsExpression);
+                }
                 else break;
                 depth++;
             }
@@ -1260,7 +1267,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitConditionalAccessExpression(ConditionalAccessExpressionSyntax node)
         {
-            Debug.Assert(!IsRewiteCandidate(node));
+            Debug.Assert(!IsConditionalAccessRewriteCandidate(node));
             var useIfNotNull = ConditionalAccessUseIfNotNull(node, out var rhs);
             if (useIfNotNull)
             {
@@ -1287,7 +1294,7 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             else
             {
-                if (rhs != null)
+                if (rhs != null && rhs.Kind == SymbolKind.Method)
                 {
                     var lhs = _global.GetTypeSymbol(node.Expression, this);
                     if (IsGenericDispatch(lhs, rhs))
@@ -1296,7 +1303,7 @@ namespace NetJs.Translator.CSharpToJavascript
                         return;
                     }
                 }
-                if (!(node.Parent is StatementSyntax))
+                if (node.Parent is not StatementSyntax && node.Parent is not ConditionalAccessExpressionSyntax)
                     CurrentTypeWriter.Write(node, "(");
                 Visit(node.Expression);
                 CurrentTypeWriter.Write(node, node.OperatorToken.ValueText);
@@ -1312,7 +1319,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 Visit(node.WhenNotNull);
                 if (node.Parent is not StatementSyntax)
                     CurrentTypeWriter.Write(node, " ?? null"); //js null?.member is undefined, we need to convert it to null to be consistent with c#
-                if (!(node.Parent is StatementSyntax))
+                if (node.Parent is not StatementSyntax && node.Parent is not ConditionalAccessExpressionSyntax)
                     CurrentTypeWriter.Write(node, ")");
             }
             return;

@@ -12,7 +12,7 @@
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="buildTransitive\$(PackageId).targets" PackagePath="buildTransitive\netstandard2.0\" />
+    <Content Include="$(DotnetRuntimeRoot)src\libraries\Microsoft.Extensions.Configuration.Binder\src\buildTransitive\$(PackageId).targets" PackagePath="buildTransitive\netstandard2.0\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="$(CommonPath)Extensions\ParameterDefaultValue\ParameterDefaultValue.cs" Link="Common\src\Extensions\ParameterDefaultValue\ParameterDefaultValue.cs" />

@@ -276,6 +276,9 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Numbers
                                     _ => false
                                 };
 
+                                if (resultType != SpecialType.System_Int32 && resultType != SpecialType.System_UInt32) //>>>0 and | 0 are reserve for int operations
+                                    return false;
+
                                 var leftRank = lhsType.GetNumericRangeRank();
                                 var rightRank = rhsType.GetNumericRangeRank();
                                 var int32Rank = visitor.Global.SystemInt32.GetNumericRangeRank();

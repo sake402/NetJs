@@ -11,6 +11,7 @@
     <IsTrimmable>true</IsTrimmable>
     <ImplicitUsings>enable</ImplicitUsings>
     <EnableDefaultItems>true</EnableDefaultItems>
+    <RootNamespace>Microsoft.AspNetCore.Components.QuickGrid</RootNamespace>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
   </PropertyGroup>
   <ItemGroup>
@@ -28,6 +29,9 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(CoreLibProject)" />
+    <ProjectReference Include="$(NewLibrariesProjectRoot)System.Linq\NetJs.System.Linq.csproj" />
+    <ProjectReference Include="$(NewLibrariesProjectRoot)System.Linq.Expressions\NetJs.System.Linq.Expressions.csproj" />
+    <ProjectReference Include="$(NewLibrariesProjectRoot)System.Linq.Queryable\NetJs.System.Linq.Queryable.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.AspNetCore.Components.Web\NetJs.Microsoft.AspNetCore.Components.Web.csproj" />
   </ItemGroup>
   <ItemGroup>
@@ -52,8 +56,8 @@
     <Compile Include="$(RepoRoot)src\Components\QuickGrid\Microsoft.AspNetCore.Components.QuickGrid\src\Infrastructure\InternalGridContext.cs" />
     <Compile Include="$(RepoRoot)src\Components\QuickGrid\Microsoft.AspNetCore.Components.QuickGrid\src\Pagination\PaginationState.cs" />
     <Compile Include="$(RepoRoot)src\Components\QuickGrid\Microsoft.AspNetCore.Components.QuickGrid\src\Pagination\Paginator.razor.cs" />
-    <Compile Include="$(RepoRoot)src\Components\QuickGrid\Microsoft.AspNetCore.Components.QuickGrid\src\QuickGrid.razor" />
-    <Compile Include="$(RepoRoot)src\Components\QuickGrid\Microsoft.AspNetCore.Components.QuickGrid\src\Columns\ColumnBase.razor" />
-    <Compile Include="$(RepoRoot)src\Components\QuickGrid\Microsoft.AspNetCore.Components.QuickGrid\src\Pagination\Paginator.razor" />
+    <Content Include="$(RepoRoot)src\Components\QuickGrid\Microsoft.AspNetCore.Components.QuickGrid\src\QuickGrid.razor" Watch="false" />
+    <Content Include="$(RepoRoot)src\Components\QuickGrid\Microsoft.AspNetCore.Components.QuickGrid\src\Columns\ColumnBase.razor" Watch="false" />
+    <Content Include="$(RepoRoot)src\Components\QuickGrid\Microsoft.AspNetCore.Components.QuickGrid\src\Pagination\Paginator.razor" Watch="false" />
   </ItemGroup>
 </Project>

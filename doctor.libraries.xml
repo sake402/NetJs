@@ -167,6 +167,9 @@ Whenever we sync our forked dotnet runtime and aspnetcore with official repo, we
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Net.NetworkInformation\src\System.Net.NetworkInformation.csproj">
 	</Project>
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Net.Http\src\System.Net.Http.csproj" Remove="//ItemGroup/ProjectReference@Include=$(LibrariesProjectRoot)System.Runtime.InteropServices.JavaScript\gen\JSImportGenerator\JSImportGenerator.csproj">
+		<ItemGroup>
+			<Compile Remove="!SR.g.cs" />
+		</ItemGroup>
 	</Project>
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Net.Http.Json\src\System.Net.Http.Json.csproj">
 		<ItemGroup>
@@ -315,6 +318,53 @@ Whenever we sync our forked dotnet runtime and aspnetcore with official repo, we
 	
 	
 	
+	<Project Include="$(DotnetGitRoot)aspnetcore\src\Localization\Abstractions\src\Microsoft.Extensions.Localization.Abstractions.csproj">
+		<PropertyGroup>
+			<EnableDefaultItems>true</EnableDefaultItems>
+		</PropertyGroup>
+		<ItemGroup>
+			<ProjectReference Include="$(CoreLibProject)" />
+		</ItemGroup>
+	</Project>	
+	
+	<Project Include="$(DotnetGitRoot)aspnetcore\src\Localization\Localization\src\Microsoft.Extensions.Localization.csproj">
+		<PropertyGroup>
+			<EnableDefaultItems>true</EnableDefaultItems>
+		</PropertyGroup>
+		<ItemGroup>
+			<ProjectReference Include="$(CoreLibProject)" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.DependencyInjection.Abstractions\NetJs.Microsoft.Extensions.DependencyInjection.Abstractions.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.Options\NetJs.Microsoft.Extensions.Options.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.Localization.Abstractions\NetJs.Microsoft.Extensions.Localization.Abstractions.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.Logging.Abstractions\NetJs.Microsoft.Extensions.Logging.Abstractions.csproj" />
+			<ProjectReference Include="$(LoggingGenerator)" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		</ItemGroup>
+	</Project>	
+	
+	<Project Include="$(DotnetGitRoot)aspnetcore\src\Http\Metadata\src\Microsoft.AspNetCore.Metadata.csproj">
+		<PropertyGroup>
+			<EnableDefaultItems>true</EnableDefaultItems>
+		</PropertyGroup>
+		<ItemGroup>
+			<ProjectReference Include="$(CoreLibProject)" />
+		</ItemGroup>
+	</Project>
+	
+	<Project Include="$(DotnetGitRoot)aspnetcore\src\Security\Authorization\Core\src\Microsoft.AspNetCore.Authorization.csproj">
+		<PropertyGroup>
+			<ImplicitUsings>enable</ImplicitUsings>
+			<EnableDefaultItems>true</EnableDefaultItems>
+		</PropertyGroup>
+		<ItemGroup>
+			<ProjectReference Include="$(CoreLibProject)" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.AspNetCore.Metadata\NetJs.Microsoft.AspNetCore.Metadata.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.Logging.Abstractions\NetJs.Microsoft.Extensions.Logging.Abstractions.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.Diagnostics\NetJs.Microsoft.Extensions.Diagnostics.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.Options\NetJs.Microsoft.Extensions.Options.csproj" />
+			<ProjectReference Include="$(LoggingGenerator)" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		</ItemGroup>
+	</Project>
+		
 	<Project Include="$(DotnetGitRoot)aspnetcore\src\Validation\src\Microsoft.Extensions.Validation.csproj">
 		<PropertyGroup>
 			<ImplicitUsings>enable</ImplicitUsings>
@@ -350,7 +400,7 @@ Whenever we sync our forked dotnet runtime and aspnetcore with official repo, we
 			<AssemblyName>Microsoft.AspNetCore.Components</AssemblyName>
 		</PropertyGroup>
 		<ItemGroup>
-			  <InternalsVisibleTo Include="Microsoft.AspNetCore.Components.Web" />
+			  <InternalsVisibleTo Include="!Microsoft.AspNetCore.Components.Web" />
 		</ItemGroup>
 		<ItemGroup>
 			<ProjectReference Include="$(CoreLibProject)" />
@@ -403,9 +453,13 @@ Whenever we sync our forked dotnet runtime and aspnetcore with official repo, we
 		<PropertyGroup>
 			<ImplicitUsings>enable</ImplicitUsings>
 			<EnableDefaultItems>true</EnableDefaultItems>
+			<RootNamespace>Microsoft.AspNetCore.Components.QuickGrid</RootNamespace>
 		</PropertyGroup>
 		<ItemGroup>
 			<ProjectReference Include="$(CoreLibProject)" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)System.Linq\NetJs.System.Linq.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)System.Linq.Expressions\NetJs.System.Linq.Expressions.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)System.Linq.Queryable\NetJs.System.Linq.Queryable.csproj" />
 			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.AspNetCore.Components.Web\NetJs.Microsoft.AspNetCore.Components.Web.csproj" />
 		</ItemGroup>
 	</Project>
@@ -433,6 +487,18 @@ Whenever we sync our forked dotnet runtime and aspnetcore with official repo, we
 			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.JSInterop.WebAssembly\NetJs.Microsoft.JSInterop.WebAssembly.csproj" />
 			<ProjectReference Include="$(JsonGenerator)" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 			<ProjectReference Include="$(LoggingGenerator)" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		</ItemGroup>
+	</Project>
+	<Project Include="$(DotnetGitRoot)aspnetcore\src\Components\Authorization\src\Microsoft.AspNetCore.Components.Authorization.csproj">
+		<PropertyGroup>
+			<ImplicitUsings>enable</ImplicitUsings>
+			<EnableDefaultItems>true</EnableDefaultItems>
+			<RootNamespace>Microsoft.AspNetCore.Components.Authorization</RootNamespace>
+		</PropertyGroup>
+		<ItemGroup>
+			<ProjectReference Include="$(CoreLibProject)" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.AspNetCore.Authorization\NetJs.Microsoft.AspNetCore.Authorization.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.AspNetCore.Components\NetJs.Microsoft.AspNetCore.Components.csproj" />
 		</ItemGroup>
 	</Project>
 </Projects>

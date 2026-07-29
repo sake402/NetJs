@@ -1,40 +1,59 @@
-﻿using NetJs.Translator;
+﻿using Microsoft.Build.Evaluation;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.MSBuild;
+using NetJs.Translator;
+using NuGet.Packaging;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using MsBuildProject = Microsoft.Build.Evaluation.Project;
+using System.Threading.Tasks;
 using CodeAnalysisProject = Microsoft.CodeAnalysis.Project;
-using NuGet.Packaging;
-using Microsoft.CodeAnalysis;
+using MsBuildProject = Microsoft.Build.Evaluation.Project;
 
 namespace NetJs.Compiler
 {
     public class ProjectWrapper : IProject
     {
+        MSBuildWorkspace msWorkspace;
+        ProjectCollection projectCollection;
         MsBuildProject msProject;
         CodeAnalysisProject caProject;
+        IDictionary<string, string>? buildProperties;
         public CSharpCompilation? Compilation { get; }
         public string DirectoryPath => msProject.DirectoryPath;
         public string FullPath => msProject.FullPath;
         public string SDK => msProject.Xml.Sdk;
+        public string BaseIntermediateOutputPath => Evaluate("BaseIntermediateOutputPath").First();
+        public string IntermediateOutputPath => Evaluate("IntermediateOutputPath").First();
         public CompilationOptions? CompilationOptions => caProject.CompilationOptions;
-        public ProjectWrapper(CodeAnalysisProject caProject, MsBuildProject project)
+        public ProjectWrapper(MSBuildWorkspace msWorkspace, ProjectCollection projectCollection, CodeAnalysisProject caProject, MsBuildProject project, IDictionary<string, string>? buildProperties)
         {
+            this.msWorkspace = msWorkspace;
+            this.projectCollection = projectCollection;
             this.caProject = caProject;
             this.msProject = project;
-
+            this.buildProperties = buildProperties;
         }
 
-        public string? Evaluate(string propertyName)
+        public IEnumerable<string> Evaluate(string propertyName, bool allItems = false)
         {
             var v = msProject.GetPropertyValue(propertyName);
             if (!string.IsNullOrEmpty(v))
-                return v;
-            var value = msProject.AllEvaluatedProperties.LastOrDefault(e => e.Name == propertyName);
-            return value?.EvaluatedValue;
+                return [v];
+            if (allItems)
+            {
+                var value = msProject.AllEvaluatedItems.Where(e => e.ItemType == propertyName);
+                return value.Select(e => e.EvaluatedInclude);
+            }
+            else
+            {
+                var value = msProject.AllEvaluatedProperties.Where(e => e.Name == propertyName);
+                return value.Select(e => e.EvaluatedValue);
+            }
         }
+
         public string GetAssemblyName()
         {
             var aName = msProject.AllEvaluatedProperties.Last(e => e.Name == "AssemblyName").EvaluatedValue;
@@ -51,7 +70,10 @@ namespace NetJs.Compiler
         }
         public string GetOutputPath()
         {
-            return msProject.AllEvaluatedProperties.Last(e => e.Name == "OutputPath").EvaluatedValue;
+            var result = msProject.AllEvaluatedProperties.Last(e => e.Name == "OutputPath").EvaluatedValue;
+            if (!Path.IsPathRooted(result))
+                result = Path.Combine(msProject.DirectoryPath, result);
+            return result;
         }
         public string GetConfiguration()
         {
@@ -63,7 +85,16 @@ namespace NetJs.Compiler
         }
         public string GetTargetFramework()
         {
-            return msProject.AllEvaluatedProperties.Last(e => e.Name == "TargetFramework").EvaluatedValue;
+            var framework = msProject.AllEvaluatedProperties.LastOrDefault(e => e.Name == "TargetFramework")?.EvaluatedValue;
+            if (framework == null)
+            {
+                framework = msProject.AllEvaluatedProperties.LastOrDefault(e => e.Name == "TargetFrameworks")?.EvaluatedValue?.Split(';').LastOrDefault();
+            }
+            if (framework == null)
+            {
+                framework = "net10.0";
+            }
+            return framework;
         }
         public OutputMode GetOutputMode()
         {
@@ -111,25 +142,27 @@ namespace NetJs.Compiler
                     sourceFiles.Add(Path.Join(msProject.DirectoryPath, projectItem.EvaluatedInclude));
             }
 
-            var platform = GetPlatform();
-            if (platform.Equals("AnyCPU", StringComparison.InvariantCultureIgnoreCase))
-            {
-                platform = "";
-            }
-            else
-            {
-                platform = "/" + platform;
-            }
+            //var platform = GetPlatform();
+            //if (platform.Equals("AnyCPU", StringComparison.InvariantCultureIgnoreCase))
+            //{
+            //    platform = "";
+            //}
+            //else
+            //{
+            //    platform = "/" + platform;
+            //}
             //Check for cs files like .NETCoreApp,Version=v10.0.AssemblyAttributes.cs
-            var sourceObjGenOutputPath = $"{msProject.DirectoryPath}/obj{platform}/{GetConfiguration()}/{GetTargetFramework()}";
-            if (Directory.Exists(sourceObjGenOutputPath))
+            var objectFolder = IntermediateOutputPath;
+            if (!Path.IsPathRooted(objectFolder)) //check if it has volume label already
+                objectFolder = Path.Join(msProject.DirectoryPath, objectFolder);
+            if (Directory.Exists(objectFolder))
             {
-                var csFiles = Directory.EnumerateFiles(sourceObjGenOutputPath, "*.cs", SearchOption.TopDirectoryOnly);
+                var csFiles = Directory.EnumerateFiles(objectFolder, "*.cs", SearchOption.TopDirectoryOnly);
                 sourceFiles.AddRange(csFiles);
             }
 
             //Check for source generated files
-            var sourceGenOutputPath = $"{msProject.DirectoryPath}/obj{platform}/{GetConfiguration()}/{GetTargetFramework()}/generated";
+            var sourceGenOutputPath = Path.Combine(objectFolder, "generated");
             if (Directory.Exists(sourceGenOutputPath))
             {
                 var csFiles = Directory.EnumerateFiles(sourceGenOutputPath, "*.cs", SearchOption.AllDirectories);
@@ -165,17 +198,20 @@ namespace NetJs.Compiler
                 }
             }
 
-            var platform = GetPlatform();
-            if (platform.Equals("AnyCPU", StringComparison.InvariantCultureIgnoreCase))
-            {
-                platform = "";
-            }
-            else
-            {
-                platform = "/" + platform;
-            }
+            //var platform = GetPlatform();
+            //if (platform.Equals("AnyCPU", StringComparison.InvariantCultureIgnoreCase))
+            //{
+            //    platform = "";
+            //}
+            //else
+            //{
+            //    platform = "/" + platform;
+            //}
+            var objectFolder = IntermediateOutputPath;
+            if (!Path.IsPathRooted(objectFolder)) //check if it has volume label already
+                objectFolder = Path.Join(msProject.DirectoryPath, objectFolder);
             //Check for css files scopedcss/bundle
-            var sourceGenOutputPath = $"{msProject.DirectoryPath}/obj{platform}/{GetConfiguration()}/{GetTargetFramework()}/scopedcss/bundle";
+            var sourceGenOutputPath = Path.Combine(objectFolder, "scopedcss", "bundle");// $"{msProject.DirectoryPath}/obj{platform}/{GetConfiguration()}/{GetTargetFramework()}/scopedcss/bundle";
             if (Directory.Exists(sourceGenOutputPath))
             {
                 var csFiles = Directory.EnumerateFiles(sourceGenOutputPath, "*.css", SearchOption.AllDirectories);
@@ -217,6 +253,19 @@ namespace NetJs.Compiler
             }
 
             return sourceFiles;
+        }
+
+        public async Task<IProject> LoadDependecy(string projectName)
+        {
+            var csProjectFile = projectName;
+            var codeAnalysisProject = msWorkspace.CurrentSolution.Projects.FirstOrDefault(f => f.Name.Equals(projectName, StringComparison.InvariantCultureIgnoreCase));
+            if (codeAnalysisProject == null && !projectName.StartsWith(Constants.ProjectName + "."))
+            {
+                projectName = Constants.ProjectName + "." + projectName;
+                codeAnalysisProject = msWorkspace.CurrentSolution.Projects.First(f => f.Name.Equals(projectName, StringComparison.InvariantCultureIgnoreCase));
+            }
+            var msBuildProject = new MsBuildProject(codeAnalysisProject!.FilePath, buildProperties, null, projectCollection);
+            return new ProjectWrapper(msWorkspace, projectCollection, codeAnalysisProject, msBuildProject, buildProperties);
         }
 
         public bool Build()

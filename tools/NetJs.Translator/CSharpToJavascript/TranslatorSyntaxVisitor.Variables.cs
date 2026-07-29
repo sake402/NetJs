@@ -159,5 +159,11 @@ namespace NetJs.Translator.CSharpToJavascript
             CurrentTypeWriter.Write(node, node.Identifier.ResolveIdentifierName());
             //base.VisitSingleVariableDesignation(node);
         }
+
+        public override void VisitDiscardDesignation(DiscardDesignationSyntax node)
+        {
+            CurrentTypeWriter.Write(node, $"_{++CurrentTypeWriter.CurrentClosure.NameManglingSeed}");
+            //base.VisitDiscardDesignation(node);
+        }
     }
 }

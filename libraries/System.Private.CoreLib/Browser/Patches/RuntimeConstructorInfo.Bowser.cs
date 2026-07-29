@@ -69,6 +69,7 @@ namespace System.Reflection
             var dobject = prototype.New();
             var outputName = _model.OutputName!.NativeReplace("@", _model.Name);
             var ctor = dobject[outputName];
+            parameters = parameters?.Map(p => NetJs.Script.Unbox(p));
             //If calling default constructor, it may not be exported, if the type does not explicitly define it
             if (NetJs.Script.IsDefined(ctor))
                 NetJs.Script.Write("ctor.apply(dobject, parameters)");

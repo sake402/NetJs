@@ -3436,7 +3436,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public string? Evaluate(string keyword, TranslatorSyntaxVisitor? visitor)
         {
-            var value = Project.Evaluate(keyword);
+            var value = Project.Evaluate(keyword).LastOrDefault();
             if (string.IsNullOrEmpty(value) && visitor != null && visitor.Pragmas.TryGetValue(keyword, out var n))
             {
                 return n.ToString();
@@ -3783,7 +3783,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 var main = Compilation.GetEntryPoint(CancellationToken.None);
                 if (main == null)
                 {
-                    var ns = Project.Evaluate("RootNamespace");
+                    var ns = Project.Evaluate("RootNamespace").LastOrDefault();
                     main = (IMethodSymbol?)TryGetSymbol($"{ns}.Program.Main(System.String[])", null);
                     main ??= (IMethodSymbol?)TryGetSymbol($"{ns}.Program.Main()", null);
                 }

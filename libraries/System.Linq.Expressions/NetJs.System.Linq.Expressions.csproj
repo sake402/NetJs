@@ -103,7 +103,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>UpdateDelegates.Generated.tt</DependentUpon>
     </Compile>
-    <Content Include="System\Dynamic\UpdateDelegates.Generated.tt">
+    <Content Include="$(DotnetRuntimeRoot)src\libraries\System.Linq.Expressions\src\System\Dynamic\UpdateDelegates.Generated.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>UpdateDelegates.Generated.cs</LastGenOutput>
     </Content>

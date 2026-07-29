@@ -73,9 +73,13 @@ namespace NetJs.Translator
         {
             return System.IO.Path.GetDirectoryName(project.FullPath)!.Split('/', '\\').Last();
         }
-        public static string GetName(this IProject project)
+
+        public static string GetName(this IProject project, bool useNetJsFormat = true)
         {
-            return System.IO.Path.GetFileNameWithoutExtension(project.FullPath);
+            var name = System.IO.Path.GetFileNameWithoutExtension(project.FullPath);
+            if (useNetJsFormat && !name.StartsWith(Constants.ProjectName + "."))
+                name = Constants.ProjectName + "." + name;
+            return name;
         }
 
         public static string GetRelativePath(this string fromPath, string toPath)

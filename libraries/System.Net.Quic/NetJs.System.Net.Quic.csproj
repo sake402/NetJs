@@ -166,15 +166,15 @@
   </ItemGroup>
   <!-- Local builds - developers only -->
   <ItemGroup>
-    <Content Include="libmsquic.dylib" Condition="Exists('libmsquic.dylib')">
+    <Content Include="$(DotnetRuntimeRoot)src\libraries\System.Net.Quic\src\libmsquic.dylib" Condition="Exists('libmsquic.dylib')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
-    <Content Include="libmsquic.so" Condition="Exists('libmsquic.so')">
+    <Content Include="$(DotnetRuntimeRoot)src\libraries\System.Net.Quic\src\libmsquic.so" Condition="Exists('libmsquic.so')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
-    <Content Include="libmsquic.lttng.so" Condition="Exists('libmsquic.lttng.so')">
+    <Content Include="$(DotnetRuntimeRoot)src\libraries\System.Net.Quic\src\libmsquic.lttng.so" Condition="Exists('libmsquic.lttng.so')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>

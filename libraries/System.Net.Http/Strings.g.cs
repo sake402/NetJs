@@ -2409,18 +2409,5 @@ namespace System
             }
         }
 
-
-
-        /// <summary>
-        /// Failed to HPACK encode the headers.
-        /// </summary>
-        internal static string net_http_hpack_encode_failure
-        {
-            get
-            {
-                return "Failed to HPACK encode the headers.";
-            }
-        }
-
     }
 }

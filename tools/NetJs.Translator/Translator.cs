@@ -21,16 +21,18 @@ namespace NetJs.Translator
 {
     public partial class Translator
     {
-        string dotnetPath;
-        string dotnetVersion;
-        string dotnetSdkPath;
-        string dotnetSdkVersion;
-        IProject project;
-        IProjectOutputProvider output;
+        Config _config;
+        string _dotnetPath;
+        string _dotnetVersion;
+        string _dotnetSdkPath;
+        string _dotnetSdkVersion;
+        IProject _project;
+        IProjectOutputProvider _output;
         Random random;
         public IEnumerable<IIncrementalGenerator>? SourceGenerators { get; set; }
         //public TextWriter? LogTo { get; set; }
-        public string TempFolder { get; set; }
+        string _tempFolder;
+        string _datFolder;
 
         MetadataProvider metadataProvider = default!;
         CSharpCompilation csCompilation = default!;
@@ -54,20 +56,25 @@ namespace NetJs.Translator
         string projectTempFolder;
 
         public Translator(
+            Config config,
             string dotnetPath,
             string dotnetVersion,
             string dotnetSdkPath,
             string dotnetSdkVersion,
+            string dataFolder,
+            string tempFolder,
             IProject project,
             IProjectOutputProvider output)
         {
-            this.dotnetPath = dotnetPath;
-            this.dotnetVersion = dotnetVersion;
-            this.dotnetSdkPath = dotnetSdkPath;
-            this.dotnetSdkVersion = dotnetSdkVersion;
-            this.project = project;
-            this.output = output;
-            TempFolder = Path.GetTempPath() + "NetJs";
+            this._config = config;
+            this._dotnetPath = dotnetPath;
+            this._dotnetVersion = dotnetVersion;
+            this._dotnetSdkPath = dotnetSdkPath;
+            this._dotnetSdkVersion = dotnetSdkVersion;
+            this._project = project;
+            this._output = output;
+            _datFolder = dataFolder;
+            _tempFolder = tempFolder;
             random = new Random();
             globalUsings = project.GetGlobalUsings();
             sourceFiles = project.GetSourceFiles();
@@ -77,7 +84,7 @@ namespace NetJs.Translator
             serializer = new SerializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
             deSerializer = new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
             isSystemPrivateCoreLib = project.GetAssemblyName() == "NetJs.System.Private.CoreLib";
-            projectTempFolder = Path.Combine(TempFolder, project.GetName());
+            projectTempFolder = Path.Combine(_tempFolder, project.GetName());
             wwwrootFolder = project.GetFolder() + Path.DirectorySeparatorChar + "wwwroot" + Path.DirectorySeparatorChar;
             wwwrootFiles = contentFiles.Where(e => e.StartsWith(wwwrootFolder)).ToList();
             indexFile = wwwrootFiles.SingleOrDefault(e => e.EndsWith("wwwroot" + Path.DirectorySeparatorChar + "index.html"));
@@ -88,7 +95,7 @@ namespace NetJs.Translator
         List<MetadataReference> sortedReferences = new();
         List<string> symbolFiles = new();
         SyntaxTree[] syntaxTrees = Array.Empty<SyntaxTree>();
-        (string FilePath, string Source)[] replacements = Array.Empty<(string, string)>();
+        List<(string FilePath, string SourceCode)> sources = new();
 
         MemoryStream dllStream = new MemoryStream();
         MemoryStream pdbStream = new MemoryStream();
@@ -121,7 +128,7 @@ namespace NetJs.Translator
             var csFiles = sourceFiles.Where(e => e.EndsWith(".cs")).ToList();
             return $"Prebuilding Syntax Tree".ProfileAsync(async () =>
             {
-                csCompilation = await metadataProvider.CreateCompilation(project, csFiles.ToArray(), null, globalUsings, sortedReferences, null);
+                csCompilation = await metadataProvider.CreateCompilation(_project, csFiles.ToArray(), null, globalUsings, sortedReferences, null);
                 syntaxTrees = csCompilation.SyntaxTrees.ToArray();
             });
         }
@@ -139,7 +146,7 @@ namespace NetJs.Translator
                     syntaxTrees[tree.i] = newTree;
                 });
                 sortedReferences.Clear();
-                csCompilation = await metadataProvider.CreateCompilation(project, syntaxTrees.Select(c => c.FilePath).ToArray(), syntaxTrees.Select(c => c.GetText().ToString()).ToArray(), null, sortedReferences, null);
+                csCompilation = await metadataProvider.CreateCompilation(_project, syntaxTrees.Select(c => c.FilePath).ToArray(), syntaxTrees.Select(c => c.GetText().ToString()).ToArray(), null, sortedReferences, null);
                 syntaxTrees = csCompilation.SyntaxTrees.ToArray();
             });
         }
@@ -166,7 +173,7 @@ namespace NetJs.Translator
                         var partials = partialClassGroupings[name];
                         foreach (var partial in partials)
                         {
-                            if (partial.HasAnyAttribute([typeof(VerbatimReplacementAttribute).FullName], out var atts))
+                            if (partial.HasAnyAttribute([typeof(VerbatimReplacementAttribute).FullName!], out var atts))
                             {
                                 var att = atts.Single().Value;
                                 foreach (var a in att)
@@ -201,11 +208,29 @@ namespace NetJs.Translator
                         if (!Directory.Exists(directory))
                             Directory.CreateDirectory(directory);
                         File.WriteAllText(tempFile, sourceCode);
+                        //sources[tree.i] = (tempFile, sourceCode);
+                        sources.Add((tempFile, sourceCode));
                     }
-                    replacements[tree.i] = (tempFile, sourceCode);
                 });
             });
+        }
 
+        void RunResXGenerator()
+        {
+            var packegeReferences = _project.Evaluate("PackageReference", true);
+            if (!packegeReferences.Contains("Microsoft.CodeAnalysis.ResxSourceGenerator"))
+            {
+                var resourceFiles = contentFiles.Where(e => e.EndsWith(".resx")).ToArray();
+                var rootNamespace = _project.GetNamespace();
+                var rSources = ResXGenerator.GenerateStaticResourceInlined(null, _project.GetName(useNetJsFormat:false), _project.DirectoryPath, useNamespace: (srFile) =>
+                {
+                    var folder = _project.DirectoryPath.GetRelativePath(Path.GetDirectoryName(srFile)!);
+                    var ns = folder.TrimStart('.', '/', '\\').Replace("/", ".").Replace("\\", ".");
+                    return rootNamespace + "." + ns;
+                });
+                foreach (var source in rSources)
+                    sources.Add(("", source));
+            }
         }
 
         Task ReBuildSyntaxTree()
@@ -214,7 +239,7 @@ namespace NetJs.Translator
             {
                 sortedReferences.Clear();
                 symbolFiles.Clear();
-                csCompilation = await metadataProvider.CreateCompilation(project, replacements.Select(s => s.FilePath).ToArray(), replacements.Select(s => s.Source).ToArray(), null, sortedReferences, symbolFiles);
+                csCompilation = await metadataProvider.CreateCompilation(_project, sources.Select(s => s.FilePath).ToArray(), sources.Select(s => s.SourceCode).ToArray(), null, sortedReferences, symbolFiles);
                 //var errors = csCompilation.GetDiagnostics().Where(e => e.Severity == DiagnosticSeverity.Error);
             });
         }
@@ -257,7 +282,7 @@ namespace NetJs.Translator
             $"Preparing to transpile".Profile(() =>
             {
                 var importedNames = symbolFiles.Select(s => deSerializer.Deserialize<SymbolDescriptor>(File.ReadAllText(s))).ToList();
-                global = new GlobalCompilationVisitor(csCompilation, project, isSystemPrivateCoreLib, importedNames);
+                global = new GlobalCompilationVisitor(csCompilation, _project, isSystemPrivateCoreLib, importedNames);
                 metadataBuilder = new ReflectionMetadataBuilder(global, isSystemPrivateCoreLib, contentFiles.Where(e => e.EndsWith(".resx")).ToArray(), embeddedFiles.ToArray());
                 metadataBuilder.InitializeForAssembly(csCompilation.Assembly);
                 global.Reflection = metadataBuilder;
@@ -307,13 +332,13 @@ namespace NetJs.Translator
             dllStream.Position = 0;
             pdbStream.Position = 0;
             docStream.Position = 0;
-            pendingTask.Add(output.Output(global, project.GetName() + ".js.dll", dllStream));
-            pendingTask.Add(output.Output(global, project.GetName() + ".js.pdb", pdbStream));
-            pendingTask.Add(output.Output(global, project.GetName() + ".js.xml", docStream));
+            pendingTask.Add(_output.Output(global, _project.GetName() + ".js.dll", dllStream));
+            pendingTask.Add(_output.Output(global, _project.GetName() + ".js.pdb", pdbStream));
+            pendingTask.Add(_output.Output(global, _project.GetName() + ".js.xml", docStream));
 
-            packages.Add((project.GetName() + ".js.dll", dllStream));
-            packages.Add((project.GetName() + ".js.pdb", pdbStream));
-            packages.Add((project.GetName() + ".js.xml", docStream));
+            packages.Add((_project.GetName() + ".js.dll", dllStream));
+            packages.Add((_project.GetName() + ".js.pdb", pdbStream));
+            packages.Add((_project.GetName() + ".js.xml", docStream));
             packages.Add(("package.yaml", new MemoryStream(Encoding.UTF8.GetBytes(serializer.Serialize(new PackageModel()
             {
                 Dependencies = sortedReferences.Select(s =>
@@ -352,7 +377,7 @@ namespace NetJs.Translator
                     }))
                     {
                         var relativePath = Utility.GetRelativePath(refFolder, file);
-                        pendingTask.Add(output.Output(global, relativePath, file));
+                        pendingTask.Add(_output.Output(global, relativePath, file));
                         if (Path.GetExtension(file).ToLower() == ".js" && !sortedOutputtedJsFiles.Contains(relativePath))
                             sortedOutputtedJsFiles.Add(relativePath);
                     }
@@ -364,7 +389,7 @@ namespace NetJs.Translator
         {
             foreach (var file in wwwrootFiles)
             {
-                var relativePath = Utility.GetRelativePath(project.GetFolder(), file);
+                var relativePath = Utility.GetRelativePath(_project.GetFolder(), file);
                 var outputPath = !relativePath.StartsWith(Constants.OutputFolderName + Path.DirectorySeparatorChar) ? Constants.OutputFolderName + Path.DirectorySeparatorChar + relativePath : relativePath;
                 if (outputPath == $"wwwroot{Path.DirectorySeparatorChar}blazor.netjs.js")
                 {
@@ -372,23 +397,23 @@ namespace NetJs.Translator
                 }
                 else if (isRCL)
                 {
-                    outputPath = outputPath.Replace("wwwroot" + Path.DirectorySeparatorChar, $"wwwroot{Path.DirectorySeparatorChar}_content{Path.DirectorySeparatorChar}{project.GetName()}{Path.DirectorySeparatorChar}");
+                    outputPath = outputPath.Replace("wwwroot" + Path.DirectorySeparatorChar, $"wwwroot{Path.DirectorySeparatorChar}_content{Path.DirectorySeparatorChar}{_project.GetName()}{Path.DirectorySeparatorChar}");
                 }
                 packages.Add((outputPath, file));
-                pendingTask.Add(output.Output(global, outputPath, file));
+                pendingTask.Add(_output.Output(global, outputPath, file));
             }
 
             var scopedCssBundles = contentFiles.Where(e => !e.StartsWith(wwwrootFolder) && e.EndsWith(".styles.css"));
             foreach (var file in scopedCssBundles)
             {
-                var relativePath = Utility.GetRelativePath(project.GetFolder(), file);
+                var relativePath = Utility.GetRelativePath(_project.GetFolder(), file);
                 var outputPath = $"wwwroot{Path.DirectorySeparatorChar}{Path.GetFileName(file)}";
                 if (isRCL)
                 {
-                    outputPath = outputPath.Replace("wwwroot" + Path.DirectorySeparatorChar, $"wwwroot{Path.DirectorySeparatorChar}_content{Path.DirectorySeparatorChar}{project.GetName()}{Path.DirectorySeparatorChar}");
+                    outputPath = outputPath.Replace("wwwroot" + Path.DirectorySeparatorChar, $"wwwroot{Path.DirectorySeparatorChar}_content{Path.DirectorySeparatorChar}{_project.GetName()}{Path.DirectorySeparatorChar}");
                 }
                 packages.Add((outputPath, file));
-                pendingTask.Add(output.Output(global, outputPath, file));
+                pendingTask.Add(_output.Output(global, outputPath, file));
             }
         }
 
@@ -661,7 +686,7 @@ namespace NetJs.Translator
                 var reflectionMetadata = metadataBuilder.FromAssemblySymbol(csCompilation.Assembly);
                 var refAssemblySlugs = string.Join(", ", csCompilation.SourceModule.ReferencedAssemblySymbols.Select(a => global.GetAssemblyGlobalSlug(a)));
                 var refAssemblyNames = string.Join(", ", csCompilation.SourceModule.ReferencedAssemblySymbols.Select(a => "\"" + a.Name + "\""));
-                var outputFileName = Constants.OutputFolderName + Path.DirectorySeparatorChar + project.GetName() + ".js";
+                var outputFileName = Constants.OutputFolderName + Path.DirectorySeparatorChar + _project.GetName() + ".js";
                 var stream = StringToStream(global.OutputMode.HasFlag(OutputMode.Global) ? @$"
 (function ($global, {global.GlobalName}{(refAssemblySlugs.Length > 0 ? ", " : "")}{refAssemblySlugs}) {{
     ""use strict"";
@@ -670,7 +695,7 @@ namespace NetJs.Translator
     {bootCodes}
     {(isSystemPrivateCoreLib ? $"{global.GlobalName}.{Constants.AssemblyRegistryName} = {global.GlobalName}.{global.GetAssemblyGlobalSlug(global.Compilation.Assembly)}.System.AppDomain.{Constants.AssemblyRegistryName};" : "")}
 	{global.GlobalName}.{Constants.AssemblyRegistryName}(
-    ""{project.GetAssemblyName()}"", 
+    ""{_project.GetAssemblyName()}"", 
     {JsonSerializer.Serialize(reflectionMetadata, ReflectionMetadataBuilder.SerializationOption)},
     function({Constants.AssemblyRegistryName})
 	{{
@@ -679,13 +704,13 @@ namespace NetJs.Translator
         {codes}
 	}});
 }})(window, window.{Constants.ProjectName}.{Constants.BootName}(), ...window.{Constants.ProjectName}.$require({refAssemblyNames}))" : codes);
-                pendingTask.Add(output.Output(global, outputFileName, stream));
+                pendingTask.Add(_output.Output(global, outputFileName, stream));
                 sortedOutputtedJsFiles.Add(outputFileName);
                 packages.Add((outputFileName, stream));
             }
             else
             {
-                var existingFile = Path.Combine(output.OutputPath, "js", Path.ChangeExtension(project.GetName(), ".js"));
+                var existingFile = Path.Combine(_output.OutputPath, "js", Path.ChangeExtension(_project.GetName(), ".js"));
                 if (File.Exists(existingFile))
                     File.Delete(existingFile);
                 foreach (var visitor in global.Visitors)
@@ -693,13 +718,13 @@ namespace NetJs.Translator
                     var codes = visitor.Value.Build(2).Trim();
                     if (!string.IsNullOrEmpty(codes))
                     {
-                        var relative = Utility.GetRelativePath(project.DirectoryPath, visitor.Key.FilePath);
-                        var filePath = (project.DirectoryPath.Split('\\', '/').LastOrDefault() ?? "") + Path.ChangeExtension(relative, "js");
-                        pendingTask.Add(output.Output(global, filePath, StringToStream(global.OutputMode.HasFlag(OutputMode.Global) ? @$"
+                        var relative = Utility.GetRelativePath(_project.DirectoryPath, visitor.Key.FilePath);
+                        var filePath = (_project.DirectoryPath.Split('\\', '/').LastOrDefault() ?? "") + Path.ChangeExtension(relative, "js");
+                        pendingTask.Add(_output.Output(global, filePath, StringToStream(global.OutputMode.HasFlag(OutputMode.Global) ? @$"
 (function ({global.GlobalName}, $global) {{
     ""use strict"";
     let _;
-	{global.GlobalName}.{Constants.AssemblyRegistryName}(""{project.GetAssemblyName()}"", function({Constants.AssemblyRegistryName})
+	{global.GlobalName}.{Constants.AssemblyRegistryName}(""{_project.GetAssemblyName()}"", function({Constants.AssemblyRegistryName})
 	{{
         {codes}
 	}});
@@ -719,9 +744,9 @@ namespace NetJs.Translator
         void WriteOwnSymbolToDisk()
         {
             var yaml = serializer.Serialize(global.Symbols);
-            var yamlFileName = project.GetName() + $".Symbols.yaml";
+            var yamlFileName = _project.GetName() + $".Symbols.yaml";
             var yamlStream = StringToStream(yaml);
-            pendingTask.Add(output.Output(global, yamlFileName, yamlStream));
+            pendingTask.Add(_output.Output(global, yamlFileName, yamlStream));
             packages.Add((yamlFileName, yamlStream));
         }
 
@@ -746,7 +771,7 @@ namespace NetJs.Translator
         ({(global.MainEntry.IsAsync ? "async " : "")}function ({global.GlobalName}, $global) {{
             ""use strict"";
             {(hasBlazorNet && indexFile == null ? "Blazor.start();" : "")}
-            {StreamToString(output.HtmlScriptContent)}
+            {StreamToString(_output.HtmlScriptContent)}
             {(!global.OutputMode.HasFlag(OutputMode.Global) ? $"import {global.MainEntry.ContainingSymbol.Name} from \"/{Path.GetFileNameWithoutExtension(global.MainEntry.DeclaringSyntaxReferences.First().SyntaxTree.FilePath)}.js\"" : "")}
             {(!global.OutputMode.HasFlag(OutputMode.Global) ? $"{global.MainEntry.ContainingSymbol.Name}.Main();" : "")}
             {(global.OutputMode.HasFlag(OutputMode.Global) ? $"{(global.MainEntry.IsAsync ? "await " : "")}{meta.InvocationName}();" : "")}
@@ -759,8 +784,8 @@ namespace NetJs.Translator
                     text = text.Replace("</head>", insertHead + "\r\n</head>")
                         .Replace("</body>", insertScripts + "\r\n</body>")
                         .Replace("_framework/blazor.webassembly#[.{fingerprint}].js", "_framework/blazor.netjs.js");
-                    var relativePath = Utility.GetRelativePath(project.GetFolder(), indexFile);
-                    pendingTask.Add(output.Output(global,
+                    var relativePath = Utility.GetRelativePath(_project.GetFolder(), indexFile);
+                    pendingTask.Add(_output.Output(global,
                         !relativePath.StartsWith(Constants.OutputFolderName + Path.DirectorySeparatorChar) ? Constants.OutputFolderName + Path.DirectorySeparatorChar + relativePath : relativePath,
                         new MemoryStream(Encoding.UTF8.GetBytes(text))));
                 }
@@ -772,27 +797,32 @@ namespace NetJs.Translator
 <head>
     <meta charset=""UTF-8"">
     <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
-    <title>{project.Evaluate("AppicationTitle")}</title>
+    <title>{_project.Evaluate("AppicationTitle").LastOrDefault()}</title>
     <style>
-        {StreamToString(output.HtmlStyleContent)}
+        {StreamToString(_output.HtmlStyleContent)}
     </style>
 {insertHead}
 </head>
 <body>
     <app id=""app""></app>
-        {StreamToString(output.HtmlBodyContent)}
+        {StreamToString(_output.HtmlBodyContent)}
 {insertScripts}
 </body>
 </html>
 ";
-                    pendingTask.Add(output.Output(global, Constants.OutputFolderName + Path.DirectorySeparatorChar + "index.html", StringToStream(index)));
+                    pendingTask.Add(_output.Output(global, Constants.OutputFolderName + Path.DirectorySeparatorChar + "index.html", StringToStream(index)));
                 }
             }
         }
 
         void WritePackages()
         {
-            var localPackageCacheFolder = $"{metadataProvider.LocalPackageCacheFolder}{Path.DirectorySeparatorChar}{project.GetName()}";
+            var targetFramework = _project.GetTargetFramework();
+            if (!targetFramework.EndsWith("-browser"))
+            {
+                targetFramework += "-browser";
+            }
+            var localPackageCacheFolder = $"{metadataProvider.LocalPackageCacheFolder}{Path.DirectorySeparatorChar}{targetFramework}{Path.DirectorySeparatorChar}{_project.GetName()}";
             if (Directory.Exists(localPackageCacheFolder))
                 Directory.Delete(localPackageCacheFolder, true);
             Directory.CreateDirectory(localPackageCacheFolder);
@@ -825,13 +855,12 @@ namespace NetJs.Translator
                         }
                     }
                 }
-                var zipPackageFolder = project.Evaluate("ZipPackageFolder");
+                var zipPackageFolder = _project.Evaluate("ZipPackageFolder").LastOrDefault() ?? _config.OutputPackageSink;
                 if (!string.IsNullOrEmpty(zipPackageFolder))
                 {
                     if (!Directory.Exists(zipPackageFolder))
                         Directory.CreateDirectory(zipPackageFolder);
-                    var targetFramework = project.Evaluate("TargetFramework");
-                    var path = $"{zipPackageFolder}{Path.DirectorySeparatorChar}{targetFramework}{Path.DirectorySeparatorChar}{project.GetName()}.package.zip";
+                    var path = $"{zipPackageFolder}{Path.DirectorySeparatorChar}{targetFramework}{Path.DirectorySeparatorChar}{_project.GetName()}.package.zip";
                     var folder = Path.GetDirectoryName(path);
                     if (!Directory.Exists(folder))
                         Directory.CreateDirectory(folder);
@@ -846,9 +875,9 @@ namespace NetJs.Translator
 
         public async Task<bool> Build()
         {
-            metadataProvider = new MetadataProvider(dotnetPath, dotnetVersion, dotnetSdkPath, dotnetSdkVersion, TempFolder, deSerializer);
-            if (!Directory.Exists(output.OutputPath))
-                Directory.CreateDirectory(output.OutputPath);
+            metadataProvider = new MetadataProvider(_config, _dotnetPath, _dotnetVersion, _dotnetSdkPath, _dotnetSdkVersion, _datFolder, _tempFolder, deSerializer);
+            if (!Directory.Exists(_output.OutputPath))
+                Directory.CreateDirectory(_output.OutputPath);
 
             Clean();
 
@@ -858,9 +887,9 @@ namespace NetJs.Translator
 
             await RewiteFirstPass();
 
-            replacements = new (string, string)[syntaxTrees.Count()];
-
             await RewiteSecondPass();
+
+            RunResXGenerator();
 
             await ReBuildSyntaxTree();
 

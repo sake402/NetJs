@@ -93,7 +93,7 @@
         Outputs="$(IntermediateOutputPath)NetJsBuild.timestamp"
 		Condition="'$(NoNetJs)' != 'true' and '$(BuildingProject)' == 'true' and '$(DesignTimeBuild)' != 'true'">
 		<Message Importance="high" Text="NetJs compiling..."/>
-		<Exec Command="NetJs build -p &quot;$(ProjectPath)&quot; -c &quot;$(Configuration)&quot; -s" ConsoleToMsBuild="true" YieldDuringToolExecution="true" WorkingDirectory="$(ProjectDir)" ContinueOnError="ErrorAndStop" IgnoreExitCode="false"/>			
+		<Exec Command="NetJs build --project &quot;$(ProjectPath)&quot; -c &quot;$(Configuration)&quot; -s" ConsoleToMsBuild="true" YieldDuringToolExecution="true" WorkingDirectory="$(ProjectDir)" ContinueOnError="ErrorAndStop" IgnoreExitCode="false"/>			
 		<Touch Files="$(IntermediateOutputPath)NetJsBuild.timestamp" AlwaysCreate="true" />
 		<ItemGroup>
 			<FileWrites Include="$(IntermediateOutputPath)NetJsBuild.timestamp" />

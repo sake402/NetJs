@@ -441,6 +441,9 @@
     <None Include="$(DotnetRuntimeRoot)src\libraries\System.Net.Http\src\Resources\SR.resx" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Remove="SR.g.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <Compile Include="$(DotnetRuntimeRoot)src/libraries/Common/src/System/SR.cs" />
   </ItemGroup>
 </Project>

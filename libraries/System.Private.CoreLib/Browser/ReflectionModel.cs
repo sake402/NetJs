@@ -227,6 +227,7 @@ namespace NetJs
         IsGeneric = 1 << 17,
         HasDefaultValue = 1 << 18,
         ReturnTypeIsCovariantOut = 1 << 19,
+        IsAnonymous = 1 << 20,
         IsFamilyAndAssembly = IsFamily | IsAssembly,
     }
 

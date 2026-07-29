@@ -1164,7 +1164,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 return null;
             return t;
         }
-        MethodModel FromMethodSymbol(IMethodSymbol method, TranslatorSyntaxVisitor? fromVisitor, IPropertySymbol? fromProperty = null)
+        public MethodModel FromMethodSymbol(IMethodSymbol method, TranslatorSyntaxVisitor? fromVisitor, IPropertySymbol? fromProperty = null)
         {
             var name = method.Name;
             var explicitImpls = method.ExplicitInterfaceImplementations;
@@ -1180,8 +1180,8 @@ namespace NetJs.Translator.CSharpToJavascript
                 name = handle > 0 ? $"{{{handle}}}.{strippedName}" : strippedName;
             }
 
-            var metadata = global.GetRequiredMetadata(method);
-            var outputName = metadata.OverloadName ?? name;
+            var metadata = global.GetMetadata(method);
+            var outputName = metadata?.OverloadName ?? name;
 
             string? finalizedOutputName = null;
             if (fromProperty == null && outputName != name)
@@ -1249,6 +1249,11 @@ namespace NetJs.Translator.CSharpToJavascript
             };
         }
 
+        public string FromMethodSymbolAsJson(IMethodSymbol method, TranslatorSyntaxVisitor? fromVisitor, IPropertySymbol? fromProperty = null)
+        {
+            var model = FromMethodSymbol(method, fromVisitor, fromProperty);
+            return JsonSerializer.Serialize(model, SerializationOption);
+        }
         //MethodModel FromMethodSymbol(IMethodSymbol method, TranslatorSyntaxVisitor? fromVisitor, IPropertySymbol? fromProperty = null)
         //{
         //    var name = method.Name;

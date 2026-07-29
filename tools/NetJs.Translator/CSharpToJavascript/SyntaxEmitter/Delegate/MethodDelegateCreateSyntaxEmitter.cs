@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis.Operations;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json;
 
 namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Delegate
 {
@@ -12,7 +13,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Delegate
     {
         public override bool TryEmit(CSharpSyntaxNode node, TranslatorSyntaxVisitor visitor)
         {
-            if (node.ToString() == "(RenderFragment)RenderPageWithParameters")
+            if (node.ToString() == "(BindFormatter<T>)FormatEnumValueCore<T>")
             {
 
             }
@@ -29,7 +30,9 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Delegate
                 {
                     if (node.SyntaxTree == sm.SyntaxTree)
                     {
-                        var type = visitor.Global.GetSymbol(node, visitor);
+                        var type = visitor.Global.TryGetSymbol(node, visitor);
+                        if (type == null)
+                            continue;
                         if (!visitor.Global.IsNativeFunction(type))
                         {
                             if (node.Parent.IsKind(SyntaxKind.Argument))
@@ -61,16 +64,18 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Delegate
                                     var methodGroup = node;// as MemberAccessExpressionSyntax ?? node as IdentifierNameSyntax; 
                                     if (methodGroup.IsKind(SyntaxKind.CastExpression) && methodGroup is CastExpressionSyntax cast)
                                         methodGroup = cast.Expression;
+                                    var methodSymbol = (IMethodSymbol)visitor.Global.GetSymbol(methodGroup, visitor);
                                     if (_this == null)
                                     {
-                                        var methodSymbol = (IMethodSymbol)visitor.Global.GetSymbol(methodGroup, visitor);
                                         if (!methodSymbol.IsStatic)
                                         {
-                                            _this = new CodeNode(() => visitor.CurrentTypeWriter.Write(node, "this"));// SyntaxFactory.ThisExpression();
+                                            _this = new CodeNode(() => visitor.CurrentTypeWriter.Write(node, "this"));
                                         }
                                         else
                                         {
-                                            _this = new CodeNode(() => visitor.CurrentTypeWriter.Write(node, "null")); //SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression);
+                                            //TODO: Instead of null, pass the static class prototype as target
+                                            _this = new CodeNode(() => visitor.CurrentTypeWriter.Write(node, methodSymbol.ContainingType.ComputeOutputTypeName(visitor.Global)));
+                                            //_this = new CodeNode(() => visitor.CurrentTypeWriter.Write(node, "null"));
                                         }
                                     }
                                     int popCount = 1;
@@ -103,9 +108,37 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Delegate
                                         visitor.CurrentTypeWriter.Write(node, "().$ctor(");
                                         visitor.VisitNode(_this);
                                         visitor.CurrentTypeWriter.Write(node, ", ");
+                                        if (methodGroup.IsKind(SyntaxKind.GenericName)) //a method like FormatEnumValueCore<T>
+                                        {
+                                            visitor.CurrentTypeWriter.Write(node, $"(...args) => ");
+                                        }
                                         visitor.Visit(methodGroup);
+                                        if (methodGroup.IsKind(SyntaxKind.GenericName)) //a method like FormatEnumValueCore<T>
+                                        {
+                                            visitor.CurrentTypeWriter.Write(node, "(");
+                                            int ix = 0;
+                                            foreach (var arg in ((GenericNameSyntax)methodGroup).TypeArgumentList.Arguments)
+                                            {
+                                                if (ix > 0)
+                                                    visitor.CurrentTypeWriter.Write(node, ", ");
+                                                visitor.Visit(arg);
+                                                ix++;
+                                            }
+                                            if (ix > 0)
+                                                visitor.CurrentTypeWriter.Write(node, ", ");
+                                            visitor.CurrentTypeWriter.Write(node, " ...args)");
+                                        }
                                         //A parameter that is a lamda block could have written newLine
                                         visitor.CurrentTypeWriter.TrimEnd();
+                                        //An anonumous function should have its method metadata passed to the delegate it is converted to
+                                        if (node.IsKind(SyntaxKind.SimpleLambdaExpression) ||
+                                            node.IsKind(SyntaxKind.AnonymousMethodExpression) ||
+                                            node.IsKind(SyntaxKind.ParenthesizedLambdaExpression))
+                                        {
+                                            var methodModel = visitor.Global.Reflection.FromMethodSymbolAsJson(methodSymbol, visitor);
+                                            visitor.CurrentTypeWriter.Write(node, ", ");
+                                            visitor.CurrentTypeWriter.Write(node, methodModel);
+                                        }
                                         visitor.CurrentTypeWriter.Write(node, ")");
                                         return true;
                                     }

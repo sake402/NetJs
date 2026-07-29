@@ -1,15 +1,16 @@
-﻿using NetJs.Translator.CSharpToJavascript;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using NetJs.Translator.CSharpToJavascript;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace NetJs.Translator.CSharpToJavascript
 {
@@ -871,7 +872,7 @@ namespace NetJs.Translator.CSharpToJavascript
                             CurrentTypeWriter.WriteLine(node, "{", true);
                             var baseMembers = typeSymbol.BaseType?.GetMembers(".ctor", _global, true);
                             //if there is a base constructor with all parameter having default, prioritize that
-                            var defaulBaseConstructor = (IMethodSymbol?)baseMembers.FirstOrDefault(e => e is IMethodSymbol ms && ms.Parameters.Length > 0 && ms.Parameters.All(e => e.HasExplicitDefaultValue)) ??
+                            var defaulBaseConstructor = (IMethodSymbol?)baseMembers?.FirstOrDefault(e => e is IMethodSymbol ms && ms.Parameters.Length > 0 && ms.Parameters.All(e => e.HasExplicitDefaultValue)) ??
                                 (IMethodSymbol?)typeSymbol.BaseType?.GetMembers(".ctor", _global, true)
                                 .SingleOrDefault(e => e is IMethodSymbol ms && ms.Parameters.Length == 0);
                             if (defaulBaseConstructor != null)
@@ -1002,7 +1003,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     CurrentTypeWriter.WriteLine(node, "//default member initializer", true);
                     CurrentTypeWriter.WriteLine(node, "constructor()", true);
                     CurrentTypeWriter.WriteLine(node, $"{{", true);
-                    var baseIsBootClass = typeSymbol.BaseType != null ? _global.HasAttribute(typeSymbol.BaseType, typeof(BootAttribute).FullName, this, false, out _) : false;
+                    var baseIsBootClass = typeSymbol.BaseType != null ? _global.HasAttribute(typeSymbol.BaseType, typeof(BootAttribute).FullName!, this, false, out _) : false;
                     if ((!isBootClass && typeSymbol.BaseType != null) || baseIsBootClass)
                         CurrentTypeWriter.WriteLine(node, $"super();", true);
                     //if (isInlineArray)
@@ -1134,7 +1135,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     CurrentTypeWriter.WriteLine(node, "{", true);
                     int ix = 0;
                     var properties = typeSymbol.GetMembers().Where(e => e.Kind == SymbolKind.Property && e.DeclaredAccessibility == Accessibility.Public &&
-                        !_global.HasAttribute(e, typeof(CompilerGeneratedAttribute).FullName, this, false, out _) && e.Name != "EqualityContract").Cast<IPropertySymbol>()
+                        !_global.HasAttribute(e, typeof(CompilerGeneratedAttribute).FullName!, this, false, out _) && e.Name != "EqualityContract").Cast<IPropertySymbol>()
                         .Where(e => !e.IsIndexer);
                     foreach (var property in properties)
                     {
@@ -1282,7 +1283,7 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             CloseClosure(node);
 
-            if (export && !nestedClassAsNestedStaticObject)
+            if (export && members != null && !nestedClassAsNestedStaticObject)
             {
                 VisitChildren(members.Where(e =>
                 {
@@ -1303,7 +1304,7 @@ namespace NetJs.Translator.CSharpToJavascript
             if (field.ConstantValue != null)
             {
                 CurrentTypeWriter.Write(node, $" = ", false);
-                CurrentTypeWriter.Write(node, field.ConstantValue.ToString(), false);
+                CurrentTypeWriter.Write(node, field.ConstantValue.ToString() ?? throw new InvalidOperationException(), false);
             }
             else
             {
@@ -1341,7 +1342,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     var field = (IFieldSymbol)_global.GetSymbol(member, this/*, out _, out _*/);
                     if (field.ConstantValue != null)
                     {
-                        CurrentTypeWriter.Write(node, field.ConstantValue.ToString(), false);
+                        CurrentTypeWriter.Write(node, field.ConstantValue.ToString() ?? throw new InvalidOperationException(), false);
                         CurrentTypeWriter.Write(node, "n", false);
                     }
                     else
@@ -1417,10 +1418,12 @@ namespace NetJs.Translator.CSharpToJavascript
                 //CurrentTypeWriter.WriteLine(node, "return this;", true);
                 //CurrentTypeWriter.WriteLine(node, "}", true);
 
-                CurrentTypeWriter.WriteLine(node, $"$ctor(/*object*/ target, fn)", true);
+                CurrentTypeWriter.WriteLine(node, $"$ctor(/*object*/ target, fn, anmodel)", true);
                 CurrentTypeWriter.WriteLine(node, "{", true);
-                CurrentTypeWriter.WriteLine(node, $"this._target = target;", true);
-                CurrentTypeWriter.WriteLine(node, $"this.{Constants.NativeDelagateFunction} = fn;", true);
+                CurrentTypeWriter.WriteLine(node, $"this.{Constants.NativeDelagateFunctionTargetName} = target;", true);
+                CurrentTypeWriter.WriteLine(node, $"this.{Constants.NativeDelagateFunctionName} = fn;", true);
+                CurrentTypeWriter.WriteLine(node, $"if (anmodel) this.{Constants.NativeDelagateAnonymousFunctionModel} = anmodel;", true);
+                CurrentTypeWriter.WriteLine(node, $"if (typeof(target) === 'object') this._target = target;", true);
                 CurrentTypeWriter.WriteLine(node, "return this;", true);
                 CurrentTypeWriter.WriteLine(node, "}", true);
 
@@ -1430,10 +1433,17 @@ namespace NetJs.Translator.CSharpToJavascript
                 CurrentTypeWriter.WriteLine(node, $"/*{node.ReturnType}*/ Invoke({(string.Join(", ", node.ParameterList.Parameters.Select(parameter =>
                 {
                     var t = _global.TryGetSymbol(parameter.Type!, null);
-                    return $"/*{(t != null ? _global.GetMetadata(t)?.InvocationName ?? t?.Name : t?.Name)}*/ ${parameter.Identifier.ValueText}";
+                    return $"/*{(t != null ? _global.GetMetadata(t)?.InvocationName ?? t?.Name : t?.Name)}*/ {parameter.Identifier.ResolveIdentifierName()}";
                 })))})", true);
                 CurrentTypeWriter.WriteLine(node, "{", true);
-                CurrentTypeWriter.WriteLine(node, $"return this.{Constants.NativeDelagateFunction}.apply(this._target, arguments);", true);
+                CurrentTypeWriter.WriteLine(node, $"return this.{Constants.NativeDelagateFunctionName}.call(this.{Constants.NativeDelagateFunctionTargetName}, {string.Join(", ", node.ParameterList.Parameters.Select(parameter =>
+                {
+                    var t = _global.TryGetSymbol(parameter.Type!, null);
+                    if (t?.Kind == SymbolKind.TypeParameter)
+                        return $"{_global.GlobalName}.{Constants.CastName}({parameter.Identifier.ResolveIdentifierName()}, {t.Name})";
+                    return $"{parameter.Identifier.ResolveIdentifierName()}";
+                }))});", true);
+                //CurrentTypeWriter.WriteLine(node, $"return this.{Constants.NativeDelagateFunction}.apply(this._target, arguments);", true);
                 CurrentTypeWriter.WriteLine(node, "}", true);
 
                 //CurrentTypeWriter.WriteLine(node, $"BeginInvoke({(string.Join(", ", node.ParameterList.Parameters.Select(parameter =>

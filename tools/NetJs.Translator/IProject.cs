@@ -16,10 +16,13 @@ namespace NetJs.Translator
         string DirectoryPath { get; }
         string FullPath { get; }
         string SDK { get; }
-        string? Evaluate(string propertyName);
+        string BaseIntermediateOutputPath { get; }
+        string IntermediateOutputPath { get; }
+        IEnumerable<string> Evaluate(string propertyName, bool allItems = false);
         string GetAssemblyName();
         string GetNamespace();
         string GetOutputPath();
+        string GetTargetFramework();
         string GetPlatform();
         OutputMode GetOutputMode();
         IList<string> GetSourceFiles();
@@ -27,6 +30,7 @@ namespace NetJs.Translator
         IList<string> GetLinkerFiles();
         IList<string> GetEmbeddedFiles();
         IList<string> GetGlobalUsings();
+        Task<IProject> LoadDependecy(string projectName);
         bool Build();
     }
 

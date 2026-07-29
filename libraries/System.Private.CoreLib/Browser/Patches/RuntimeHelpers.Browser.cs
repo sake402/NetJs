@@ -450,6 +450,8 @@ namespace System.Runtime.CompilerServices
         [NetJs.MemberReplace(nameof(GetRawData))]
         internal static ref byte GetRawDataImpl(this object obj)
         {
+            if (obj == null)
+                return ref Unsafe.NullRef<byte>();
             var type = obj.GetType().As<RuntimeType>();
             if (type._prototype.Flags.TypeHasFlag(TypeFlagsModel.IsEnum) || type._prototype.KnownType.IsNumeric())
             {
@@ -723,7 +725,11 @@ namespace System.Runtime.CompilerServices
                                 var param = paramContainer!.fieldsAsArray[i];
                                 if (param.Is(typeof(ByReference)))
                                 {
-                                    param = param[nameof(ByReference.Value)]![NetJs.Constants.RefValueName];
+                                    ref byte b = ref NetJs.Script.Ref<byte>(param[nameof(ByReference.Value)].As<Ref<byte>>());
+                                    if (Unsafe.IsNullRef(ref b))
+                                        param = null;
+                                    else
+                                        param = param[nameof(ByReference.Value)]![NetJs.Constants.RefValueName];
                                 }
                                 param = NetJs.Script.Unbox(param);
                                 parameters.Push(param);

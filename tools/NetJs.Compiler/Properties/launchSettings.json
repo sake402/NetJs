@@ -1,5 +1,14 @@
 {
   "profiles": {
+    "NetJs.Compiler.CacheClean": {
+      "commandName": "Project",
+      "commandLineArgs": "cache clean"
+    },
+    "NetJs.Compiler.CachePull": {
+      "commandName": "Project",
+      "commandLineArgs": "cache pull",
+      "workingDirectory": "E:\\Apps\\NetJs\\3rdparty\\MudBlazor\\src\\MudBlazor"
+    },
     "NetJs.Compiler.Watch": {
       "commandName": "Project",
       "commandLineArgs": "watch",
@@ -7,27 +16,41 @@
     },
     "NetJs.Compiler.Doctor": {
       "commandName": "Project",
-      "commandLineArgs": "--doctor E:\\Apps\\NetJs\\doctor.libraries.xml",
-      "workingDirectory": "E:\\Apps\\NetJs"
+      "commandLineArgs": "doctor \"E:\\Apps\\NetJs\\doctor.libraries.xml\""
     },
     "NetJs.Compiler.SPC": {
       "commandName": "Project",
-      "commandLineArgs": "build -p \"E:\\Apps\\NetJs\\libraries\\System.Private.CoreLib\\NetJs.System.Private.CoreLib.csproj\" -c \"Debug\" -s -f",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Private.CoreLib\\NetJs.System.Private.CoreLib.csproj\" -c \"Debug\" -s -f",
       "workingDirectory": "E:\\Apps\\NetJs"
     },
     "NetJs.Compiler.TestApp": {
       "commandName": "Project",
-      "commandLineArgs": "build -p \"E:\\Apps\\NetJs\\tests\\NetJs.Tests.App\\NetJs.Tests.App.csproj\" -c \"Debug\" -s -f",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\tests\\NetJs.Tests.App\\NetJs.Tests.App.csproj\" -c \"Debug\" -s -f",
       "workingDirectory": "E:\\Apps\\NetJs"
     },
     "NetJs.Compiler.BareMetal": {
       "commandName": "Project",
-      "commandLineArgs": "build -p \"E:\\Apps\\NetJs\\tests\\NetJs.Tests.BareMetal\\NetJs.Tests.BareMetal.csproj\" -c \"Debug\" -s -f",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\tests\\NetJs.Tests.BareMetal\\NetJs.Tests.BareMetal.csproj\" -c \"Debug\" -s -f",
       "workingDirectory": "E:\\Apps\\NetJs"
     },
-    "NetJs.Ext": {
+    "MudBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "build -p \"C:\\Users\\User\\Desktop\\miniapp\\miniapp.csproj\" -c \"Debug\" -s -f",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\3rdparty\\MudBlazor\\src\\MudBlazor\\MudBlazor.csproj\" -s -f -p TargetFramework=net10.0",
+      "workingDirectory": "E:\\Apps\\NetJs"
+    },
+    "NetEscapades.EnumGenerators.Attributes": {
+      "commandName": "Project",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\3rdparty\\NetEscapades.EnumGenerators\\src\\NetEscapades.EnumGenerators.Attributes\\NetEscapades.EnumGenerators.Attributes.csproj\" -s -f -p TargetFramework=net10.0",
+      "workingDirectory": "E:\\Apps\\NetJs"
+    },
+    "miniapp": {
+      "commandName": "Project",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\Microsoft.AspNetCore.Components.Authorization\\NetJs.Microsoft.AspNetCore.Components.Authorization.csproj\" -s -f",
+      "workingDirectory": "E:\\Apps\\NetJs"
+    },
+    "LivingThing.Core.Frameworks.Common": {
+      "commandName": "Project",
+      "commandLineArgs": "build --project \"E:\\Apps\\LivingThing\\Libraries\\LivingThing.Frameworks\\LivingThing.Core.Frameworks.Common\\LivingThing.Core.Frameworks.Common.csproj\" -s -f -p TargetFramework=net10.0",
       "workingDirectory": "E:\\Apps\\NetJs"
     }
   }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NetJs.Translator;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -14,7 +15,8 @@ namespace NetJs.Compiler
         {
             var directoryBuildProps = Path.Combine(dotnetJsSolutionPath, "libraries", "Directory.Build.props");
             var fileContent = File.ReadAllText(directoryBuildProps);
-            var DotnetGitRoot = Regex.Match(fileContent, ".?<DotnetGitRoot>(.+)</DotnetGitRoot>.?").Groups[1].Value;
+            var netJsFolder = Regex.Match(fileContent, ".?<NetJsFolder>(.+)</NetJsFolder>.?").Groups[1].Value;
+            var DotnetGitRoot = Regex.Match(fileContent, ".?<DotnetGitRoot>(.+)</DotnetGitRoot>.?").Groups[1].Value.Replace("$(NetJsFolder)", netJsFolder);
             var DotnetRuntimeRoot = Regex.Match(fileContent, ".?<DotnetRuntimeRoot>(.+)</DotnetRuntimeRoot>.?").Groups[1].Value.Replace("$(DotnetGitRoot)", DotnetGitRoot);
             var CoreLibRoot = Regex.Match(fileContent, ".?<CoreLibRoot>(.+)</CoreLibRoot>.?").Groups[1].Value.Replace("$(DotnetRuntimeRoot)", DotnetRuntimeRoot);
             var CoreLibSharedDir = Regex.Match(fileContent, ".?<CoreLibSharedDir>(.+)</CoreLibSharedDir>.?").Groups[1].Value.Replace("$(DotnetRuntimeRoot)", DotnetRuntimeRoot);
@@ -68,7 +70,7 @@ namespace NetJs.Compiler
             var csProjPath = $"{dotnetJsSolutionPath}/libraries/System.Private.CoreLib/NetJs.System.Private.CoreLib.csproj";
             File.WriteAllText(csProjPath, monoCsProject);
 
-            LibraryDoctor.GenerateStaticResourceInlined(null, "System.Private.CoreLib", PrivateCoreLibSharedProjectDirectory.Replace("$(DotnetRuntimeRoot)", DotnetRuntimeRoot), Path.GetDirectoryName(csProjPath)!, "SR1");
+            ResXGenerator.GenerateStaticResourceInlined(null, "System.Private.CoreLib", PrivateCoreLibSharedProjectDirectory.Replace("$(DotnetRuntimeRoot)", DotnetRuntimeRoot), Path.GetDirectoryName(csProjPath)!, "SR1");
         }
     }
 }

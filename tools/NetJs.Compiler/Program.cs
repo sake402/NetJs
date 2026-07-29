@@ -1,4 +1,5 @@
-﻿using Microsoft.Build.Locator;
+﻿using Microsoft.Build.Evaluation;
+using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
 using NetJs.Compiler;
@@ -15,7 +16,9 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using System.Xml.Linq;
+using YamlDotNet.Core.Tokens;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using CodeAnalysisProject = Microsoft.CodeAnalysis.Project;
@@ -29,6 +32,7 @@ var consoleWriter = new DuplicityWriter(originalConsole, defaultLogWriter);
 using var duplicityWriter = TextWriter.Synchronized(consoleWriter);
 Console.SetOut(duplicityWriter);
 
+
 string dotnetPath = (await "where dotnet".CLI()).StdOut.Trim();
 string dotnetVersion = (await "dotnet --version".CLI()).StdOut.Trim();
 var dotnetSDKs = (await "dotnet --list-sdks".CLI()).StdOut.Trim();
@@ -36,20 +40,42 @@ var sdks = dotnetSDKs.Split('\r').Select(e => e.Trim());
 var sdk = sdks.Last();
 var match = Regex.Match(sdk, @"^([^\s]+)\s+\[([^\]]+)\]");
 if (!match.Success)
-    throw new InvalidOperationException("Expected forat of dotnet --list-sdks is \"{version} [{path}]\"");
+    throw new InvalidOperationException("Expected format of dotnet --list-sdks is \"{version} [{path}]\"");
 var sdkVersion = match.Groups[1].Value;
 var sdkPath = match.Groups[2].Value; ;
 var dotnetFolder = Path.GetDirectoryName(dotnetPath) + "\\";
 var directory = Directory.GetCurrentDirectory();
-var tempFolder = Path.GetTempPath() + "NetJs";
+
+string dataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NetJs");
+if (!Directory.Exists(dataFolder))
+    Directory.CreateDirectory(dataFolder);
+var tempFolder = Path.Combine(Path.GetTempPath(), "NetJs");
+
+var serializer = new SerializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
+var deSerializer = new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).IgnoreUnmatchedProperties().Build();
+
+var config = new Config();
+var configFile = Path.Combine(dataFolder, "config.yaml");
+if (File.Exists(configFile))
+{
+    var yaml = File.ReadAllText(configFile);
+    config = deSerializer.Deserialize<Config>(yaml);
+}
+
 Console.WriteLine();
 Console.WriteLine($"Using dotnet {dotnetVersion} @ {dotnetPath}. SDK {sdkVersion} @ {sdkPath}");
+Console.WriteLine($"Using Input Package: \"{config.InputPackageSource}\"");
+Console.WriteLine($"Using Output Package: \"{config.OutputPackageSink}\"");
+Console.WriteLine($"Using Temp Folder: \"{tempFolder}\"");
+Console.WriteLine($"Using Data Folder: \"{dataFolder}\"");
+Console.WriteLine();
 
 var rootCommand = new RootCommand("NetJs");
 
 var doctorCommand = new Command("doctor", "Creates csproj files from dotnet runtime and aspnetcore from official dotnet repo");
 doctorCommand.Aliases.Add("--doctor");
 var fileArgument = new Argument<FileInfo>("file") { Description = "Path to the doctor.libraries.xml file" };
+doctorCommand.Add(fileArgument);
 doctorCommand.SetAction(Doctor);
 
 
@@ -61,31 +87,76 @@ watchCommand.SetAction(Watch);
 var buildCommand = new Command("build", "Build a project");
 buildCommand.Aliases.Add("--build");
 var projectOption = new Option<FileInfo>("--project") { Description = "Path to the project to build" };
-projectOption.Aliases.Add("-p");
+//projectOption.Aliases.Add("-p");
 var configOption = new Option<FileInfo>("--configuration") { Description = "Build configuration. Debug/Release" };
 configOption.Aliases.Add("-c");
 var singleBuildOption = new Option<bool>("--single") { Description = "Build only this project" };
 singleBuildOption.Aliases.Add("-s");
 var forceBuildOption = new Option<bool>("--force") { Description = "Build this project even if up to date" };
 forceBuildOption.Aliases.Add("-f");
+var propertiesOption = new Option<Dictionary<string, string>>("--property") { Description = "Build properties", Arity = ArgumentArity.ZeroOrMore };
+propertiesOption.Aliases.Add("-p");
+propertiesOption.CustomParser = (result) =>
+{
+    var dictionary = new Dictionary<string, string>();
+    foreach (var token in result.Tokens)
+    {
+        var parts = token.Value.Split('=', 2);
+        if (parts.Length == 2)
+        {
+            // Overwrites if the same key is passed multiple times
+            dictionary[parts[0]] = parts[1];
+        }
+        else
+        {
+            result.AddError($"Invalid format for property: '{token.Value}'. Use Key=Value.");
+            return null!;
+        }
+    }
+    return dictionary;
+};
 buildCommand.Options.Add(projectOption);
 buildCommand.Options.Add(configOption);
 buildCommand.Options.Add(singleBuildOption);
 buildCommand.Options.Add(forceBuildOption);
+buildCommand.Options.Add(propertiesOption);
 buildCommand.SetAction(Build);
 
-var cleanCommand = new Command("cleanCache", "Clean the package cache folder in temp folder");
+var cacheCommand = new Command("cache", "Manage package cache");
+
+var cleanCommand = new Command("clean", "Clean the package cache folder in temp folder");
 cleanCommand.SetAction(CleanPackageCache);
 
-var pullCacheCommand = new Command("cachePull", "Pull the project package cache from github to this PC");
+var pullCacheCommand = new Command("pull", "Pull the project package cache from github to this PC");
 pullCacheCommand.Options.Add(projectOption);
 pullCacheCommand.SetAction(PullPackageCache);
+
+cacheCommand.Add(cleanCommand);
+cacheCommand.Add(pullCacheCommand);
+
+var configCommand = new Command("config", "Manage NetJs configuration");
+var nameConfigOption = new Option<string>("--name") { Description = "Configuration name", Required = true };
+nameConfigOption.Aliases.Add("-n");
+var valueConfigOption = new Option<string>("--value") { Description = "Configuration value", Required = true };
+valueConfigOption.Aliases.Add("-v");
+
+var getConfigCommand = new Command("get", "Get a configuration");
+configCommand.Add(getConfigCommand);
+getConfigCommand.SetAction(GetConfig);
+
+var setConfigCommand = new Command("set", "Set a configuration");
+setConfigCommand.SetAction(SetConfig);
+configCommand.Add(setConfigCommand);
+
+getConfigCommand.Options.Add(nameConfigOption);
+setConfigCommand.Options.Add(nameConfigOption);
+setConfigCommand.Options.Add(valueConfigOption);
 
 rootCommand.Subcommands.Add(doctorCommand);
 rootCommand.Subcommands.Add(watchCommand);
 rootCommand.Subcommands.Add(buildCommand);
-rootCommand.Subcommands.Add(cleanCommand);
-rootCommand.Subcommands.Add(pullCacheCommand);
+rootCommand.Subcommands.Add(cacheCommand);
+rootCommand.Subcommands.Add(configCommand);
 return await rootCommand.Parse(args).InvokeAsync();
 
 Dictionary<string, string> GetBuildProperties()
@@ -137,6 +208,8 @@ async Task Doctor(ParseResult parseResult)
 async Task Watch(ParseResult parseResult)
 {
     var workspace = MSBuildWorkspace.Create();
+    var buildProperties = GetBuildProperties();
+    var projectCollection = new Microsoft.Build.Evaluation.ProjectCollection();
     await Watch(directory);
 
     async Task Watch(string directory)
@@ -145,7 +218,6 @@ async Task Watch(ParseResult parseResult)
 
         async Task<IEnumerable<(CodeAnalysisProject CodeAnalysis, MsBuildProject MsBuild)>> DiscoverProjects()
         {
-            var projectCollection = new Microsoft.Build.Evaluation.ProjectCollection();
             Console.WriteLine($"Scanning for projects in \"{directory}\"...");
             var projects = Directory.EnumerateFiles(directory, "*.csproj", SearchOption.AllDirectories);
             List<(CodeAnalysisProject, MsBuildProject)> list = new();
@@ -160,7 +232,7 @@ async Task Watch(ParseResult parseResult)
                 try
                 {
                     var codeAnalysisProject = workspace.CurrentSolution.Projects.FirstOrDefault(f => f.FilePath == path) ?? await workspace.OpenProjectAsync(path);
-                    var msProject = new MsBuildProject(path, GetBuildProperties(), null, projectCollection);
+                    var msProject = new MsBuildProject(path, buildProperties, null, projectCollection);
                     list.Add((codeAnalysisProject, msProject));
                 }
                 catch (Exception e) { Console.WriteLine(e.Message); }
@@ -285,8 +357,8 @@ async Task Watch(ParseResult parseResult)
                         {
                             try
                             {
-                                var wProject = new ProjectWrapper(caProject, msProject);
-                                var translator = new Translator(dotnetPath, dotnetVersion, sdkPath, sdkVersion, wProject, new ProjectBinOutputProvider(wProject));
+                                var wProject = new ProjectWrapper(workspace, projectCollection, caProject, msProject, buildProperties);
+                                var translator = new Translator(config, dotnetPath, dotnetVersion, sdkPath, sdkVersion, dataFolder, tempFolder, wProject, new ProjectBinOutputProvider(wProject));
                                 await translator.Build();
                             }
                             catch (Exception e)
@@ -319,7 +391,7 @@ async Task Build(ParseResult parseResult, CancellationToken cancellationToken)
     var projectFileInfo = parseResult.GetValue(projectOption);
     var singleBuild = parseResult.GetValue(singleBuildOption);
     var forceBuild = parseResult.GetValue(forceBuildOption);
-
+    var buildProperties = parseResult.GetValue(propertiesOption);
     if (projectFileInfo != null)
     {
         csProjectFile = projectFileInfo.FullName;
@@ -334,6 +406,7 @@ async Task Build(ParseResult parseResult, CancellationToken cancellationToken)
     }
     //var csProjectFile = projectFile;
     var workspace = MSBuildWorkspace.Create();
+    var projectCollection = new Microsoft.Build.Evaluation.ProjectCollection();
     Dictionary<string, TaskCompletionSource<Exception?>> building = new();
     SemaphoreSlim slock = new(1);
     SemaphoreSlim maxParallelBuild = new(4);
@@ -345,10 +418,6 @@ async Task Build(ParseResult parseResult, CancellationToken cancellationToken)
     });
     async Task<Exception?> BuildWithDependencies(string csProjectFile, bool singleBuild, bool forceBuild)
     {
-        if (csProjectFile.Contains("WebAssembly"))
-        {
-
-        }
         var projectFolder = Path.GetDirectoryName(csProjectFile)!;
         await slock.WaitAsync();
         if (building.TryGetValue(csProjectFile, out var tcs))
@@ -369,8 +438,7 @@ async Task Build(ParseResult parseResult, CancellationToken cancellationToken)
                 logDestination = new StringWriter();
                 consoleWriter.AsyncLocalWriter.Value = logDestination;
             }
-            var projectCollection = new Microsoft.Build.Evaluation.ProjectCollection();
-            var msBuildProject = new MsBuildProject(csProjectFile, GetBuildProperties(), null, projectCollection);
+            var msBuildProject = new MsBuildProject(csProjectFile, buildProperties, null, projectCollection);
             bool dependencyBuilt = false;
             if (!singleBuild)
             {
@@ -419,10 +487,12 @@ async Task Build(ParseResult parseResult, CancellationToken cancellationToken)
             //        return include;
             //    return Path.Join(projectFolder, include);
             //});
-            var wProject = new ProjectWrapper(codeAnalysisProject, msBuildProject);
+            var wProject = new ProjectWrapper(workspace, projectCollection, codeAnalysisProject, msBuildProject, buildProperties);
             var sources = wProject.GetSourceFiles();
             var objFolder = msBuildProject.Evaluate("IntermediateOutputPath");
-            var timeStampFile = $"{projectFolder}{Path.DirectorySeparatorChar}{objFolder}{Path.DirectorySeparatorChar}NetJsBuild.timestamp";
+            var timeStampFile = $"{objFolder}{Path.DirectorySeparatorChar}NetJsBuild.timestamp";
+            if (!Path.IsPathRooted(timeStampFile))
+                timeStampFile = Path.Combine(projectFolder, timeStampFile);
             DateTime? lastBuildTime = null;
             if (File.Exists(timeStampFile))
             {
@@ -435,7 +505,7 @@ async Task Build(ParseResult parseResult, CancellationToken cancellationToken)
                 {
                     await maxParallelBuild.WaitAsync();
                     Console.WriteLine($"Building \"{csProjectFile}\"");
-                    translator = new Translator(dotnetPath, dotnetVersion, sdkPath, sdkVersion, wProject, new ProjectBinOutputProvider(wProject));
+                    translator = new Translator(config, dotnetPath, dotnetVersion, sdkPath, sdkVersion, dataFolder, tempFolder, wProject, new ProjectBinOutputProvider(wProject));
                     //translator.LogTo = logWriter;
                     if (!await translator.Build())
                     {
@@ -447,6 +517,9 @@ async Task Build(ParseResult parseResult, CancellationToken cancellationToken)
                     Console.WriteLine($"BUILD \"{csProjectFile}\" SUCCESS!");
                     if (!File.Exists(timeStampFile))
                     {
+                        var dir = Path.GetDirectoryName(timeStampFile);
+                        if (!Directory.Exists(dir))
+                            Directory.CreateDirectory(dir);
                         var fs = File.Create(timeStampFile);
                         fs.Flush();
                         fs.Close();
@@ -472,7 +545,7 @@ async Task Build(ParseResult parseResult, CancellationToken cancellationToken)
                 finally
                 {
                     maxParallelBuild.Release();
-                    var logFile = Path.Combine(translator.TempFolder, Path.GetFileNameWithoutExtension(csProjectFile)!, $"__build.log.txt");
+                    var logFile = Path.Combine(tempFolder, Path.GetFileNameWithoutExtension(csProjectFile)!, $"__build.log.txt");
                     var directory = Path.GetDirectoryName(logFile);
                     if (!Directory.Exists(directory))
                         Directory.CreateDirectory(directory!);
@@ -493,7 +566,7 @@ async Task Build(ParseResult parseResult, CancellationToken cancellationToken)
 void CleanPackageCache(ParseResult parseResult)
 {
     var deSerializer = new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
-    var metadataProvider = new MetadataProvider(dotnetPath, dotnetVersion, sdkPath, sdkVersion, tempFolder, deSerializer);
+    var metadataProvider = new MetadataProvider(config, dotnetPath, dotnetVersion, sdkPath, sdkVersion, dataFolder, tempFolder, deSerializer);
     metadataProvider.CleanPackageCache();
 }
 
@@ -520,9 +593,37 @@ async Task PullPackageCache(ParseResult parseResult)
     var projectCollection = new Microsoft.Build.Evaluation.ProjectCollection();
     var codeAnalysisProject = await workspace.OpenProjectAsync(csProjectFile!);
     var msBuildProject = new MsBuildProject(csProjectFile, GetBuildProperties(), null, projectCollection);
-    var wProject = new ProjectWrapper(codeAnalysisProject, msBuildProject);
+    var wProject = new ProjectWrapper(workspace, projectCollection, codeAnalysisProject, msBuildProject, null);
 
-    var deSerializer = new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
-    var metadataProvider = new MetadataProvider(dotnetPath, dotnetVersion, sdkPath, sdkVersion, tempFolder, deSerializer);
+    var metadataProvider = new MetadataProvider(config, dotnetPath, dotnetVersion, sdkPath, sdkVersion, dataFolder, tempFolder, deSerializer);
     await metadataProvider.PullPackageCache(wProject);
+}
+
+void SetConfig(ParseResult parseResult)
+{
+    var name = parseResult.GetValue(nameConfigOption) ?? "";
+    var value = parseResult.GetValue(valueConfigOption) ?? "";
+    if (name.Equals(nameof(config.InputPackageSource), StringComparison.InvariantCultureIgnoreCase))
+    {
+        if (value == "@remote")
+            value = "https://raw.githubusercontent.com/sake402/NetJs/master/zpackages";
+        config.InputPackageSource = value;
+    }
+    else if (name.Equals(nameof(config.OutputPackageSink), StringComparison.InvariantCultureIgnoreCase))
+    {
+        config.OutputPackageSink = value;
+    }
+    var yaml = serializer.Serialize(config);
+    File.WriteAllText(configFile, yaml);
+    Console.WriteLine("Done!");
+}
+
+void GetConfig(ParseResult parseResult)
+{
+    var name = parseResult.GetValue(nameConfigOption) ?? "";
+    if (name.Equals(nameof(config.InputPackageSource), StringComparison.InvariantCultureIgnoreCase))
+        Console.WriteLine(config.InputPackageSource);
+    else if (name.Equals(nameof(config.OutputPackageSink), StringComparison.InvariantCultureIgnoreCase))
+        Console.WriteLine(config.OutputPackageSink);
+    Console.WriteLine("Done!");
 }

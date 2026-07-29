@@ -478,7 +478,8 @@ namespace NetJs.Translator.CSharpToJavascript
                     }
                     else
                     {
-                        var addMethod = instanceType.GetMembers("Add").Single(e => e is IMethodSymbol ms && ms.Parameters.Count() == 1 + imp.ArgumentList.Arguments.Count);
+                        var addMethod = instanceType.GetMembers("set_Item").Single(e => e is IMethodSymbol ms && ms.Parameters.Count() == 1 + imp.ArgumentList.Arguments.Count) ??
+                            instanceType.GetMembers("Add").Single(e => e is IMethodSymbol ms && ms.Parameters.Count() == 1 + imp.ArgumentList.Arguments.Count);
                         var metadata = _global.GetRequiredMetadata(addMethod);
                         CurrentTypeWriter.Write(node, $"{instanceName}.{metadata.OverloadName}(", true);
                         int ix = 0;
@@ -641,7 +642,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     genericArgs = gn.TypeArgumentList;
                 }
                 boundConstructor ??= GetExpressionBoundTarget(node).TypeSyntaxOrSymbol as IMethodSymbol;
-                var targetConstructor = boundConstructor ?? GetBestOverloadMethod(typeSymbol, ".ctor", null, arguments.Select(a => a.AsT0), null, out overloadResult) ?? throw new InvalidOperationException("Cannot find the constructor");
+                var targetConstructor = boundConstructor ?? GetBestOverloadMethod(typeSymbol, ".ctor", null, arguments?.Select(a => a.AsT0), null, out overloadResult) ?? throw new InvalidOperationException("Cannot find the constructor");
                 bool isCompilerGeneratedConstructor = targetConstructor.Parameters.Count() == 0 && targetConstructor.IsImplicitlyDeclared;
                 if (_global.HasAttribute(targetConstructor, typeof(TemplateAttribute).FullName!, this, false, out _))
                 {
@@ -655,14 +656,14 @@ namespace NetJs.Translator.CSharpToJavascript
                     }
                     else
                     {
-                        var meta = _global.GetRequiredMetadata(typeSymbol);
+                        var meta = _global.GetMetadata(typeSymbol);
                         var constructorMeta = _global.GetRequiredMetadata(targetConstructor);
                         WrapInExpression((classTargetName, instanceName) =>
                         {
-                            CurrentTypeWriter.WriteLine(node, $"//new {meta.InvocationName ?? typeSymbol.Name}()", true);
+                            CurrentTypeWriter.WriteLine(node, $"//new {meta?.InvocationName ?? typeSymbol.Name}()", true);
                             CurrentTypeWriter.Write(node, $"const {classTargetName} = ", true);
-                            CurrentTypeWriter.Write(node, meta.InvocationName ?? typeSymbol.Name);
-                            if (meta.InvocationName == null && genericArgs != null)
+                            CurrentTypeWriter.Write(node, meta?.InvocationName ?? typeSymbol.Name);
+                            if (meta?.InvocationName == null && genericArgs != null)
                             {
                                 CurrentTypeWriter.Write(node, "(");
                                 int ix = 0;

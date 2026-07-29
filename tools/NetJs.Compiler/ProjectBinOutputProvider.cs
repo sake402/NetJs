@@ -45,7 +45,7 @@ namespace NetJs.Compiler
                         f.EndsWith(".js.xml")) //clean only the ones we created, to avoid deleting files created by other tools (e.g. .NET build)
                     {
                         if (debugLog)
-                        Console.WriteLine($"Clean \"{f}\"");
+                            Console.WriteLine($"Clean \"{f}\"");
                         File.Delete(f);
                     }
                 }
@@ -79,6 +79,8 @@ namespace NetJs.Compiler
                 cleaned = true;
             }
             var outputFile = Path.Combine(OutputPath, /*Constants.OutputFolderName,*/ destinationRelativePath);
+            if (content.IsT0 && content.AsT0 == outputFile)
+                return;
             FileInfo? existingInfo = null;
             DateTime? sourceCreateTime = null;
             if (content.IsT0 && File.Exists(outputFile))

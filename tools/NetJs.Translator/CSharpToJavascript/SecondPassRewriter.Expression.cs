@@ -178,6 +178,15 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             return node switch
             {
+                ParenthesizedExpressionSyntax parenthesized =>
+                    ConvertNodeToFactory(parenthesized.Expression, parameterVariables),
+
+                CastExpressionSyntax cast =>
+                   CreateFactoryCall("Convert",
+                       SyntaxFactory.Argument(ConvertNodeToFactory(cast.Expression, parameterVariables)),
+                       SyntaxFactory.Argument(SyntaxFactory.TypeOfExpression(cast.Type))
+                   ),
+
                 IdentifierNameSyntax identifier =>
                     ResolveParameterIdentifier(identifier, parameterVariables),
 
@@ -187,6 +196,9 @@ namespace NetJs.Translator.CSharpToJavascript
                         SyntaxFactory.Argument(CreateStringLiteral(memberAccess.Name.Identifier.ValueText))
                     ),
 
+                PredefinedTypeSyntax predefinedType =>
+                    SyntaxFactory.TypeOfExpression(predefinedType),
+
                 LiteralExpressionSyntax literal =>
                     CreateFactoryCall("Constant", SyntaxFactory.Argument(literal)),
 
@@ -195,6 +207,29 @@ namespace NetJs.Translator.CSharpToJavascript
                         SyntaxFactory.Argument(ConvertNodeToFactory(binary.Left, parameterVariables)),
                         SyntaxFactory.Argument(ConvertNodeToFactory(binary.Right, parameterVariables))
                     ),
+
+                PrefixUnaryExpressionSyntax unary when unary.IsKind(SyntaxKind.LogicalNotExpression) =>
+                    CreateFactoryCall("Not",
+                        SyntaxFactory.Argument(ConvertNodeToFactory(unary.Operand, parameterVariables))
+                    ),
+
+                InvocationExpressionSyntax invocation =>
+                   CreateFactoryCall("Call",
+                       SyntaxFactory.Argument(ConvertNodeToFactory(
+                           ((MemberAccessExpressionSyntax)invocation.Expression).Expression, parameterVariables)),
+                       SyntaxFactory.Argument(CreateStringLiteral(
+                           ((MemberAccessExpressionSyntax)invocation.Expression).Name.Identifier.ValueText)),
+                       SyntaxFactory.Argument(SyntaxFactory.ParseExpression("Type.EmptyTypes")),
+                       SyntaxFactory.Argument(SyntaxFactory.ArrayCreationExpression(
+                            (ArrayTypeSyntax)SyntaxFactory.ParseTypeName("System.Linq.Expressions.Expression[]"),
+                            SyntaxFactory.InitializerExpression(
+                                SyntaxKind.ArrayInitializerExpression,
+                                SyntaxFactory.SeparatedList(
+                                    invocation.ArgumentList.Arguments.Select(arg => ConvertNodeToFactory(arg.Expression, parameterVariables))
+                                )
+                            )
+                        ))
+                   ),
 
                 _ => throw new NotSupportedException($"The syntax layout '{node.Kind()}' is not supported yet.")
             };

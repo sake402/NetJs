@@ -27,6 +27,8 @@
         public const bool ComplexSwitchUseIfElse = true;
         [InlineConst]
         public const bool MinifyNamespace = false;
+        [InlineConst]
+        public const bool RewriteConditionalAccessExpressions = true;
         //[InlineConst]
         //public const bool GotoLabelsUseIfCondition = false;
         [InlineConst]
@@ -192,7 +194,11 @@
         [InlineConst]
         public const string Destructure = "$destructure";
         [InlineConst]
-        public const string NativeDelagateFunction = "$nativeFunction";
+        public const string NativeDelagateFunctionName = "$nativeFunction";
+        [InlineConst]
+        public const string NativeDelagateFunctionTargetName = "$target";
+        [InlineConst]
+        public const string NativeDelagateAnonymousFunctionModel = "$nfmodel";
         [InlineConst]
         public const string FileScopedTypeNameMangling = "$file";
         [InlineConst]

@@ -7,8 +7,29 @@ namespace NetJs.Tests.Baremetal
 {
     public static class Program
     {
+        public static string A(this string a)
+        {
+            return a;
+        }
+        public static string B(this string b)
+        {
+            return b;
+        }
+        public static string C(this string b)
+        {
+            return b;
+        }
+        public static string D(this string b)
+        {
+            return b;
+        }
+        public static string E(this string b)
+        {
+            return b;
+        }
         public static async Task Main()
         {
+            var len = "".A()?.B()?.C().Trim().D()?.E().Length.ToString().A()?.B()?.C()?.D()?.E();
             //var builder = WebAssemblyHostBuilder.CreateDefault(args);
             //builder.RootComponents.Add<App>("#app");
             //builder.RootComponents.Add<HeadOutlet>("head::after");

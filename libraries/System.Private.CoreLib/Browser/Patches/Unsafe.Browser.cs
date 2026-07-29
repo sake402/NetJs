@@ -35,7 +35,7 @@ namespace System.Runtime.CompilerServices
                     where T : allows ref struct
         {
             var nullReff = _nullRef;
-            var isNullRef = NetJs.Script.Write<bool>("value == nullReff");
+            var isNullRef = NetJs.Script.Write<bool>("value === nullReff");
             if (isNullRef)
                 return null;
             NetJs.Script.Write("return value");
@@ -104,6 +104,10 @@ namespace System.Runtime.CompilerServices
             where TFrom : allows ref struct
             where TTo : allows ref struct
         {
+            if (Unsafe.IsNullRef(ref source))
+            {
+                NetJs.Script.Write("return source");
+            }
             if (!NetJs.Script.IsDiscardRef(ref source)) //a discard ref shoulf not be wrapped, returns discard
             {
                 RefOrPointer<object> mreff = EnsureIsRefOrPointer(ref source);// NetJs.Script.Write<RefOrPointer<object>>("source");

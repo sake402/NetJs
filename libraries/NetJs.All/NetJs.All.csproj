@@ -103,6 +103,10 @@
     <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.FileProviders.Abstractions\NetJs.Microsoft.Extensions.FileProviders.Abstractions.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.FileProviders.Physical\NetJs.Microsoft.Extensions.FileProviders.Physical.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.FileSystemGlobbing\NetJs.Microsoft.Extensions.FileSystemGlobbing.csproj" />
+    <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.Localization.Abstractions\NetJs.Microsoft.Extensions.Localization.Abstractions.csproj" />
+    <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.Localization\NetJs.Microsoft.Extensions.Localization.csproj" />
+    <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.AspNetCore.Metadata\NetJs.Microsoft.AspNetCore.Metadata.csproj" />
+    <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.AspNetCore.Authorization\NetJs.Microsoft.AspNetCore.Authorization.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.Validation\NetJs.Microsoft.Extensions.Validation.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.JSInterop\NetJs.Microsoft.JSInterop.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.AspNetCore.Components\NetJs.Microsoft.AspNetCore.Components.csproj" />
@@ -111,5 +115,6 @@
     <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.AspNetCore.Components.QuickGrid\NetJs.Microsoft.AspNetCore.Components.QuickGrid.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.JSInterop.WebAssembly\NetJs.Microsoft.JSInterop.WebAssembly.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.AspNetCore.Components.WebAssembly\NetJs.Microsoft.AspNetCore.Components.WebAssembly.csproj" />
+    <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.AspNetCore.Components.Authorization\NetJs.Microsoft.AspNetCore.Components.Authorization.csproj" />
   </ItemGroup>
 </Project>

@@ -580,6 +580,7 @@ namespace System
 
         internal MemberInfo? GetMemberInternal(uint memberHandle)
         {
+            EnsureSelfInitialized();
             return (MemberInfo?)_constructors.ArrayFirstOrDefault(c => c._model.Handle.As<uint>().GetMemberHandle() == memberHandle.GetMemberHandle()) ??
                (MemberInfo?)_fields.ArrayFirstOrDefault(c => c._model.Handle.As<uint>().GetMemberHandle() == memberHandle.GetMemberHandle()) ??
                (MemberInfo?)_properties.ArrayFirstOrDefault(c => c._model.Handle.As<uint>().GetMemberHandle() == memberHandle.GetMemberHandle()) ??

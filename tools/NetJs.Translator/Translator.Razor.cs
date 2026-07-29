@@ -19,12 +19,12 @@ namespace NetJs.Translator
             if (razorFiles.Any())
             {
                 var rcsFiles = sourceFiles.Where(f => f.EndsWith(".cs") /*&& !f.Contains(GeneratedFolderName)*/).ToList();
-                CSharpCompilation? compilation = project.Compilation;
+                CSharpCompilation? compilation = _project.Compilation;
                 if (compilation == null)
                 {
                     await $"Precompiling {rcsFiles.Count} files for razor generator...".ProfileAsync(async () =>
                     {
-                        compilation = await metadataProvider.CreateCompilation(project, rcsFiles.ToArray(), null, globalUsings, null, null);
+                        compilation = await metadataProvider.CreateCompilation(_project, rcsFiles.ToArray(), null, globalUsings, null, null);
                     });
                 }
 
@@ -76,7 +76,7 @@ namespace NetJs.Translator
                             //if (ts.ContainingAssembly.Name==projectInfo.AssemblyName)
                             //continue;
                             var componentClassName = ts.Name;
-                            var context = new ComponentCodeGenerationContext(outStartupCodes, project)
+                            var context = new ComponentCodeGenerationContext(outStartupCodes, _project)
                             {
                                 //GlobalUsing = imports,
                                 //RazorFile = razorFile,
@@ -116,25 +116,25 @@ namespace NetJs.Translator
                     }
 
                     var razorFolder = Path.GetDirectoryName(razorFile)!;
-                    var relativePath = Utility.GetRelativePath(project.DirectoryPath, razorFolder);
+                    var relativePath = Utility.GetRelativePath(_project.DirectoryPath, razorFolder);
                     string? GetRazorImports(string directory)
                     {
                         if (File.Exists(directory + "/_Imports.razor"))
                         {
                             return File.ReadAllText(directory + "/_Imports.razor");
                         }
-                        if (directory == project.DirectoryPath)
+                        if (directory == _project.DirectoryPath)
                             return null;
                         var upperDirectory = Path.GetFullPath(directory + "/..");
                         return GetRazorImports(upperDirectory);
                     }
                     var imports = GetRazorImports(razorFolder);
-                    var context = new ComponentCodeGenerationContext(outStartupCodes, project)
+                    var context = new ComponentCodeGenerationContext(outStartupCodes, _project)
                     {
                         RazorImports = imports,
                         RazorFile = razorFile,
                         CsFile = csFilePath,
-                        Namespace = project.GetNamespace() + (relativePath != "." ? ("." + relativePath.Replace("/", ".").Replace("\\", ".")) : ""),
+                        Namespace = _project.GetNamespace() + (relativePath != "." ? ("." + relativePath.Replace("/", ".").Replace("\\", ".")) : ""),
                         ClassName = componentClassName,
                         RazorSequenceNumber = random.Next(int.MinValue + 200000, int.MaxValue - 200000), //make sure the sequnce number wont overflow when incrmented
                         ComponentClassSymbol = _componentClassSymbol,
@@ -163,9 +163,9 @@ namespace NetJs.Translator
                     if (_componentClassSymbol == null || _componentClassSymbol.Name == "ComponentBase" || !InheritsFromComponentBase(_componentClassSymbol))
                         continue;
                     var csFolder = Path.GetDirectoryName(csComponent.FilePath);
-                    var relativePath = Utility.GetRelativePath(project.DirectoryPath, csComponent.FilePath);
+                    var relativePath = Utility.GetRelativePath(_project.DirectoryPath, csComponent.FilePath);
 
-                    var context = new ComponentCodeGenerationContext(outStartupCodes, project)
+                    var context = new ComponentCodeGenerationContext(outStartupCodes, _project)
                     {
                         CsFile = csComponent.FilePath,
                         Namespace = _namespace!.Name.ToString(),
@@ -190,7 +190,7 @@ namespace NetJs.Translator
                         }
                         var code = component.Value.GenerateCode();
                         var csFileName = (component.Value.RazorFile ?? component.Value.CsFile!.Replace(".cs", ""));
-                        csFileName = Path.Combine(output.OutputPath, Utility.GetRelativePath(project.DirectoryPath, csFileName) + ".g.cs");
+                        csFileName = Path.Combine(_output.OutputPath, Utility.GetRelativePath(_project.DirectoryPath, csFileName) + ".g.cs");
                         var folder = Path.GetDirectoryName(csFileName)!;
                         if (!Directory.Exists(folder))
                             Directory.CreateDirectory(folder);
@@ -199,8 +199,8 @@ namespace NetJs.Translator
 
                     if (outStartupCodes.Any())
                     {
-                        File.WriteAllText(Path.Combine(output.OutputPath, "__Startup.g.cs"), @$"
-namespace {project.GetNamespace()}
+                        File.WriteAllText(Path.Combine(_output.OutputPath, "__Startup.g.cs"), @$"
+namespace {_project.GetNamespace()}
 {{
     public static class GeneratedStartup
     {{

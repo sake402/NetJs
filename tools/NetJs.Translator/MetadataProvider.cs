@@ -16,31 +16,38 @@ namespace NetJs.Translator
 {
     public class MetadataProvider
     {
-        public MetadataProvider(string dotnetPath, string dotnetVersion, string sdkPath, string sdkVersion, string tempFolder, IDeserializer deserializer)
+        public MetadataProvider(Config config, string dotnetPath, string dotnetVersion, string sdkPath, string sdkVersion, string dataFolder, string tempFolder, IDeserializer deserializer)
         {
+            _config = config;
             DotnetPath = dotnetPath;
             DotnetVersion = dotnetVersion;
             SDKPath = sdkPath;
             SDKVersion = sdkVersion;
+            this.dataFolder = dataFolder;
             this.tempFolder = tempFolder;
             this.deserializer = deserializer;
         }
 
+        Config _config;
         string DotnetPath;
         string DotnetVersion;
         string SDKPath;
         string SDKVersion;
+        string dataFolder;
         string tempFolder;
         IDeserializer deserializer;
-        public string LocalPackageCacheFolder => $"{tempFolder}{Path.DirectorySeparatorChar}@Packages";
+        public string LocalPackageCacheFolder => Path.Combine(dataFolder, "Packages");
         public void CleanPackageCache()
         {
-            Directory.Delete(LocalPackageCacheFolder, true);
+            if (Directory.Exists(LocalPackageCacheFolder))
+                Directory.Delete(LocalPackageCacheFolder, true);
         }
 
         LockFile GetLockFile(IProject project, out string content)
         {
-            var projectAsset = Path.GetDirectoryName(project.FullPath) + "/obj/project.assets.json";
+            var projectAsset = Path.Combine(project.BaseIntermediateOutputPath, "project.assets.json");
+            if (!Path.IsPathRooted(projectAsset))
+                projectAsset = Path.Combine(project.DirectoryPath, projectAsset);
             if (!File.Exists(projectAsset))
             {
                 if (!project.Build())
@@ -55,6 +62,10 @@ namespace NetJs.Translator
         HashSet<string> addedReference = new();
         async Task AddReference(IProject project, string refName, List<MetadataReference>? refs = null, List<string>? symbols = null)
         {
+            if (refName.StartsWith("NetJs."))
+            {
+
+            }
             if (refName == "System.Drawing")
                 refName = "System.Drawing.Primitives";
             else if (refName == "System.Net")
@@ -62,7 +73,7 @@ namespace NetJs.Translator
             if (!addedReference.Add(refName))
                 return;
             //Console.WriteLine($"Adding implicit \"{refName}\"...");
-            var targetFramework = project.Evaluate("TargetFramework") ?? "net10.0";
+            var targetFramework = project.GetTargetFramework();
             if (!targetFramework.EndsWith("-browser"))
             {
                 targetFramework += "-browser";
@@ -73,7 +84,7 @@ namespace NetJs.Translator
             var refPackagePackageYaml = $"{refPackageFolder}{Path.DirectorySeparatorChar}package.yaml";
             if (!File.Exists(refPackageDll))
             {
-                var packageFeedUrl = "https://raw.githubusercontent.com/sake402/NetJs/master/zpackages";
+                var packageFeedUrl = _config.InputPackageSource;// "https://raw.githubusercontent.com/sake402/NetJs/master/zpackages";
                 var remoteUrl = $"{packageFeedUrl}/{targetFramework}/NetJs.{refName}.package.zip";
                 Console.WriteLine($"Downloading {remoteUrl}...");
                 try
@@ -124,8 +135,8 @@ namespace NetJs.Translator
                         var dpackage = package;
                         if (dpackage.EndsWith(".js"))
                             dpackage = Path.GetFileNameWithoutExtension(dpackage);
-                        if (dpackage.StartsWith("NetJs."))
-                            dpackage = dpackage.Substring(6);
+                        if (dpackage.StartsWith(Constants.ProjectName + "."))
+                            dpackage = dpackage.Substring((Constants.ProjectName + ".").Length);
                         await AddReference(project, dpackage, refs, symbols);
                     }
                 }
@@ -178,7 +189,32 @@ namespace NetJs.Translator
                     foreach (var lib in target.Libraries)
                     {
                         if (lib.Name != null)
+                        {
                             await AddReference(project, lib.Name, refs, symbols);
+                            if (lib.Dependencies != null)
+                            {
+                                foreach (var ilib in lib.Dependencies)
+                                {
+                                    await AddReference(project, ilib.Id, refs, symbols);
+                                }
+                            }
+                            if (lib.RuntimeAssemblies != null)
+                            {
+                                foreach (var ilib in lib.RuntimeAssemblies)
+                                {
+                                    var name = Path.GetFileNameWithoutExtension(ilib.Path);
+                                    await AddReference(project, name, refs, symbols);
+                                }
+                            }
+                            if (lib.CompileTimeAssemblies != null)
+                            {
+                                foreach (var ilib in lib.CompileTimeAssemblies)
+                                {
+                                    var name = Path.GetFileNameWithoutExtension(ilib.Path);
+                                    await AddReference(project, name, refs, symbols);
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -190,7 +226,7 @@ namespace NetJs.Translator
                     var packBaseFolder = $"{dotnetFolder}{Path.DirectorySeparatorChar}packs{Path.DirectorySeparatorChar}{name}.Ref";
                     if (Directory.Exists(packBaseFolder))
                     {
-                        var targetFramework = project.Evaluate("TargetFramework")!;
+                        var targetFramework = project.GetTargetFramework();
                         string versionPrefix = targetFramework.Replace("net", "");
                         var latestVersionFolder = Directory.GetDirectories(packBaseFolder, $"{versionPrefix}.*")
                             .Select(Path.GetFileName)
@@ -240,6 +276,53 @@ namespace NetJs.Translator
             }
         }
 
+        IList<LockFileTargetLibrary> Sort(IList<LockFileTargetLibrary> libraries)
+        {
+            var libraryMap = libraries.ToDictionary(l => l.Name, l => l, StringComparer.OrdinalIgnoreCase);
+            var sortedLibraries = new List<LockFileTargetLibrary>();
+            var visited = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase); // false = visiting, true = visited
+
+            // 2. Local function for Depth-First Search (DFS) topological sort
+            void Visit(LockFileTargetLibrary library)
+            {
+                if (visited.TryGetValue(library.Name, out bool isFullyVisited))
+                {
+                    if (!isFullyVisited)
+                    {
+                        // Optional: Circular dependency detected (a -> b -> a). 
+                        // We break out to prevent infinite loops.
+                        return;
+                    }
+                    return; // Already processed
+                }
+
+                // Mark as currently visiting
+                visited[library.Name] = false;
+
+                // Process all dependencies first (bottom of the chain)
+                foreach (var dependency in library.Dependencies)
+                {
+                    if (libraryMap.TryGetValue(dependency.Id, out var dependentLibrary))
+                    {
+                        Visit(dependentLibrary);
+                    }
+                }
+
+                // Mark as fully processed
+                visited[library.Name] = true;
+
+                // Add to the final list
+                sortedLibraries.Add(library);
+            }
+
+            // 3. Execute the sort for all libraries in the target
+            foreach (var library in libraries)
+            {
+                Visit(library);
+            }
+            return sortedLibraries;
+        }
+
         HttpClient http = new HttpClient();
         async Task<(MetadataReference[], string[])> GetReferencesForProject(IProject project)
         {
@@ -251,7 +334,7 @@ namespace NetJs.Translator
 
             var lockFile = GetLockFile(project, out var content);
 
-            var disableImplicit = project.Evaluate("DisableImplicitFrameworkReferences");
+            var disableImplicit = project.Evaluate("DisableImplicitFrameworkReferences").LastOrDefault();
             bool enableImplicitImport = string.IsNullOrEmpty(disableImplicit);
             if (disableImplicit?.Equals("true", StringComparison.InvariantCultureIgnoreCase) ?? false)
             {
@@ -261,64 +344,70 @@ namespace NetJs.Translator
             {
                 await PullPackageCache(project, lockFile, refs, symbols);
             }
-            var sortLibraries = lockFile.Libraries.Where(e =>
-            {
-                if (e.Type == "package" && e.HasTools)//TODO: Need better way of doing this. We targets filtering Microsoft.NET.ILLink.Tasks from Microsoft.AspNetCore.Components
-                {
-                    return false;
-                }
-                return true;
-            }).ToArray();
+            var target = lockFile.Targets.Count == 1 ? lockFile.Targets.Single() :
+                (lockFile.Targets.SingleOrDefault(l => l.Name.Contains("-browser")) ??
+                lockFile.Targets.SingleOrDefault(f => f.Name == project.GetTargetFramework()) ??
+                lockFile.Targets.SingleOrDefault(f => f.Name == "netstandard2.0"))!;
+            var sortLibraries = Sort(target.Libraries);
+            //var sortLibraries = lockFile.Libraries.Where(e =>
+            //{
+            //    if (e.Type == "package" && e.HasTools)//TODO: Need better way of doing this. We targets filtering Microsoft.NET.ILLink.Tasks from Microsoft.AspNetCore.Components
+            //    {
+            //        return false;
+            //    }
+            //    return true;
+            //}).ToArray();
 
-            var model = JsonSerializer.Deserialize<ProjectAssetModel>(content);
-            model!.Targets = model.Targets.ToDictionary(e => e.Key, e => e.Value.ToDictionary(ee => ee.Key.Split('/')[0], ee => ee.Value));
-            var dic = model.Targets.Count == 1 ? model.Targets.Values.Single() : model.Targets.Where(e => e.Key.Contains("browser")).Single().Value;
+            //var model = JsonSerializer.Deserialize<ProjectAssetModel>(content);
+            //model!.Targets = model.Targets.ToDictionary(e => e.Key, e => e.Value.ToDictionary(ee => ee.Key.Split('/')[0], ee => ee.Value));
+            //var dic = model.Targets.Count == 1 ? model.Targets.Values.Single() :
+            //    (model.Targets.SingleOrDefault(e => e.Key.Contains("-browser")).Value ?? model.Targets.SingleOrDefault(e => e.Key == project.GetTargetFramework()).Value);
+            //var dic = target.Libraries.Select()
+            //var adjacencyList = sortLibraries.ToDictionary(l => l.Name, _ => new List<string>());
+            //var inDegree = sortLibraries.ToDictionary(l => l.Name, _ => 0);
 
-            var adjacencyList = sortLibraries.ToDictionary(l => l.Name, _ => new List<string>());
-            var inDegree = sortLibraries.ToDictionary(l => l.Name, _ => 0);
+            //foreach (var lib in sortLibraries)
+            //{
+            //    var graph = dic[lib.Name];
+            //    if (graph.Dependencies != null)
+            //    {
+            //        foreach (var dep in graph.Dependencies.Keys)
+            //        {
+            //            // Only map dependencies that exist in our target library list
+            //            if (adjacencyList.ContainsKey(dep))
+            //            {
+            //                adjacencyList[dep].Add(lib.Name); // 'dep' must be loaded before 'lib.Name'
+            //                inDegree[lib.Name]++;
+            //            }
+            //        }
+            //    }
+            //}
 
-            foreach (var lib in sortLibraries)
-            {
-                var graph = dic[lib.Name];
-                if (graph.Dependencies != null)
-                {
-                    foreach (var dep in graph.Dependencies.Keys)
-                    {
-                        // Only map dependencies that exist in our target library list
-                        if (adjacencyList.ContainsKey(dep))
-                        {
-                            adjacencyList[dep].Add(lib.Name); // 'dep' must be loaded before 'lib.Name'
-                            inDegree[lib.Name]++;
-                        }
-                    }
-                }
-            }
+            //var queue = new Queue<string>(inDegree.Where(x => x.Value == 0).Select(x => x.Key));
+            //var sortedNames = new List<string>();
 
-            var queue = new Queue<string>(inDegree.Where(x => x.Value == 0).Select(x => x.Key));
-            var sortedNames = new List<string>();
+            //while (queue.Count > 0)
+            //{
+            //    var current = queue.Dequeue();
+            //    sortedNames.Add(current);
 
-            while (queue.Count > 0)
-            {
-                var current = queue.Dequeue();
-                sortedNames.Add(current);
+            //    foreach (var neighbor in adjacencyList[current])
+            //    {
+            //        inDegree[neighbor]--;
+            //        if (inDegree[neighbor] == 0)
+            //        {
+            //            queue.Enqueue(neighbor);
+            //        }
+            //    }
+            //}
 
-                foreach (var neighbor in adjacencyList[current])
-                {
-                    inDegree[neighbor]--;
-                    if (inDegree[neighbor] == 0)
-                    {
-                        queue.Enqueue(neighbor);
-                    }
-                }
-            }
+            //if (sortedNames.Count != sortLibraries.Length)
+            //{
+            //    throw new InvalidOperationException("Circular dependency detected in assets file!");
+            //}
 
-            if (sortedNames.Count != sortLibraries.Length)
-            {
-                throw new InvalidOperationException("Circular dependency detected in assets file!");
-            }
-
-            var libraryMap = sortLibraries.ToDictionary(l => l.Name);
-            sortLibraries = sortedNames.Select(name => libraryMap[name]).ToArray();
+            //var libraryMap = sortLibraries.ToDictionary(l => l.Name);
+            //sortLibraries = sortedNames.Select(name => libraryMap[name]).ToArray();
 
             ////make sure all dependecies are complete
             //IEnumerable<string> GetDependecies(string libName)
@@ -355,6 +444,7 @@ namespace NetJs.Translator
 
             foreach (var lib in sortLibraries)
             {
+                var llib = lockFile.Libraries.First(e => e.Name == lib.Name);
                 if (lib.Type == "package")
                 {
                     await AddReference(project, lib.Name, refs, symbols);
@@ -370,28 +460,33 @@ namespace NetJs.Translator
                 }
                 else if (lib.Type == "project")
                 {
-                    var libProjectPath = Path.GetFullPath(Path.GetDirectoryName(project.FullPath) + "/" + lib.Path);
-                    var libProjectFolder = Path.GetDirectoryName(libProjectPath);
-                    var libName = Path.GetFileName(lib.Name);
+                    var libName = Path.GetFileName(lib.Name)!;
+                    var depProject = await project.LoadDependecy(libName);
+                    //var libProjectPath = Path.GetFullPath(Path.GetDirectoryName(project.FullPath) + "/" + llib.Path);
+                    //var libProjectPath = Path.GetFullPath(Path.GetDirectoryName(project.FullPath) + "/" + lib.Path);
+                    //var libProjectFolder = Path.GetDirectoryName(libProjectPath);
                     //We may have override assembly name back to default for some libraries, beacuase of vs intelissense
                     if (!libName.StartsWith($"{Constants.ProjectName}."))
                         libName = Constants.ProjectName + "." + libName;
                     //var config="wasm";//project.Evaluate("Configuration");
-                    var platform = project.GetPlatform();
-                    if (platform.Equals("AnyCPU", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        platform = "";
-                    }
-                    else
-                    {
-                        platform = "/" + platform;
-                    }
-                    var binPathJs = libProjectFolder + $"/bin/wasm/{project.Evaluate("Configuration")}/{project.Evaluate("TargetFramework")}/" + libName + ".js.dll";
-                    var binPath = libProjectFolder + $"/bin/wasm/{project.Evaluate("Configuration")}/{project.Evaluate("TargetFramework")}/" + libName + ".dll";
+                    //var platform = project.GetPlatform();
+                    //if (platform.Equals("AnyCPU", StringComparison.InvariantCultureIgnoreCase))
+                    //{
+                    //    platform = "";
+                    //}
+                    //else
+                    //{
+                    //    platform = "/" + platform;
+                    //}
+                    var binPathJs = Path.Combine(depProject.GetOutputPath(), libName + ".js.dll");
+                    var binPath = Path.Combine(depProject.GetOutputPath(), libName + ".dll");
+                    var symbolFile = Path.Combine(depProject.GetOutputPath(), libName + ".Symbols.yaml");
+                    //var binPathJs = libProjectFolder + $"/bin/wasm/{project.Evaluate("Configuration").LastOrDefault()}/{project.Evaluate("TargetFramework").LastOrDefault()}/" + libName + ".js.dll";
+                    //var binPath = libProjectFolder + $"/bin/wasm/{project.Evaluate("Configuration").LastOrDefault()}/{project.Evaluate("TargetFramework").LastOrDefault()}/" + libName + ".dll";
                     if (!File.Exists(binPath) && !File.Exists(binPathJs))
                         throw new InvalidOperationException($"Expected dll file not found at {binPath} or {binPathJs}. Ensure that project has built successfully.");
                     refs.Add(MetadataReference.CreateFromFile(File.Exists(binPathJs) ? binPathJs : binPath));
-                    var symbolFile = libProjectFolder + $"/bin/wasm/{project.Evaluate("Configuration")}/{project.Evaluate("TargetFramework")}/" + libName + ".Symbols.yaml";
+                    //var symbolFile = libProjectFolder + $"/bin/wasm/{project.Evaluate("Configuration").LastOrDefault()}/{project.Evaluate("TargetFramework").LastOrDefault()}/" + libName + ".Symbols.yaml";
                     if (File.Exists(symbolFile))
                     {
                         symbols.Add(symbolFile);
@@ -423,7 +518,7 @@ namespace NetJs.Translator
             }
 
             int index = 0;
-            var constants = project.Evaluate("DefineConstants")?.Split([';'], StringSplitOptions.RemoveEmptyEntries);
+            var constants = project.Evaluate("DefineConstants").LastOrDefault()?.Split([';'], StringSplitOptions.RemoveEmptyEntries);
             foreach (var path in sourceCodePath)
             {
                 //var codeString =/* SourceText.From*/(sourceCode);
@@ -452,10 +547,10 @@ namespace NetJs.Translator
                     optimizationLevel: OptimizationLevel.Debug,
                     assemblyIdentityComparer: DesktopAssemblyIdentityComparer.Default,
                     allowUnsafe: true);
-            var name = project.GetName();
-            if (name != options.ModuleName)
-                options = options.WithModuleName(name);
-            return CSharpCompilation.Create(project.GetName(),
+            //var name = project.GetName();
+            //if (name != options.ModuleName)
+            //    options = options.WithModuleName(name);
+            return CSharpCompilation.Create(project.GetAssemblyName(),
                 syntaxTrees.ToArray(),
                 references: referenceAndSymbols.Value.Item1,
                 options: options);

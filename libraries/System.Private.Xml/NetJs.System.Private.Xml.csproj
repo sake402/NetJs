@@ -66,7 +66,7 @@
     <None Include="$(DotnetRuntimeRoot)src\libraries\System.Private.Xml\src\System\Xml\Core\XmlRawTextWriterGeneratorAsync.ttinclude" />
     <None Include="$(DotnetRuntimeRoot)src\libraries\System.Private.Xml\src\System\Xml\Core\XmlRawTextWriterGenerator.ttinclude" />
     <None Include="$(DotnetRuntimeRoot)src\libraries\System.Private.Xml\src\System\Xml\Core\RawTextWriterEncoded.ttinclude" />
-    <Content Include="System\Xml\Core\XmlEncodedRawTextWriter.tt">
+    <Content Include="$(DotnetRuntimeRoot)src\libraries\System.Private.Xml\src\System\Xml\Core\XmlEncodedRawTextWriter.tt">
       <LastGenOutput>XmlEncodedRawTextWriter.cs</LastGenOutput>
       <Generator>TextTemplatingFileGenerator</Generator>
     </Content>
@@ -75,7 +75,7 @@
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
     </Compile>
-    <Content Include="System\Xml\Core\XmlEncodedRawTextWriterAsync.tt">
+    <Content Include="$(DotnetRuntimeRoot)src\libraries\System.Private.Xml\src\System\Xml\Core\XmlEncodedRawTextWriterAsync.tt">
       <LastGenOutput>XmlEncodedRawTextWriterAsync.cs</LastGenOutput>
       <Generator>TextTemplatingFileGenerator</Generator>
     </Content>
@@ -85,7 +85,7 @@
       <AutoGen>True</AutoGen>
     </Compile>
     <None Include="$(DotnetRuntimeRoot)src\libraries\System.Private.Xml\src\System\Xml\Core\RawTextWriterUtf8.ttinclude" />
-    <Content Include="System\Xml\Core\XmlUtf8RawTextWriter.tt">
+    <Content Include="$(DotnetRuntimeRoot)src\libraries\System.Private.Xml\src\System\Xml\Core\XmlUtf8RawTextWriter.tt">
       <LastGenOutput>XmlUtf8RawTextWriter.cs</LastGenOutput>
       <Generator>TextTemplatingFileGenerator</Generator>
     </Content>
@@ -94,7 +94,7 @@
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
     </Compile>
-    <Content Include="System\Xml\Core\XmlUtf8RawTextWriterAsync.tt">
+    <Content Include="$(DotnetRuntimeRoot)src\libraries\System.Private.Xml\src\System\Xml\Core\XmlUtf8RawTextWriterAsync.tt">
       <LastGenOutput>XmlUtf8RawTextWriterAsync.cs</LastGenOutput>
       <Generator>TextTemplatingFileGenerator</Generator>
     </Content>

@@ -264,8 +264,9 @@ namespace NetJs.Compiler
                 projectName = Constants.ProjectName + "." + projectName;
                 codeAnalysisProject = msWorkspace.CurrentSolution.Projects.First(f => f.Name.Equals(projectName, StringComparison.InvariantCultureIgnoreCase));
             }
-            var msBuildProject = new MsBuildProject(codeAnalysisProject!.FilePath, buildProperties, null, projectCollection);
-            return new ProjectWrapper(msWorkspace, projectCollection, codeAnalysisProject, msBuildProject, buildProperties);
+            var msBuildProject = projectCollection.LoadedProjects.SingleOrDefault(e => e.FullPath == codeAnalysisProject!.FilePath) ??
+                new MsBuildProject(codeAnalysisProject!.FilePath, buildProperties, null, projectCollection);
+            return new ProjectWrapper(msWorkspace, projectCollection, codeAnalysisProject!, msBuildProject, buildProperties);
         }
 
         public bool Build()

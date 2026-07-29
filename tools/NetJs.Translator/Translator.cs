@@ -849,7 +849,7 @@ namespace NetJs.Translator
                             }
 
                             sourceStream.Position = 0;
-                            var zipEntry = zipArchive.CreateEntry(sourceName);
+                            var zipEntry = zipArchive.CreateEntry(sourceName.Replace("\\", "/")); //Without replace, we have issue on MacOs when extracting the archive as path slash \ is interpreted as a valid file char
                             using (var zipEntryStream = zipEntry.Open())
                                 sourceStream.CopyTo(zipEntryStream);
                         }

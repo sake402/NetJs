@@ -33,7 +33,7 @@ using var duplicityWriter = TextWriter.Synchronized(consoleWriter);
 Console.SetOut(duplicityWriter);
 
 
-string dotnetPath = (await "where dotnet".CLI()).StdOut.Trim();
+string dotnetPath = (await $"{(OperatingSystem.IsWindows()? "where" : "which")} dotnet".CLI()).StdOut.Trim();
 string dotnetVersion = (await "dotnet --version".CLI()).StdOut.Trim();
 var dotnetSDKs = (await "dotnet --list-sdks".CLI()).StdOut.Trim();
 var sdks = dotnetSDKs.Split('\r').Select(e => e.Trim());
@@ -71,6 +71,7 @@ Console.WriteLine($"Using Data Folder: \"{dataFolder}\"");
 Console.WriteLine();
 
 var rootCommand = new RootCommand("NetJs");
+
 
 var doctorCommand = new Command("doctor", "Creates csproj files from dotnet runtime and aspnetcore from official dotnet repo");
 doctorCommand.Aliases.Add("--doctor");

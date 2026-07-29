@@ -116,7 +116,7 @@ namespace NetJs.Translator
                     }
 
                     var razorFolder = Path.GetDirectoryName(razorFile)!;
-                    var relativePath = Utility.GetRelativePath(_project.DirectoryPath, razorFolder);
+                    var relativePath = Path.GetRelativePath(_project.DirectoryPath, razorFolder);
                     string? GetRazorImports(string directory)
                     {
                         if (File.Exists(directory + "/_Imports.razor"))
@@ -163,7 +163,7 @@ namespace NetJs.Translator
                     if (_componentClassSymbol == null || _componentClassSymbol.Name == "ComponentBase" || !InheritsFromComponentBase(_componentClassSymbol))
                         continue;
                     var csFolder = Path.GetDirectoryName(csComponent.FilePath);
-                    var relativePath = Utility.GetRelativePath(_project.DirectoryPath, csComponent.FilePath);
+                    var relativePath = Path.GetRelativePath(_project.DirectoryPath, csComponent.FilePath);
 
                     var context = new ComponentCodeGenerationContext(outStartupCodes, _project)
                     {
@@ -190,7 +190,7 @@ namespace NetJs.Translator
                         }
                         var code = component.Value.GenerateCode();
                         var csFileName = (component.Value.RazorFile ?? component.Value.CsFile!.Replace(".cs", ""));
-                        csFileName = Path.Combine(_output.OutputPath, Utility.GetRelativePath(_project.DirectoryPath, csFileName) + ".g.cs");
+                        csFileName = Path.Combine(_output.OutputPath, Path.GetRelativePath(_project.DirectoryPath, csFileName) + ".g.cs");
                         var folder = Path.GetDirectoryName(csFileName)!;
                         if (!Directory.Exists(folder))
                             Directory.CreateDirectory(folder);

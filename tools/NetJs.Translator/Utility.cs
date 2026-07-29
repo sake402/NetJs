@@ -82,10 +82,10 @@ namespace NetJs.Translator
             return name;
         }
 
-        public static string GetRelativePath(this string fromPath, string toPath)
+        public static string _GetRelativePath(this string fromPath, string toPath)
         {
-            if (!fromPath.EndsWith("\\"))
-                fromPath += "\\";
+            if (!fromPath.EndsWith("\\") && !fromPath.EndsWith("/"))
+                fromPath += Path.DirectorySeparatorChar;
             if (string.IsNullOrEmpty(fromPath)) throw new ArgumentNullException("fromPath");
             if (string.IsNullOrEmpty(toPath)) throw new ArgumentNullException("toPath");
 

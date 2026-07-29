@@ -1705,7 +1705,7 @@ namespace NetJs.Translator.CSharpToJavascript
         public string Build(int formatTabs)
         {
             var importsFromSource = _global.OutputMode.HasFlag(OutputMode.Module) ?
-            string.Join("\r\n", imports.Where(e => e.Key.EndsWith(".cs")).Select(i => $"import {{ {string.Join(", ", i.Value)} }} from \"/{_global.Project.GetName()}/{Path.ChangeExtension(Utility.GetRelativePath(_global.Project.GetFolder(), i.Key), "js").Replace("\\", "/")}\"")) : null;
+            string.Join("\r\n", imports.Where(e => e.Key.EndsWith(".cs")).Select(i => $"import {{ {string.Join(", ", i.Value)} }} from \"/{_global.Project.GetName()}/{Path.ChangeExtension(Path.GetRelativePath(_global.Project.GetFolder(), i.Key), "js").Replace("\\", "/")}\"")) : null;
             var importsFromModule = _global.OutputMode.HasFlag(OutputMode.Module) ?
                 string.Join("\r\n", imports.Where(e => e.Key.Contains(".dll")).Select(i => $"import {{ {string.Join(", ", i.Value)} }} from \"/{Path.GetFileNameWithoutExtension(i.Key)}.js\"")) : null;
             return (importsFromSource + "\r\n" + importsFromModule + "\r\n" + string.Join("\r\n\r\n", TypeWriters.Values.Select(w => w.Build(formatTabs)))).Trim();

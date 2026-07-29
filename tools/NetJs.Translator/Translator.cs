@@ -224,7 +224,7 @@ namespace NetJs.Translator
                 var rootNamespace = _project.GetNamespace();
                 var rSources = ResXGenerator.GenerateStaticResourceInlined(null, _project.GetName(useNetJsFormat:false), _project.DirectoryPath, useNamespace: (srFile) =>
                 {
-                    var folder = _project.DirectoryPath.GetRelativePath(Path.GetDirectoryName(srFile)!);
+                    var folder = Path.GetRelativePath(_project.DirectoryPath, Path.GetDirectoryName(srFile)!);
                     var ns = folder.TrimStart('.', '/', '\\').Replace("/", ".").Replace("\\", ".");
                     return rootNamespace + "." + ns;
                 });
@@ -261,7 +261,7 @@ namespace NetJs.Translator
         {
             $"Emit dll".Profile(() =>
             {
-                emitResult = csCompilation.Emit(dllStream, pdbStream, docStream, options: new EmitOptions(debugInformationFormat: DebugInformationFormat.Pdb));
+                emitResult = csCompilation.Emit(dllStream, pdbStream, docStream, options: new EmitOptions(debugInformationFormat: DebugInformationFormat.PortablePdb));
             });
 
             if (!emitResult.Success)
@@ -376,7 +376,7 @@ namespace NetJs.Translator
                         return 0;
                     }))
                     {
-                        var relativePath = Utility.GetRelativePath(refFolder, file);
+                        var relativePath = Path.GetRelativePath(refFolder, file);
                         pendingTask.Add(_output.Output(global, relativePath, file));
                         if (Path.GetExtension(file).ToLower() == ".js" && !sortedOutputtedJsFiles.Contains(relativePath))
                             sortedOutputtedJsFiles.Add(relativePath);
@@ -389,7 +389,7 @@ namespace NetJs.Translator
         {
             foreach (var file in wwwrootFiles)
             {
-                var relativePath = Utility.GetRelativePath(_project.GetFolder(), file);
+                var relativePath = Path.GetRelativePath(_project.GetFolder(), file);
                 var outputPath = !relativePath.StartsWith(Constants.OutputFolderName + Path.DirectorySeparatorChar) ? Constants.OutputFolderName + Path.DirectorySeparatorChar + relativePath : relativePath;
                 if (outputPath == $"wwwroot{Path.DirectorySeparatorChar}blazor.netjs.js")
                 {
@@ -406,7 +406,7 @@ namespace NetJs.Translator
             var scopedCssBundles = contentFiles.Where(e => !e.StartsWith(wwwrootFolder) && e.EndsWith(".styles.css"));
             foreach (var file in scopedCssBundles)
             {
-                var relativePath = Utility.GetRelativePath(_project.GetFolder(), file);
+                var relativePath = Path.GetRelativePath(_project.GetFolder(), file);
                 var outputPath = $"wwwroot{Path.DirectorySeparatorChar}{Path.GetFileName(file)}";
                 if (isRCL)
                 {
@@ -424,7 +424,7 @@ namespace NetJs.Translator
             HashSet<INamedTypeSymbol> stubbed = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
             void SortedOutputBuild(INamedTypeSymbol root, INamedTypeSymbol symbol, StringBuilder stringBuilder, int formatTabs, ref bool dependsOnSelf)
             {
-                if (global.HasAttribute(symbol, typeof(DependsOnAttribute).FullName, null, false, out var args))
+                if (global.HasAttribute(symbol, typeof(DependsOnAttribute).FullName!, null, false, out var args))
                 {
                     var types = (args[0] as IEnumerable<TypedConstant>).Select(c => (INamedTypeSymbol)c.Value!);
                     foreach (var type in types)
@@ -718,7 +718,7 @@ namespace NetJs.Translator
                     var codes = visitor.Value.Build(2).Trim();
                     if (!string.IsNullOrEmpty(codes))
                     {
-                        var relative = Utility.GetRelativePath(_project.DirectoryPath, visitor.Key.FilePath);
+                        var relative = Path.GetRelativePath(_project.DirectoryPath, visitor.Key.FilePath);
                         var filePath = (_project.DirectoryPath.Split('\\', '/').LastOrDefault() ?? "") + Path.ChangeExtension(relative, "js");
                         pendingTask.Add(_output.Output(global, filePath, StringToStream(global.OutputMode.HasFlag(OutputMode.Global) ? @$"
 (function ({global.GlobalName}, $global) {{
@@ -784,7 +784,7 @@ namespace NetJs.Translator
                     text = text.Replace("</head>", insertHead + "\r\n</head>")
                         .Replace("</body>", insertScripts + "\r\n</body>")
                         .Replace("_framework/blazor.webassembly#[.{fingerprint}].js", "_framework/blazor.netjs.js");
-                    var relativePath = Utility.GetRelativePath(_project.GetFolder(), indexFile);
+                    var relativePath = Path.GetRelativePath(_project.GetFolder(), indexFile);
                     pendingTask.Add(_output.Output(global,
                         !relativePath.StartsWith(Constants.OutputFolderName + Path.DirectorySeparatorChar) ? Constants.OutputFolderName + Path.DirectorySeparatorChar + relativePath : relativePath,
                         new MemoryStream(Encoding.UTF8.GetBytes(text))));

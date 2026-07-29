@@ -24,32 +24,32 @@
 		
 		<RuntimeFlavor>Mono</RuntimeFlavor>
 		<Platform>wasm</Platform>
-		<NetJsFolder>E:\Apps\NetJs\</NetJsFolder>
-		<DotnetGitRoot>$(NetJsFolder)dotnet\</DotnetGitRoot>
-		<DotnetRuntimeRoot>$(DotnetGitRoot)runtime\</DotnetRuntimeRoot>
-		<RepoRoot>$(DotnetGitRoot)aspnetcore\</RepoRoot>
+		<NetJsFolder>E:/Apps/NetJs/</NetJsFolder>
+		<DotnetGitRoot>$(NetJsFolder)dotnet/</DotnetGitRoot>
+		<DotnetRuntimeRoot>$(DotnetGitRoot)runtime/</DotnetRuntimeRoot>
+		<RepoRoot>$(DotnetGitRoot)aspnetcore/</RepoRoot>
 
-		<SharedSourceRoot>$(RepoRoot)src\Shared\</SharedSourceRoot>
-		<ComponentsSharedSourceRoot>$(RepoRoot)src\Components\Shared\</ComponentsSharedSourceRoot>
+		<SharedSourceRoot>$(RepoRoot)src/Shared/</SharedSourceRoot>
+		<ComponentsSharedSourceRoot>$(RepoRoot)src/Components/Shared/</ComponentsSharedSourceRoot>
 		
-		<CoreClrProjectRoot>$(DotnetRuntimeRoot)src\coreclr\</CoreClrProjectRoot>
-		<CoreLibRoot>$(DotnetRuntimeRoot)src\libraries\System.Private.CoreLib\src\</CoreLibRoot>
-		<CoreLibSharedDir>$(DotnetRuntimeRoot)src\libraries\System.Private.CoreLib\src\</CoreLibSharedDir>
-		<LibrariesProjectRoot>$(DotnetRuntimeRoot)src\libraries\</LibrariesProjectRoot>
-		<CommonPath>$(DotnetRuntimeRoot)src\libraries\Common\src\</CommonPath>
+		<CoreClrProjectRoot>$(DotnetRuntimeRoot)src/coreclr/</CoreClrProjectRoot>
+		<CoreLibRoot>$(DotnetRuntimeRoot)src/libraries/System.Private.CoreLib/src/</CoreLibRoot>
+		<CoreLibSharedDir>$(DotnetRuntimeRoot)src/libraries/System.Private.CoreLib/src/</CoreLibSharedDir>
+		<LibrariesProjectRoot>$(DotnetRuntimeRoot)src/libraries/</LibrariesProjectRoot>
+		<CommonPath>$(DotnetRuntimeRoot)src/libraries/Common/src/</CommonPath>
 		<BclSourcesRoot>$(DotnetRuntimeRoot)src/mono/System.Private.CoreLib/src</BclSourcesRoot>
-		<!--ILLinkDirectory>$(DotnetRuntimeRoot)src\mono\System.Private.CoreLib\src\ILLink\</ILLinkDirectory-->
-		<PrivateCoreLibSharedProjectDirectory>$(DotnetRuntimeRoot)src\libraries\System.Private.CoreLib\src\</PrivateCoreLibSharedProjectDirectory>
+		<!--ILLinkDirectory>$(DotnetRuntimeRoot)src/mono/System.Private.CoreLib/src/ILLink/</ILLinkDirectory-->
+		<PrivateCoreLibSharedProjectDirectory>$(DotnetRuntimeRoot)src/libraries/System.Private.CoreLib/src/</PrivateCoreLibSharedProjectDirectory>
 
 
-		<NewLibrariesProjectRoot>E:\Apps\NetJs\libraries\</NewLibrariesProjectRoot>
+		<NewLibrariesProjectRoot>E:/Apps/NetJs/libraries/</NewLibrariesProjectRoot>
 		<DotnetJsRuntimeRoot>$(MsBuildThisFileDirectory)/dotnetJs.Runtime</DotnetJsRuntimeRoot>
-		<CoreLibProject>$(NewLibrariesProjectRoot)System.Private.CoreLib\NetJs.System.Private.CoreLib.csproj</CoreLibProject>
-		<UriProject>$(NewLibrariesProjectRoot)System.Private.Uri\NetJs.System.Private.Uri.csproj</UriProject>
-		<LoggingGenerator>$(LibrariesProjectRoot)Microsoft.Extensions.Logging.Abstractions\gen\Microsoft.Extensions.Logging.Generators.Roslyn4.4.csproj</LoggingGenerator>	
-		<RegexGenerator>$(LibrariesProjectRoot)System.Text.RegularExpressions\gen\System.Text.RegularExpressions.Generator.csproj</RegexGenerator>
-		<OptionGenerator>$(LibrariesProjectRoot)Microsoft.Extensions.Options\gen\Microsoft.Extensions.Options.SourceGeneration.csproj</OptionGenerator>
-		<JsonGenerator>$(LibrariesProjectRoot)System.Text.Json\gen\System.Text.Json.SourceGeneration.Roslyn4.4.csproj</JsonGenerator>
+		<CoreLibProject>$(NewLibrariesProjectRoot)System.Private.CoreLib/NetJs.System.Private.CoreLib.csproj</CoreLibProject>
+		<UriProject>$(NewLibrariesProjectRoot)System.Private.Uri/NetJs.System.Private.Uri.csproj</UriProject>
+		<LoggingGenerator>$(LibrariesProjectRoot)Microsoft.Extensions.Logging.Abstractions/gen/Microsoft.Extensions.Logging.Generators.Roslyn4.4.csproj</LoggingGenerator>	
+		<RegexGenerator>$(LibrariesProjectRoot)System.Text.RegularExpressions/gen/System.Text.RegularExpressions.Generator.csproj</RegexGenerator>
+		<OptionGenerator>$(LibrariesProjectRoot)Microsoft.Extensions.Options/gen/Microsoft.Extensions.Options.SourceGeneration.csproj</OptionGenerator>
+		<JsonGenerator>$(LibrariesProjectRoot)System.Text.Json/gen/System.Text.Json.SourceGeneration.Roslyn4.4.csproj</JsonGenerator>
 	</PropertyGroup>
 	
 	<PropertyGroup>

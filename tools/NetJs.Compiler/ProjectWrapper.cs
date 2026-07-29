@@ -25,8 +25,8 @@ namespace NetJs.Compiler
         public string DirectoryPath => msProject.DirectoryPath;
         public string FullPath => msProject.FullPath;
         public string SDK => msProject.Xml.Sdk;
-        public string BaseIntermediateOutputPath => Evaluate("BaseIntermediateOutputPath").First();
-        public string IntermediateOutputPath => Evaluate("IntermediateOutputPath").First();
+        public string BaseIntermediateOutputPath => Evaluate("BaseIntermediateOutputPath").First().Replace("\\", "/");
+        public string IntermediateOutputPath => Evaluate("IntermediateOutputPath").First().Replace("\\", "/");
         public CompilationOptions? CompilationOptions => caProject.CompilationOptions;
         public ProjectWrapper(MSBuildWorkspace msWorkspace, ProjectCollection projectCollection, CodeAnalysisProject caProject, MsBuildProject project, IDictionary<string, string>? buildProperties)
         {

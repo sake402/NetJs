@@ -45,8 +45,7 @@
     },
     "miniapp": {
       "commandName": "Project",
-      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\Microsoft.AspNetCore.Components.Authorization\\NetJs.Microsoft.AspNetCore.Components.Authorization.csproj\" -s -f",
-      "workingDirectory": "E:\\Apps\\NetJs"
+      "commandLineArgs": "build --project \"/Users/sit/Desktop/miniapp/miniapp.csproj\" -s -f"
     },
     "LivingThing.Core.Frameworks.Common": {
       "commandName": "Project",

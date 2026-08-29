@@ -26,6 +26,12 @@ namespace NetJs.Translator.CSharpToJavascript
             WriteMemberName(node, symbol, member/*, _this*/);
         }
 
+        public string GetMemberName(ITypeSymbol symbol, string memberName)
+        {
+            var member = symbol.GetMembers(memberName, _global).Single();
+            return GetMemberName(symbol, member);
+        }
+
         public void WriteMemberName(CSharpSyntaxNode node, ITypeSymbol typeSymbol, ISymbol member
             //, CodeNode? thisExpression = null, bool? isGet = null, CodeNode? setValue = null
             )
@@ -54,7 +60,7 @@ namespace NetJs.Translator.CSharpToJavascript
             //}
             var metadata = _global.GetRequiredMetadata(member);
             var isStaticConvention = member.IsStaticCallConvention(_global);
-            CurrentTypeWriter.Write(node, metadata.InvocationName ?? typeSymbol.Name);
+            CurrentTypeWriter.Write(node, metadata.InvocationName ?? member.Name);
             //if (isStaticConvention)
             //{
             //    if (thisExpression == null)
@@ -79,6 +85,13 @@ namespace NetJs.Translator.CSharpToJavascript
             //    CurrentTypeWriter.Write(node, ")");
             //}
         }
+
+        public string GetMemberName(ITypeSymbol typeSymbol, ISymbol member)
+        {
+            var metadata = _global.GetRequiredMetadata(member);
+            return metadata.InvocationName ?? member.Name;
+        }
+
 
         public void WriteMemberAccess(
              CSharpSyntaxNode node,
@@ -111,7 +124,7 @@ namespace NetJs.Translator.CSharpToJavascript
             if (member is IFieldSymbol field &&
                 field.IsConst &&
                 field.ConstantValue != null &&
-                (_global.OutputMode.HasFlag(OutputMode.InlineConstants) || _global.HasAttribute(member, typeof(InlineConstAttribute).FullName, this, false, out _) || _global.HasAttribute(member.ContainingType, typeof(InlineConstAttribute).FullName, this, false, out _)) &&
+                (_global.BuildFlags.HasFlag(NetJsBuildFlags.InlineConstants) || _global.HasAttribute(member, typeof(InlineConstAttribute).FullName, this, false, out _) || _global.HasAttribute(member.ContainingType, typeof(InlineConstAttribute).FullName, this, false, out _)) &&
                 !_global.HasAttribute(member, typeof(TemplateAttribute).FullName, this, false, out _))
             {
                 TryWriteConstant(node, field.Type, null, new Optional<object?>(field.ConstantValue));

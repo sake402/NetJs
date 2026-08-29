@@ -45,15 +45,19 @@ namespace NetJs
     public static class NativeActionExtensions
     {
         [NetJs.IgnoreGeneric]
-        public static void Invoke(this NativeAction action, object? thisArg = null)
-        {
-            NetJs.Script.Write("action.call(thisArg)");
-        }
+        [NetJs.Template("{action}.call({thisArg})")]
+        public static extern void InvokeCall(this NativeAction action, object? thisArg = null);
         [NetJs.IgnoreGeneric]
-        public static T Invoke<T>(this NativeFunction<T> func, object? thisArg = null)
-        {
-            return NetJs.Script.Write<T>("func.call(thisArg)");
-        }
+        [NetJs.Template("{func}.call({thisArg})")]
+        public static extern T InvokeCall<T>(this NativeFunction<T> func, object? thisArg = null);
+
+        [NetJs.IgnoreGeneric]
+        [NetJs.Template("{action}.apply({thisArg}, {args})")]
+        public static extern void InvokeApply(this NativeAction action, object? thisArg = null, params object?[] args);
+        [NetJs.IgnoreGeneric]
+        [NetJs.Template("{func}.apply({thisArg}, {args})")]
+        public static extern T InvokeApply<T>(this NativeFunction<T> func, object? thisArg = null, params object?[] args);
+
         [NetJs.Template("{func}.length")]
         public static extern int NativeFunctionParametersCount(this Delegate func);
     }

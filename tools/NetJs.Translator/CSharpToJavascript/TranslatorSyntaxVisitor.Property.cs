@@ -177,22 +177,22 @@ namespace NetJs.Translator.CSharpToJavascript
             //    }
             //    backingFieldWritten = true;
             //}
-            var symbol = _global.GetSymbol(node, this/*, out _, out _*/);
+            var symbol = (IEventSymbol)_global.GetSymbol(node, this);
             var metadata = _global.GetRequiredMetadata(symbol);
             if (node.AccessorList != null)
             {
                 foreach (var accessor in node.AccessorList.Accessors)
                 {
-                    //if (accessor.ExpressionBody == null && accessor.Body == null)
-                    //EnsureWriteBackingField();
                     if (accessor.IsKind(SyntaxKind.AddAccessorDeclaration))
                     {
-                        CurrentTypeWriter.WriteLine(node, $"/*{node.Type.ToString().Trim()}*/{modifier} add_{metadata.OverloadName}(value)", true);
+                        var addMethodMetadata = _global.GetRequiredMetadata(symbol.AddMethod!);
+                        CurrentTypeWriter.WriteLine(node, $"/*{node.Type.ToString().Trim()}*/{modifier} {(addMethodMetadata?.OverloadName ?? $"add_{metadata.OverloadName}")}(value)", true);
                         WritePropertyGetAccessor(node, node.Identifier.ValueText, accessor, symbol);
                     }
                     else if (accessor.IsKind(SyntaxKind.RemoveAccessorDeclaration))
                     {
-                        CurrentTypeWriter.WriteLine(node, $"/*{node.Type.ToString().Trim()}*/{modifier} remove_{metadata.OverloadName}(value)", true);
+                        var removeMethodMetadata = _global.GetRequiredMetadata(symbol.RemoveMethod!);
+                        CurrentTypeWriter.WriteLine(node, $"/*{node.Type.ToString().Trim()}*/{modifier} {(removeMethodMetadata?.OverloadName ?? $"remove_{metadata.OverloadName}")}(value)", true);
                         WritePropertySetAccessor(node, node.Identifier.ValueText, accessor, symbol);
                     }
                 }

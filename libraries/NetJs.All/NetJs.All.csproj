@@ -14,6 +14,7 @@
     <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Win32.Primitives\NetJs.Microsoft.Win32.Primitives.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Bcl.AsyncInterfaces\NetJs.Microsoft.Bcl.AsyncInterfaces.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Runtime.InteropServices.JavaScript\NetJs.System.Runtime.InteropServices.JavaScript.csproj" />
+    <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Bcl.Cryptography\NetJs.Microsoft.Bcl.Cryptography.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Collections\NetJs.System.Collections.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Collections.Concurrent\NetJs.System.Collections.Concurrent.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Collections.Immutable\NetJs.System.Collections.Immutable.csproj" />
@@ -116,5 +117,12 @@
     <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.JSInterop.WebAssembly\NetJs.Microsoft.JSInterop.WebAssembly.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.AspNetCore.Components.WebAssembly\NetJs.Microsoft.AspNetCore.Components.WebAssembly.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.AspNetCore.Components.Authorization\NetJs.Microsoft.AspNetCore.Components.Authorization.csproj" />
+    <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Net.Http.Headers\NetJs.Microsoft.Net.Http.Headers.csproj" />
+    <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.AspNetCore.WebUtilities\NetJs.Microsoft.AspNetCore.WebUtilities.csproj" />
+    <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.IdentityModel.Abstractions\NetJs.Microsoft.IdentityModel.Abstractions.csproj" />
+    <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.IdentityModel.Logging\NetJs.Microsoft.IdentityModel.Logging.csproj" />
+    <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.IdentityModel.Tokens\NetJs.Microsoft.IdentityModel.Tokens.csproj" />
+    <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.IdentityModel.JsonWebTokens\NetJs.Microsoft.IdentityModel.JsonWebTokens.csproj" />
+    <ProjectReference Include="$(NewLibrariesProjectRoot)System.IdentityModel.Tokens.Jwt\NetJs.System.IdentityModel.Tokens.Jwt.csproj" />
   </ItemGroup>
 </Project>

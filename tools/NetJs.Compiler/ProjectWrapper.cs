@@ -96,22 +96,22 @@ namespace NetJs.Compiler
             }
             return framework;
         }
-        public OutputMode GetOutputMode()
+        public NetJsBuildFlags GetBuildFlags()
         {
-            var v = msProject.AllEvaluatedProperties.LastOrDefault(e => e.Name == "OutputMode")?.EvaluatedValue;
-            Enum.TryParse<OutputMode>(v, out var value);
-            if (value == OutputMode.None)
+            var v = msProject.AllEvaluatedProperties.LastOrDefault(e => e.Name == nameof(NetJsBuildFlags))?.EvaluatedValue;
+            Enum.TryParse<NetJsBuildFlags>(v, out var value);
+            if (value == NetJsBuildFlags.None)
             {
-                value = OutputMode.Global | OutputMode.InlineConstants | OutputMode.SingleFile;
+                value = NetJsBuildFlags.Default;
             }
-            if (value.HasFlag(OutputMode.Module) && value.HasFlag(OutputMode.Global))
+            if (value.HasFlag(NetJsBuildFlags.Module) && value.HasFlag(NetJsBuildFlags.Global))
             {
                 throw new InvalidOperationException("Cannot enable both global and module at the same time");
             }
-            if (!value.HasFlag(OutputMode.Module) && !value.HasFlag(OutputMode.Global))
-            {
-                value |= OutputMode.Global;
-            }
+            //if (!value.HasFlag(NetJsBuildFlags.Module) && !value.HasFlag(NetJsBuildFlags.Global))
+            //{
+            value |= NetJsBuildFlags.Global;//Module not yet supported, we must use global for now
+            //}
             return value;
         }
 

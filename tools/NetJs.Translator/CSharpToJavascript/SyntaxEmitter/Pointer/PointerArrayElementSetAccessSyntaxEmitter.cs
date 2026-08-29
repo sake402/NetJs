@@ -21,7 +21,9 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Pointer
                         {
                             var argType = visitor.Global.GetTypeSymbol(elementAccess.ArgumentList.Arguments[0], visitor);
                             visitor.Visit(elementAccess.Expression);
-                            visitor.CurrentTypeWriter.Write(node, ".SetAt(");
+                            visitor.CurrentTypeWriter.Write(node, ".");
+                            visitor.WriteMemberName(node, visitor.Global.SystemPointer, "SetAt");
+                            visitor.CurrentTypeWriter.Write(node, "(");
                             visitor.Visit(node.Right);
                             visitor.CurrentTypeWriter.Write(node, ", ");
                             if (argType.IsLongNumericType())

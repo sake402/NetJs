@@ -26,7 +26,7 @@ namespace System.Reflection
 
         public RuntimeAssembly_Partial(AssemblyModel model, string assemblyName)
         {
-            NetJs.Script.Write("this._mono_assembly = model.h");
+            NetJs.Script.Write("this.{nameof(RuntimeAssembly._mono_assembly)} = model.h");
             this._model = model;
             _module = new RuntimeModule_Partial(this);
             if (model.AssemblyFlags.TypeHasFlag(AssemblyFlags.Entry))
@@ -237,7 +237,7 @@ namespace System.Reflection
                     {
                         //Slower but will rarely be used
                         var args = NetJs.Script.NewArray<object>(paramCount);
-                        for(int i = 0; i < paramCount; i++)
+                        for (int i = 0; i < paramCount; i++)
                         {
                             unchecked
                             {
@@ -554,11 +554,17 @@ namespace System.Reflection
             {
                 var t = _types[i];
                 if (t.InternalFullName.NativeEquals(name) || t.InternalAssemblyQualifiedName.NativeEquals(name))
+                {
+                    t.EnsureSelfInitialized();
                     return t;
+                }
                 if (ignoreCase)
                 {
                     if (t.InternalFullName.NativeToLower().NativeEquals(name) || t.InternalAssemblyQualifiedName.NativeToLower().NativeEquals(name))
+                    {
+                        t.EnsureSelfInitialized();
                         return t;
+                    }
                 }
             }
             return null;
@@ -586,7 +592,9 @@ namespace System.Reflection
         private static void GetExportedTypes(QCallAssembly assembly_h, ObjectHandleOnStack res)
         {
             var assembly = assembly_h.QCallAssemblyHandleToRuntimeType().As<RuntimeAssembly_Partial>();
-            res.GetObjectHandleOnStack<Type[]?>() = assembly._types.Filter(e => e._prototype.Flags.TypeHasFlag(TypeFlagsModel.IsPublic)).AsNetArray();
+            var ts = assembly._types.Filter(e => e._prototype.Flags.TypeHasFlag(TypeFlagsModel.IsPublic)).AsNetArray();
+            ts.ForEach(t => t.EnsureSelfInitialized());
+            res.GetObjectHandleOnStack<Type[]?>() = ts;
         }
 
         [NetJs.MemberReplace]
@@ -626,7 +634,7 @@ namespace System.Reflection
         private static bool GetManifestResourceInfoInternal(QCallAssembly assembly, string name, ManifestResourceInfo info)
         {
             var runtimeAssembly = assembly.QCallAssemblyHandleToRuntimeType().As<RuntimeAssembly_Partial>();
-            var manifest = runtimeAssembly._model.Manifests?.ArrayFirstOrDefault(a => a.Name == name);
+            var manifest = runtimeAssembly._model.Manifests?.ArrayFirstOrDefault(a => a.Name.NativeEquals(name));
             if (manifest != null)
             {
                 //info.ResourceLocation = ResourceLocation.Embedded;

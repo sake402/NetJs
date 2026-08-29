@@ -26,7 +26,7 @@ namespace System
     {
 
         private static global::System.Resources.ResourceManager s_resourceManager;
-
+        
         private static global::System.Globalization.CultureInfo resourceCulture;
 
         /// <summary>

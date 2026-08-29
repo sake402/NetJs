@@ -11,6 +11,7 @@ namespace NetJs.Translator.CSharpToJavascript
             _global = global;
         }
 
+        public bool Preprocessed { get; set; }
         /// <summary>
         /// Name is only unique within the type. Declared symbol and overriden symbol will share this name within the type
         /// </summary>
@@ -59,13 +60,14 @@ namespace NetJs.Translator.CSharpToJavascript
             else if (Symbol is ITypeSymbol ttype)
             {
                 bool isExtern = Symbol.IsExtern || _global.HasAttribute(Symbol, typeof(ExternalAttribute).FullName!, null, false, out _);
-                if ((ttype is not INamedTypeSymbol nt || nt.IsExtension) && ttype.ContainingSymbol is INamedTypeSymbol)
+                if ((ttype is not INamedTypeSymbol nt || nt.IsExtension) && ttype.ContainingType != null)
                 {
                     //type.OriginalInvocationName = (originalPrefixInvocationName != null ? originalPrefixInvocationName + "." : "") + overloadedName;
                     //type.InvocationName = ComputeInvocatioNameForType(ttype, type.OverloadName);
                     _originalInvocationName = ComputeInvocatioNameForType(ttype, _overloadName, _global);
+                    _invocationName = _originalInvocationName;
                     //TODO: this will not work when shortname is actually enabled
-                    _invocationName = ShortName(_global, null, null, Signature, _originalInvocationName, _global.Symbols.Types, generate: !isExtern, export: false);
+                    //_invocationName = ShortName(_global, Signature, _originalInvocationName, _global.Symbols.Types, generate: !isExtern, export: false);
                     //type.InvocationName = ShortName(shortPrefixInvocationName, originalPrefixInvocationName, type.Signature, overloadedName, ShortNames.Types, generate: !isExtern);
                 }
                 else
@@ -161,203 +163,143 @@ namespace NetJs.Translator.CSharpToJavascript
             return UniqueFullName;
         }
 
-        const string ShortenedNameIdentitfier = "\\";
-        public static string ShortName(GlobalCompilationVisitor _global, string? shortPrefix, string? longPrefix, string signature, string name, Dictionary<string, SymbolValue> exportNames, bool generate = true, bool export = true)
-        {
-            if (!generate || !_global.OutputMode.HasFlag(OutputMode.ShortNames))
-            {
-                var resolvedName = (!string.IsNullOrEmpty(shortPrefix) ? shortPrefix + "." : "") + name;
-                if (export)
-                {
-                    //var key = resolvedName;
-                    //if (resolvedName != name)
-                    //{
-                    //    key = name + "|" + resolvedName;
-                    //}
-                    //if (signature== "Ceiling($spc.System.Runtime.Intrinsics.Vector256<$spc.System.Double>)$$2")
-                    //{
+        //const string ShortenedNameIdentitfier = "\\";
+        //public static string ShortName(
+        //    GlobalCompilationVisitor _global,
+        //    //string? shortPrefix, 
+        //    //string? longPrefix, 
+        //    string signature,
+        //    string name, 
+        //    Dictionary<string, SymbolValue> exportNames, 
+        //    bool generate = true,
+        //    bool export = true)
+        //{
+        //    if (!generate || !_global.BuildFlags.HasFlag(NetJsBuildFlags.ShortNames))
+        //    {
+        //        var resolvedName = /*(!string.IsNullOrEmpty(shortPrefix) ? shortPrefix + "." : "") +*/ name;
+        //        if (export)
+        //        {
+        //            //var key = resolvedName;
+        //            //if (resolvedName != name)
+        //            //{
+        //            //    key = name + "|" + resolvedName;
+        //            //}
+        //            //if (signature== "Ceiling($spc.System.Runtime.Intrinsics.Vector256<$spc.System.Double>)$$2")
+        //            //{
 
-                    //}
-                    exportNames.Add(resolvedName, new SymbolValue { Signature = signature });
-                }
-                return resolvedName;
-            }
-            if (name.Length <= 3)
-                return name;
-            var shortenSegment = name;
-            bool hasGlobal = false;
-            if (name.StartsWith(_global.GlobalName) && name[_global.GlobalName.Length] == '.')
-            {
-                hasGlobal = true;
-                shortenSegment = name.Substring(_global.GlobalName.Length + 1);
-            }
-            //string? keepSuffix = null;
-            //if (shortenSegment.EndsWith("$") || (char.IsDigit(shortenSegment[shortenSegment.Length - 1]) && shortenSegment.Contains('$')))
-            //{
-            //    int l = shortenSegment.Length;
-            //    while (char.IsDigit(shortenSegment[l - 1]))
-            //    {
-            //        l--;
-            //    }
-            //    while (shortenSegment[l - 1] == '$')
-            //    {
-            //        l--;
-            //    }
-            //    keepSuffix = shortenSegment.Substring(l);
-            //    shortenSegment = shortenSegment.Substring(0, l);
-            //}
-            string shortName = "";
-            bool startSingleCharacterCapture = true;
-            List<char> possibleCamelCaseNameOverloadVariations = new List<char>();
-            for (int i = 0; i < shortenSegment.Length; i++)
-            {
-                if (_global.OutputMode.HasFlag(OutputMode.ShortNamesTryUseCamelCase))
-                {
-                    if (i > 0 && char.IsUpper(shortenSegment[i]) && char.IsLower(shortenSegment[i - 1]))
-                    {
-                        possibleCamelCaseNameOverloadVariations.Add(shortenSegment[i]);
-                    }
-                }
-                if (startSingleCharacterCapture)
-                {
-                    if (shortenSegment[i] != ShortenedNameIdentitfier[0]) //this segment is already shortened, dont shorten it again
-                    {
-                        shortName += /*ShortenedNameIdentitfier +*/ shortenSegment[i];
-                    }
-                    startSingleCharacterCapture = false;
-                    possibleCamelCaseNameOverloadVariations.Clear();
-                }
-                else if (shortenSegment[i] == '.' || shortenSegment[i] == '_' || shortenSegment[i] == '$')
-                {
-                    if (shortenSegment[i] != '_')
-                        shortName += /*ShortenedNameIdentitfier +*/ shortenSegment[i];
-                    if (i < shortenSegment.Length - 1 && shortenSegment[i + 1] == '$')
-                    {
-                        while (i < shortenSegment.Length - 1 && shortenSegment[i + 1] == '$') //keep generic argument $ marker
-                        {
-                            shortName += '$';
-                            i++;
-                        }
-                        //startSingleCharacterCapture = false;
-                    }
-                    //else
-                    startSingleCharacterCapture = true;
-                }
-            }
-            //var splitted = shortenSegment.Split(['.','$'], StringSplitOptions.RemoveEmptyEntries);
-            //var shortName = string.Join(".", splitted.Select(s => s[0]));
-            //splitted = shortName.Split(['$'], StringSplitOptions.RemoveEmptyEntries);
-            //shortName = string.Join("$", splitted.Select(s => s[0]));
-            if (hasGlobal)
-            {
-                shortName = _global.GlobalName + "." + shortName;
-            }
-            shortName = (shortPrefix != null ? shortPrefix + "." : "") + shortName;
-            string? padded = null;
-            //if we can form a unique name using its camel case pattern, the use that
-            if (possibleCamelCaseNameOverloadVariations.Count > 0)
-            {
-                string sn = shortName;
-                padded = "";
-                int i = 0;
-                while (exportNames.TryGetValue(sn, out _))
-                {
-                    if (i >= possibleCamelCaseNameOverloadVariations.Count)
-                        break;
-                    sn += possibleCamelCaseNameOverloadVariations[i];
-                    i++;
-                }
-                if (!exportNames.TryGetValue(sn, out _))
-                {
-                    shortName = sn;
-                }
-            }
-            int nextTry = 1;
-            padded = null;
-            while (exportNames.TryGetValue(shortName, out _))
-            {
-                if (padded != null)
-                    shortName = shortName.Substring(0, shortName.Length - padded.Length);
-                padded = nextTry.ToString();
-                shortName += padded;
-                nextTry++;
-            }
-            exportNames.Add(shortName, new SymbolValue { Signature = signature });
-            //usedNames.Add(shortName, (longPrefix != null ? longPrefix + "." : "") + name + suffix);
-            //shortName += keepSuffix;
-            return shortName;
-        }
+        //            //}
+        //            exportNames.Add(resolvedName, new SymbolValue { Signature = signature });
+        //        }
+        //        return resolvedName;
+        //    }
+        //    if (name.Length <= 3)
+        //        return name;
+        //    var shortenSegment = name;
+        //    bool hasGlobal = false;
+        //    if (name.StartsWith(_global.GlobalName) && name[_global.GlobalName.Length] == '.')
+        //    {
+        //        hasGlobal = true;
+        //        shortenSegment = name.Substring(_global.GlobalName.Length + 1);
+        //    }
+        //    //string? keepSuffix = null;
+        //    //if (shortenSegment.EndsWith("$") || (char.IsDigit(shortenSegment[shortenSegment.Length - 1]) && shortenSegment.Contains('$')))
+        //    //{
+        //    //    int l = shortenSegment.Length;
+        //    //    while (char.IsDigit(shortenSegment[l - 1]))
+        //    //    {
+        //    //        l--;
+        //    //    }
+        //    //    while (shortenSegment[l - 1] == '$')
+        //    //    {
+        //    //        l--;
+        //    //    }
+        //    //    keepSuffix = shortenSegment.Substring(l);
+        //    //    shortenSegment = shortenSegment.Substring(0, l);
+        //    //}
+        //    string shortName = "";
+        //    bool startSingleCharacterCapture = true;
+        //    List<char> possibleCamelCaseNameOverloadVariations = new List<char>();
+        //    for (int i = 0; i < shortenSegment.Length; i++)
+        //    {
+        //        if (_global.BuildFlags.HasFlag(NetJsBuildFlags.ShortNamesTryUseCamelCase))
+        //        {
+        //            if (i > 0 && char.IsUpper(shortenSegment[i]) && char.IsLower(shortenSegment[i - 1]))
+        //            {
+        //                possibleCamelCaseNameOverloadVariations.Add(shortenSegment[i]);
+        //            }
+        //        }
+        //        if (startSingleCharacterCapture)
+        //        {
+        //            if (shortenSegment[i] != ShortenedNameIdentitfier[0]) //this segment is already shortened, dont shorten it again
+        //            {
+        //                shortName += /*ShortenedNameIdentitfier +*/ shortenSegment[i];
+        //            }
+        //            startSingleCharacterCapture = false;
+        //            possibleCamelCaseNameOverloadVariations.Clear();
+        //        }
+        //        else if (shortenSegment[i] == '.' || shortenSegment[i] == '_' || shortenSegment[i] == '$')
+        //        {
+        //            if (shortenSegment[i] != '_')
+        //                shortName += /*ShortenedNameIdentitfier +*/ shortenSegment[i];
+        //            if (i < shortenSegment.Length - 1 && shortenSegment[i + 1] == '$')
+        //            {
+        //                while (i < shortenSegment.Length - 1 && shortenSegment[i + 1] == '$') //keep generic argument $ marker
+        //                {
+        //                    shortName += '$';
+        //                    i++;
+        //                }
+        //                //startSingleCharacterCapture = false;
+        //            }
+        //            //else
+        //            startSingleCharacterCapture = true;
+        //        }
+        //    }
+        //    //var splitted = shortenSegment.Split(['.','$'], StringSplitOptions.RemoveEmptyEntries);
+        //    //var shortName = string.Join(".", splitted.Select(s => s[0]));
+        //    //splitted = shortName.Split(['$'], StringSplitOptions.RemoveEmptyEntries);
+        //    //shortName = string.Join("$", splitted.Select(s => s[0]));
+        //    if (hasGlobal)
+        //    {
+        //        shortName = _global.GlobalName + "." + shortName;
+        //    }
+        //    //shortName = (shortPrefix != null ? shortPrefix + "." : "") + shortName;
+        //    string? padded = null;
+        //    //if we can form a unique name using its camel case pattern, the use that
+        //    if (possibleCamelCaseNameOverloadVariations.Count > 0)
+        //    {
+        //        string sn = shortName;
+        //        padded = "";
+        //        int i = 0;
+        //        while (exportNames.TryGetValue(sn, out _))
+        //        {
+        //            if (i >= possibleCamelCaseNameOverloadVariations.Count)
+        //                break;
+        //            sn += possibleCamelCaseNameOverloadVariations[i];
+        //            i++;
+        //        }
+        //        if (!exportNames.TryGetValue(sn, out _))
+        //        {
+        //            shortName = sn;
+        //        }
+        //    }
+        //    int nextTry = 1;
+        //    padded = null;
+        //    while (exportNames.TryGetValue(shortName, out _))
+        //    {
+        //        if (padded != null)
+        //            shortName = shortName.Substring(0, shortName.Length - padded.Length);
+        //        padded = nextTry.ToString();
+        //        shortName += padded;
+        //        nextTry++;
+        //    }
+        //    exportNames.Add(shortName, new SymbolValue { Signature = signature });
+        //    //usedNames.Add(shortName, (longPrefix != null ? longPrefix + "." : "") + name + suffix);
+        //    //shortName += keepSuffix;
+        //    return shortName;
+        //}
 
         static string ComputeInvocatioNameForType(ITypeSymbol type, string? overloadName, GlobalCompilationVisitor _global)
         {
-            static string MinifyNamespace(string fullName)
-            {
-                if (string.IsNullOrEmpty(fullName))
-                {
-                    return fullName;
-                }
-
-                // Allocate an adequate initial threshold buffer
-                var builder = new StringBuilder(fullName.Length);
-                int lastDotIndex = fullName.LastIndexOf('.');
-
-                // Fast Path: If there are no dots separating names, return the original string instantly
-                if (lastDotIndex < 0)
-                {
-                    return fullName;
-                }
-
-                int i = 0;
-                while (i <= lastDotIndex)
-                {
-                    char c = fullName[i];
-
-                    if (c == '$')
-                    {
-                        // If we hit a dollar-sign flag separator, append everything up to the next dot
-                        builder.Append(c);
-                        i++;
-
-                        while (i <= lastDotIndex)
-                        {
-                            char nextChar = fullName[i];
-                            builder.Append(nextChar);
-                            i++;
-                            if (nextChar == '.')
-                            {
-                                break;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // Standard Namespace Segment: Retain ONLY the first character (the minification step)
-                        builder.Append(c);
-                        i++;
-
-                        // Fast-forward past the rest of this current segment namespace word up to the next dot
-                        while (i <= lastDotIndex)
-                        {
-                            if (fullName[i] == '.')
-                            {
-                                builder.Append('.');
-                                i++; // Consume the dot character cleanly
-                                break;
-                            }
-                            i++;
-                        }
-                    }
-                }
-
-                // Append the final class name block in exactly one operation
-                if (lastDotIndex + 1 < fullName.Length)
-                {
-                    builder.Append(fullName, lastDotIndex + 1, fullName.Length - (lastDotIndex + 1));
-                }
-
-                return builder.ToString();
-            }
-
             //if (type is INamedTypeSymbol ts && ts.IsExtension)
             //{
 
@@ -367,10 +309,9 @@ namespace NetJs.Translator.CSharpToJavascript
                 return ComputeInvocatioNameForType(_global.SystemObject, null, _global);
             }
             //We are not testing for [External] because those types still exist, only JS world, do they are not deleted
-            if (!type.IsNullable(out _) && _global.HasAnyAttribute(type, null, false, typeof(ObjectLiteralAttribute).FullName, typeof(NonScriptableAttribute).FullName))
+            if (!type.IsNullable(out _) && _global.HasAnyAttribute(type, null, false, typeof(ObjectLiteralAttribute).FullName!, typeof(NonScriptableAttribute).FullName!))
             {
-                return $"/*{overloadName}*/$.$spc.DeletedObject";
-                //return $"/*{overloadName}*/{ComputeInvocatioNameForType(_global.DeletedObject, null, _global)}";
+                return $"/*{overloadName?.Replace("/*", "").Replace("*/", "")}*/{_global.DeletedObject.ComputeOutputTypeName(_global)}";
             }
             var assembly = type.ContainingAssembly;
             if (type.Kind == SymbolKind.ErrorType)
@@ -382,13 +323,13 @@ namespace NetJs.Translator.CSharpToJavascript
                     type = ntt;
                 }
             }
-            if (type.IsArray(out var elementType))
+            if (type.IsArray(out var elementType, false))
             {
-                return $"{_global.GlobalName}.{Constants.TypeArray}({ComputeInvocatioNameForType(elementType, null, _global)})";
+                return $"{_global.GlobalName}.{Constants.TypeArrayName}({ComputeInvocatioNameForType(elementType, null, _global)})";
             }
             if (type.IsPointer(out var pointedType))
             {
-                return $"{_global.GlobalName}.{Constants.TypePointer}({ComputeInvocatioNameForType(pointedType, null, _global)})";
+                return $"{_global.GlobalName}.{Constants.TypePointerName}({ComputeInvocatioNameForType(pointedType, null, _global)})";
             }
             if (type is ITypeParameterSymbol tp)
                 return tp.Name;
@@ -398,7 +339,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 overloadName = typeMeta.OverloadName ?? throw new InvalidOperationException("Containing type must be processed before contained type");
             }
             string invocationName = overloadName ?? type.Name;
-            if (_global.OutputMode.HasFlag(OutputMode.Global))
+            if (_global.BuildFlags.HasFlag(NetJsBuildFlags.Global))
             {
                 if (type.ContainingSymbol is INamedTypeSymbol container)
                 {
@@ -418,10 +359,10 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
                 else
                 {
-                    if (overloadName != null && Constants.MinifyNamespace)
-                    {
-                        overloadName = MinifyNamespace(overloadName);
-                    }
+                    //if (overloadName != null && Constants.MinifyNamespace)
+                    //{
+                    //    overloadName = MinifyNamespace(overloadName);
+                    //}
                     invocationName = overloadName ?? type.Name;
                 }
             }
@@ -500,6 +441,19 @@ namespace NetJs.Translator.CSharpToJavascript
                     invocationName += ")";
                 }
             }
+            /*if (method.AssociatedSymbol?.Kind == SymbolKind.Event)
+            {
+                var eevent = (IEventSymbol)method.AssociatedSymbol;
+                if (SymbolEqualityComparer.Default.Equals(method, eevent.AddMethod))
+                {
+                    invocationName = "add_" + invocationName;
+                }
+                else
+                {
+                    invocationName = "remove_" + invocationName;
+                }
+            }
+            else*/
             if (method.IsStatic || method.IsStaticCallConvention(_global))
             {
                 var declaringType = method.ContainingType;

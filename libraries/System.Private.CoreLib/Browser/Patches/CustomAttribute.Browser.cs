@@ -35,12 +35,15 @@ namespace System.Reflection
             var attribute = (Attribute)Activator.CreateInstance(attType, args)!;
             if (NetJs.Script.IsDefined(att.NamedArguments))
             {
-                for (int i = 0; i < att.NamedArguments!.Length; i++)
+                unchecked
                 {
-                    var type = AppDomain.GetType(att.NamedArguments[i].Type.As<uint>()) ?? throw new InvalidOperationException();
-                    var val = ConvertAttributeType(att.NamedArguments[i].Value, type);
-                    var property = attType.GetProperty(att.NamedArguments[i].Name) ?? throw new InvalidOperationException();
-                    property.SetValue(attribute, val);
+                    for (int i = 0; i < att.NamedArguments!.Length; i++)
+                    {
+                        var type = AppDomain.GetType(att.NamedArguments[i].Type.As<uint>()) ?? throw new InvalidOperationException();
+                        var val = ConvertAttributeType(att.NamedArguments[i].Value, type);
+                        var property = attType.GetProperty(att.NamedArguments[i].Name) ?? throw new InvalidOperationException();
+                        property.SetValue(attribute, val);
+                    }
                 }
             }
             return attribute;
@@ -69,7 +72,8 @@ namespace System.Reflection
             }
             else if (obj is RuntimeType rt)
             {
-                attributesModel = rt.As<RuntimeAssembly_Partial>()._model.Attributes;
+                rt.EnsureSelfInitialized();
+                attributesModel = rt.As<RuntimeType>()._model.Attributes;
             }
             else if (obj is RuntimeMethodInfo rm)
             {

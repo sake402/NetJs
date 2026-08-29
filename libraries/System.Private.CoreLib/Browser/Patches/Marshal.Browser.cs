@@ -28,11 +28,11 @@ namespace System.Runtime.InteropServices
             //marsalTable[reference] = *(object*)value;
             //return reference.As<IntPtr>();
         }
-        
+
         internal static IntPtr MarshalObject(object? value, IntPtr handle = 0, bool deleteOld = false)
         {
             //if (value == null)
-                //return 0;
+            //return 0;
             if (Script.TypeOf(value).NativeEquals("number"))
                 return value.As<IntPtr>();
             return InteropUtility.castObject2Address(value, handle.As<uint>(), deleteOld).As<IntPtr>();
@@ -160,13 +160,16 @@ namespace System.Runtime.InteropServices
             var fields = type.GetFields(BindingFlags.Instance);
             for (int i = 0; i < fields.Length; i++)
             {
-                if (fields[i].FieldType.As<RuntimeType>().IsValueType)
+                unchecked
                 {
-                    sz += SizeOf(fields[i].FieldType);
-                }
-                else
-                {
-                    sz += IntPtr.Size;
+                    if (fields[i].FieldType != null && fields[i].FieldType.As<RuntimeType>().IsValueType)
+                    {
+                        sz += SizeOf(fields[i].FieldType);
+                    }
+                    else
+                    {
+                        sz += IntPtr.Size;
+                    }
                 }
             }
             return sz;

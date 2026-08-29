@@ -12,9 +12,20 @@ internal partial class InternalJSImportMethods
 
     private static extern partial Task<string> GetInitialUpdateCore();
 
-    [NetJs.Template("\"Development\"", "Debug")]
-    [NetJs.Template("\"Production\"", "Release")]
-    private static extern partial string GetApplicationEnvironmentCore();
+    //[NetJs.Template("\"Development\"", "Debug")]
+    //[NetJs.Template("\"Production\"", "Release")]
+    [NetJs.NoJSImport]
+    private static partial string GetApplicationEnvironmentCore()
+    {
+        var env = Window.Window.localStorage.getItem("__environment__");
+        if (env is not null)
+        {
+            return env;
+        }
+        if (Window.Window.location.hostname.NativeEquals("localhost"))
+            return "Development";
+        return "Production";
+    }
 
     private static extern partial void AttachRootComponentToElementCore(string domElementSelector, int componentId, int rendererId);
 

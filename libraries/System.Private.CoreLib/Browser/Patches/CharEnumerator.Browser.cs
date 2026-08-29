@@ -10,7 +10,7 @@ namespace System
         public void Ctor(string str) //str passed to CharEnumerator may be a boxed string, if GetEnumerator is call through an interface
         {
             //THIS._str = str;
-            NetJs.Script.Write($"this._str = {NetJs.Constants.GlobalName}.{NetJs.Constants.UnboxName}(str)");
+            NetJs.Script.Write($"this.{{nameof(System.CharEnumerator._str)}} = {NetJs.Constants.GlobalName}.{NetJs.Constants.UnboxName}(str)");
         }
     }
 }

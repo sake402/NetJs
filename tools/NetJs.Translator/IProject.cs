@@ -24,7 +24,7 @@ namespace NetJs.Translator
         string GetOutputPath();
         string GetTargetFramework();
         string GetPlatform();
-        OutputMode GetOutputMode();
+        NetJsBuildFlags GetBuildFlags();
         IList<string> GetSourceFiles();
         IList<string> GetContentFiles();
         IList<string> GetLinkerFiles();

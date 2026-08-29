@@ -298,12 +298,12 @@ namespace NetJs.Translator.CSharpToJavascript
                 EnsureImported(p.Type);
                 if (symbol is IMethodSymbol method)
                 {
-                    var parameter = method.Parameters.ElementAt(i);
+                    var parameter = method.Parameters.ElementAt(node.Parent.IsKind(SyntaxKind.ExtensionBlockDeclaration) ? i - 1 : i);
                     CurrentClosure.DefineIdentifierType(p.Identifier.ValueText, CodeSymbol.From(parameter));
                 }
                 else if (symbol is IPropertySymbol property)
                 {
-                    var parameter = property.Parameters.ElementAt(i);
+                    var parameter = property.Parameters.ElementAt(node.Parent.IsKind(SyntaxKind.ExtensionBlockDeclaration) ? i - 1 : i);
                     CurrentClosure.DefineIdentifierType(p.Identifier.ValueText, CodeSymbol.From(parameter));
                 }
                 else if (p.Type != null)
@@ -1343,7 +1343,8 @@ namespace NetJs.Translator.CSharpToJavascript
                             }
                             if (!isExplicitInvoke)
                             {
-                                CurrentTypeWriter.Write(node, ".Invoke");
+                                CurrentTypeWriter.Write(node, ".");
+                                CurrentTypeWriter.Write(node, methodMetadata?.OverloadName ?? "Invoke");
                             }
                         }
                     }

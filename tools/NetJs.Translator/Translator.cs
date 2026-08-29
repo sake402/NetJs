@@ -1,21 +1,24 @@
-﻿using NetJs.Translator.CSharpToJavascript;
-using NetJs.Translator.RazorToCSharp;
+﻿using LivingThing.Core.Frameworks.Common.OneOf;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Emit;
+using NetJs.Translator.CSharpToJavascript;
+using NetJs.Translator.RazorToCSharp;
+using NUglify;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Runtime.Serialization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using System.Threading;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
-using LivingThing.Core.Frameworks.Common.OneOf;
-using System.IO.Compression;
-using System.Linq.Expressions;
 
 namespace NetJs.Translator
 {
@@ -153,6 +156,7 @@ namespace NetJs.Translator
 
         Task RewiteSecondPass()
         {
+            var workspace = new AdhocWorkspace();
             return $"Rewriting.2".ProfileAsync(async () =>
             {
                 var partialClassGroupings = syntaxTrees
@@ -162,11 +166,29 @@ namespace NetJs.Translator
                 Parallel.ForEach(syntaxTrees.Select((tree, i) => (tree, i)), new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, tree =>
                 {
                     var visitor = new SecondPassRewriter(csCompilation, tree.tree, partialClassGroupings);
-                    var newTree = (((CSharpSyntaxNode)tree.tree.GetRoot()).Accept(visitor))
+                    //var unformattedTree = ((CSharpSyntaxNode)tree.tree.GetRoot()).Accept(visitor)!;
+
+                    var newTree = ((CSharpSyntaxNode)tree.tree.GetRoot()).Accept(visitor)
+                    //!.NormalizeWhitespace()
                     !.SyntaxTree
                     .WithFilePath(tree.tree.FilePath);
-                    var typesInTree = newTree.GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>();
+
+                    //var newTree = Microsoft.CodeAnalysis.Formatting.Formatter.Format(unformattedTree, workspace)
+                    //!.SyntaxTree
+                    //.WithFilePath(tree.tree.FilePath); 
+
                     var sourceCode = newTree.GetText().ToString();
+                    ////Regex transform block comments to line comments (Extremely fast preprocessing)
+                    //string sanitizedSource = Regex.Replace(sourceCode, @"/\*\*([\s\S]*?)\*/", m =>
+                    //{
+                    //    var lines = m.Groups[1].Value.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+                    //    return string.Join(Environment.NewLine, lines.Select(l => "/// " + l.TrimStart(' ', '*')));
+                    //});
+                    //newTree = CSharpSyntaxTree.ParseText(sanitizedSource);
+                    //sourceCode = newTree.GetRoot().NormalizeWhitespace().ToFullString();
+
+
+                    var typesInTree = newTree.GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>();
                     foreach (var t in typesInTree)
                     {
                         var name = t.CreateFullMemberName();
@@ -222,7 +244,7 @@ namespace NetJs.Translator
             {
                 var resourceFiles = contentFiles.Where(e => e.EndsWith(".resx")).ToArray();
                 var rootNamespace = _project.GetNamespace();
-                var rSources = ResXGenerator.GenerateStaticResourceInlined(null, _project.GetName(useNetJsFormat:false), _project.DirectoryPath, useNamespace: (srFile) =>
+                var rSources = ResXGenerator.GenerateStaticResource(null, _project.GetName(useNetJsFormat: false), _project.DirectoryPath, useNamespace: (srFile) =>
                 {
                     var folder = Path.GetRelativePath(_project.DirectoryPath, Path.GetDirectoryName(srFile)!);
                     var ns = folder.TrimStart('.', '/', '\\').Replace("/", ".").Replace("\\", ".");
@@ -378,7 +400,8 @@ namespace NetJs.Translator
                     {
                         var relativePath = Path.GetRelativePath(refFolder, file);
                         pendingTask.Add(_output.Output(global, relativePath, file));
-                        if (Path.GetExtension(file).ToLower() == ".js" && !sortedOutputtedJsFiles.Contains(relativePath))
+                        var extension = Path.GetExtension(file).ToLower();
+                        if (extension == ".js" && !file.EndsWith(".min.js") && !sortedOutputtedJsFiles.Contains(relativePath))
                             sortedOutputtedJsFiles.Add(relativePath);
                     }
                 }
@@ -391,11 +414,7 @@ namespace NetJs.Translator
             {
                 var relativePath = Path.GetRelativePath(_project.GetFolder(), file);
                 var outputPath = !relativePath.StartsWith(Constants.OutputFolderName + Path.DirectorySeparatorChar) ? Constants.OutputFolderName + Path.DirectorySeparatorChar + relativePath : relativePath;
-                if (outputPath == $"wwwroot{Path.DirectorySeparatorChar}blazor.netjs.js")
-                {
-                    outputPath = $"wwwroot{Path.DirectorySeparatorChar}_framework{Path.DirectorySeparatorChar}blazor.netjs.js";
-                }
-                else if (isRCL)
+                if (isRCL)
                 {
                     outputPath = outputPath.Replace("wwwroot" + Path.DirectorySeparatorChar, $"wwwroot{Path.DirectorySeparatorChar}_content{Path.DirectorySeparatorChar}{_project.GetName()}{Path.DirectorySeparatorChar}");
                 }
@@ -487,7 +506,30 @@ namespace NetJs.Translator
                         //if (metadata != null)
                         //{
                         if (global.ShouldExportType(dep.OriginalDefinition, null) && stubbed.Add(dep.OriginalDefinition))
-                            stringBuilder.AppendLine($"        {Constants.AssemblyRegistryName}.{Constants.AssemblyTypeProxyName}(\"{dep.OriginalDefinition.CreateSignature(global, withGlobalNamespace: false, withAssemblySlugNamespace: true)}\");");
+                        {
+                            var typeMetadata = global.GetRequiredMetadata(dep.OriginalDefinition);// SyntaxSymbols.GetValueOrDefault(node)?.First() ?? default;
+                            string fullClassName;
+                            if (typeMetadata.OverloadName != null)
+                            {
+                                if (dep.OriginalDefinition.Arity > 0)
+                                {
+                                    fullClassName = typeMetadata.OverloadName.TrimEnd('$') + $"<{string.Join(",", Enumerable.Range(1, dep.OriginalDefinition.Arity).Select(n => ""))}>";
+                                }
+                                else
+                                {
+                                    fullClassName = typeMetadata.OverloadName;
+                                }
+                            }
+                            else
+                            {
+                                fullClassName = typeMetadata.OverloadName!;
+                            }
+                            if (global.BuildFlags.HasFlag(NetJsBuildFlags.Global) && fullClassName.StartsWith(global.GlobalName + "."))
+                            {
+                                fullClassName = fullClassName.Substring(global.GlobalName.Length + 1);
+                            }
+                            stringBuilder.AppendLine($"        {Constants.AssemblyRegistryName}.{Constants.AssemblyTypeProxyName}(\"{fullClassName}\");");
+                        }
                         //}
                     }
                 }
@@ -605,14 +647,14 @@ namespace NetJs.Translator
                 outputted.Add(symbol.OriginalDefinition);
             }
 
-            if (global.OutputMode.HasFlag(OutputMode.SingleFile))
+            if (global.BuildFlags.HasFlag(NetJsBuildFlags.SingleFile))
             {
                 //var existingFolder = Path.Combine(output.OutputPath, Constants.OutputFolderName);
                 //if (Directory.Exists(existingFolder))
                 //Directory.Delete(existingFolder, true);
                 string bootCodes = "";
                 string codes;
-                if (global.OutputMode.HasFlag(OutputMode.Global))
+                if (global.BuildFlags.HasFlag(NetJsBuildFlags.Global))
                 {
                     StringBuilder stringBuilder = new();
                     StringBuilder bootStringBuilder = new();
@@ -687,26 +729,52 @@ namespace NetJs.Translator
                 var refAssemblySlugs = string.Join(", ", csCompilation.SourceModule.ReferencedAssemblySymbols.Select(a => global.GetAssemblyGlobalSlug(a)));
                 var refAssemblyNames = string.Join(", ", csCompilation.SourceModule.ReferencedAssemblySymbols.Select(a => "\"" + a.Name + "\""));
                 var outputFileName = Constants.OutputFolderName + Path.DirectorySeparatorChar + _project.GetName() + ".js";
-                var stream = StringToStream(global.OutputMode.HasFlag(OutputMode.Global) ? @$"
+                var appDomain = isSystemPrivateCoreLib ? (INamedTypeSymbol)global.GetSymbol("System.AppDomain", null) : null;
+                var initDomain = isSystemPrivateCoreLib ? appDomain?.GetMembers("Initialize").Single() : null;
+                var initDomainMetadata = initDomain!= null? global.GetRequiredMetadata(initDomain) : null;
+                var createAssembly = isSystemPrivateCoreLib ? appDomain?.GetMembers("CreateAssembly").Single() : null;
+                var createAssemblyMetadata = createAssembly != null ? global.GetRequiredMetadata(createAssembly) : null;
+                //{ (isSystemPrivateCoreLib ? $"{global.GlobalName}.{Constants.AssemblyRegistryName} = {createAssemblyMetadata?.InvocationName}{global.GlobalName}.{global.GetAssemblyGlobalSlug(global.Compilation.Assembly)}.{(global.BuildFlags.HasFlag(NetJsBuildFlags.MinifyNamespaces) ? "S" : "System")}.AppDomain.{Constants.AssemblyRegistryName};" : "")}
+                //{ (isSystemPrivateCoreLib ? $"{global.GlobalName}.{global.GetAssemblyGlobalSlug(global.Compilation.Assembly)}.{(global.BuildFlags.HasFlag(NetJsBuildFlags.MinifyNamespaces) ? "S" : "System")}.AppDomain.{Constants.AppDomainInitialize}($asm)" : "")}
+                var jsCode = global.BuildFlags.HasFlag(NetJsBuildFlags.Global) ? @$"
 (function ($global, {global.GlobalName}{(refAssemblySlugs.Length > 0 ? ", " : "")}{refAssemblySlugs}) {{
     ""use strict"";
     let _;
     {(isSystemPrivateCoreLib ? "let $asm; function $setasm(v){ $asm = v; }" : "")}
     {bootCodes}
-    {(isSystemPrivateCoreLib ? $"{global.GlobalName}.{Constants.AssemblyRegistryName} = {global.GlobalName}.{global.GetAssemblyGlobalSlug(global.Compilation.Assembly)}.System.AppDomain.{Constants.AssemblyRegistryName};" : "")}
+    {(isSystemPrivateCoreLib ? $"{global.GlobalName}.{Constants.AssemblyRegistryName} = {createAssemblyMetadata?.InvocationName};" : "")}
 	{global.GlobalName}.{Constants.AssemblyRegistryName}(
     ""{_project.GetAssemblyName()}"", 
     {JsonSerializer.Serialize(reflectionMetadata, ReflectionMetadataBuilder.SerializationOption)},
     function({Constants.AssemblyRegistryName})
 	{{
         {(isSystemPrivateCoreLib ? "$setasm($asm);" : "")}
-        {(isSystemPrivateCoreLib ? $"{global.GlobalName}.{global.GetAssemblyGlobalSlug(global.Compilation.Assembly)}.System.AppDomain.{Constants.AppDomainInitialize}($asm)" : "")}
+        {(isSystemPrivateCoreLib ? $"{initDomainMetadata?.InvocationName}($asm)" : "")}
         {codes}
 	}});
-}})(window, window.{Constants.ProjectName}.{Constants.BootName}(), ...window.{Constants.ProjectName}.$require({refAssemblyNames}))" : codes);
+}})(window, window.{Constants.ProjectName}.{Constants.BootName}(), ...window.{Constants.ProjectName}.$require({refAssemblyNames}))" : codes;
+                var stream = StringToStream(jsCode);
                 pendingTask.Add(_output.Output(global, outputFileName, stream));
                 sortedOutputtedJsFiles.Add(outputFileName);
                 packages.Add((outputFileName, stream));
+
+                var minified = NUglify.Uglify.Js(jsCode, new NUglify.JavaScript.CodeSettings
+                {
+                    IgnoreErrorList = "JS1306"
+                });
+                //if (!minified.HasErrors)
+                {
+                    var laxEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: false);
+                    byte[] fileBytes = laxEncoding.GetBytes(minified.Code);
+                    var uglyStream = new MemoryStream(fileBytes);
+                    var uglyFileName = Path.ChangeExtension(outputFileName, ".min.js");
+                    pendingTask.Add(_output.Output(global, uglyFileName, uglyStream));
+                    //sortedOutputtedJsFiles.Add(uglyFileName);
+                    packages.Add((uglyFileName, uglyStream));
+#if DEBUG
+                    minified.Code.TokenHistogram();
+#endif
+                }
             }
             else
             {
@@ -720,7 +788,7 @@ namespace NetJs.Translator
                     {
                         var relative = Path.GetRelativePath(_project.DirectoryPath, visitor.Key.FilePath);
                         var filePath = (_project.DirectoryPath.Split('\\', '/').LastOrDefault() ?? "") + Path.ChangeExtension(relative, "js");
-                        pendingTask.Add(_output.Output(global, filePath, StringToStream(global.OutputMode.HasFlag(OutputMode.Global) ? @$"
+                        pendingTask.Add(_output.Output(global, filePath, StringToStream(global.BuildFlags.HasFlag(NetJsBuildFlags.Global) ? @$"
 (function ({global.GlobalName}, $global) {{
     ""use strict"";
     let _;
@@ -767,14 +835,14 @@ namespace NetJs.Translator
     {(string.Join("\r\n    ", jss.Select(o => $"<script type=\"text/javascript\" src=\"{Path.GetFileName(o)}\"{(o.EndsWith("blazor.netjs.js") ? " autostart=\"false\"" : "")}></script>")))}
 ";
                 var insertScripts = @$"
-	<script type=""{(global.OutputMode.HasFlag(OutputMode.Global) ? "text/javascript" : "module")}"">
+	<script type=""{(global.BuildFlags.HasFlag(NetJsBuildFlags.Global) ? "text/javascript" : "module")}"">
         ({(global.MainEntry.IsAsync ? "async " : "")}function ({global.GlobalName}, $global) {{
             ""use strict"";
             {(hasBlazorNet && indexFile == null ? "Blazor.start();" : "")}
             {StreamToString(_output.HtmlScriptContent)}
-            {(!global.OutputMode.HasFlag(OutputMode.Global) ? $"import {global.MainEntry.ContainingSymbol.Name} from \"/{Path.GetFileNameWithoutExtension(global.MainEntry.DeclaringSyntaxReferences.First().SyntaxTree.FilePath)}.js\"" : "")}
-            {(!global.OutputMode.HasFlag(OutputMode.Global) ? $"{global.MainEntry.ContainingSymbol.Name}.Main();" : "")}
-            {(global.OutputMode.HasFlag(OutputMode.Global) ? $"{(global.MainEntry.IsAsync ? "await " : "")}{meta.InvocationName}();" : "")}
+            {(!global.BuildFlags.HasFlag(NetJsBuildFlags.Global) ? $"import {global.MainEntry.ContainingSymbol.Name} from \"/{Path.GetFileNameWithoutExtension(global.MainEntry.DeclaringSyntaxReferences.First().SyntaxTree.FilePath)}.js\"" : "")}
+            {(!global.BuildFlags.HasFlag(NetJsBuildFlags.Global) ? $"{global.MainEntry.ContainingSymbol.Name}.Main();" : "")}
+            {(global.BuildFlags.HasFlag(NetJsBuildFlags.Global) ? $"{(global.MainEntry.IsAsync ? "await " : "")}{meta.InvocationName}();" : "")}
         }})(window.{Constants.ProjectName}.{Constants.BootName}(), window)
 	</script>
 ";

@@ -11,8 +11,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <EnableDefaultItems>true</EnableDefaultItems>
+    <RootNamespace>Microsoft.AspNetCore.Components.Authorization</RootNamespace>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-	  <RootNamespace>Microsoft.AspNetCore.Components.Authorization</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <!--<Reference Include="Microsoft.AspNetCore.Authorization" />-->

@@ -63,36 +63,38 @@ namespace NetJs
                         return _array[index + _offset];
                 }
             }
-            return NetJs.Script.Write<object>("Reflect.get(this._array, property, this._array)");
+            return Window.Reflect.get(_array, property, _array);
+            //return NetJs.Script.Write<object>("Reflect.get(this.{nameof(ArrayWindowProxyHandler._array)}, property, this.{nameof(ArrayWindowProxyHandler._array)})");
         }
-        public bool Set(object target, string propertyName, object value, object receiver)
+        public bool Set(object target, string property, object value, object receiver)
         {
-            var propertyType = NetJs.Script.TypeOf(propertyName);
+            var propertyType = NetJs.Script.TypeOf(property);
             if (propertyType.NativeEquals("string"))
             {
                 unchecked
                 {
-                    var index = NetJs.Script.ParseInt(propertyName);
+                    var index = NetJs.Script.ParseInt(property);
                     if (!NetJs.Script.IsNaN(index))
                         _array[index + _offset] = value;
                 }
-                if (propertyName.NativeEquals(Array.ElementTypeName))
+                if (property.NativeEquals(Array.ElementTypeName))
                 {
                     this[Array.ElementTypeName] = value;
                     ElementType = value.As<Type>();
                 }
-                else if (propertyName.NativeEquals(Array.SizesName))
+                else if (property.NativeEquals(Array.SizesName))
                 {
                     this[Array.SizesName] = value;
                 }
-                else if (propertyName.NativeEquals(Array.LowerBoundsName))
+                else if (property.NativeEquals(Array.LowerBoundsName))
                 {
                     this[Array.LowerBoundsName] = value;
                 }
             }
             else
             {
-                NetJs.Script.Write<object>("Reflect.set(this._array, property, value, this._array)");
+                Window.Reflect.set(_array, property, value, _array);
+                //NetJs.Script.Write<object>("Reflect.set(this.{nameof(ArrayWindowProxyHandler._array)}, property, value, this.{nameof(ArrayWindowProxyHandler._array)})");
             }
             return true;
         }

@@ -180,9 +180,9 @@ namespace System
             _delegate._target = d._target;
             object? trampoline()
             {
-                object? r;
+                object? result;
                 int i = 0;
-                var delegates = NetJs.Script.Write<Delegate[]>("_delegate.delegates");
+                var delegates = NetJs.Script.Write<Delegate[]>("_delegate.{nameof(System.MulticastDelegate.delegates)}");
                 int len = delegates.Length;
                 var args = NetJs.Script.Write<object[]>("arguments");
                 do
@@ -190,10 +190,14 @@ namespace System
                     unchecked
                     {
                         var del = delegates[i];
-                        r = NetJs.Script.Write<object?>("del.Invoke.apply(del, args)");
+                        var invokeMethodModel = del.GetClassPrototype().Metadata?.Methods?.Filter(m => m.Name.NativeEquals("Invoke"))[0];
+                        var invokeName = invokeMethodModel?.GetOutputName() ?? "Invoke";
+                        var invokeMethod = del[invokeName].As<NativeFunction<object?>>();
+                        result = invokeMethod.InvokeApply(del, args);
+                        // r = NetJs.Script.Write<object?>("del.Invoke.apply(del, args)");
                     }
                 } while (++i < len);
-                return r;
+                return result;
             }
             _delegate[NetJs.Constants.NativeDelagateFunctionName] = trampoline;
             return _delegate;
@@ -240,7 +244,7 @@ namespace System
                 return RuntimeHelpers.NativeFunctionDispatch(info._model.Flags.TypeHasFlag(MemberFlagsModel.IsStatic) ? prototype : target, info._model, args);
                 //return info.Invoke(target, NetJs.Script.Arguments());
             }
-            RuntimeHelpers.NativeFunctionDispatch(_delegate, NetJs.Constants.DefaultConstructorName, target, trampoline);
+            RuntimeHelpers.NativeFunctionDispatch(_delegate, NetJs.Constants.DefaultConstructorName, delegateType._prototype, target, trampoline);
             //NetJs.Script.Write("ctor.call(_delegate, target, trampoline)");
             return _delegate.As<Delegate>();
         }
@@ -282,7 +286,7 @@ namespace System
                 {
                     unchecked
                     {
-                        var methodModel = prototype.Metadata!.Methods!.Filter(f => (f.OutputName ?? f.Name).NativeEquals(nativeFunctionName))[0] ?? null;
+                        var methodModel = prototype.Metadata!.Methods!.Filter(f => (f.GetOutputName()).NativeEquals(nativeFunctionName))[0] ?? null;
                         if (NetJs.Script.IsDefined(methodModel))
                         {
                             var info = (MethodInfo?)AppDomain.GetMember(methodModel!.Handle.As<uint>());
@@ -394,7 +398,7 @@ namespace System
                         MethodModel? thatInvoke = null;
                         for (int i = 0; i < thatPrototype.Metadata!.Methods!.Length; i++)
                         {
-                            if (thatPrototype.Metadata!.Methods[i].Name == "Invoke")
+                            if (thatPrototype.Metadata!.Methods[i].Name.NativeEquals("Invoke"))
                             {
                                 thatInvoke = thatPrototype.Metadata!.Methods[i];
                                 break;

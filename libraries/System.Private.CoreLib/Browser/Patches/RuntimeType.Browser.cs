@@ -18,6 +18,7 @@ namespace System
         internal string _metadataFullName;
         internal RuntimeAssembly? _assembly;
         internal GenericTypePrototypeProvider? _prototypeProvider;
+        [NetJs.Name(Constants.RuntimeTypePrototypeName)]
         internal TypePrototype _prototype;
         //TypeModel _metadata;
         internal RuntimeType? _parentGenericTypeDefinition = null;
@@ -333,7 +334,7 @@ namespace System
                             {
                                 var key = keys[i];
                                 // Skip the standard constructor property to avoid overwriting native setup
-                                if (key == "constructor") continue;
+                                if (key.NativeEquals("constructor")) continue;
                                 if (filterKey != null && filterKey(key) == false) continue;
                                 // Define the member onto the native prototype with original descriptors intact
                                 Object.DefineProperty(nativePrototype, key, descriptors[key]);
@@ -509,14 +510,16 @@ namespace System
         [Name(Constants.TypeIsAssignableName)]
         internal static bool IsSubClassOfInternal(RuntimeType child, RuntimeType @base)
         {
+            if (@base == typeof(object) && !child.IsPointer) //every type derives from object, even if child is an interface
+                return true;
             if (@base == child/* || child.FullName == @base.FullName*/)
                 return true;
             //Ensure the child is initialized, else we cant access its model
-            child.EnsureSelfInitialized();
+            //child.EnsureSelfInitialized();
             if (Script.IsDefined(child._prototype.Base))//._model.As<TypeModel>().BaseType))
             {
                 var childBase = child._prototype.Base!.Type.As<RuntimeType>();// GetTypeFromHandle(child._model.As<TypeModel>().BaseType!.Value.As<uint>());
-                if (childBase != null && IsSubClassOfInternal(childBase, @base))
+                if (childBase is not null && IsSubClassOfInternal(childBase, @base))
                     return true;
             }
             if (@base._prototype.Kind == TypeKindModel.Interface && Script.IsDefined(child._prototype.Interfaces))
@@ -526,7 +529,7 @@ namespace System
                     unchecked
                     {
                         var childBase = child._prototype.Interfaces![i].Type.As<RuntimeType>();// GetTypeFromHandle(child._prototype.Interfaces![i].TypeHandle.As<uint>());
-                        if (childBase != null && IsSubClassOfInternal(childBase, @base))
+                        if (childBase is not null && IsSubClassOfInternal(childBase, @base))
                             return true;
                     }
                 }
@@ -546,7 +549,10 @@ namespace System
             {
                 if (name != null)
                 {
-                    info = info.Filter(i => i.Name == name);
+                    info = info.Filter(i =>
+                    {
+                        return i.Name.Equals(name, bindingAttr.HasFlag(BindingFlags.IgnoreCase) ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
+                    });
                 }
                 info = info.Filter(i =>
                 {
@@ -574,6 +580,10 @@ namespace System
             if (memberTypes.TypeHasFlag(MemberTypes.Method))
             {
                 members = members.ArrayConcat(Filter(_methods)).As<MemberInfo[]>();
+            }
+            if (!bindingAttr.HasFlag(BindingFlags.DeclaredOnly) && BaseType != null)
+            {
+                members = members.ArrayConcat(BaseType.As<RuntimeType>().GetMembersInternal(memberTypes & ~MemberTypes.Constructor/*Constructors are bound to only its instance, not inheritable*/, bindingAttr, name, parameterTypes, listType)).As<MemberInfo[]>();
             }
             return members;
         }
@@ -783,16 +793,15 @@ namespace System
         [NetJs.MemberReplace(nameof(GetParentType) + "(QCallTypeHandle, ObjectHandleOnStack)")]
         private static void GetParentTypeImpl(QCallTypeHandle type, ObjectHandleOnStack res)
         {
-            var runtimeType = RuntimeHelpers.QCallTypeHandleToRuntimeType(type);
+            var runtimeType = type.QCallTypeHandleToRuntimeType();
             if (runtimeType._prototype.Kind == TypeKindModel.Class ||
                 runtimeType._prototype.Kind == TypeKindModel.Struct ||
                 runtimeType._prototype.Kind == TypeKindModel.Delegate ||
                 runtimeType._prototype.Kind == TypeKindModel.Enum)
             {
-                runtimeType.EnsureSelfInitialized();
-                if (NetJs.Script.IsDefined(runtimeType._model.As<TypeModel>().BaseType))
+                if (NetJs.Script.IsDefined(runtimeType._prototype.Base))
                 {
-                    res.GetObjectHandleOnStack<RuntimeType?>() = AppDomain.GetType(runtimeType._model.As<TypeModel>().BaseType!.Value.As<uint>());
+                    res.GetObjectHandleOnStack<RuntimeType?>() = runtimeType._prototype.Base!.Type.As<RuntimeType>();
                     return;
                 }
             }
@@ -809,7 +818,7 @@ namespace System
         private static void make_array_typeImpl(QCallTypeHandle type, int rank, ObjectHandleOnStack res)
         {
             var tp = type.QCallTypeHandleToRuntimeType();
-            var genericArray = AppDomain.GlobalTypeRegistry.GetNested($"{NetJs.Constants.SystemPrivateCoreLib}.System.Array<>");
+            var genericArray = AppDomain.GlobalTypeRegistry.GetNested($"{NetJs.Constants.SystemPrivateCoreLibSlug}.System.Array<>");
             var genericArrayType = genericArray.MakeGenericTypeInternal([tp]);
             genericArrayType._arrayTypeRank = rank;
             genericArrayType._arrayElementType = tp;
@@ -820,7 +829,7 @@ namespace System
         private static void make_byref_typeImpl(QCallTypeHandle type, ObjectHandleOnStack res)
         {
             var tp = type.QCallTypeHandleToRuntimeType();
-            var genericArray = AppDomain.GlobalTypeRegistry.GetNested($"{NetJs.Constants.SystemPrivateCoreLib}.System.RefOrPointer<>");
+            var genericArray = AppDomain.GlobalTypeRegistry.GetNested($"{NetJs.Constants.SystemPrivateCoreLibSlug}.System.RefOrPointer<>");
             var genericArrayType = genericArray.MakeGenericTypeInternal([tp]);
             res.GetObjectHandleOnStack<Type>() = genericArrayType;
         }
@@ -829,7 +838,7 @@ namespace System
         private static void make_pointer_typeImpl(QCallTypeHandle type, ObjectHandleOnStack res)
         {
             var tp = type.QCallTypeHandleToRuntimeType();
-            var genericArray = AppDomain.GlobalTypeRegistry.GetNested($"{NetJs.Constants.SystemPrivateCoreLib}.System.RefOrPointer<>");
+            var genericArray = AppDomain.GlobalTypeRegistry.GetNested($"{NetJs.Constants.SystemPrivateCoreLibSlug}.System.RefOrPointer<>");
             var genericArrayType = genericArray.MakeGenericTypeInternal([tp]);
             res.GetObjectHandleOnStack<Type>() = genericArrayType;
         }
@@ -866,9 +875,9 @@ namespace System
         }
 
         [NetJs.MemberReplace(nameof(GetEvents_internal))]
-        private RuntimeFieldInfo[] GetEvents_internalOverride(string? name, BindingFlags bindingAttr, MemberListType listType, RuntimeType reflectedType)
+        private RuntimeEventInfo[] GetEvents_internalOverride(string? name, MemberListType listType, RuntimeType reflectedType)
         {
-            return GetMembersInternal(MemberTypes.Event, bindingAttr, name, null, listType).As<RuntimeFieldInfo[]>().AsNetArray();
+            return GetMembersInternal(MemberTypes.Event, BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance, name, null, listType).As<RuntimeEventInfo[]>().AsNetArray();
         }
 
         [NetJs.MemberReplace(nameof(GetInterfaces))]

@@ -60,7 +60,7 @@ namespace System
         public static extern string[] GetOwnPropertyNames(object obj);
 
         [NetJs.Convention(NetJs.Notation.CamelCase)]
-        [NetJs.Template("{T}.prototype")]
+        [NetJs.Template("{T}")]
         public static extern TypePrototype GetPrototype<T>();
         [NetJs.Template("Object.getPrototypeOf({value})")]
         public static extern TypePrototype GetPrototypeOf(object value);
@@ -92,6 +92,12 @@ namespace System
         public static extern TypePrototype? Prototype
         {
             [NetJs.Template("Object.prototype")]
+            get;
+        }
+
+        public static extern TypePrototype? Self
+        {
+            [NetJs.Template("Object")]
             get;
         }
 
@@ -176,9 +182,10 @@ namespace System
         public virtual int GetHashCodeImpl()
         {
             var callerName = NetJs.Script.Write<string>("{global.}getCallerName()");
-            if (callerName.NativeNotEquals("GetHashCode")) //not called by subclass? call the subsclass GetHashCode if there is one
+            var getHashCodeName = NetJs.Script.Write<string>("\"{nameof(System.Object.GetHashCode())}\"");
+            if (callerName.NativeNotEquals(getHashCodeName)) //not called by subclass? call the subsclass GetHashCode if there is one
             {
-                var method = this["GetHashCode"];
+                var method = this[getHashCodeName];
                 if (NetJs.Script.IsDefined(method))
                 {
                     var unboxedThis = NetJs.Script.Unbox(this);
@@ -194,9 +201,10 @@ namespace System
         public virtual bool EqualsImpl(object? obj)
         {
             var callerName = NetJs.Script.Write<string>("{global.}getCallerName()");
-            if (callerName.NativeNotEquals("Equals")) //not called by subclass? call the subsclass GetHashCode if there is one
+            var equalsName = "Equals";// NetJs.Script.Write<string>("\"{nameof(object.Equals(object))}\"");
+            if (callerName.NativeNotEquals(equalsName)) //not called by subclass? call the subsclass Equals if there is one
             {
-                var method = this["Equals"];
+                var method = this[equalsName];
                 if (NetJs.Script.IsDefined(method))
                 {
                     var unboxedThis = NetJs.Script.Unbox(this);
@@ -818,7 +826,8 @@ namespace System
             }
             if (type._model.As<TypeModel>().KnownType.IsIntegerNumeric())
                 return value.As<int>() | 0;
-            var method = value["GetHashCode"];
+            var getHashCodeName = NetJs.Script.Write<string>("\"{nameof(System.Object.GetHashCode())}\"");
+            var method = value[getHashCodeName];
             if (NetJs.Script.IsDefined(method))
             {
                 var hashCode = NetJs.Script.Write<int>("method.call(value)");

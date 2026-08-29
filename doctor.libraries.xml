@@ -34,6 +34,12 @@ Whenever we sync our forked dotnet runtime and aspnetcore with official repo, we
 	</Project>
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Runtime.InteropServices.JavaScript\src\System.Runtime.InteropServices.JavaScript.csproj">
 	</Project>
+	<Project Include="$(DotnetGitRoot)runtime\src\libraries\Microsoft.Bcl.Cryptography\src\Microsoft.Bcl.Cryptography.csproj">
+		<ItemGroup>
+			<ProjectReference Include="$(CoreLibProject)" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)System.Security.Cryptography\NetJs.System.Security.Cryptography.csproj" />
+		</ItemGroup>
+	</Project>
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Collections\src\System.Collections.csproj">
 	</Project>
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Collections.Concurrent\src\System.Collections.Concurrent.csproj">
@@ -499,6 +505,114 @@ Whenever we sync our forked dotnet runtime and aspnetcore with official repo, we
 			<ProjectReference Include="$(CoreLibProject)" />
 			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.AspNetCore.Authorization\NetJs.Microsoft.AspNetCore.Authorization.csproj" />
 			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.AspNetCore.Components\NetJs.Microsoft.AspNetCore.Components.csproj" />
+		</ItemGroup>
+	</Project>
+	<Project Include="$(DotnetGitRoot)aspnetcore\src\Http\Headers\src\Microsoft.Net.Http.Headers.csproj">
+		<PropertyGroup>
+			<ImplicitUsings>enable</ImplicitUsings>
+			<EnableDefaultItems>true</EnableDefaultItems>
+		</PropertyGroup>
+		<ItemGroup>
+			<ProjectReference Include="$(CoreLibProject)" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.Primitives\NetJs.Microsoft.Extensions.Primitives.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)System.Linq\NetJs.System.Linq.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)System.Net.Http\NetJs.System.Net.Http.csproj" />
+		</ItemGroup>
+	</Project>
+	<Project Include="$(DotnetGitRoot)aspnetcore\src\Http\WebUtilities\src\Microsoft.AspNetCore.WebUtilities.csproj">
+		<PropertyGroup>
+			<ImplicitUsings>enable</ImplicitUsings>
+			<EnableDefaultItems>true</EnableDefaultItems>
+			<DefineConstants>NETCOREAPP</DefineConstants>
+		</PropertyGroup>
+		<ItemGroup>
+			<ProjectReference Include="$(CoreLibProject)" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Net.Http.Headers\NetJs.Microsoft.Net.Http.Headers.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)System.IO.Pipelines\NetJs.System.IO.Pipelines.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)System.Text.Encodings.Web\NetJs.System.Text.Encodings.Web.csproj" />
+		</ItemGroup>
+	</Project>
+	<Project Include="$(DotnetGitRoot)azure-activedirectory-identitymodel-extensions-for-dotnet\src\Microsoft.IdentityModel.Abstractions\Microsoft.IdentityModel.Abstractions.csproj">
+		<PropertyGroup>
+			<EnableDefaultItems>true</EnableDefaultItems>
+			<TargetFramework>$(NetCoreAppCurrent)</TargetFramework>
+			<TargetFrameworks>$(NetCoreAppCurrent)</TargetFrameworks>
+			<AssemblyName>NetJs.Microsoft.IdentityModel.Abstractions</AssemblyName>
+		</PropertyGroup>
+		<ItemGroup>
+			<ProjectReference Include="$(CoreLibProject)" />
+		</ItemGroup>
+	</Project>
+	<Project Include="$(DotnetGitRoot)azure-activedirectory-identitymodel-extensions-for-dotnet\src\Microsoft.IdentityModel.Logging\Microsoft.IdentityModel.Logging.csproj">
+		<PropertyGroup>
+			<EnableDefaultItems>true</EnableDefaultItems>
+			<TargetFramework>$(NetCoreAppCurrent)</TargetFramework>
+			<TargetFrameworks>$(NetCoreAppCurrent)</TargetFrameworks>
+			<TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+			<AssemblyName>NetJs.Microsoft.IdentityModel.Logging</AssemblyName>
+		</PropertyGroup>
+		<ItemGroup>
+			<ProjectReference Include="$(CoreLibProject)" />
+			<ProjectReference Include="$(LoggingGenerator)" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.IdentityModel.Abstractions\NetJs.Microsoft.IdentityModel.Abstractions.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)System.Net.Http\NetJs.System.Net.Http.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)System.Linq\NetJs.System.Linq.csproj" />
+		</ItemGroup>
+	</Project>
+	<Project Include="$(DotnetGitRoot)azure-activedirectory-identitymodel-extensions-for-dotnet\src\Microsoft.IdentityModel.Tokens\Microsoft.IdentityModel.Tokens.csproj">
+		<PropertyGroup>
+			<EnableDefaultItems>true</EnableDefaultItems>
+			<TargetFramework>$(NetCoreAppCurrent)</TargetFramework>
+			<TargetFrameworks>$(NetCoreAppCurrent)</TargetFrameworks>
+			<TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+			<SignAssembly>false</SignAssembly>
+			<AssemblyName>NetJs.Microsoft.IdentityModel.Tokens</AssemblyName>
+		</PropertyGroup>
+		<ItemGroup>
+			<ProjectReference Include="$(CoreLibProject)" />
+			<ProjectReference Include="$(LoggingGenerator)" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.IdentityModel.Logging\NetJs.Microsoft.IdentityModel.Logging.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)System.Text.Json\NetJs.System.Text.Json.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)System.Private.Xml\NetJs.System.Private.Xml.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.Logging\NetJs.Microsoft.Extensions.Logging.csproj" />
+		</ItemGroup>
+		<ItemGroup>
+			<InternalsVisibleTo Include="NetJs.Microsoft.IdentityModel.JsonWebTokens" />
+			<InternalsVisibleTo Include="NetJs.System.IdentityModel.Tokens.Jwt" />
+		</ItemGroup>
+	</Project>
+	<Project Include="$(DotnetGitRoot)azure-activedirectory-identitymodel-extensions-for-dotnet\src\Microsoft.IdentityModel.JsonWebTokens\Microsoft.IdentityModel.JsonWebTokens.csproj">
+		<PropertyGroup>
+			<EnableDefaultItems>true</EnableDefaultItems>
+			<TargetFramework>$(NetCoreAppCurrent)</TargetFramework>
+			<TargetFrameworks>$(NetCoreAppCurrent)</TargetFrameworks>
+			<TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+			<SignAssembly>false</SignAssembly>
+			<AssemblyName>NetJs.Microsoft.IdentityModel.JsonWebTokens</AssemblyName>
+		</PropertyGroup>
+		<ItemGroup>
+			<ProjectReference Include="$(CoreLibProject)" />
+			<ProjectReference Include="$(RegexGenerator)" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.IdentityModel.Tokens\NetJs.Microsoft.IdentityModel.Tokens.csproj" />
+		</ItemGroup>
+		<ItemGroup>
+			<InternalsVisibleTo Include="NetJs.System.IdentityModel.Tokens.Jwt" />
+		</ItemGroup>
+	</Project>
+	<Project Include="$(DotnetGitRoot)azure-activedirectory-identitymodel-extensions-for-dotnet\src\System.IdentityModel.Tokens.Jwt\System.IdentityModel.Tokens.Jwt.csproj">
+		<PropertyGroup>
+			<EnableDefaultItems>true</EnableDefaultItems>
+			<TargetFramework>$(NetCoreAppCurrent)</TargetFramework>
+			<TargetFrameworks>$(NetCoreAppCurrent)</TargetFrameworks>
+			<TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+			<SignAssembly>false</SignAssembly>
+			<AssemblyName>NetJs.System.IdentityModel.Tokens.Jwt</AssemblyName>
+		</PropertyGroup>
+		<ItemGroup>
+			<ProjectReference Include="$(CoreLibProject)" />
+			<ProjectReference Include="$(RegexGenerator)" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.IdentityModel.JsonWebTokens\NetJs.Microsoft.IdentityModel.JsonWebTokens.csproj" />
+			<ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.IdentityModel.Tokens\NetJs.Microsoft.IdentityModel.Tokens.csproj" />
 		</ItemGroup>
 	</Project>
 </Projects>

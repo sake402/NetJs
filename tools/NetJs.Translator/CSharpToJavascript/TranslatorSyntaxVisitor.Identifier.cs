@@ -109,7 +109,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     currentExpressionNamespace += ".";
                 currentExpressionNamespace += ns.Name;
             }
-            else if (identifierSymbol is IFieldSymbol field && field.IsConst && (_global.OutputMode.HasFlag(OutputMode.InlineConstants) || _global.HasAttribute(field, typeof(InlineConstAttribute).FullName, this, false, out _)))
+            else if (identifierSymbol is IFieldSymbol field && field.IsConst && (_global.BuildFlags.HasFlag(NetJsBuildFlags.InlineConstants) || _global.HasAttribute(field, typeof(InlineConstAttribute).FullName, this, false, out _)))
             {
                 if (!TryWriteConstant(node, field.Type, node)) //this shouldn't fail, but if it does we need to know
                 {

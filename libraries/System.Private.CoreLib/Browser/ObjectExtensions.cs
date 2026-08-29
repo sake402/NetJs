@@ -17,8 +17,8 @@ public static class ObjectExtensions
     [NetJs.Template("{global.}" + Constants.TryCastName + "({obj}, {T})")]
     public static extern T TryCast<T>(this object obj);
 
-    [NetJs.Template("{global.}" + Constants.IsTypeName + "({obj}, {T}._prototype)")]
+    [NetJs.Template("{global.}" + Constants.IsTypeName + "({obj}, {T}.{nameof(RuntimeType._prototype)})")]
     public static extern bool Is<T>(this object obj);
-    [NetJs.Template("{global.}" + Constants.IsTypeName + "({obj}, {type}._prototype)")]
+    [NetJs.Template("{global.}" + Constants.IsTypeName + "({obj}, {type}.{nameof(RuntimeType._prototype)})")]
     public static extern bool Is(this object obj, System.Type type);
 }

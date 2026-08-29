@@ -70,7 +70,7 @@ namespace NetJs.Compiler
             var csProjPath = $"{dotnetJsSolutionPath}/libraries/System.Private.CoreLib/NetJs.System.Private.CoreLib.csproj";
             File.WriteAllText(csProjPath, monoCsProject);
 
-            ResXGenerator.GenerateStaticResourceInlined(null, "System.Private.CoreLib", PrivateCoreLibSharedProjectDirectory.Replace("$(DotnetRuntimeRoot)", DotnetRuntimeRoot), Path.GetDirectoryName(csProjPath)!, "SR1");
+            ResXGenerator.GenerateStaticResource(null, "System.Private.CoreLib", PrivateCoreLibSharedProjectDirectory.Replace("$(DotnetRuntimeRoot)", DotnetRuntimeRoot), Path.GetDirectoryName(csProjPath)!, "SR1");
         }
     }
 }

@@ -223,7 +223,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 CurrentTypeWriter.Write(node, $" {_operator} ");
                 if (lhsExpression.IsKind(SyntaxKind.DeclarationExpression)/* is DeclarationExpressionSyntax*/)
                 {
-                    CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.Destructure}(");
+                    CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.DestructureName}(");
                 }
             }
             bool needBoxing = lhsType != null && rhsType != null && NeedBoxing(lhsType, rhsType);

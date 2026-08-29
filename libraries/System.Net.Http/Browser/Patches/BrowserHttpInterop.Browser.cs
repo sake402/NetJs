@@ -104,6 +104,16 @@ namespace System.Net.Http
             return session.response!.type!;
         }
 
+        static unsafe DataView? ToDataView(in MemoryHandle pinBuffer)
+        {
+            RefOrPointer<byte>? mref = NetJs.Script.Ref<byte>(pinBuffer.Pointer);
+            if (mref != null)
+            {
+                return mref.GetDataView();
+            }
+            return null;
+        }
+        
         public static async Task DoFetch(
             JSObject httpController,
             string uri,
@@ -123,11 +133,21 @@ namespace System.Net.Http
                     header.append(headerNames[i], headerValues[i]);
                 }
             }
-            DataView? body = null;//TODO: populate from pinBuffer
+            var method = "GET";
+            if (optionValues != null)
+            {
+                var methodIndex = optionNames.ArrayIndexOf("method");
+                unchecked
+                {
+                    if (methodIndex >= 0)
+                        method = optionValues[methodIndex].As<string>();
+                }
+            }
             var promise = Window.Window.fetch(uri, new FetchOption
             {
+                method = method,
                 headers = header,
-                body = body
+                body = ToDataView(pinBuffer)
             });
             var response = await promise;
             var responseHeaderNames = NetJs.Script.NewArray<string>();

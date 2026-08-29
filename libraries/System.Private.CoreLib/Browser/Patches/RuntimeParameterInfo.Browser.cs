@@ -14,9 +14,9 @@ namespace System.Reflection
         public RuntimeParameterInfo_Partial(ParameterModel model, RuntimeType type, MemberInfo member, int position)
         {
             var nm = model.Name;
-            Script.Write("this.NameImpl = nm");
-            Script.Write("this.ClassImpl = type");
-            Script.Write("this.PositionImpl = position");
+            Script.Write("this.{nameof(ParameterInfo.NameImpl)} = nm");
+            Script.Write("this.{nameof(ParameterInfo.ClassImpl)} = type");
+            Script.Write("this.{nameof(ParameterInfo.PositionImpl)} = position");
             //This.NameImpl = model.Name;
             //This.ClassImpl = type;
             //This.PositionImpl = position;
@@ -32,9 +32,9 @@ namespace System.Reflection
                 //if (model.Flags.HasFlag(ParameterFlagsModel.Params))
                 //    attrs|= ParameterAttributes.Params;
             }
-            Script.Write("this.AttrsImpl = attrs");
+            Script.Write("this.{nameof(ParameterInfo.AttrsImpl)} = attrs");
             //Script.Write("this.DefaultValueImpl = null");
-            Script.Write("this.MemberImpl = member");
+            Script.Write("this.{nameof(ParameterInfo.MemberImpl)} = member");
             //This.AttrsImpl = attrs;
             //This.DefaultValueImpl = defaultValue;
             //This.MemberImpl = member;
@@ -42,12 +42,12 @@ namespace System.Reflection
             if (model.Flags.TypeHasFlag(ParameterFlagsModel.HasDefaultValue))
             {
                 var value = model.DefaultValue ?? null;
-                Script.Write("this.DefaultValueImpl = value");
+                Script.Write("this.{nameof(ParameterInfo.DefaultValueImpl)} = value");
             }
             else
             {
                 var missing = Missing.Value;
-                Script.Write("this.DefaultValueImpl = missing");
+                Script.Write("this.{nameof(ParameterInfo.DefaultValueImpl)} = missing");
             }
             _model = model;
         }

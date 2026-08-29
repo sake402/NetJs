@@ -1,6 +1,11 @@
 ﻿
 (function (global) {
-    let NetJs = global.NetJs = {};
+    let NetJs = global.NetJs = {
+        $$: {
+            "System": {}
+        }
+    };
+    NetJs.$$.S = NetJs.$$.System; //make sure we have System namespace even if we shorten it to S
     //keep boot types in this array for retreiver by AppDomain when it starts
     let bootTypes = [];
     NetJs.$bts = bootTypes;
@@ -13,10 +18,6 @@
     const finalizer = new FinalizationRegistry((_object) => {
         _object.$dtor();
     });
-    function getCoreAssembly() {
-        let spcAssembly = NetJs.$spc.System.AppDomain.GlobalAssemblyRegistry["NetJs.System.Private.CoreLib"];
-        return spcAssembly;
-    }
     function isValueType(prototype) {
         var flags = prototype.$f;
         if (flags) {//value type
@@ -147,20 +148,6 @@
         var rprototype = NetJs.$ns(fullTypeName, prototype);
         bootTypes.push(prototype);
         prototype.$mfullName = fullTypeName;
-        // //boot type will also have a type system
-        // let runtimeType;
-        // Object.defineProperty(rprototype, "$type", {
-        //     configurable: true,
-        //     get: function () {
-        //         if (runtimeType)
-        //             return runtimeType;
-        //         let spcAssembly = getCoreAssembly();
-        //         var metadata = prototype.$metadata ?? { h: 0 };spcAssembly.GetModel(fullTypeName);
-        //         runtimeType = NetJs.$spc.System.RuntimeType.Create(spcAssembly, prototype, metadata, fullTypeName);
-        //         runtimeType.$do_complete();
-        //         return runtimeType;
-        //     }
-        // });
         return rprototype;
     }
 
@@ -184,8 +171,13 @@
             return prototype.$default();
         if (prototype.Zero !== undefined) //test long and decimal type
             return prototype.Zero;
-        if (prototype.$is && prototype.$is(0, NetJs._))
+        if (prototype.$is && prototype.$is(0, NetJs._)) {
+            if (typeIsLong(prototype))
+                return 0n;
             return 0;
+        }
+        // if (prototype.$is && prototype.$is(0n, NetJs._))
+        // return 0n;
         // var model = prototype.$model;
         if (isValueType(prototype) === false) {
             return null;
@@ -304,15 +296,16 @@
     NetJs.$is = function (value, type, outValue) {
         if (value === null || value === undefined)
             return false;
-        if (value.$boxed) {
-            if (type.$fullName !== "System.Object") { //dont unbox if we are testing againt object, needs to remain boxed as object
-                value = value.m_value;
-            }
+        let valueType = isValueType(type);
+        let unboxedValue = value;
+        if (value.$boxed && valueType) { //dont unbox if we are testing against ref type, needs to remain boxed as object
+            unboxedValue = value.m_value;
         }
+
         let assigned = false;
         function assignOut() {
             if (!assigned && outValue) {
-                if (value.$boxed && isValueType(type)) {
+                if (value.$boxed && valueType) {
                     outValue.$v = value.m_value;
                 }
                 else
@@ -399,6 +392,16 @@
             fn == "System.IntPtr" ||
             fn == "System.UIntPtr";
     }
+    function typeIsSignedIntegerNumber(T) {
+        var fn = T.$fullName;
+        if (T.$k == 4) { //enum
+            fn = T.$eut.$fullName;
+        }
+        return fn == "System.SByte" ||
+            fn == "System.Int16" ||
+            fn == "System.Int32" ||
+            fn == "System.IntPtr";
+    }
     function typeIsFloatingNumber(T) {
         var fn = T.$fullName;
         if (T.$k == 4) { //enum
@@ -422,10 +425,8 @@
             var toInteger = typeIsIntegerNumber(T);
             var toFloat = typeIsFloatingNumber(T);
             if (toInteger || toFloat || toLong) {
-                var min = T.MinValue;
-                var max = T.MaxValue;
-                //Detect long and ulong overflow, since JavaScript bitwise operation only work on 32 bit signed integer, we need to use BigInt to detect overflow, 
-                //but we will still return a number
+                // var min = T.MinValue;
+                // var max = T.MaxValue;
                 if (toLong) {
                     if (tvalue == "bigint") { //already bigint
                         return value;
@@ -458,9 +459,9 @@
                         } else {
                             value = value & max;
                         }
-                        if (min < 0) //cast to signed
+                        if (typeIsSignedIntegerNumber(T)) //cast to signed
                             value = (value << (32 - bitSize)) >> (32 - bitSize);
-                        else if (/*greaterThanZero || */min == 0) // cast to unsigned
+                        else // cast to unsigned
                             value = value >>> 0;
                     }
                 }
@@ -470,12 +471,13 @@
         return value;
     }
     NetJs.$wrap = function (value, signed) {
+        let system = NetJs.$$.System ?? NetJs.$$.S;
         if (signed == 0) {
             if (value < 0 || value > 4294967295)
-                return tryCastNumeric(value, NetJs.$spc.System.UInt32);
+                return tryCastNumeric(value, system.UInt32);
         } else {
             if (value < -2147483648 || value > 2147483647)
-                return tryCastNumeric(value, NetJs.$spc.System.Int32);
+                return tryCastNumeric(value, system.Int32);
         }
         return value;
     }
@@ -513,7 +515,7 @@
             mvalue = out.$v;
             return tryCastNumeric(mvalue, toType);
         }
-        if (value instanceof NetJs.$spc.NetJs.RefOrPointer && (typeIsIntegerNumber(toType) || typeIsLong(toType))) { //casting pointer to number
+        if (value instanceof NetJs.$typeRefOrPointer() && (typeIsIntegerNumber(toType) || typeIsLong(toType))) { //casting pointer to number
             var number = NetJs.castPtr2Address(value, toType);
             // if (number) {
             if (typeIsLong(toType))
@@ -522,7 +524,7 @@
             // }
         }
         var tvalue = typeof (value);
-        if ((tvalue == "number" || tvalue == "bigint") && value >= NetJs.virtualAddressOffset && (toType.name == "Pointer$$" || toType.name == "Ref$$")/*Object.getPrototypeListOf(type).contains(NetJs.$spc.System.IRefOrPointer)*/) { //casting number to pointer
+        if ((tvalue == "number" || tvalue == "bigint") && value >= NetJs.$$.$interop.$vAddrOff && (toType.$fullName.startsWith("NetJs.Pointer<") || toType.$fullName.startsWith("NetJs.Ref<"))/*Object.getPrototypeListOf(type).contains(NetJs.$spc.System.IRefOrPointer)*/) { //casting number to pointer
             var ivalue = tvalue == "bigint" ? Number(value) : value;
             var pointer = NetJs.castAddress2Ptr(ivalue, toType);
             if (pointer)
@@ -532,24 +534,6 @@
     }
     NetJs.$tupleUnpack = function (fn) {
         return { set $v(tuple) { fn(tuple) } };
-    }
-    NetJs.$typeArray = function (type) {
-        if (!type)
-            return NetJs.$spc.System.Array$$;
-        return NetJs.$spc.System.Array$$(type);
-    }
-    NetJs.$typePointer = function (type) {
-        if (!type)
-            return NetJs.$spc.NetJs.Pointer$$;
-        return NetJs.$spc.NetJs.Pointer$$(type);
-    }
-    NetJs.$typeNullable = function (type) {
-        if (!type)
-            return NetJs.$spc.System.Nullable$$;
-        return NetJs.$spc.System.Nullable$$(type);
-    }
-    NetJs.$array = function (type, length) {
-        return NetJs.$spc.System.Array.$array(NetJs.$typeOf(type), length);
     }
     NetJs.$equals = function (a, b) {
         if (a === b)
@@ -645,46 +629,46 @@
         }
         return a == b;
     }
-    NetJs.$destructure = function (tuple, ...refs) {
-        var o = [];
-        if (tuple.Deconstruct) {
-            if (refs.length > 0)
-                tuple.Deconstruct.apply(tuple, refs)
-            else {
-                o.length = 16;
-                tuple.Deconstruct(
-                    { set $v(v) { o[0] = v; } },
-                    { set $v(v) { o[1] = v; } },
-                    { set $v(v) { o[2] = v; } },
-                    { set $v(v) { o[3] = v; } },
-                    { set $v(v) { o[4] = v; } },
-                    { set $v(v) { o[5] = v; } },
-                    { set $v(v) { o[6] = v; } },
-                    { set $v(v) { o[7] = v; } },
-                    { set $v(v) { o[8] = v; } },
-                    { set $v(v) { o[9] = v; } },
-                    { set $v(v) { o[10] = v; } },
-                    { set $v(v) { o[11] = v; } },
-                    { set $v(v) { o[12] = v; } },
-                    { set $v(v) { o[13] = v; } },
-                    { set $v(v) { o[14] = v; } },
-                    { set $v(v) { o[15] = v; } });
-            }
-        } else {
-            for (let i = 1; ; i++) {
-                var property = "Item" + i;
-                var val = tuple[property];
-                if (val !== undefined) {
-                    if (refs.length > 0)
-                        refs[i - 1].$v = val;
-                    else
-                        o.push(val);
-                } else
-                    break;
-            }
-        }
-        return o;
-    }
+    // NetJs.$destructure = function (tuple, ...refs) {
+    //     var o = [];
+    //     if (tuple.Deconstruct) {
+    //         if (refs.length > 0)
+    //             tuple.Deconstruct.apply(tuple, refs)
+    //         else {
+    //             o.length = 16;
+    //             tuple.Deconstruct(
+    //                 { set $v(v) { o[0] = v; } },
+    //                 { set $v(v) { o[1] = v; } },
+    //                 { set $v(v) { o[2] = v; } },
+    //                 { set $v(v) { o[3] = v; } },
+    //                 { set $v(v) { o[4] = v; } },
+    //                 { set $v(v) { o[5] = v; } },
+    //                 { set $v(v) { o[6] = v; } },
+    //                 { set $v(v) { o[7] = v; } },
+    //                 { set $v(v) { o[8] = v; } },
+    //                 { set $v(v) { o[9] = v; } },
+    //                 { set $v(v) { o[10] = v; } },
+    //                 { set $v(v) { o[11] = v; } },
+    //                 { set $v(v) { o[12] = v; } },
+    //                 { set $v(v) { o[13] = v; } },
+    //                 { set $v(v) { o[14] = v; } },
+    //                 { set $v(v) { o[15] = v; } });
+    //         }
+    //     } else {
+    //         for (let i = 1; ; i++) {
+    //             var property = "Item" + i;
+    //             var val = tuple[property];
+    //             if (val !== undefined) {
+    //                 if (refs.length > 0)
+    //                     refs[i - 1].$v = val;
+    //                 else
+    //                     o.push(val);
+    //             } else
+    //                 break;
+    //         }
+    //     }
+    //     return o;
+    // }
     NetJs.$require = function () {
         //TODO:
         return [];

@@ -3,6 +3,7 @@ using System;
 [NetJs.Boot]
 [NetJs.OutputOrder(int.MinValue)]
 [NetJs.Reflectable(false)]
+[NetJs.Name("$SD")]
 public static class SimpleDictionaryExtension
 {
     [IgnoreGeneric]

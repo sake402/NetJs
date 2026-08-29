@@ -56,7 +56,17 @@ namespace NetJs.Translator.CSharpToJavascript
         
         public override void VisitRangeExpression(RangeExpressionSyntax node)
         {
-            WriteCreateRange(node, node.LeftOperand, node.RightOperand);
+            var left = node.LeftOperand;
+            while (left.IsKind(SyntaxKind.ParenthesizedExpression) && left is ParenthesizedExpressionSyntax pl)
+            {
+                left = pl.Expression;
+            }
+            var right = node.RightOperand;
+            while (right.IsKind(SyntaxKind.ParenthesizedExpression) && right is ParenthesizedExpressionSyntax pr)
+            {
+                right = pr.Expression;
+            }
+            WriteCreateRange(node, left, right);
             //base.VisitRangeExpression(node);
         }
     }

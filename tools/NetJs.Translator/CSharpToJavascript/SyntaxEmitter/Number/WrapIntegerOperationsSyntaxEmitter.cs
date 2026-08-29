@@ -307,7 +307,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Numbers
                                 {
                                     visitor.CurrentTypeWriter.Write(node, visitor.Global.GlobalName);
                                     visitor.CurrentTypeWriter.Write(node, ".");
-                                    visitor.CurrentTypeWriter.Write(node, Constants.IntegerChecked);
+                                    visitor.CurrentTypeWriter.Write(node, Constants.IntegerCheckedName);
                                     visitor.CurrentTypeWriter.Write(node, "(");
                                     visitor.Visit(node.Left);
                                     visitor.CurrentTypeWriter.Write(node, " ");

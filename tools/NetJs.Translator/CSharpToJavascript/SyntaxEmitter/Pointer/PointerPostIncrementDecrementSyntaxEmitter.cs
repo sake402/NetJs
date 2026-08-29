@@ -27,16 +27,18 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Pointer
                     {
                         visitor.WrapStatementsInExpression(node, () =>
                         {
-                            visitor.CurrentTypeWriter.Write(node, "var $oldp = ", true);
+                            visitor.CurrentTypeWriter.Write(node, "var $old = ", true);
                             visitor.Visit(node.Operand);
-                            visitor.CurrentTypeWriter.WriteLine(node, ".Clone();");
+                            visitor.CurrentTypeWriter.Write(node, ".");
+                            visitor.WriteMemberName(node, visitor.Global.SystemBaseRefOrPointer, "Clone");
+                            visitor.CurrentTypeWriter.WriteLine(node, "();");
                             visitor.CurrentTypeWriter.Write(node, "", true);
                             visitor.WritePointerSelfAdvance(node, node.Operand, new CodeNode(() =>
                             {
                                 visitor.CurrentTypeWriter.Write(node, node.IsKind(SyntaxKind.PostIncrementExpression) ? "1" : "-1");
                             }));
                             visitor.CurrentTypeWriter.WriteLine(node, ";");
-                            visitor.CurrentTypeWriter.WriteLine(node, "return $oldp;", true);
+                            visitor.CurrentTypeWriter.WriteLine(node, "return $old;", true);
                         });
                     }
                     else

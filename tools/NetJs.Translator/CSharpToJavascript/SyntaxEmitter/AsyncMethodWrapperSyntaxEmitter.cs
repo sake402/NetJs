@@ -72,7 +72,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                             visitor.CurrentTypeWriter.WriteLine(node, "{", true);
                         }
                         visitor.CurrentTypeWriter.Write(node, "return ", true);
-                        visitor.WriteMethodInvocation(node, "System.Runtime.CompilerServices.RuntimeHelpers.Async", methodGenericTypes: [taskSymbol, returnSymbol], arguments: [new CodeNode(() => {
+                        visitor.WriteMethodInvocation(node, "NetJs.AsyncResolver.Async", methodGenericTypes: [taskSymbol, returnSymbol], arguments: [new CodeNode(() => {
                             visitor.CurrentTypeWriter.WriteLine(node, "async () => ");
                             if (!node.IsKind(SyntaxKind.Block)) //arrow clause has no brace, write it
                             {

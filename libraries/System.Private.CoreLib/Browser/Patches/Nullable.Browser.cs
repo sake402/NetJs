@@ -66,6 +66,16 @@ namespace System
             return Value;
         }
 
+        [NetJs.Name(Constants.IsTypeName)]
+        public static bool Is(object? value)
+        {
+            if (value == null)
+                return false;
+            if (value is T t)
+                return true;
+            return false;
+        }
+
         //[NonVersionable]
         //public readonly T GetValueOrDefault(T defaultValue) =>
         //    hasValue ? value : defaultValue;

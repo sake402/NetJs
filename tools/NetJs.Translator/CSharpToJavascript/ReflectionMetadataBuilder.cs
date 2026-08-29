@@ -68,15 +68,21 @@ namespace NetJs.Translator.CSharpToJavascript
             if (useCachedHandle)
             {
                 var typeSignature = type.CreateSignature(global, withGlobalNamespace: true);
-                if (global.Symbols.Types.TryGetValue(typeSignature, out var symbol) && symbol?.Handle != null)
-                {
-                    return symbol.Handle.Value;
-                }
+                var sym = global.Symbols.Types.FirstOrDefault(S => S.Value.Signature == typeSignature).Value;
+                if (sym != null && sym.Handle != null)
+                    return sym.Handle.Value;
+                //if (global.Symbols.Types.TryGetValue(typeSignature, out var symbol) && symbol?.Handle != null)
+                //{
+                //    return symbol.Handle.Value;
+                //}
+                sym = global.ImportedNames.Types.FirstOrDefault(S => S.Value.Signature == typeSignature).Value;
+                if (sym != null && sym.Handle != null)
+                    return sym.Handle.Value;
 
-                if (global.ImportedNames.Types.TryGetValue(typeSignature, out symbol) && symbol?.Handle != null)
-                {
-                    return symbol.Handle.Value;
-                }
+                //if (global.ImportedNames.Types.TryGetValue(typeSignature, out symbol) && symbol?.Handle != null)
+                //{
+                //    return symbol.Handle.Value;
+                //}
             }
             if (types!.TryGetValue(type.OriginalDefinition, out int typeHandle))
             {
@@ -152,6 +158,99 @@ namespace NetJs.Translator.CSharpToJavascript
             if (!global.ShouldExportType(type, fromVisitor))
                 return default;
 
+            IMethodSymbol? GetDeclaringMethodOfAnyTypeParameter(ITypeSymbol nt)
+            {
+                IMethodSymbol? declaringMethod = null;
+                var argQueue = new Queue<ITypeSymbol>();
+                argQueue.Enqueue(nt);
+
+                while (argQueue.Count > 0)
+                {
+                    var current = argQueue.Dequeue();
+                    if (current is INamedTypeSymbol currentNamed)
+                    {
+                        var typeArgs = currentNamed.TypeArguments;
+                        for (int i = 0; i < typeArgs.Length; i++)
+                        {
+                            var ta = typeArgs[i];
+                            if (ta is ITypeParameterSymbol tpArg)
+                            {
+                                if (tpArg.DeclaringMethod != null)
+                                {
+                                    declaringMethod = tpArg.DeclaringMethod;
+                                    break;
+                                }
+                            }
+                            else if (ta is INamedTypeSymbol or IArrayTypeSymbol)
+                            {
+                                argQueue.Enqueue(ta);
+                            }
+                        }
+
+                        if (declaringMethod != null) break;
+
+                        if (currentNamed.ContainingType != null)
+                        {
+                            argQueue.Enqueue(currentNamed.ContainingType);
+                        }
+                    }
+                    else if (current is IArrayTypeSymbol arrayType)
+                    {
+                        var elem = arrayType.ElementType;
+                        if (elem is ITypeParameterSymbol tpArg && tpArg.DeclaringMethod != null)
+                        {
+                            declaringMethod = tpArg.DeclaringMethod;
+                            break;
+                        }
+                        else if (elem is INamedTypeSymbol or IArrayTypeSymbol)
+                        {
+                            argQueue.Enqueue(elem);
+                        }
+                    }
+                }
+                return declaringMethod;
+            }
+
+            bool isPointer = false;
+            ITypeSymbol elementType;
+            if (
+                (type.IsArray(out elementType) && global.ShouldExportType(elementType, fromVisitor)) ||
+                (isPointer = type.IsPointer(out elementType) && global.ShouldExportType(elementType, fromVisitor))
+                )
+            {
+                string? prefix = null;
+                if (elementType.TypeKind == TypeKind.TypeParameter)
+                {
+                    var t = (ITypeParameterSymbol)elementType;
+                    if (t.DeclaringMethod != null)
+                    {
+                        var typeParams = t.DeclaringMethod.TypeParameters;
+                        var paramNames = new string[typeParams.Length];
+                        for (int i = 0; i < typeParams.Length; i++)
+                        {
+                            paramNames[i] = typeParams[i].Name;
+                        }
+                        prefix = $"({string.Join(", ", paramNames)}) => ";
+                    }
+                }
+                else
+                {
+                    IMethodSymbol? declaringMethod = GetDeclaringMethodOfAnyTypeParameter(elementType);
+                    if (declaringMethod != null)
+                    {
+                        //return GenericMethodTypeParameterHandle(declaringMethod, nt);
+                        var typeParams = declaringMethod.TypeParameters;
+                        var paramNames = new string[typeParams.Length];
+                        for (int i = 0; i < typeParams.Length; i++)
+                        {
+                            paramNames[i] = typeParams[i].Name;
+                        }
+                        prefix = $"({string.Join(", ", paramNames)}) => ";
+                    }
+                }
+                return $"{prefix}{global.GlobalName}.{(isPointer ? Constants.TypePointerName : Constants.TypeArrayName)}({elementType.ComputeOutputTypeName(global)}).{Constants.PrototypeTypeHandle}";
+            }
+
             if (type.Kind == SymbolKind.TypeParameter)
             {
                 ITypeParameterSymbol tp = (ITypeParameterSymbol)type;
@@ -163,24 +262,6 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     var declaringMethod = tp.DeclaringMethod!;
                     return GenericMethodTypeParameterHandle(declaringMethod, tp);
-                    ////var methodParams = declaringMethod.TypeParameters;
-                    ////int index = -1;
-                    ////for (int i = 0; i < methodParams.Length; i++)
-                    ////{
-                    ////    if (methodParams[i].Equals(tp, SymbolEqualityComparer.Default))
-                    ////    {
-                    ////        index = i;
-                    ////        break;
-                    ////    }
-                    ////}
-                    //var typeParams = declaringMethod.TypeParameters;
-                    //var paramNames = new string[typeParams.Length];
-                    //for (int i = 0; i < typeParams.Length; i++)
-                    //{
-                    //    paramNames[i] = typeParams[i].Name;
-                    //}
-                    //return $"({string.Join(", ", paramNames)}) => {tp.ComputeOutputTypeName(global)}.{Constants.PrototypeTypeHandle}";
-                    ////return GenericMethodHandle(declaringMethod, index);
                 }
             }
 
@@ -193,58 +274,10 @@ namespace NetJs.Translator.CSharpToJavascript
                         return $"this.{Constants.PrototypeTypeHandle}";
                     }
 
-                    IMethodSymbol? declaringMethod = null;
-                    var argQueue = new Queue<ITypeSymbol>();
-                    argQueue.Enqueue(nt);
-
-                    while (argQueue.Count > 0)
-                    {
-                        var current = argQueue.Dequeue();
-                        if (current is INamedTypeSymbol currentNamed)
-                        {
-                            var typeArgs = currentNamed.TypeArguments;
-                            for (int i = 0; i < typeArgs.Length; i++)
-                            {
-                                var ta = typeArgs[i];
-                                if (ta is ITypeParameterSymbol tpArg)
-                                {
-                                    if (tpArg.DeclaringMethod != null)
-                                    {
-                                        declaringMethod = tpArg.DeclaringMethod;
-                                        break;
-                                    }
-                                }
-                                else if (ta is INamedTypeSymbol or IArrayTypeSymbol)
-                                {
-                                    argQueue.Enqueue(ta);
-                                }
-                            }
-
-                            if (declaringMethod != null) break;
-
-                            if (currentNamed.ContainingType != null)
-                            {
-                                argQueue.Enqueue(currentNamed.ContainingType);
-                            }
-                        }
-                        else if (current is IArrayTypeSymbol arrayType)
-                        {
-                            var elem = arrayType.ElementType;
-                            if (elem is ITypeParameterSymbol tpArg && tpArg.DeclaringMethod != null)
-                            {
-                                declaringMethod = tpArg.DeclaringMethod;
-                                break;
-                            }
-                            else if (elem is INamedTypeSymbol or IArrayTypeSymbol)
-                            {
-                                argQueue.Enqueue(elem);
-                            }
-                        }
-                    }
+                    IMethodSymbol? declaringMethod = GetDeclaringMethodOfAnyTypeParameter(nt);
 
                     if (declaringMethod != null)
                     {
-                        //return GenericMethodTypeParameterHandle(declaringMethod, nt);
                         var typeParams = declaringMethod.TypeParameters;
                         var paramNames = new string[typeParams.Length];
                         for (int i = 0; i < typeParams.Length; i++)
@@ -506,7 +539,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 throw new ArgumentNullException(nameof(assembly));
             if (assemblyHandle != 0)
                 throw new InvalidOperationException("Already init for assembly");
-            if (!global.HasAttribute(assembly, typeof(AssemblyHandleAttribute).FullName, null, false, out var args))
+            if (!global.HasAttribute(assembly, typeof(AssemblyHandleAttribute).FullName!, null, false, out var args))
             {
                 //throw new InvalidOperationException("An AssemblyHandleAttribute must be defined on all assembly");
             }
@@ -642,22 +675,25 @@ namespace NetJs.Translator.CSharpToJavascript
             //    manifest.StringResourceData = result;
             //    manifests.Add(manifest);
             //}
-            foreach (var resx in resxFiles.Concat(embeddedFiles.Where(e => e.EndsWith(".resx"))).Distinct())
+            if (!Constants.ResourceNamesInlined)
             {
-                var stream = new MemoryStream();
-                var resourceWriter = new ResourceWriter(stream);
-                var manifest = new AssemblyManifestModel();
-                manifest.Name = assembly.Name + "." + Path.GetFileNameWithoutExtension(resx) + ".resources";
-                var xml = File.ReadAllText(resx);
-                var doc = XElement.Parse(xml);
-                var result = doc.Elements("data").Where(r => r.Attribute("name") is not null && r.Element("value") is not null).ToDictionary(e => e.Attribute("name").Value, e => e.Element("value").Value);
-                foreach (var kv in result)
+                foreach (var resx in resxFiles.Concat(embeddedFiles.Where(e => e.EndsWith(".resx"))).Distinct())
                 {
-                    resourceWriter.AddResource(kv.Key, kv.Value);
+                    var stream = new MemoryStream();
+                    var resourceWriter = new ResourceWriter(stream);
+                    var manifest = new AssemblyManifestModel();
+                    manifest.Name = assembly.Name + "." + Path.GetFileNameWithoutExtension(resx) + ".resources";
+                    var xml = File.ReadAllText(resx);
+                    var doc = XElement.Parse(xml);
+                    var result = doc.Elements("data").Where(r => r.Attribute("name") is not null && r.Element("value") is not null).ToDictionary(e => e.Attribute("name").Value, e => e.Element("value").Value);
+                    foreach (var kv in result)
+                    {
+                        resourceWriter.AddResource(kv.Key, kv.Value);
+                    }
+                    resourceWriter.Close();
+                    manifest.Data = Convert.ToBase64String(stream.ToArray());
+                    manifests.Add(manifest);
                 }
-                resourceWriter.Close();
-                manifest.Data = Convert.ToBase64String(stream.ToArray());
-                manifests.Add(manifest);
             }
             //}
             //if (embeddedFiles != null)
@@ -1553,11 +1589,11 @@ namespace NetJs.Translator.CSharpToJavascript
                     }
                 }
             }
-
+            var typeHandle = TypeHandle(param.Type, fromVisitor);
             return new ParameterModel
             {
                 Name = param.Name,
-                ParameterType = TypeHandle(param.Type, fromVisitor),
+                ParameterType = typeHandle,
                 Flags = flags,
                 DefaultValue = param.HasExplicitDefaultValue ? param.ExplicitDefaultValue : null,
                 Attributes = NullIfEmpty(attributesList?.ToArray())

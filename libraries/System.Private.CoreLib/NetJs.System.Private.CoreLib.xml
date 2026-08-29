@@ -178,6 +178,11 @@
             
              </summary>
         </member>
+        <member name="T:NetJs.KeepMemberNamesAttribute">
+            <summary>
+            Specifies that the name of the entity should be kept as-is, when emitting JavaScript-equivalent, even when performing minification
+            </summary>
+        </member>
         <member name="T:NetJs.MemberReplaceAttribute">
             <summary>
             Copies the content of a member to replace the one already defined in another member, both within the same type(partial)

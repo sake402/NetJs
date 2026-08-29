@@ -62,10 +62,6 @@ namespace NetJs.Translator
         HashSet<string> addedReference = new();
         async Task AddReference(IProject project, string refName, List<MetadataReference>? refs = null, List<string>? symbols = null)
         {
-            if (refName.StartsWith("NetJs."))
-            {
-
-            }
             if (refName == "System.Drawing")
                 refName = "System.Drawing.Primitives";
             else if (refName == "System.Net")
@@ -344,9 +340,14 @@ namespace NetJs.Translator
             {
                 await PullPackageCache(project, lockFile, refs, symbols);
             }
+            var tfm = project.GetTargetFramework();
+            var otfm = tfm;
+            if (tfm.EndsWith("-browser"))
+                tfm = tfm.Substring(0, tfm.Length - 8);
             var target = lockFile.Targets.Count == 1 ? lockFile.Targets.Single() :
                 (lockFile.Targets.SingleOrDefault(l => l.Name.Contains("-browser")) ??
-                lockFile.Targets.SingleOrDefault(f => f.Name == project.GetTargetFramework()) ??
+                lockFile.Targets.SingleOrDefault(f => f.Name == otfm) ??
+                lockFile.Targets.SingleOrDefault(f => f.Name == tfm) ??
                 lockFile.Targets.SingleOrDefault(f => f.Name == "netstandard2.0"))!;
             var sortLibraries = Sort(target.Libraries);
             //var sortLibraries = lockFile.Libraries.Where(e =>
@@ -547,6 +548,27 @@ namespace NetJs.Translator
                     optimizationLevel: OptimizationLevel.Debug,
                     assemblyIdentityComparer: DesktopAssemblyIdentityComparer.Default,
                     allowUnsafe: true);
+
+            //Make sure we expose private and internal members from metadata, especially for name overload resolution
+            var importOptionsProperty = typeof(CSharpCompilationOptions)
+                .GetProperty("MetadataImportOptions", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+
+            if (importOptionsProperty != null)
+            {
+                // The internal MetadataImportOptions enum maps exactly to these byte values:
+                // Public = 0, Internal = 1, All = 2
+                byte importAllMembers = 2;
+                importOptionsProperty.SetValue(options, importAllMembers);
+            }
+
+            //var prop = typeof(CSharpCompilationOptions)
+            //    .GetProperty("TopLevelBinderFlags", BindingFlags.Instance | BindingFlags.NonPublic);
+            //if (prop != null)
+            //{
+            //    // 0x00400000 (or 1 << 22) represents BinderFlags.IgnoreAccessibility inside Roslyn
+            //    uint ignoreAccessibilityFlag = 0x00400000;
+            //    prop.SetValue(options, ignoreAccessibilityFlag);
+            //}
             //var name = project.GetName();
             //if (name != options.ModuleName)
             //    options = options.WithModuleName(name);

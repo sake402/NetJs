@@ -17,7 +17,7 @@
 		<Nullable>enable</Nullable>
 		<RazorLangVersion>Latest</RazorLangVersion>
 		<DefaultNugetVersion>7.0.1</DefaultNugetVersion>
-		<DefineConstants>$(DefineConstants);$(CommandLineDefineConstants);NET;FEATURE_SERIALIZATION</DefineConstants>		
+		<DefineConstants>$(DefineConstants);$(CommandLineDefineConstants);NET;NET10;NET10_0;NET10_0_OR_GREATER;NET9_0_OR_GREATER;NET8_0_OR_GREATER;NET7_0_OR_GREATER;NET6_0_OR_GREATER;NET5_0_OR_GREATER;FEATURE_SERIALIZATION</DefineConstants>		
 		
 		<NoWarn>CS0824,CS0626,CS8500,CS3021</NoWarn>
 		<OutputMode>SingleFile,Global,InlineConstants</OutputMode>
@@ -59,8 +59,8 @@
 		<RunAnalyzers>false</RunAnalyzers>
 		<RunAnalyzersDuringLiveAnalisis>false</RunAnalyzersDuringLiveAnalisis>
 		<RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
-		<SkipImportNuGetProps>false</SkipImportNuGetProps>
-		<SkipImportNuGetBuildTargets>false</SkipImportNuGetBuildTargets>
+		<SkipImportNuGetProps>true</SkipImportNuGetProps>
+		<SkipImportNuGetBuildTargets>true</SkipImportNuGetBuildTargets>
 		<NoStdLib>true</NoStdLib>
 		<NoExplicitReferenceToStdLib>true</NoExplicitReferenceToStdLib>
 		<NoCompilerStandardLib>true</NoCompilerStandardLib>

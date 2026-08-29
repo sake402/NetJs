@@ -444,7 +444,7 @@ namespace NetJs.Translator.CSharpToJavascript
                             {
                                 CurrentTypeWriter.Write(node, _global.GlobalName, true);
                                 CurrentTypeWriter.Write(node, ".");
-                                CurrentTypeWriter.Write(node, Constants.Destructure);
+                                CurrentTypeWriter.Write(node, Constants.DestructureName);
                                 CurrentTypeWriter.Write(node, "(");
                                 WritePatternExpressionFilter(node);
                                 CurrentTypeWriter.Write(node, ", ");
@@ -481,7 +481,7 @@ namespace NetJs.Translator.CSharpToJavascript
                             CurrentTypeWriter.Write(node, " ] = ");
                             CurrentTypeWriter.Write(node, _global.GlobalName);
                             CurrentTypeWriter.Write(node, ".");
-                            CurrentTypeWriter.Write(node, Constants.Destructure);
+                            CurrentTypeWriter.Write(node, Constants.DestructureName);
                             CurrentTypeWriter.Write(node, "(");
                             WritePatternExpressionFilter(node);
                             CurrentTypeWriter.Write(node, ");");

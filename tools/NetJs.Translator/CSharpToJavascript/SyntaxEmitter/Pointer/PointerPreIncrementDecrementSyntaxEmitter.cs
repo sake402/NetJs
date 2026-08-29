@@ -15,7 +15,10 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Pointer
                 if (operandType.IsPointer(out var pointerType))
                 {
                     //if the result of the expression is passed to other variables
-                    if (node.Parent is AssignmentExpressionSyntax || node.Parent.IsKind(SyntaxKind.EqualsExpression) || node.Parent.IsKind(SyntaxKind.Argument))
+                    if (node.Parent is AssignmentExpressionSyntax || 
+                        node.Parent.IsKind(SyntaxKind.EqualsExpression) ||
+                        node.Parent.IsKind(SyntaxKind.Argument) ||
+                        node.Parent.IsKind(SyntaxKind.PointerIndirectionExpression))
                     {
                         visitor.WrapStatementsInExpression(node, () =>
                         {

@@ -473,8 +473,10 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             foreach (var variable in node.Declaration.Variables)
             {
-                var symbol = _global.GetSymbol(variable, this/*, out _, out _*/);
+                var symbol = (IEventSymbol)_global.GetSymbol(variable, this/*, out _, out _*/);
                 var metadata = _global.GetRequiredMetadata(symbol);
+                var addMetadata = symbol.AddMethod != null ? _global.GetMetadata(symbol.AddMethod) : null;
+                var removeMetadata = symbol.RemoveMethod != null ? _global.GetMetadata(symbol.RemoveMethod) : null;
 
                 CodeNode left = new CodeNode(() =>
                 {
@@ -489,14 +491,14 @@ namespace NetJs.Translator.CSharpToJavascript
                     CurrentTypeWriter.Write(node, "value");
                 });
 
-                CurrentTypeWriter.WriteLine(node, $"{modifier}add_{metadata.OverloadName}(/*{node.Declaration.Type.ToString().Trim()}*/ value)", true);
+                CurrentTypeWriter.WriteLine(node, $"{modifier}{addMetadata?.OverloadName ?? ("add_" + (metadata?.OverloadName ?? symbol.Name))}(/*{node.Declaration.Type.ToString().Trim()}*/ value)", true);
                 CurrentTypeWriter.WriteLine(node, "{", true);
                 CurrentTypeWriter.Write(node, "", true);
                 WriteDelegateCombine(node, left, right);
                 CurrentTypeWriter.WriteLine(node, ";");
                 CurrentTypeWriter.WriteLine(node, "}", true);
 
-                CurrentTypeWriter.WriteLine(node, $"{modifier}remove_{metadata.OverloadName}(/*{node.Declaration.Type.ToString().Trim()}*/ value)", true);
+                CurrentTypeWriter.WriteLine(node, $"{modifier}{removeMetadata?.OverloadName ?? ("remove_" + (metadata?.OverloadName ?? symbol.Name))}(/*{node.Declaration.Type.ToString().Trim()}*/ value)", true);
                 CurrentTypeWriter.WriteLine(node, "{", true);
                 CurrentTypeWriter.Write(node, "", true);
                 WriteDelegateRemove(node, left, right);

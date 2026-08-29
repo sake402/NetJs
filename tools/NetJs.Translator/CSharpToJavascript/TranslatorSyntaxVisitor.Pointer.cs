@@ -86,7 +86,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitPointerType(PointerTypeSyntax node)
         {
-            CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.TypePointer}(");
+            CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.TypePointerName}(");
             Visit(node.ElementType);
             CurrentTypeWriter.Write(node, ")");
             //base.VisitPointerType(node);

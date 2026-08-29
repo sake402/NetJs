@@ -25,8 +25,9 @@ namespace System.Reflection
                 if (NetJs.Script.IsDefined(model.GetMethod))
                 {
                     model.GetMethod!.Name = "get_" + model.Name;
-                    if (NetJs.Script.IsDefined(model.OutputName))
-                        model.GetMethod!.OutputName = "get_" + model.OutputName;
+                    var oName = model.GetOutputName();
+                    if (NetJs.Script.IsDefined(oName))
+                        model.GetMethod!.OutputName = "get_" + oName;
                     model.GetMethod!.DeclaringType = model.DeclaringType;
                     model.GetMethod!.ReturnType = model.PropertyType;
                     //we skipped generating parameters for methods on a property, since we can infer those at runtime
@@ -39,8 +40,9 @@ namespace System.Reflection
                 if (NetJs.Script.IsDefined(model.SetMethod))
                 {
                     model.SetMethod!.Name = "set_" + model.Name;
-                    if (NetJs.Script.IsDefined(model.OutputName))
-                        model.SetMethod!.OutputName = "set_" + model.OutputName;
+                    var oName = model.GetOutputName();
+                    if (NetJs.Script.IsDefined(oName))
+                        model.SetMethod!.OutputName = "set_" + oName;
                     model.SetMethod!.DeclaringType = model.DeclaringType;
                     //we skipped generating parameters for methods on a property, since we can infer those at runtime
                     if (NetJs.Script.IsDefined(model.IndexParameters))

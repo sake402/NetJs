@@ -62,6 +62,7 @@ namespace System.Runtime.CompilerServices
             return CreateArray(typeof(T), jsArray.As<object[]>(), null, null).As<T[]>();
         }
 
+        //TODO: remove this method and use the one in IAwaitable.cs
         //Make sure we always return task from a method that has Task return by wrapping the native promise into Task object
         public static TTaskType Async<TTaskType, TResult>(NativeFunction<Task> asyncCode)
         {
@@ -118,21 +119,24 @@ namespace System.Runtime.CompilerServices
             //        });
             //    });
             //}
-            var getAwaiter = taskLike["GetAwaiter"].As<NativeFunction<INotifyCompletion>>();
+            var getAwaiterName = "GetAwaiter";
+            var isCompletedName = "IsCompleted";
+            var getResultName = "GetResult";
+            var getAwaiter = taskLike[getAwaiterName].As<NativeFunction<INotifyCompletion>>();
             if (NetJs.Script.IsDefined(getAwaiter))
             {
                 return new NetJs.Promise<object>((resolve, reject) =>
                 {
-                    var awaiter = getAwaiter.Invoke(taskLike);
+                    var awaiter = getAwaiter.InvokeCall(taskLike);
                     awaiter.OnCompleted(() =>
                     {
                         try
                         {
-                            var isCompleted = awaiter["IsCompleted"].As<bool>();
+                            var isCompleted = awaiter[isCompletedName].As<bool>();
                             if (isCompleted)
                             {
-                                var getResult = awaiter["GetResult"].As<NativeFunction<object>>();
-                                var result = getResult.Invoke(awaiter);
+                                var getResult = awaiter[getResultName].As<NativeFunction<object>>();
+                                var result = getResult.InvokeCall(awaiter);
                                 resolve(result);
                             }
                             else
@@ -725,11 +729,12 @@ namespace System.Runtime.CompilerServices
                                 var param = paramContainer!.fieldsAsArray[i];
                                 if (param.Is(typeof(ByReference)))
                                 {
-                                    ref byte b = ref NetJs.Script.Ref<byte>(param[nameof(ByReference.Value)].As<Ref<byte>>());
+                                    var byreRefValueName = NetJs.Script.Write<string>("\"{nameof(System.ByReference.Value)}\"");
+                                    ref byte b = ref NetJs.Script.Ref<byte>(param[byreRefValueName].As<Ref<byte>>());
                                     if (Unsafe.IsNullRef(ref b))
                                         param = null;
                                     else
-                                        param = param[nameof(ByReference.Value)]![NetJs.Constants.RefValueName];
+                                        param = param[byreRefValueName]![NetJs.Constants.RefValueName];
                                 }
                                 param = NetJs.Script.Unbox(param);
                                 parameters.Push(param);
@@ -741,7 +746,7 @@ namespace System.Runtime.CompilerServices
             return parameters;
         }
 
-        internal static object? NativeFunctionDispatch(object? targetOrPrototype, string methodName, params object?[]? parameters)
+        internal static object? NativeFunctionDispatch(object? targetOrPrototype, string methodName, TypePrototype? returnType, params object?[]? parameters)
         {
             if (methodName.NativeStartsWith("set_")) //TODO: this wont work for indexer
             {
@@ -761,28 +766,59 @@ namespace System.Runtime.CompilerServices
             }
             else if (methodName.NativeStartsWith("get_"))  //TODO: this wont work for indexer
             {
-                methodName = methodName.NativeSubstring(4);
-                if (targetOrPrototype == null)
+                unchecked
                 {
-                    Debug.Assert(parameters!.Length == 1);
-                    targetOrPrototype = parameters![0];
+                    methodName = methodName.NativeSubstring(4);
+                    if (targetOrPrototype == null)
+                    {
+                        Debug.Assert(parameters!.Length == 1);
+                        targetOrPrototype = parameters![0];
+                    }
+                    var value = targetOrPrototype![methodName];
+                    if (NetJs.Script.TypeOf(value).NativeEquals("object")) //dont attempt to box if value is object
+                    {
+                        return value;
+                    }
+                    return NetJs.Script.Box(value, returnType!);
                 }
-                return targetOrPrototype![methodName];
             }
             else
             {
-                var method = targetOrPrototype[methodName];
-                var ret = NetJs.Script.Write<object>("method.apply(targetOrPrototype, parameters)");
-                if (NetJs.Script.IsUndefined(ret))
-                    ret = null;
-                return ret;
+                var method = targetOrPrototype![methodName];
+                var value = NetJs.Script.Write<object>("method.apply(targetOrPrototype, parameters)");
+                if (NetJs.Script.IsUndefined(value))
+                    value = null;
+                if (NetJs.Script.TypeOf(value).NativeEquals("object")) //dont attempt to box if value is object
+                {
+                    return value;
+                }
+                return NetJs.Script.Box(value, returnType!);
             }
         }
 
         internal static object? NativeFunctionDispatch(object? targetOrPrototype, MemberModel member, params object?[]? parameters)
         {
-            var methodName = NetJs.Script.IsDefined(member.OutputName) ? member.OutputName!.NativeReplace("@", member.Name) : member.Name;
-            return NativeFunctionDispatch(targetOrPrototype, methodName, parameters);
+            var methodName = member.GetOutputName();
+            TypePrototype? returns = null;
+            uint rt = 0;
+            if (member.Flags.TypeHasFlag(MemberFlagsModel.IsMethod) && NetJs.Script.IsDefined(member.As<MethodModel>().ReturnType))
+            {
+                rt = member.As<MethodModel>().ReturnType.As<uint>();
+            }
+            else if (member.Flags.TypeHasFlag(MemberFlagsModel.IsProperty) && NetJs.Script.IsDefined(member.As<PropertyModel>().PropertyType))
+            {
+                rt = member.As<PropertyModel>().PropertyType.As<uint>();
+            }
+            else if (member.Flags.TypeHasFlag(MemberFlagsModel.IsField) && NetJs.Script.IsDefined(member.As<FieldModel>().FieldType))
+            {
+                rt = member.As<FieldModel>().FieldType.As<uint>();
+            }
+            if (rt != 0)
+            {
+                var tp = AppDomain.GetType(rt);
+                returns = tp!._prototype;
+            }
+            return NativeFunctionDispatch(targetOrPrototype, methodName, returns, parameters);
         }
 
         public static ArrayBuffer? ArrayBufferFrom(Array arr, KnownTypeHandle? knownType = null)

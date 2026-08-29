@@ -11,7 +11,11 @@ namespace NetJs.Translator.CSharpToJavascript
     {
         BlockSyntax WrapInBlock(StatementSyntax expression)
         {
-            return SyntaxFactory.Block(expression.WithLeadingTrivia(SyntaxFactory.LineFeed)).WithLeadingTrivia(SyntaxFactory.LineFeed).WithTrailingTrivia(SyntaxFactory.LineFeed);
+            return SyntaxFactory.Block(expression.WithLeadingTrivia(SyntaxFactory.LineFeed))
+                .WithLeadingTrivia(expression.GetLeadingTrivia().Insert(0, SyntaxFactory.LineFeed))
+                .WithTrailingTrivia(expression.GetTrailingTrivia().Add(SyntaxFactory.LineFeed));
+            //.WithLeadingTrivia(SyntaxFactory.LineFeed)
+            //.WithTrailingTrivia(SyntaxFactory.LineFeed);
         }
         public override SyntaxNode? VisitForStatement(ForStatementSyntax node)
         {

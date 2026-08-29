@@ -49,13 +49,21 @@ namespace System
             var unboxed = NetJs.Script.Unbox(value);
             var t = NetJs.Script.TypeOf(unboxed);
             EnumPrototype prototype = NetJs.Script.Write<EnumPrototype>("this");
-            if (t.NativeEquals("number") || t.NativeEquals("bigint"))
+            var underlyingType = prototype.UnderlyingType;
+            if (NetJs.Script.IsUndefined(underlyingType)) // System.Enum itself
             {
-                if (t.NativeEquals("number") && (prototype.UnderlyingType.KnownType == KnownTypeHandle.SystemInt64 || prototype.UnderlyingType.KnownType == KnownTypeHandle.SystemUint64))
+                if (value == unboxed) //value not boxed
+                {
+                    return false;
+                }
+            }
+            if (NetJs.Script.IsDefined(underlyingType) && (t.NativeEquals("number") || t.NativeEquals("bigint")))
+            {
+                if (t.NativeEquals("number") && (underlyingType.KnownType == KnownTypeHandle.SystemInt64 || underlyingType.KnownType == KnownTypeHandle.SystemUint64))
                 {
                     result = NetJs.Script.Write<object>("BigInt(unboxed)");
                 }
-                if (t.NativeEquals("bigint") && prototype.UnderlyingType.KnownType != KnownTypeHandle.SystemInt64 && prototype.UnderlyingType.KnownType != KnownTypeHandle.SystemUint64)
+                if (t.NativeEquals("bigint") && underlyingType.KnownType != KnownTypeHandle.SystemInt64 && underlyingType.KnownType != KnownTypeHandle.SystemUint64)
                 {
                     result = NetJs.Script.Write<object>("Number(unboxed)");
                 }

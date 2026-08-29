@@ -51,9 +51,9 @@ namespace NetJs.Translator.CSharpToJavascript
             var parameterNames = method?.Parameters.Select(p => p.Name).ToList();
             var template = templateAttribute.ConstructorArguments.FirstOrDefault().Value?.ToString();
             IEnumerable<CodeNode> arguments = parameterArgs ?? Enumerable.Empty<CodeNode>();
-            if (template == null)
+            if (template == null && arguments.Any())
             {
-                var exp = (arguments.FirstOrDefault().IsT0 ? arguments.FirstOrDefault().AsT0 as ArgumentSyntax : null)?.Expression ?? arguments.FirstOrDefault();
+                var exp = (arguments.First().IsT0 ? arguments.First().AsT0 as ArgumentSyntax : null)?.Expression ?? arguments.First();
                 if (exp.IsT0 && exp.AsT0 is LiteralExpressionSyntax literal)
                 {
                     template = literal.ToString();
@@ -219,6 +219,22 @@ namespace NetJs.Translator.CSharpToJavascript
                                         }
                                     }
                                 }
+                            }
+                        }
+                        else if (name.StartsWith("nameof("))
+                        {
+                            var braceStart = 6;
+                            var braceEnd = name.LastIndexOf(')');
+                            var token = name.Substring(braceStart + 1, braceEnd - braceStart - 1);
+                            var symbol = _global.GetSymbol(token, this);
+                            if (symbol != null)
+                            {
+                                var metadata = _global.GetRequiredMetadata(symbol);
+                                CurrentTypeWriter.Write(node, metadata.OverloadName ?? token);
+                            }
+                            else
+                            {
+                                CurrentTypeWriter.Write(node, $"\"{token}\"");
                             }
                         }
                         else if (name == "global")

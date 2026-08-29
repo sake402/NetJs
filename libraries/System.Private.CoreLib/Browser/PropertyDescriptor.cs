@@ -1,5 +1,6 @@
 ﻿namespace NetJs
 {
+    [NetJs.External]
     [NetJs.ObjectLiteral]
     [NetJs.Convention(NetJs.Notation.CamelCase)]
     public class PropertyDescriptor

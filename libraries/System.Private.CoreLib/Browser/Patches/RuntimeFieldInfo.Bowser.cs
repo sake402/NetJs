@@ -15,6 +15,8 @@ namespace System.Reflection
         internal RuntimeFieldInfo_Partial(FieldModel model) 
         {
             THIS._model = model;
+            NetJs.Script.Write("this.{nameof(System.Reflection.RuntimeFieldInfo.name)} = model.{nameof(NetJs.MemberModel.Name)}");
+            //THIS.name = model.Name;
             //_model = model;
         }
 

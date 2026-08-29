@@ -187,7 +187,7 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (node != null)
             {
-                if (node.ToString().StartsWith("(ushort _, byte codePageFlags)"))
+                if (node.ToString().StartsWith("queryStartPos..(queryEndPos < 0 ? url.Length : queryEndPos)"))
                 {
 
                 }
@@ -285,14 +285,19 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 var mainEntry = _global.MainEntry ?? throw new InvalidOperationException("Expected a main entry for global statements");
                 var typeSymbol = mainEntry.ContainingType;
-                var classMetadata = _global.GetRequiredMetadata(typeSymbol);
+                var typeMetadata = _global.GetRequiredMetadata(typeSymbol);
                 var methodMetadata = _global.GetRequiredMetadata(mainEntry);
                 CurrentTypeWriter = new ScriptWriter();
                 TypeWriters.Add(typeSymbol, CurrentTypeWriter);
                 _global.TypeVisitors.Add(typeSymbol, this);
                 _global.TypeWriters.Add(typeSymbol, CurrentTypeWriter);
+                string overloadFullClassName = typeMetadata.OverloadName!;
+                if (_global.BuildFlags.HasFlag(NetJsBuildFlags.Global) && overloadFullClassName.StartsWith(_global.GlobalName + "."))
+                {
+                    overloadFullClassName = overloadFullClassName.Substring(_global.GlobalName.Length + 1);
+                }
                 OpenClosure(node);
-                CurrentTypeWriter.WriteLine(node, $"{Constants.AssemblyRegistryName}.{Constants.AssemblyDefineClassName}(\"{typeSymbol.CreateSignature(_global, withGlobalNamespace: false, withAssemblySlugNamespace: true)}\", ($self) => class {typeSymbol.Name}", true);
+                CurrentTypeWriter.WriteLine(node, $"{Constants.AssemblyRegistryName}.{Constants.AssemblyDefineClassName}(\"{overloadFullClassName}\", ($self) => class {typeSymbol.Name}", true);
                 CurrentTypeWriter.WriteLine(node, "{", true);
                 CurrentTypeWriter.WriteLine(node, $"static{(mainEntry.IsAsync ? " async" : "")} {methodMetadata.OverloadName}(args)", true);
                 CurrentTypeWriter.WriteLine(node, "{", true);
@@ -550,10 +555,12 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             else if (op == "as")
             {
+                var type = _global.GetTypeSymbol(node.Right, this);
                 CurrentTypeWriter.Write(node, $"{_global.GlobalName}.$as(");
                 Visit(node.Left);
                 CurrentTypeWriter.Write(node, ", ");
-                Visit(node.Right);
+                //Visit(node.Right);
+                CurrentTypeWriter.Write(node, type.ComputeOutputTypeName(_global));
                 CurrentTypeWriter.Write(node, ")");
             }
             else if (op == "is" && node.Right is TypeSyntax && rightSymbol.Kind != SymbolKind.Field/*resolve ambiguity on maybeColor is Color.Blue when Color.Bule is an enum*/)
@@ -1303,7 +1310,8 @@ namespace NetJs.Translator.CSharpToJavascript
                         return;
                     }
                 }
-                if (node.Parent is not StatementSyntax && node.Parent is not ConditionalAccessExpressionSyntax)
+                bool parentIsStatement = node.Parent is StatementSyntax;
+                if (!parentIsStatement && node.Parent is not ConditionalAccessExpressionSyntax)
                     CurrentTypeWriter.Write(node, "(");
                 Visit(node.Expression);
                 CurrentTypeWriter.Write(node, node.OperatorToken.ValueText);
@@ -1317,9 +1325,9 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
 
                 Visit(node.WhenNotNull);
-                if (node.Parent is not StatementSyntax)
+                if (!parentIsStatement || node.Parent.IsKind(SyntaxKind.ReturnStatement))
                     CurrentTypeWriter.Write(node, " ?? null"); //js null?.member is undefined, we need to convert it to null to be consistent with c#
-                if (node.Parent is not StatementSyntax && node.Parent is not ConditionalAccessExpressionSyntax)
+                if (!parentIsStatement && node.Parent is not ConditionalAccessExpressionSyntax)
                     CurrentTypeWriter.Write(node, ")");
             }
             return;
@@ -1704,9 +1712,9 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public string Build(int formatTabs)
         {
-            var importsFromSource = _global.OutputMode.HasFlag(OutputMode.Module) ?
+            var importsFromSource = _global.BuildFlags.HasFlag(NetJsBuildFlags.Module) ?
             string.Join("\r\n", imports.Where(e => e.Key.EndsWith(".cs")).Select(i => $"import {{ {string.Join(", ", i.Value)} }} from \"/{_global.Project.GetName()}/{Path.ChangeExtension(Path.GetRelativePath(_global.Project.GetFolder(), i.Key), "js").Replace("\\", "/")}\"")) : null;
-            var importsFromModule = _global.OutputMode.HasFlag(OutputMode.Module) ?
+            var importsFromModule = _global.BuildFlags.HasFlag(NetJsBuildFlags.Module) ?
                 string.Join("\r\n", imports.Where(e => e.Key.Contains(".dll")).Select(i => $"import {{ {string.Join(", ", i.Value)} }} from \"/{Path.GetFileNameWithoutExtension(i.Key)}.js\"")) : null;
             return (importsFromSource + "\r\n" + importsFromModule + "\r\n" + string.Join("\r\n\r\n", TypeWriters.Values.Select(w => w.Build(formatTabs)))).Trim();
         }

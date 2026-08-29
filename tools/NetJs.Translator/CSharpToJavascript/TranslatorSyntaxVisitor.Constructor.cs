@@ -478,7 +478,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     }
                     else
                     {
-                        var addMethod = instanceType.GetMembers("set_Item").Single(e => e is IMethodSymbol ms && ms.Parameters.Count() == 1 + imp.ArgumentList.Arguments.Count) ??
+                        var addMethod = instanceType.GetMembers("set_Item").SingleOrDefault(e => e is IMethodSymbol ms && ms.Parameters.Count() == 1 + imp.ArgumentList.Arguments.Count) ??
                             instanceType.GetMembers("Add").Single(e => e is IMethodSymbol ms && ms.Parameters.Count() == 1 + imp.ArgumentList.Arguments.Count);
                         var metadata = _global.GetRequiredMetadata(addMethod);
                         CurrentTypeWriter.Write(node, $"{instanceName}.{metadata.OverloadName}(", true);

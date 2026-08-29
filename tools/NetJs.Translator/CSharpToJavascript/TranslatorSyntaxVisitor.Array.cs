@@ -325,7 +325,7 @@ namespace NetJs.Translator.CSharpToJavascript
             bool hasSpreadElement = node.Elements.Any(e => e.IsKind(SyntaxKind.SpreadElement));
             if (createNetArray && hasSpreadElement)
             {
-                CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.ToArray}(");
+                CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.ToArrayName}(");
             }
             CurrentTypeWriter.Write(node, $"[ ");
             int i = 0;
@@ -393,7 +393,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     if (lhsType.IsAbstract || lhsType.TypeKind == TypeKind.Interface)
                     {
-                        if (lhsType.Name == "IReadOnlyList" || lhsType.Name == "IList")
+                        if (lhsType.Name == "IReadOnlyList" || lhsType.Name == "IList" || lhsType.Name == "IReadOnlyCollection")
                         {
                             lhsType = ((INamedTypeSymbol)_global.GetSymbol("System.Collections.Generic.List<>", this)).Construct(((INamedTypeSymbol)lhsType).TypeArguments.ToArray());
                         }
@@ -471,7 +471,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitArrayType(ArrayTypeSyntax node)
         {
-            CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.TypeArray}(");
+            CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.TypeArrayName}(");
             Visit(node.ElementType);
             CurrentTypeWriter.Write(node, ")");
             //base.VisitArrayType(node);

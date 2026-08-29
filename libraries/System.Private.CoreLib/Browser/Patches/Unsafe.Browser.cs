@@ -111,7 +111,7 @@ namespace System.Runtime.CompilerServices
             if (!NetJs.Script.IsDiscardRef(ref source)) //a discard ref shoulf not be wrapped, returns discard
             {
                 RefOrPointer<object> mreff = EnsureIsRefOrPointer(ref source);// NetJs.Script.Write<RefOrPointer<object>>("source");
-                var reff = NetJs.Script.Write<Ref<object>>("mreff.Cast(TTo)");
+                var reff = NetJs.Script.Write<Ref<object>>("mreff.{nameof(NetJs.RefOrPointer<>.Cast<>())}(TTo)");
                 if (reff != null)
                 {
                     NetJs.Script.Write("return reff");
@@ -407,8 +407,8 @@ namespace System.Runtime.CompilerServices
                     {
                         if (source?._parentRef != null && destination._parentRef != null && (destination._byteOffset ?? 0) == 0 && (source._byteOffset ?? 0) == 0)
                         {
-                            var nDest = NetJs.Script.RefAsVoidPointer(NetJs.Script.Write<RefOrPointer<object>>("destination._parentRef"));
-                            var nSrc = NetJs.Script.RefAsVoidPointer(NetJs.Script.Write<RefOrPointer<object>>("source._parentRef"));
+                            var nDest = NetJs.Script.RefAsVoidPointer(destination._parentRef.As<RefOrPointer<object>>());
+                            var nSrc = NetJs.Script.RefAsVoidPointer(source._parentRef.As<RefOrPointer<object>>());
                             CopyBlockFinal(nDest, nSrc, lenBytes);
                         }
                         else

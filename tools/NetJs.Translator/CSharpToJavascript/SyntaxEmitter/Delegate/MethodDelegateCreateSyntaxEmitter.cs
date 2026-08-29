@@ -13,10 +13,6 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Delegate
     {
         public override bool TryEmit(CSharpSyntaxNode node, TranslatorSyntaxVisitor visitor)
         {
-            if (node.ToString() == "(BindFormatter<T>)FormatEnumValueCore<T>")
-            {
-
-            }
             if (_processing.Value.TryPeek(out var top) && top == node)
                 return false;
             if (node.IsKind(SyntaxKind.SimpleMemberAccessExpression) ||
@@ -60,7 +56,16 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Delegate
                             {
                                 if (!visitor.Global.IsNativeFunction(delegateCreate.Type!))
                                 {
-                                    CodeNode _this = (node as MemberAccessExpressionSyntax)?.Expression;
+                                    var expression = (node as MemberAccessExpressionSyntax)?.Expression;
+                                    CodeNode? _this;
+                                    if (expression.IsKind(SyntaxKind.BaseExpression)) //base.Method should target this, not super
+                                    {
+                                        _this = new CodeNode(() => visitor.CurrentTypeWriter.Write(node, "this"));
+                                    }
+                                    else
+                                    {
+                                        _this = expression;
+                                    }
                                     var methodGroup = node;// as MemberAccessExpressionSyntax ?? node as IdentifierNameSyntax; 
                                     if (methodGroup.IsKind(SyntaxKind.CastExpression) && methodGroup is CastExpressionSyntax cast)
                                         methodGroup = cast.Expression;

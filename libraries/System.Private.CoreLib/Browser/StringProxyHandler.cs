@@ -72,7 +72,9 @@ namespace NetJs
         //internal char[] _proxyChars;
         Ref<char> reff;
         bool strDirty;
+        [NetJs.Name(nameof(Reference))]
         public Ref<char> Reference => reff;
+        [NetJs.Name(nameof(Collect))]
         public string Collect
         {
             get

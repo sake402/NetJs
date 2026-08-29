@@ -12,6 +12,7 @@ using System.Diagnostics.SymbolStore;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Xml.Linq;
 using static NetJs.Translator.OneOf.Types.TrueFalseOrNull;
 
@@ -681,7 +682,7 @@ namespace NetJs.Translator.CSharpToJavascript
         //    return new string(newChars, 0, cLen);
         //}
 
-        static StringBuilder _discardTypeParameter = new StringBuilder();
+        static ThreadLocal<StringBuilder> _discardTypeParameter = new ThreadLocal<StringBuilder>(() => new StringBuilder());
         private static readonly Regex FileScopeRegex = new Regex(@"^<(?<Assembly>[^>]+)>F(?<FileHash>[0-9A-F]+)__(?<TypeName>.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         public static void __CreateSignatures((StringBuilder WithTypeParameter, StringBuilder WithoutTypeParameter) builder, ISymbol current, GlobalCompilationVisitor global, bool withGlobalNamespace = true)
         {
@@ -764,8 +765,8 @@ namespace NetJs.Translator.CSharpToJavascript
                                             builder.WithTypeParameter.Append(",");
                                             builder.WithoutTypeParameter.Append(",");
                                         }
-                                        _discardTypeParameter.Clear();
-                                        __CreateSignatures(builder with { WithoutTypeParameter = _discardTypeParameter }, tps[i], global);
+                                        _discardTypeParameter.Value!.Clear();
+                                        __CreateSignatures(builder with { WithoutTypeParameter = _discardTypeParameter.Value }, tps[i], global);
                                         //Different extension types with same signature can have discriminating constraint
                                         //Use the constraint as part of the signature
                                         if (tps[i].ConstraintTypes.Length > 0)
@@ -778,8 +779,8 @@ namespace NetJs.Translator.CSharpToJavascript
                                                 {
                                                     builder.WithTypeParameter.Append(",");
                                                 }
-                                                _discardTypeParameter.Clear();
-                                                __CreateSignatures(builder with { WithoutTypeParameter = _discardTypeParameter }, t, global);
+                                                _discardTypeParameter.Value.Clear();
+                                                __CreateSignatures(builder with { WithoutTypeParameter = _discardTypeParameter.Value }, t, global);
                                                 ix++;
                                             }
                                         }
@@ -912,8 +913,8 @@ namespace NetJs.Translator.CSharpToJavascript
                                     builder.WithTypeParameter.Append(",");
                                     builder.WithoutTypeParameter.Append(",");
                                 }
-                                _discardTypeParameter.Clear();
-                                __CreateSignatures(builder with { WithoutTypeParameter = _discardTypeParameter }, tps[i], global);
+                                _discardTypeParameter.Value!.Clear();
+                                __CreateSignatures(builder with { WithoutTypeParameter = _discardTypeParameter.Value }, tps[i], global);
                             }
                         }
                         builder.WithTypeParameter.Append(">");
@@ -937,8 +938,8 @@ namespace NetJs.Translator.CSharpToJavascript
                                     builder.WithTypeParameter.Append(",");
                                     builder.WithoutTypeParameter.Append(",");
                                 }
-                                _discardTypeParameter.Clear();
-                                __CreateSignatures(builder with { WithoutTypeParameter = _discardTypeParameter }, tps[i], global);
+                                _discardTypeParameter.Value!.Clear();
+                                __CreateSignatures(builder with { WithoutTypeParameter = _discardTypeParameter.Value }, tps[i], global);
                             }
                         }
                         builder.WithTypeParameter.Append(">");
@@ -1038,17 +1039,17 @@ namespace NetJs.Translator.CSharpToJavascript
             string? prefix = null;
             if (withGlobalNamespace && symbol.ContainingAssembly != null)
             {
-                prefix = global.GlobalName + "." + global.GetAssemblyGlobalSlug(symbol.ContainingAssembly) + ".";
+                prefix = global.GlobalName + "." + global.GetAssemblyGlobalSlug(symbol.ContainingAssembly);
             }
             else if (withAssemblySlugNamespace && symbol.ContainingAssembly != null)
             {
-                prefix = global.GetAssemblyGlobalSlug(symbol.ContainingAssembly) + ".";
+                prefix = global.GetAssemblyGlobalSlug(symbol.ContainingAssembly);
             }
             if (global.FullTypeNameCache.TryGetValue(symbol, out var s))
             {
                 if (withTypeParameterNames)
-                    return prefix + s.WithTypeParameter;
-                return prefix + s.WithoutTypeParameter;
+                    return prefix + (prefix?.Length > 0 && s.WithTypeParameter.Length > 0 ? "." : "") + s.WithTypeParameter;
+                return prefix + (prefix?.Length > 0 && s.WithoutTypeParameter.Length > 0 ? "." : "") + s.WithoutTypeParameter;
             }
             if (symbol.Kind == SymbolKind.NamedType && symbol is INamedTypeSymbol tt && tt.IsNullable(out var nt))
             {
@@ -1063,8 +1064,8 @@ namespace NetJs.Translator.CSharpToJavascript
             (string WithTypeParameter, string WithoutTypeParameter) values = (withTypeParameterBuilder.ToString(), withoutTypeParameterBuilder.ToString());
             global.FullTypeNameCache[symbol] = values;
             if (withTypeParameterNames)
-                return prefix + values.WithTypeParameter;
-            return prefix + values.WithoutTypeParameter;
+                return prefix + (prefix?.Length > 0 && values.WithTypeParameter.Length > 0 ? "." : "") + values.WithTypeParameter;
+            return prefix + (prefix?.Length > 0 && values.WithoutTypeParameter.Length > 0 ? "." : "") + values.WithoutTypeParameter;
         }
 
         //public static string _CreateFullTypeName(this ISymbol type, GlobalCompilationVisitor global, bool withTypeParameterNames = false)
@@ -1396,12 +1397,12 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 return ComputeOutputTypeName(global.SystemObject, global);
             }
-            if (type.IsArray(out var elementType))
-                return $"{global.GlobalName}.{Constants.TypeArray}({ComputeOutputTypeName(elementType, global)})";
+            if (type.IsArray(out var elementType, false))
+                return $"{global.GlobalName}.{Constants.TypeArrayName}({ComputeOutputTypeName(elementType, global)})";
             if (type.IsPointer(out var pointedType))
-                return $"{global.GlobalName}.{Constants.TypePointer}({ComputeOutputTypeName(pointedType, global)})";
+                return $"{global.GlobalName}.{Constants.TypePointerName}({ComputeOutputTypeName(pointedType, global)})";
             if (type.IsNullable(out var nt) && nt!.IsValueType)
-                return $"{global.GlobalName}.{Constants.NullableType}({ComputeOutputTypeName(nt, global)})";
+                return $"{global.GlobalName}.{Constants.TypeNullableName}({ComputeOutputTypeName(nt, global)})";
             var sym = global.GetMetadata(type);
             if (sym != null)
             {
@@ -1790,7 +1791,7 @@ namespace NetJs.Translator.CSharpToJavascript
             return fullName == name;
         }
 
-        public static bool IsArray(this ITypeSymbol symbol, out ITypeSymbol elementType)
+        public static bool IsArray(this ITypeSymbol symbol, out ITypeSymbol elementType, bool withSystemArrayGeneric = true)
         {
             if (symbol is IArrayTypeSymbol arr)
             {
@@ -1802,7 +1803,7 @@ namespace NetJs.Translator.CSharpToJavascript
             //    elementType = ((INamedTypeSymbol)symbol).TypeArguments[0];
             //    return true;
             //}
-            if (symbol.IsType("System.Array<>", true))
+            if (withSystemArrayGeneric && symbol.IsType("System.Array<>", true))
             {
                 elementType = ((INamedTypeSymbol)symbol).TypeArguments[0];
                 return true;
@@ -3564,6 +3565,34 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             var flags = MemberFlagsModel.None;
 
+            if (symbol.Kind == SymbolKind.Property)
+                flags |= MemberFlagsModel.IsProperty;
+            if (symbol.Kind == SymbolKind.Field)
+                flags |= MemberFlagsModel.IsField;
+            if (symbol.Kind == SymbolKind.Event)
+                flags |= MemberFlagsModel.IsEvent;
+            if (symbol.Kind == SymbolKind.Method)
+            {
+                flags |= MemberFlagsModel.IsMethod;
+                var mth = (IMethodSymbol)symbol;
+                if (mth.AssociatedSymbol?.Kind == SymbolKind.Property)
+                {
+                    var prop = (IPropertySymbol)mth.AssociatedSymbol;
+                    if (SymbolEqualityComparer.Default.Equals(prop.GetMethod, mth))
+                        flags |= MemberFlagsModel.IsMethodPropertyGet;
+                    if (SymbolEqualityComparer.Default.Equals(prop.SetMethod, mth))
+                        flags |= MemberFlagsModel.IsMethodPropertySet;
+                }
+                if (mth.AssociatedSymbol?.Kind == SymbolKind.Event)
+                {
+                    var prop = (IEventSymbol)mth.AssociatedSymbol;
+                    if (SymbolEqualityComparer.Default.Equals(prop.AddMethod, mth))
+                        flags |= MemberFlagsModel.IsMethodEventAdd;
+                    if (SymbolEqualityComparer.Default.Equals(prop.RemoveMethod, mth))
+                        flags |= MemberFlagsModel.IsMethodEventRemove;
+                }
+            }
+
             switch (symbol.DeclaredAccessibility)
             {
                 case Accessibility.Public: flags |= MemberFlagsModel.IsPublic; break;
@@ -3816,5 +3845,45 @@ namespace NetJs.Translator.CSharpToJavascript
         //    return null;
         //}
 
+        public static void TokenHistogram(this string text)
+        {
+            // Tokenize using regex (matches words/alphanumeric tokens)
+            var tokens = Regex.Matches(text, @"\b\w+\b")
+                              .Cast<Match>()
+                              .Select(m => m.Value);
+
+            // Build the histogram (Group by token and count)
+            var histogram = tokens.Where(t => t.Length > 1)
+                                  .GroupBy(t => t)
+                                  .ToDictionary(g => g.Key, g => g.Count());
+
+            // Find the best string to reduce (Max of: Frequency * Length)
+            var bestSelection = histogram
+                .Select(kvp => new { Token = kvp.Key, TotalBytes = kvp.Value * kvp.Key.Length })
+                .OrderByDescending(x => x.TotalBytes)
+                .FirstOrDefault();
+
+            // Print Results
+            Console.WriteLine("--- Top 20 Most Repetitive Tokens (by counts) ---");
+            foreach (var item in histogram.OrderByDescending(kvp => kvp.Value).Take(20))
+            {
+                Console.WriteLine($"{item.Key}: {item.Value} times");
+            }
+
+            Console.WriteLine("--- Top 20 Most Space Consuming Tokens (by bytes) ---");
+            foreach (var item in histogram
+                .Select(kvp => new { Token = kvp.Key, Count = kvp.Value, TotalBytes = kvp.Value * kvp.Key.Length })
+                .OrderByDescending(x => x.TotalBytes).Take(20))
+            {
+                Console.WriteLine($"{item.Token}: {item.Count} counts, {item.TotalBytes} bytes");
+            }
+
+            if (bestSelection != null)
+            {
+                Console.WriteLine("\n--- Best Recommendation for Size Reduction ---");
+                Console.WriteLine($"Token to shrink: \"{bestSelection.Token}\"");
+                Console.WriteLine($"Potential savings: {bestSelection.TotalBytes} bytes");
+            }
+        }
     }
 }

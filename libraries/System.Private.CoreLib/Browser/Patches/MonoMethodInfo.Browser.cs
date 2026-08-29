@@ -50,8 +50,8 @@ namespace System.Reflection
                 returnTypeHandle = NetJs.Script.Write<uint>("returnTypeHandle( ...args)");
             }
             var rt = (NetJs.Script.IsDefined(returnTypeHandle) ? AppDomain.GetType(returnTypeHandle.As<uint>()) : null) ?? typeof(void);
-            NetJs.Script.Write("minfo.parent = dt");
-            NetJs.Script.Write("minfo.ret = rt");
+            NetJs.Script.Write("minfo.{nameof(System.Reflection.MonoMethodInfo.parent)} = dt");
+            NetJs.Script.Write("minfo.{nameof(System.Reflection.MonoMethodInfo.ret)} = rt");
             if (NetJs.Script.IsDefined(method._model.Flags))
             {
                 if (method._model.Flags.TypeHasFlag(MemberFlagsModel.IsPublic))
@@ -84,12 +84,7 @@ namespace System.Reflection
             var parameters = method._model.As<MethodModel>().Parameters ?? null;
             var infos = parameters?.Map((p, i, all) =>
             {
-                var parameterTypeHandle = p.ParameterType;
-                if (NetJs.Script.TypeOf(parameterTypeHandle).NativeEquals("function"))
-                {
-                    var args = method._typeArguments!.Map(t => t.As<RuntimeType>()._prototype);
-                    parameterTypeHandle = NetJs.Script.Write<uint>("parameterTypeHandle( ...args)");
-                }
+                var parameterTypeHandle = p.ParameterType.ResolveHandle(method._typeArguments);
                 return new RuntimeParameterInfo_Partial(p, AppDomain.GetType(parameterTypeHandle.As<uint>()) ?? throw new InvalidOperationException(), method, i).As<RuntimeParameterInfo>();
             }).AsNetArray() ??
                 Array.Empty<ParameterInfo>();

@@ -8,6 +8,8 @@ namespace NetJs
     //[Name("dotnetJs")]
     public static class Script
     {
+        [Template("{global.}"+Constants.RefCreateName+"({getter}, {setter})")]
+        public static extern RefOrPointer<T> CreateReference<T>(NativeFunction<T> getter, NativeAction<T> setter);
         [Template("{0}")]
         public static extern ref T Ref<T>(RefOrPointer<T> value);
         [Template("{0}")]
@@ -166,7 +168,7 @@ namespace NetJs
 
         [Template("{global.}" + Constants.DefaultTypeName + "({0})")]
         public static extern object GetDefaultValue(TypePrototype type);
-        [Template("{global.}" + Constants.DefaultTypeName + "({0}._prototype)")]
+        [Template("{global.}" + Constants.DefaultTypeName + "({0}." + Constants.RuntimeTypePrototypeName + ")")]
         public static extern object GetDefaultValue(Type type);
         /// <summary>
         /// Checks if the specified object is undefined. The object passed in should be a local variable, and not a member of a class (to avoid potential script warnings).
@@ -372,7 +374,7 @@ namespace NetJs
 
         [Template("({obj} instanceof {type})")]
         public static extern bool InstanceOf(object? obj, TypePrototype type);
-        [Template("({obj} instanceof {type}._prototype)")]
+        [Template("({obj} instanceof {type}." + Constants.RuntimeTypePrototypeName + ")")]
         public static extern bool InstanceOf(object? obj, Type type);
 
         [Template("this")]

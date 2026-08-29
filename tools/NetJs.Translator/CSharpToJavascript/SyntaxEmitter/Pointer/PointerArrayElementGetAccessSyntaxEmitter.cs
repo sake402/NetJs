@@ -22,7 +22,9 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Pointer
                         if (isGet)
                         {
                             visitor.Visit(node.Expression);
-                            visitor.CurrentTypeWriter.Write(node, ".GetAt(");
+                            visitor.CurrentTypeWriter.Write(node, ".");
+                            visitor.WriteMemberName(node, visitor.Global.SystemPointer, "GetAt");
+                            visitor.CurrentTypeWriter.Write(node, "(");
                             if (argType.IsLongNumericType())
                             {
                                 visitor.CurrentTypeWriter.Write(node, "Number(");

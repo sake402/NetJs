@@ -38,17 +38,17 @@ namespace NetJs.Compiler
         {
             return project.AllEvaluatedProperties.Last(e => e.Name == "OutputPath").EvaluatedValue;
         }
-        public static OutputMode GetOutputMode(this Project project)
+        public static NetJsBuildFlags GetOutputMode(this Project project)
         {
             var v = project.AllEvaluatedProperties.LastOrDefault(e => e.Name == "OutputMode")?.EvaluatedValue;
-            Enum.TryParse<OutputMode>(v, out var value);
-            if (value.HasFlag(OutputMode.Module) && value.HasFlag(OutputMode.Global))
+            Enum.TryParse<NetJsBuildFlags>(v, out var value);
+            if (value.HasFlag(NetJsBuildFlags.Module) && value.HasFlag(NetJsBuildFlags.Global))
             {
                 throw new InvalidOperationException("Cannot enable both global and module at the same time");
             }
-            if (!value.HasFlag(OutputMode.Module) && !value.HasFlag(OutputMode.Global))
+            if (!value.HasFlag(NetJsBuildFlags.Module) && !value.HasFlag(NetJsBuildFlags.Global))
             {
-                value |= OutputMode.Module;
+                value |= NetJsBuildFlags.Module;
             }
             return value;
         }

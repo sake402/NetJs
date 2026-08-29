@@ -26,5 +26,11 @@ namespace System
                 NetJs.Script.Write("this._m_value = value");
             }
         }
+
+        //[NetJs.Name(Constants.IsTypeName)]
+        //public static bool Is(object value)
+        //{
+        //    return NetJs.Script.TypeOf(value).NativeEquals("bigint");
+        //}
     }
 }

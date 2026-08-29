@@ -35,7 +35,7 @@
     },
     "MudBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\3rdparty\\MudBlazor\\src\\MudBlazor\\MudBlazor.csproj\" -s -f -p TargetFramework=net10.0",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\3rdparty\\MudBlazor\\src\\MudBlazor\\MudBlazor.csproj\" -s -f -p TargetFramework=net10.0 -p TreatWarningsAsErrors=false",
       "workingDirectory": "E:\\Apps\\NetJs"
     },
     "NetEscapades.EnumGenerators.Attributes": {
@@ -45,7 +45,7 @@
     },
     "miniapp": {
       "commandName": "Project",
-      "commandLineArgs": "build --project \"/Users/sit/Desktop/miniapp/miniapp.csproj\" -s -f"
+      "commandLineArgs": "build --project \"C:\\Users\\User\\Desktop\\miniapp\\miniapp.csproj\" -s -f"
     },
     "LivingThing.Core.Frameworks.Common": {
       "commandName": "Project",

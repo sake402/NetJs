@@ -22,7 +22,9 @@ namespace NetJs
         /// <summary>
         /// The finally created type we will proxy to
         /// </summary>
+        [NetJs.Name("TargetType")] //prevent from name shrinking as we use nameof() on it. We may add this feature to the transpiler in the future to rewrite the nameof parameter accordingly too
         internal Type? TargetType { get; set; }
+        [NetJs.Name("Prototype")]
         internal TypePrototype? Prototype { get; set; }
         [Name("get")]
         public object? Get(object target, string property, object receiver)

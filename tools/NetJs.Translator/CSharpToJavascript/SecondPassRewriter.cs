@@ -1539,10 +1539,6 @@ namespace NetJs.Translator.CSharpToJavascript
             ConditionalAccessExpressionSyntax? parentCondition = null,
             Stack<ITypeSymbol>? nodeExpressionTypes = null)
         {
-            if (node.ToString() == "AppsPackages?.FirstOrDefault(a => a.Name == assemblyName).Lazy")
-            {
-
-            }
             if (parentCondition == null && !IsConditionalAccessRewriteCandidate(node))
                 return base.VisitConditionalAccessExpression(node);
             //no block to define temp variable in
@@ -1667,7 +1663,7 @@ namespace NetJs.Translator.CSharpToJavascript
                         if (nodeType.IsNullable(out var primitiveType) &&
                             primitiveType!.IsType("System.Boolean") &&
                             (targetNode.Parent is BinaryExpressionSyntax || targetNode.Parent is IsPatternExpressionSyntax) &&
-                            targetNode.FindClosestParent<IfStatementSyntax>() != null/* &&
+                            (targetNode.FindClosestParent<IfStatementSyntax>() != null || targetNode.FindClosestParent<ConditionalExpressionSyntax>() != null)/* &&
                             (parentCondition ?? node).FindDescendant<ArgumentSyntax>(isCandidate: e => e.RefKindKeyword.ValueText == "out").Any()*/)
                         {
                             whenNull = SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression);
@@ -1852,7 +1848,7 @@ namespace NetJs.Translator.CSharpToJavascript
                             SyntaxFactory.AssignmentExpression(
                                 SyntaxKind.SimpleAssignmentExpression,
                                 SyntaxFactory.IdentifierName(varName),
-                                (ExpressionSyntax)Visit(node.Expression.WithoutLeadingTrivia().WithoutTrailingTrivia())!
+                                (ExpressionSyntax)Visit(node.Expression)!.WithoutLeadingTrivia().WithoutTrailingTrivia()
                             )
                         ),
                         SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression)
@@ -1870,7 +1866,7 @@ namespace NetJs.Translator.CSharpToJavascript
                                 SyntaxFactory.AssignmentExpression(
                                     SyntaxKind.SimpleAssignmentExpression,
                                     SyntaxFactory.IdentifierName(varName).WithTrailingTrivia(SyntaxFactory.Space),
-                                    (ExpressionSyntax)Visit(node.Expression.WithoutLeadingTrivia().WithoutTrailingTrivia().WithLeadingTrivia(SyntaxFactory.Space))!
+                                    (ExpressionSyntax)Visit(node.Expression)!.WithoutLeadingTrivia().WithoutTrailingTrivia().WithLeadingTrivia(SyntaxFactory.Space)
                                 )
                             ).WithTrailingTrivia(SyntaxFactory.Space),
                             SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression).WithLeadingTrivia(SyntaxFactory.Space)
@@ -1922,8 +1918,8 @@ namespace NetJs.Translator.CSharpToJavascript
         public override SyntaxNode? VisitPostfixUnaryExpression(PostfixUnaryExpressionSyntax node)
         {
             //remove null forgivings as it will confuse some writers logic
-            if (node.IsKind(SyntaxKind.SuppressNullableWarningExpression))
-                return Visit(node.Operand);
+            //if (node.IsKind(SyntaxKind.SuppressNullableWarningExpression))
+                //return Visit(node.Operand);
             return base.VisitPostfixUnaryExpression(node);
         }
 

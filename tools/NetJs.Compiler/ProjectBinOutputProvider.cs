@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace NetJs.Compiler
@@ -117,7 +118,7 @@ namespace NetJs.Compiler
                 if (debugLog)
                     Console.WriteLine($"Copy stream to \"{outputFile}\"!");
             }
-            else if (!global.OutputMode.HasFlag(OutputMode.SingleHtmlFile) || destinationRelativePath.EndsWith(".html"))
+            else if (!global.BuildFlags.HasFlag(NetJsBuildFlags.SingleHtmlFile) || destinationRelativePath.EndsWith(".html"))
             {
                 var dir = Path.GetDirectoryName(outputFile);
                 if (dir != null && !Directory.Exists(dir))
@@ -138,21 +139,21 @@ namespace NetJs.Compiler
             {
                 if (destinationRelativePath.EndsWith(".js"))
                 {
+                    await stream.CopyToAsync(htmlScriptContent);
                     if (debugLog)
-                        await stream.CopyToAsync(htmlScriptContent);
-                    Console.WriteLine($"Copy stream to js stream!");
+                        Console.WriteLine($"Copy stream to js stream!");
                 }
                 else if (destinationRelativePath.EndsWith(".css"))
                 {
+                    await stream.CopyToAsync(htmlStyleContent);
                     if (debugLog)
-                        await stream.CopyToAsync(htmlStyleContent);
-                    Console.WriteLine($"Copy stream to css stream!");
+                        Console.WriteLine($"Copy stream to css stream!");
                 }
                 else
                 {
+                    await stream.CopyToAsync(htmlBodyContent);
                     if (debugLog)
-                        await stream.CopyToAsync(htmlBodyContent);
-                    Console.WriteLine($"Copy stream to html stream!");
+                        Console.WriteLine($"Copy stream to html stream!");
                 }
             }
 

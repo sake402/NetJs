@@ -83,6 +83,12 @@ namespace NetJs
             arrayOffset = 0;
             return this;
         }
+
+        [NetJs.Name(Constants.DefaultTypeName)]
+        public static RefOrPointer Default()
+        {
+            return _pinnedPointer;
+        }
     }
 
     public abstract class RefOrPointer<T> : RefOrPointer
@@ -270,8 +276,10 @@ namespace NetJs
         }
 
         internal DataView? _dataView;
-        private DataView GetDataView()
+        public DataView GetDataView()
         {
+            if (this == RefOrPointer._pinnedPointer.As<RefOrPointer<T>>())
+                return null!;
             if (__dataView != null)
                 return __dataView;
             if (_dataSourceType == DataSourceType._parentRef || _dataSource is RefOrPointer)
@@ -976,6 +984,8 @@ namespace NetJs
         internal override bool IsPointer => false;
         public override RefOrPointer Clone()
         {
+            if (this == RefOrPointer._pinnedPointer.As<Ref<T>>())
+                return this;
             return new Ref<T>(_getter, _setter)
             {
                 _dataSource = _dataSource,
@@ -1041,6 +1051,8 @@ namespace NetJs
         internal override bool IsPointer => true;
         public override RefOrPointer Clone()
         {
+            if (this == RefOrPointer._pinnedPointer.As<Pointer<T>>())
+                return this;
             return new Pointer<T>(_getter, _setter)
             {
                 _dataSource = _dataSource,

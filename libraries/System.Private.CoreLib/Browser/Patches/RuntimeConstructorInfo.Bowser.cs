@@ -38,7 +38,7 @@ namespace System.Reflection
         {
             var prototype = DeclaringType.As<RuntimeType>()._prototype;
             var dobject = prototype.New();
-            var ctorName = NetJs.Script.IsDefined(_model.OutputName) ? _model.OutputName!.NativeReplace("@", _model.Name) : _model.Name;
+            var ctorName = _model.GetOutputName();
             var ctor = dobject[ctorName];
             //If calling default constructor, it may not be exported, if the type does not explicitly define it
             if (NetJs.Script.IsDefined(ctor))
@@ -48,7 +48,7 @@ namespace System.Reflection
                 {
                     throw null!;
                 }
-                RuntimeHelpers.NativeFunctionDispatch(dobject, ctorName, parameters);
+                RuntimeHelpers.NativeFunctionDispatch(dobject, ctorName, prototype, parameters);
                 //NetJs.Script.Write("ctor.apply(dobject, parameters)");
             }
             else
@@ -67,7 +67,7 @@ namespace System.Reflection
         {
             var prototype = DeclaringType.As<RuntimeType>()._prototype;
             var dobject = prototype.New();
-            var outputName = _model.OutputName!.NativeReplace("@", _model.Name);
+            var outputName = _model.GetOutputName();
             var ctor = dobject[outputName];
             parameters = parameters?.Map(p => NetJs.Script.Unbox(p));
             //If calling default constructor, it may not be exported, if the type does not explicitly define it

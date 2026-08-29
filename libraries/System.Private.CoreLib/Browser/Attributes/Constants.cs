@@ -25,8 +25,20 @@
         public const bool CompatibleExtensionPropertyGetSetMethod = true;
         [InlineConst]
         public const bool ComplexSwitchUseIfElse = true;
+        //[InlineConst]
+        //public const bool MinifyNamespace = true;
+        //[InlineConst]
+        //public const bool MinifyTypeName = true;
+        //[InlineConst]
+        //public const bool MinifyFieldName = true;
+        //[InlineConst]
+        //public const bool MinifyPropertyName = true;
+        //[InlineConst]
+        //public const bool MinifyMethodName = true;
+        //[InlineConst]
+        //public const bool MinifyEventName = true;
         [InlineConst]
-        public const bool MinifyNamespace = false;
+        public const bool ResourceNamesInlined = true;
         [InlineConst]
         public const bool RewriteConditionalAccessExpressions = true;
         //[InlineConst]
@@ -38,7 +50,7 @@
         [InlineConst]
         public const string GlobalName = "$";
         [InlineConst]
-        public const string SystemPrivateCoreLib = "$spc";
+        public const string SystemPrivateCoreLibSlug = "$$";
         [InlineConst]
         public const string AssemblyRegistryName = "$asm";
         [InlineConst]
@@ -80,7 +92,7 @@
         [InlineConst]
         public const string DefaultTypeName = "$default";
         [InlineConst]
-        public const string CreateArray = "$array";
+        public const string CreateArrayName = "$array";
         [InlineConst]
         public const string BoxName = "$box";
         [InlineConst]
@@ -106,11 +118,13 @@
         [InlineConst]
         public const string Expression = "$exp";
         [InlineConst]
-        public const string TypeArray = "$typeArray";
+        public const string TypeArrayName = "$typeArray";
         [InlineConst]
-        public const string TypePointer = "$typePointer";
+        public const string TypeRefOrPointerName = "$typeRefOrPointer";
         [InlineConst]
-        public const string NullableType = "$typeNullable";
+        public const string TypePointerName = "$typePointer";
+        [InlineConst]
+        public const string TypeNullableName = "$typeNullable";
         [InlineConst]
         public const string TypeOf = "$typeOf";
         [InlineConst]
@@ -120,13 +134,15 @@
         [InlineConst]
         public const string TypePrototypeName = "$prototype";
         [InlineConst]
-        public const string ToArray = "$toArray";
+        public const string ToArrayName = "$toArray";
         [InlineConst]
         public const string ToStringName = "$toString";
         [InlineConst]
         public const string HashCodeKey = "$hashCode";
         [InlineConst]
         public const string GetHashCodeName = "$getHashCode";
+        [InlineConst]
+        public const string GetCoreAssemblyName = "$getCoreAssembly";
         [InlineConst]
         public const string BootName = "$boot";
         [InlineConst]
@@ -192,7 +208,7 @@
         [InlineConst]
         public const string Dispatch = "$dsp";
         [InlineConst]
-        public const string Destructure = "$destructure";
+        public const string DestructureName = "$destructure";
         [InlineConst]
         public const string NativeDelagateFunctionName = "$nativeFunction";
         [InlineConst]
@@ -210,7 +226,7 @@
         [InlineConst]
         public const string ProxyType = "$type";
         [InlineConst]
-        public const string IntegerChecked = "$checked";
+        public const string IntegerCheckedName = "$checked";
         [InlineConst]
         public const string OutputFolderName = "wwwroot";
         [InlineConst]
@@ -221,5 +237,15 @@
         public const string ObjectGetStaticField = "$getSField";
         [InlineConst]
         public const string ObjectSetStaticField = "$setSField";
+        [InlineConst]
+        public const string InteropUtilityName = "$interop";
+        [InlineConst]
+        public const string PointerToAddress = "$ptr2Addr";
+        [InlineConst]
+        public const string AddressToPointer = "$addr2Ptr";
+        [InlineConst]
+        public const string VirtualAddressOffset = "$vAddrOff";
+        [InlineConst]
+        public const string RuntimeTypePrototypeName = "$p";
     }
 }

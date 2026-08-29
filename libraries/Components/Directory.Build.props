@@ -1,9 +1,0 @@
-<Project>
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory)..\, Directory.Build.props))\Directory.Build.props" />
-
-  <PropertyGroup>
-    <PackageTags>aspnetcore;components</PackageTags>
-    <ComponentsSharedSourceRoot>$(RepoRoot)src\Components\Shared\</ComponentsSharedSourceRoot>
-  </PropertyGroup>
-  
-</Project>

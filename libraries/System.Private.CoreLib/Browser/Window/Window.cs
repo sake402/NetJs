@@ -20,6 +20,7 @@ namespace Window
         public static extern Navigator navigator { get; }
         public static extern Location location { get; }
         public static extern History history { get; }
+        public static extern Storage localStorage { get; }
 
         public static extern double innerWidth { get; }
         public static extern double innerHeight { get; }

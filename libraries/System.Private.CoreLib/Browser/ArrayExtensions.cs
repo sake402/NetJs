@@ -83,6 +83,8 @@ namespace System
 
         [NetJs.Template("{array}.shift()")]
         public static extern object Shift<T>(this T[] array);
+        [NetJs.Template("{array}.indexOf({value})")]
+        public static extern int ArrayIndexOf<T>(this T[] array, T value);
 
         [NetJs.Template("{array}.slice()")]
         public static extern Array ArrayClone(this Array array);

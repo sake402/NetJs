@@ -18,6 +18,7 @@ namespace System
     }
     //[NetJs.StaticCallConvention]
     //[NetJs.ExternalInterfaceImplementation(typeof(ArrayEnumerator))]
+    [NetJs.Name("Array")] //pin this at this name, so that we can use it in the templates
     public abstract partial class Array : NativeArray
     {
         //public Array(int length) : base(length)
@@ -111,7 +112,7 @@ namespace System
             {
                 var elementType = this[ElementTypeName].As<RuntimeType>();
                 var value = this[index];
-                var boxValue = NetJs.Script.IsDefined(elementType) ? NetJs.Script.Write<object>("{global.}$box(value, elementType._prototype)") : value;
+                var boxValue = NetJs.Script.IsDefined(elementType) ? NetJs.Script.Write<object>("{global.}$box(value, elementType.{nameof(RuntimeType._prototype)})") : value;
                 return boxValue;
             }
         }
@@ -134,7 +135,7 @@ namespace System
             unchecked
             {
                 var elementType = this[ElementTypeName].As<RuntimeType>();
-                var unBoxValue = NetJs.Script.IsDefined(elementType) ? NetJs.Script.Write<object>("{global.}$cast(value, elementType._prototype)") : value;
+                var unBoxValue = NetJs.Script.IsDefined(elementType) ? NetJs.Script.Write<object>("{global.}$cast(value, elementType.{nameof(RuntimeType._prototype)})") : value;
                 this[index] = unBoxValue;
             }
         }
@@ -155,7 +156,7 @@ namespace System
                     var index = indices[0];
                     var elementType = this[ElementTypeName].As<RuntimeType>();
                     var value = this[index];
-                    var boxValue = NetJs.Script.IsDefined(elementType) ? NetJs.Script.Write<object>("{global.}$box(value, elementType._prototype)") : value;
+                    var boxValue = NetJs.Script.IsDefined(elementType) ? NetJs.Script.Write<object>("{global.}$box(value, elementType.{nameof(RuntimeType._prototype)})") : value;
                     return boxValue;
                 }
             }
@@ -177,7 +178,7 @@ namespace System
                 {
                     var index = indices[0];
                     var elementType = this[ElementTypeName].As<RuntimeType>();
-                    var unBoxValue = NetJs.Script.IsDefined(elementType) ? NetJs.Script.Write<object>("{global.}$cast(value, elementType._prototype)") : value;
+                    var unBoxValue = NetJs.Script.IsDefined(elementType) ? NetJs.Script.Write<object>("{global.}$cast(value, elementType.{nameof(RuntimeType._prototype)})") : value;
                     this[index] = unBoxValue;
                 }
             }
@@ -352,7 +353,7 @@ namespace System
             }
             var elementPrototype = et?._prototype ?? typeof(object).As<RuntimeType>()._prototype;
             //var prototype = elementType._prototype;
-            return NetJs.Script.Write<Type>($"$.{NetJs.Constants.TypeOf}($.{NetJs.Constants.TypeArray}(elementPrototype))");
+            return NetJs.Script.Write<Type>($"$.{NetJs.Constants.TypeOf}($.{NetJs.Constants.TypeArrayName}(elementPrototype))");
             //return typeof(Array<>).MakeGenericType(elementType);
         }
 
@@ -387,7 +388,7 @@ namespace System
         {
             unchecked
             {
-                Array arr = NetJs.Script.Write<Array>("new ({assembly.}System.Array$$(type._prototype))()");
+                Array arr = NetJs.Script.Write<Array>("new ({assembly.}System.Array$$(type.{nameof(RuntimeType._prototype)}))()");
                 const bool createJaggedArray = false;
                 if (!createJaggedArray || depth == 0)
                 {
@@ -466,7 +467,7 @@ namespace System
             }
         }
 
-        [NetJs.Name(NetJs.Constants.CreateArray)]
+        [NetJs.Name(NetJs.Constants.CreateArrayName)]
         internal static Array CreateFromScript(RuntimeType type, int len)
         {
             return CreateFinal(type, NetJs.Script.CreateArrayFromValues(len), null, null, 0);
@@ -575,7 +576,7 @@ namespace System
             {
                 var value = marr[pos];
                 var elementType = marr[ElementTypeName].As<RuntimeType>();
-                var boxValue = NetJs.Script.Write<object>("{global.}$box(value, elementType._prototype)");
+                var boxValue = NetJs.Script.Write<object>("{global.}$box(value, elementType.{nameof(RuntimeType._prototype)})");
                 res.GetObjectHandleOnStack<object?>() = boxValue;
             }
         }
@@ -589,7 +590,7 @@ namespace System
             {
                 var dvalue = value.GetObjectHandleOnStack<object?>();
                 var elementType = marr[ElementTypeName].As<RuntimeType>();
-                var unBoxValue = NetJs.Script.Write<object>("{global.}$cast(dvalue, elementType._prototype)");
+                var unBoxValue = NetJs.Script.Write<object>("{global.}$cast(dvalue, elementType.{nameof(RuntimeType._prototype)})");
                 marr[pos] = unBoxValue;
             }
         }
@@ -742,6 +743,7 @@ namespace System
     //Class only defined for generator use
     //This class makes indexing a typed array work
     //[NetJs.External]
+    [NetJs.Name("Array")] //pin this at this name, so that we can use it in the templates
     public abstract class Array<T> : Array, ICollection<T>, IList<T>, IReadOnlyList<T>
     {
         //[NetJs.NativeConstructor]

@@ -20,7 +20,7 @@ namespace NetJs.Compiler
         string _dotnetJsSolutionPath;
         public string DotnetGitRoot { get; }
         string _dotnetRuntimeRoot;
-        string _repoRoot;
+        string _aspNetCoreRoot;
         string _coreLibRoot;
         string _coreLibSharedDir;
         string _commonPath;
@@ -34,11 +34,11 @@ namespace NetJs.Compiler
             var directoryBuildProps = Path.Combine(dotnetJsSolutionPath, "libraries", "Directory.Build.props");
             var fileContent = File.ReadAllText(directoryBuildProps);
             var netJsFolder = Regex.Match(fileContent, ".?<NetJsFolder>(.+)</NetJsFolder>.?").Groups[1].Value;
-            var DotnetGitRoot = Regex.Match(fileContent, ".?<DotnetGitRoot>(.+)</DotnetGitRoot>.?").Groups[1].Value.Replace("$(NetJsFolder)", netJsFolder);
+            DotnetGitRoot = Regex.Match(fileContent, ".?<DotnetGitRoot>(.+)</DotnetGitRoot>.?").Groups[1].Value.Replace("$(NetJsFolder)", netJsFolder).Replace("/", "\\");
             _dotnetRuntimeRoot = Regex.Match(fileContent, ".?<DotnetRuntimeRoot>(.+)</DotnetRuntimeRoot>.?").Groups[1].Value.Replace("$(DotnetGitRoot)", DotnetGitRoot).Replace("/", "\\");
             _coreLibRoot = Regex.Match(fileContent, ".?<CoreLibRoot>(.+)</CoreLibRoot>.?").Groups[1].Value.Replace("$(DotnetRuntimeRoot)", _dotnetRuntimeRoot).Replace("/", "\\"); ;
             _coreLibSharedDir = Regex.Match(fileContent, ".?<CoreLibSharedDir>(.+)</CoreLibSharedDir>.?").Groups[1].Value.Replace("$(DotnetRuntimeRoot)", _dotnetRuntimeRoot).Replace("/", "\\"); ;
-            _repoRoot = Regex.Match(fileContent, ".?<RepoRoot>(.+)</RepoRoot>.?").Groups[1].Value.Replace("$(DotnetGitRoot)", DotnetGitRoot).Replace("/", "\\"); ;
+            _aspNetCoreRoot = Regex.Match(fileContent, ".?<RepoRoot>(.+)</RepoRoot>.?").Groups[1].Value.Replace("$(DotnetGitRoot)", DotnetGitRoot).Replace("/", "\\"); ;
             _commonPath = Regex.Match(fileContent, ".?<CommonPath>(.+)</CommonPath>.?").Groups[1].Value.Replace("/", "\\"); ;
             _sharedSourceRoot = Regex.Match(fileContent, ".?<SharedSourceRoot>(.+)</SharedSourceRoot>.?").Groups[1].Value.Replace("/", "\\"); ;
             _bclSourcesRoot = Regex.Match(fileContent, ".?<BclSourcesRoot>(.+)</BclSourcesRoot>.?").Groups[1].Value.Replace("/", "\\"); ;
@@ -300,23 +300,6 @@ namespace NetJs.Compiler
                 }
             }
 
-            var sourcePropertyGroup = sourceNode.XPathSelectElement("PropertyGroup");
-
-            if (sourcePropertyGroup != null)
-            {
-                foreach (var property in sourcePropertyGroup.Elements())
-                {
-                    var existing = destinationPropertyGroup.Elements().FirstOrDefault(e => e.Name == property.Name);
-                    if (existing != null)
-                    {
-                        XComment comment = new XComment(existing.ToString());
-                        existing.AddBeforeSelf(comment);
-                        existing.Remove();
-                    }
-                    destinationPropertyGroup.Add(new XElement(property.Name, property.Value));
-                }
-            }
-
             var sourceItemGroups = sourceNode.XPathSelectElements("ItemGroup");
             foreach (var sourceItemGroup in sourceItemGroups)
             {
@@ -420,6 +403,31 @@ namespace NetJs.Compiler
                 }
             }
 
+            var sourcePropertyGroup = sourceNode.XPathSelectElement("PropertyGroup");
+
+            if (sourcePropertyGroup != null)
+            {
+                foreach (var property in sourcePropertyGroup.Elements())
+                {
+                    var value = property.Value;
+                    var existing = destinationPropertyGroup.Elements().FirstOrDefault(e => e.Name == property.Name);
+                    if (existing != null)
+                    {
+                        if (existing.Name == "DefineConstants")
+                        {
+                            value = existing.Value + ";" + value;
+                        }
+                        else
+                        {
+                            XComment comment = new XComment(existing.ToString());
+                            existing.AddBeforeSelf(comment);
+                            existing.Remove();
+                        }
+                    }
+                    destinationPropertyGroup.Add(new XElement(property.Name, value));
+                }
+            }
+
             //if (!supportsBrowser)
             //{
             //    Console.WriteLine($"Warning: Project {projectName} does not support browser target.");
@@ -476,7 +484,7 @@ namespace NetJs.Compiler
             }
 
 
-            string[] includes = ["//ItemGroup/Compile", "//ItemGroup/Content", "//ItemGroup/ILLinkSubstitutionsXmls", "//ItemGroup/None", "//ItemGroup/Compile/DependentUpon", "//ItemGroup/AsnXml", "//ItemGroup/EmbeddedResource"];
+            string[] includes = ["//ItemGroup/Compile", "//ItemGroup/Content", "//ItemGroup/AdditionalFiles", "//ItemGroup/ILLinkSubstitutionsXmls", "//ItemGroup/None", "//ItemGroup/Compile/DependentUpon", "//ItemGroup/AsnXml", "//ItemGroup/EmbeddedResource"];
 
             //Resolve Compile paths
             foreach (var includePath in includes)
@@ -557,17 +565,26 @@ namespace NetJs.Compiler
                     if (include.Value.StartsWith("$(LibrariesProjectRoot)"))
                     {
                         var newPath = include.Value.Replace("$(LibrariesProjectRoot)", "$(NewLibrariesProjectRoot)");
-                        var split = newPath.Split('\\');
+                        var split = newPath.Split('\\', '/');
                         //split[split.Length-1] = "NetJs." + split[split.Length - 1];
                         //include.Value = string.Join("\\", split);
-                        include.Value = $"$(NewLibrariesProjectRoot){Path.GetFileNameWithoutExtension(split[split.Length - 1])}\\NetJs.{split[split.Length - 1]}";
+                        include.Value = $"$(NewLibrariesProjectRoot){Path.GetFileNameWithoutExtension(split[split.Length - 1])}{Path.DirectorySeparatorChar}NetJs.{split[split.Length - 1]}";
                     }
                     else if (include.Value.StartsWith("../") || include.Value.StartsWith("..\\") || include.Value.StartsWith("/..") || include.Value.StartsWith("\\.."))
                     {
-                        var fullPath = Path.GetFullPath(Path.Join(projectFolderPath, include.Value));
-                        var relative = Path.GetRelativePath(_dotnetRuntimeRoot, fullPath);
-                        var newPath = $"$(DotnetRuntimeRoot){relative}";
-                        include.Value = newPath;
+                        var name = Path.GetFileName(include.Value);
+                        if (allProjects.Any(e => Path.GetFileName(e) == name))
+                        {
+                            var newPath = $"$(NewLibrariesProjectRoot){Path.GetFileNameWithoutExtension(name)}{Path.DirectorySeparatorChar}NetJs.{name}";
+                            include.Value = newPath;
+                        }
+                        else
+                        {
+                            var fullPath = Path.GetFullPath(Path.Join(projectFolderPath, include.Value));
+                            var relative = Path.GetRelativePath(_dotnetRuntimeRoot, fullPath);
+                            var newPath = $"$(DotnetRuntimeRoot){relative}";
+                            include.Value = newPath;
+                        }
                     }
                 }
                 return false;
@@ -591,6 +608,8 @@ namespace NetJs.Compiler
                 var itemGroup = new XElement("ItemGroup");
                 foreach (var file in csFiles)
                 {
+                    if (file.Contains("\\bin\\") || file.Contains("\\obj\\"))
+                        continue;
                     if (Path.GetFileName(file) == "Strings.Designer.cs")
                         continue;
                     if (file.StartsWith(_dotnetRuntimeRoot))
@@ -603,13 +622,23 @@ namespace NetJs.Compiler
                             itemGroup!.Add(compile);
                         }
                     }
-                    else if (file.StartsWith(_repoRoot))
+                    else if (file.StartsWith(_aspNetCoreRoot))
                     {
-                        var relativePath = file.Replace(_repoRoot, "").Replace("/", "\\");
+                        var relativePath = file.Replace(_aspNetCoreRoot, "").Replace("/", "\\");
                         if (!existingCompiles.Contains(relativePath))
                         {
                             var compile = new XElement("Compile");
                             compile.Add(new XAttribute("Include", $"$(RepoRoot){relativePath}"));
+                            itemGroup!.Add(compile);
+                        }
+                    }
+                    else if (file.StartsWith(DotnetGitRoot))
+                    {
+                        var relativePath = file.Replace(DotnetGitRoot, "").Replace("/", "\\");
+                        if (!existingCompiles.Contains(relativePath))
+                        {
+                            var compile = new XElement("Compile");
+                            compile.Add(new XAttribute("Include", $"$(DotnetGitRoot){relativePath}"));
                             itemGroup!.Add(compile);
                         }
                     }
@@ -628,9 +657,9 @@ namespace NetJs.Compiler
                             itemGroup!.Add(content);
                         }
                     }
-                    else if (file.StartsWith(_repoRoot))
+                    else if (file.StartsWith(_aspNetCoreRoot))
                     {
-                        var relativePath = file.Replace(_repoRoot, "").Replace("/", "\\");
+                        var relativePath = file.Replace(_aspNetCoreRoot, "").Replace("/", "\\");
                         if (!existingContent.Contains(relativePath))
                         {
                             var content = new XElement("Content");
@@ -719,7 +748,7 @@ namespace NetJs.Compiler
             else
             {
                 //GenerateStaticResource(destinationDocument, projectName, projectFolderPath, newProjectDirectory);
-                ResXGenerator.GenerateStaticResourceInlined(destinationDocument, projectName, projectFolderPath, newProjectDirectory);
+                ResXGenerator.GenerateStaticResource(destinationDocument, projectName, projectFolderPath, newProjectDirectory);
             }
             var doctored = destinationDocument.ToString();
             var outPath = Path.Join(newProjectDirectory, $"NetJs.{projectFileName}");

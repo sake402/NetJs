@@ -21,7 +21,7 @@ namespace NetJs.Translator.CSharpToJavascript
         List<string> alreadyTriedImport = new List<string>();
         void EnsureImported(string? typeName)
         {
-            if (!_global.OutputMode.HasFlag(OutputMode.Module))
+            if (!_global.BuildFlags.HasFlag(NetJsBuildFlags.Module))
                 return;
             if (Utilities.IsPredefinedTypeName(typeName))
                 return;
@@ -31,7 +31,7 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 typeName = typeName.Substring(0, typeName.Length - 2);
             }
-            if (_global.OutputMode.HasFlag(OutputMode.Module))
+            if (_global.BuildFlags.HasFlag(NetJsBuildFlags.Module))
             {
                 if (typeName != null)
                 {
@@ -72,7 +72,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
         void EnsureImported(TypeSyntax? type)
         {
-            if (type != null && _global.OutputMode.HasFlag(OutputMode.Module))
+            if (type != null && _global.BuildFlags.HasFlag(NetJsBuildFlags.Module))
             {
                 var symbol = _global.TryGetSymbol(type, this);
                 if (symbol != null && !_global.ShouldExportType(symbol, this))
@@ -94,7 +94,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
         void EnsureImported(ITypeSymbol? type)
         {
-            if (type != null && _global.OutputMode.HasFlag(OutputMode.Module))
+            if (type != null && _global.BuildFlags.HasFlag(NetJsBuildFlags.Module))
             {
                 if (!_global.ShouldExportType(type, this))
                 {

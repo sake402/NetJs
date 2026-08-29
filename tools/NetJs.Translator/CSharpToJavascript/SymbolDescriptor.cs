@@ -17,12 +17,13 @@
         }
         public string? GlobalNamespace { get; set; }
         public string? AssemblySlug { get; set; }
+        public Dictionary<string, SymbolValue> Namespaces { get; set; } = new();
         public Dictionary<string, SymbolValue> Types { get; set; } = new();
         public Dictionary<string, Dictionary<string, SymbolValue>> Members { get; set; } = new();
         public List<ILLinkerAssembly> LinkerSubstitutions { get; set; } = new();
         public override string ToString()
         {
-            return AssemblySlug ?? base.ToString();
+            return AssemblySlug ?? base.ToString()!;
         }
     }
 }

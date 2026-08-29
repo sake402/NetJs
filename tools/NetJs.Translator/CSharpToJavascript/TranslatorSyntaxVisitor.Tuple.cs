@@ -5,6 +5,7 @@ using NetJs.Translator.CSharpToJavascript;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -28,12 +29,15 @@ namespace NetJs.Translator.CSharpToJavascript
                     //no need to instantiate a tuple type
                     CurrentTypeWriter.Write(node, "{ ");
                     int i = 0;
+                    var tuple = _global.SystemValueTuple(node.Arguments.Count);
+                    var items = tuple.GetMembers().Where(m => m.Name.StartsWith("Item")).OrderBy(e => e.Name).ToArray();
                     foreach (var e in node.Arguments)
                     {
                         if (i > 0)
                             CurrentTypeWriter.Write(node, ", ");
-                        CurrentTypeWriter.Write(node, "Item");
-                        CurrentTypeWriter.Write(node, (i + 1).ToString());
+                        WriteMemberName(node, tuple, items[i]);
+                        //CurrentTypeWriter.Write(node, "Item");
+                        //CurrentTypeWriter.Write(node, (i + 1).ToString());
                         CurrentTypeWriter.Write(node, ": ");
                         Visit(e.Expression);
                         i++;
@@ -46,12 +50,15 @@ namespace NetJs.Translator.CSharpToJavascript
                     {
                         CurrentTypeWriter.Write(node, "const { ");
                         int i = 0;
+                        var tuple = _global.SystemValueTuple(node.Arguments.Count);
+                        var items = tuple.GetMembers().Where(m => m.Name.StartsWith("Item")).OrderBy(e => e.Name).ToArray();
                         foreach (var e in node.Arguments)
                         {
                             if (i > 0)
                                 CurrentTypeWriter.Write(node, ", ");
-                            CurrentTypeWriter.Write(node, "Item");
-                            CurrentTypeWriter.Write(node, (i + 1).ToString());
+                            WriteMemberName(node, tuple, items[i]);
+                            //CurrentTypeWriter.Write(node, "Item");
+                            //CurrentTypeWriter.Write(node, (i + 1).ToString());
                             CurrentTypeWriter.Write(node, ": ");
                             if (e.Expression is DeclarationExpressionSyntax de)
                             {
@@ -103,12 +110,16 @@ namespace NetJs.Translator.CSharpToJavascript
                             CurrentTypeWriter.WriteLine(node, $"{_global.GlobalName}.{Constants.TupleUnPack}(($tp) =>");
                             CurrentTypeWriter.WriteLine(node, "{", true);
                             int ix = 0;
+                            var tuple = _global.SystemValueTuple(node.Arguments.Count);
+                            var items = tuple.GetMembers().Where(m => m.Name.StartsWith("Item")).OrderBy(e => e.Name).ToArray();
                             foreach (var arg in node.Arguments)
                             {
                                 CurrentTypeWriter.Write(node, "", true);
                                 WriteVariableAssignment(node, arg.Expression is DeclarationExpressionSyntax de ? de.Designation : arg.Expression, null, "=", new CodeNode(() =>
                                 {
-                                    CurrentTypeWriter.Write(node, $"$tp.Item{(ix + 1)}");
+                                    CurrentTypeWriter.Write(node, $"$tp.");
+                                    WriteMemberName(node, tuple, items[ix]);
+                                    //CurrentTypeWriter.Write(node, $"$tp.Item{(ix + 1)}");
                                 }), rhs: _global.TryGetTypeSymbol(arg.Expression, this));
                                 //if (arg.Expression is DeclarationExpressionSyntax de)
                                 //{

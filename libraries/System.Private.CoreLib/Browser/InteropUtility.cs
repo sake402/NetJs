@@ -1,12 +1,14 @@
 ﻿using NetJs;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using Window;
 
 [NetJs.Boot]
 [NetJs.OutputOrder(int.MinValue)]
 [NetJs.Reflectable(false)]
+[NetJs.Name(Constants.InteropUtilityName)]
 public static class InteropUtility
 {
     //Pointers are not numbers in NetJs
@@ -14,6 +16,7 @@ public static class InteropUtility
     //We will map a pointer to a vrtual address space
     const uint virtualAddressSpaceSlotSize = 64 * 1024;
 #pragma warning disable CS3003 // Type is not CLS-compliant
+    [Name(Constants.VirtualAddressOffset)]
     public const uint virtualAddressOffset = 0x80000000;
     public const uint virtualBlockAddressOffset = 0x80000000;
     public const uint virtualObjectAddressOffset = 0xC0000000;
@@ -126,6 +129,7 @@ public static class InteropUtility
         return data;
     }
 
+    [Name(Constants.PointerToAddress)]
     public static uint castPtr2Address(RefOrPointer<object> pointer)
     {
         if (pointer._dataSource == null && pointer._setter == null && pointer._getter == null)
@@ -182,6 +186,7 @@ public static class InteropUtility
         return castObject2Address(pointer);
     }
 
+    [Name(Constants.AddressToPointer)]
     public static RefOrPointer<object> castAddress2Ptr(uint address, TypePrototype? ptrType = null)
     {
         if (address < virtualBlockAddressOffset)
@@ -216,7 +221,7 @@ public static class InteropUtility
                         if (fromSize != toSize)
                         {
                             //var mreff = new Ref<TTo>(reff);
-                            var mreff = NetJs.Script.Write<Ref<object>>("new ($.$spc.System.Ref$$(ptrType.$args[0]))().$ctor$5(ptr)");
+                            var mreff = NetJs.Script.Write<Ref<object>>($"new ($.{Constants.SystemPrivateCoreLibSlug}.System.Ref$$(ptrType.$args[0]))().$ctor$5(ptr)");
                             //mreff._type = ptrType!.Type;
                             return mreff.As<Ref<object>>();
                         }
@@ -253,6 +258,7 @@ public static class InteropUtility
         });
     }
 
+    [Name(Constants.IntegerCheckedName)]
     public static int IntegerChecked(int value, int signed)
     {
         if (signed == 0)
@@ -268,6 +274,7 @@ public static class InteropUtility
         throw new OverflowException();
     }
 
+    [Name(Constants.ToArrayName)]
     public static T[] ToArray<T>(IEnumerable<T> spreadItems)
     {
         T[] ts = NetJs.Script.NewArray<T>();
@@ -279,6 +286,130 @@ public static class InteropUtility
             ts.Push(current);
         }
         return ts;
+    }
+
+    [Name(Constants.GetCoreAssemblyName)]
+    static RuntimeAssembly GetCoreAssembly()
+    {
+        var spcAssembly = AppDomain.GlobalAssemblyRegistry["NetJs.System.Private.CoreLib"];
+        return spcAssembly;
+    }
+
+    [Name(Constants.TypeArrayName)]
+    public static TypePrototype ArrayType(TypePrototype? type)
+    {
+        var array = typeof(Array<>).As<RuntimeType>()._prototypeProvider;
+        if (type == null)
+            return array.As<TypePrototype>();
+        return array!(type);
+    }
+
+    [Name(Constants.TypeRefOrPointerName)]
+    public static TypePrototype RefOrPointerType(TypePrototype? type)
+    {
+        var pointer = typeof(RefOrPointer).As<RuntimeType>()._prototype;
+        return pointer;
+    }
+
+    [Name(Constants.TypePointerName)]
+    public static TypePrototype PointerType(TypePrototype? type)
+    {
+        var pointer = typeof(Pointer<>).As<RuntimeType>()._prototypeProvider;
+        if (type == null)
+            return pointer.As<TypePrototype>();
+        return pointer!(type);
+    }
+
+    [Name(Constants.TypeNullableName)]
+    public static TypePrototype NullableType(TypePrototype? type)
+    {
+        var nullable = typeof(Nullable<>).As<RuntimeType>()._prototypeProvider;
+        if (type == null)
+            return nullable.As<TypePrototype>();
+        return nullable!(type);
+    }
+
+    [Name(Constants.CreateArrayName)]
+    public static Array NewArray(TypePrototype type, int length)
+    {
+        return Array.CreateFromScript(type.Type.As<RuntimeType>(), length);
+    }
+
+    [NetJs.NativeDelegate]
+    [NetJs.External]
+    delegate void CallDeconstructWithRefs(
+        ref object? o1, ref object? o2, ref object? o3, ref object? o4,
+        ref object? o5, ref object? o6, ref object? o7, ref object? o8,
+        ref object? o9, ref object? o10, ref object? o11, ref object? o12,
+        ref object? o13, ref object? o14, ref object? o15, ref object? o16);
+
+    [NetJs.Name(Constants.DestructureName)]
+    public static Array Destructure(object tuple, RefOrPointer<object?>[] refs)
+    {
+        if (!NetJs.Script.IsDefined(refs))
+        {
+            refs = NetJs.Script.NewArray<RefOrPointer<object?>>();
+        }
+        object?[] o = NetJs.Script.NewArray<object?>(16);
+        var tuplePrototype = tuple.GetClassPrototype();
+        if (tuplePrototype == Object.Self)
+        {
+            tuplePrototype = null;
+        }
+        string? deconstructName = "Deconstruct";
+        var deconstructMethod = tuplePrototype?.Metadata?.Methods?.Filter(m => m.Name == "Deconstruct" && m.Parameters?.Length > 0).ArraySingleOrDefault();
+        if (deconstructMethod != null)
+        {
+            deconstructName = deconstructMethod.GetOutputName();
+        }
+        var tupleDeconstructMethod = tuple[deconstructName].As<NativeAction>();
+        if (NetJs.Script.IsDefined(tupleDeconstructMethod))
+        {
+            if (refs.Length > 0)
+            {
+                tupleDeconstructMethod.InvokeApply(tuple, refs);
+            }
+            else
+            {
+                unchecked
+                {
+                    for (int i = 0; i < 16; i++)
+                    {
+                        o[i] = null;
+                    }
+                    var mrefs = o.Map((oo, i, all) =>
+                    {
+                        return NetJs.Script.CreateReference<object?>(() => all[i], (v) => all[i] = v);
+                    });
+                    tupleDeconstructMethod.InvokeApply(tuple, mrefs);
+                }
+            }
+        }
+        else
+        {
+            var tuple8Prototype = typeof(ValueTuple<,,,,,,,>).As<RuntimeType>()._prototype;
+            var fields = tuple8Prototype.Metadata!.Fields!;
+            for (int i = 0; ; i++)
+            {
+                unchecked
+                {
+                    var propertyName = fields[i].GetOutputName();
+                    var value = tuple[propertyName];
+                    if (!(NetJs.Script.IsUndefined(value)))
+                    {
+                        if (refs.Length > 0)
+                        {
+                            refs[i].Value = value;
+                        }
+                        else
+                            o[i] = value;
+                    }
+                    else
+                        break;
+                }
+            }
+        }
+        return o;
     }
     //public static int IntegerWrap(int value, int signed)
     //{

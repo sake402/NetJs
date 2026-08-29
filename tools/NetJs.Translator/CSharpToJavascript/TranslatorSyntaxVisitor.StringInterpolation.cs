@@ -111,7 +111,8 @@ namespace NetJs.Translator.CSharpToJavascript
                                     CurrentTypeWriter.Write(node, type.Name);
                                     CurrentTypeWriter.Write(node, ", ");
                                     CurrentTypeWriter.Write(node, "($t) => ");
-                                    CurrentTypeWriter.Write(node, "$t.ToString");
+                                    CurrentTypeWriter.Write(node, "$t");
+                                    WriteMemberName(node, type, toString);
                                     //WriteMethodInvocation(node, toString, null, null, new CodeNode(() => CurrentTypeWriter.Write(node, "$t")), null, null, false);
                                     CurrentTypeWriter.Write(node, ")");
                                 }
@@ -168,7 +169,9 @@ namespace NetJs.Translator.CSharpToJavascript
                     {
                         Visit(token);
                     }
-                    CurrentTypeWriter.WriteLine(node, "return $handler.ToStringAndClear();", true);
+                    CurrentTypeWriter.Write(node, "return $handler.", true);
+                    WriteMemberName(node, handler, "ToStringAndClear");
+                    CurrentTypeWriter.WriteLine(node, "();", true);
                 });
                 //CurrentTypeWriter.WriteLine(node, $"{_global.GlobalName}.{Constants.Expression}(function()");
                 //CurrentTypeWriter.WriteLine(node, $"{{", true);

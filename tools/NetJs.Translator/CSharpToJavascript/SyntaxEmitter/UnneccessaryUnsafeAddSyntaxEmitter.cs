@@ -7,7 +7,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
     /// <summary>
     /// An expression like "int a = Unsafe.Add(ref first, index)" 
     /// will typically produce "let a = $.$spc.System.Runtime.CompilerServices.Unsafe.Add$1(T)(first, index).$v"
-    /// Rewrite as let a = first.Get(index) or first.SetAt(...), this will be way faster as it doesnt create the temp reference object returned by Unsafe.Add
+    /// Rewrite as let a = first.Get(index) or first.SetAt(...), this will be way faster as it doesnt create the temp js reference object returned by Unsafe.Add
     /// </summary>
     internal class UnneccessaryUnsafeAddSyntaxEmitter : SyntaxEmitter<CSharpSyntaxNode>
     {
@@ -31,7 +31,9 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                         }
                         visitor.CurrentTypeWriter.Write(node, " = ");
                         visitor.Visit(inv.ArgumentList.Arguments[0]);
-                        visitor.CurrentTypeWriter.Write(node, ".GetAt(");
+                        visitor.CurrentTypeWriter.Write(node, ".");
+                        visitor.WriteMemberName(node, visitor.Global.SystemPointer, "GetAt");
+                        visitor.CurrentTypeWriter.Write(node, "(");
                         visitor.Visit(inv.ArgumentList.Arguments[1]);
                         visitor.CurrentTypeWriter.Write(node, ")");
                         return true;
@@ -46,7 +48,9 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                         inv.ArgumentList.Arguments.Count == 2) //left.Set(right, int)
                     {
                         visitor.Visit(inv.ArgumentList.Arguments[0]);
-                        visitor.CurrentTypeWriter.Write(node, ".SetAt(");
+                        visitor.CurrentTypeWriter.Write(node, ".");
+                        visitor.WriteMemberName(node, visitor.Global.SystemPointer, "SetAt");
+                        visitor.CurrentTypeWriter.Write(node, "(");
                         visitor.Visit(right);
                         visitor.CurrentTypeWriter.Write(node, ", ");
                         visitor.Visit(inv.ArgumentList.Arguments[1]);

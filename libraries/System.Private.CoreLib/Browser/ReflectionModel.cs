@@ -229,6 +229,14 @@ namespace NetJs
         ReturnTypeIsCovariantOut = 1 << 19,
         IsAnonymous = 1 << 20,
         IsFamilyAndAssembly = IsFamily | IsAssembly,
+        IsProperty = 1 << 21,
+        IsField = 1 << 22,
+        IsEvent = 1 << 23,
+        IsMethod = 1 << 24,
+        IsMethodPropertyGet = 1 << 25,
+        IsMethodPropertySet = 1 << 26,
+        IsMethodEventAdd = 1 << 27,
+        IsMethodEventRemove = 1 << 28
     }
 
     [Flags]

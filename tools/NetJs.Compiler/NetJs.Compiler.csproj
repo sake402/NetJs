@@ -9,10 +9,10 @@
 		<PackageOutputPath>./nupkg</PackageOutputPath>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageId>NetJs.Compiler</PackageId>
-		<PackageVersion>1.0.9</PackageVersion>
+		<PackageVersion>1.0.10</PackageVersion>
 		<PackageProjectUrl>https://github.com/sake402/NetJs</PackageProjectUrl>
 		<PackageTags>dotnet,c#,blazor,javascript,transpiler</PackageTags>
-		<Version>1.0.9</Version>
+		<Version>1.0.10</Version>
 		<Authors>Samson Ojetade</Authors>
 		<Description>
 			Build C# into native javascript with dotnet runtime support.
@@ -53,6 +53,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\dotnet-serve\src\dotnet-serve\dotnet-serve.csproj" />
 		<ProjectReference Include="..\NetJs.Translator\NetJs.Translator.csproj" />
 	</ItemGroup>
 

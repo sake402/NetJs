@@ -1,7 +1,9 @@
-﻿using Microsoft.Build.Evaluation;
+﻿using McMaster.Extensions.CommandLineUtils;
+using Microsoft.Build.Evaluation;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
+using Microsoft.Extensions.Options;
 using NetJs.Compiler;
 using NetJs.Translator;
 using System;
@@ -33,7 +35,7 @@ using var duplicityWriter = TextWriter.Synchronized(consoleWriter);
 Console.SetOut(duplicityWriter);
 
 
-string dotnetPath = (await $"{(OperatingSystem.IsWindows()? "where" : "which")} dotnet".CLI()).StdOut.Trim();
+string dotnetPath = (await $"{(OperatingSystem.IsWindows() ? "where" : "which")} dotnet".CLI()).StdOut.Trim();
 string dotnetVersion = (await "dotnet --version".CLI()).StdOut.Trim();
 var dotnetSDKs = (await "dotnet --list-sdks".CLI()).StdOut.Trim();
 var sdks = dotnetSDKs.Split('\r').Select(e => e.Trim());
@@ -153,11 +155,25 @@ getConfigCommand.Options.Add(nameConfigOption);
 setConfigCommand.Options.Add(nameConfigOption);
 setConfigCommand.Options.Add(valueConfigOption);
 
+var serveCommand = new Command("serve", "Serve a project");
+var serveDirectoryOption = new Option<string>("--folder") { Description = "Folder path to serve from" };
+serveDirectoryOption.Aliases.Add("-f");
+var servePortOption = new Option<int>("--port") { Description = "Port to use" };
+servePortOption.Aliases.Add("-p");
+serveCommand.Options.Add(servePortOption);
+var serveOpenBrowserOption = new Option<bool>("--open") { Description = "Open Browser" };
+serveOpenBrowserOption.Aliases.Add("-o");
+serveCommand.Options.Add(serveOpenBrowserOption);
+
+serveCommand.SetAction(Serve);
+
 rootCommand.Subcommands.Add(doctorCommand);
 rootCommand.Subcommands.Add(watchCommand);
 rootCommand.Subcommands.Add(buildCommand);
 rootCommand.Subcommands.Add(cacheCommand);
 rootCommand.Subcommands.Add(configCommand);
+rootCommand.Subcommands.Add(serveCommand);
+
 return await rootCommand.Parse(args).InvokeAsync();
 
 Dictionary<string, string> GetBuildProperties()
@@ -627,4 +643,34 @@ void GetConfig(ParseResult parseResult)
     else if (name.Equals(nameof(config.OutputPackageSink), StringComparison.InvariantCultureIgnoreCase))
         Console.WriteLine(config.OutputPackageSink);
     Console.WriteLine("Done!");
+}
+
+Task Serve(ParseResult parseResult)
+{
+    int port = parseResult.GetValue(servePortOption);
+    bool open = parseResult.GetValue(serveOpenBrowserOption);
+    var folder = parseResult.GetValue(serveDirectoryOption);
+    if (folder == null)
+    {
+        folder = Directory.GetCurrentDirectory();
+        var files = Directory.GetFiles(folder, "*.csproj", SearchOption.TopDirectoryOnly);
+        if (files.Any())
+        {
+            var indexHtml = Directory.GetFiles(folder, "NetJs.Boot.js", SearchOption.AllDirectories)
+                .Where(e => (e.Contains("\\Debug\\") || e.Contains("/Debug/")) && (e.Contains("\\wwwroot\\") || e.Contains("/wwwroot/")))
+                .OrderBy(e => new FileInfo(e).LastWriteTime)
+                .LastOrDefault();
+            if (indexHtml != null)
+            {
+                folder = Path.GetDirectoryName(indexHtml);
+            }
+        }
+    }
+    Console.WriteLine($"Serving from \"{folder}\"");
+    var server = new McMaster.DotNet.Serve.SimpleServer(new McMaster.DotNet.Serve.CommandLineOptions()
+    {
+        Port = port == 0 ? null : port,
+        OpenBrowser = (open, "")
+    }, PhysicalConsole.Singleton, folder);
+    return server.RunAsync(CancellationToken.None);
 }

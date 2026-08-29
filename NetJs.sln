@@ -277,6 +277,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetJs.Microsoft.AspNetCore.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetJs.Microsoft.Net.Http.Headers", "libraries\Microsoft.Net.Http.Headers\NetJs.Microsoft.Net.Http.Headers.csproj", "{7ED8F668-038E-4F1D-89D5-CE871C56FD3F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dotnet-serve", "tools\dotnet-serve\src\dotnet-serve\dotnet-serve.csproj", "{759A8B6F-BE83-42F5-B4A5-4B57582EB9C7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -1883,6 +1885,18 @@ Global
 		{7ED8F668-038E-4F1D-89D5-CE871C56FD3F}.Release|x64.Build.0 = Release|Any CPU
 		{7ED8F668-038E-4F1D-89D5-CE871C56FD3F}.Release|x86.ActiveCfg = Release|Any CPU
 		{7ED8F668-038E-4F1D-89D5-CE871C56FD3F}.Release|x86.Build.0 = Release|Any CPU
+		{759A8B6F-BE83-42F5-B4A5-4B57582EB9C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{759A8B6F-BE83-42F5-B4A5-4B57582EB9C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{759A8B6F-BE83-42F5-B4A5-4B57582EB9C7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{759A8B6F-BE83-42F5-B4A5-4B57582EB9C7}.Debug|x64.Build.0 = Debug|Any CPU
+		{759A8B6F-BE83-42F5-B4A5-4B57582EB9C7}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{759A8B6F-BE83-42F5-B4A5-4B57582EB9C7}.Debug|x86.Build.0 = Debug|Any CPU
+		{759A8B6F-BE83-42F5-B4A5-4B57582EB9C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{759A8B6F-BE83-42F5-B4A5-4B57582EB9C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{759A8B6F-BE83-42F5-B4A5-4B57582EB9C7}.Release|x64.ActiveCfg = Release|Any CPU
+		{759A8B6F-BE83-42F5-B4A5-4B57582EB9C7}.Release|x64.Build.0 = Release|Any CPU
+		{759A8B6F-BE83-42F5-B4A5-4B57582EB9C7}.Release|x86.ActiveCfg = Release|Any CPU
+		{759A8B6F-BE83-42F5-B4A5-4B57582EB9C7}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -2021,6 +2035,7 @@ Global
 		{632DB854-F3D5-470F-AF5B-F319BCD22059} = {91ADDB27-2315-4546-9DC4-3F9BA34D5F5B}
 		{DEC57E5C-22EA-4AFF-B772-A49C85F06F21} = {91ADDB27-2315-4546-9DC4-3F9BA34D5F5B}
 		{7ED8F668-038E-4F1D-89D5-CE871C56FD3F} = {91ADDB27-2315-4546-9DC4-3F9BA34D5F5B}
+		{759A8B6F-BE83-42F5-B4A5-4B57582EB9C7} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B7699CE2-353B-4F90-B1DC-19A5F9AF4755}

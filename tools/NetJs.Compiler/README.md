@@ -9,7 +9,8 @@ Supports and tested with Sdks _Microsoft.NET.Sdk.BlazorWebAssembly_, _Microsoft.
 
 NOTES
 ---------
-If building a razor project or any project with source generators, you must have _<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>_ in your PropertyGroup or execute _dotnet build -p:EmitCompilerGeneratedFiles=true_ first
+If building a razor project or any project with source generators, you must have _<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>_ in your PropertyGroup or execute _dotnet build -p:EmitCompilerGeneratedFiles=true_ first.
+
 This ensures that the csharp code files are generated into the obj directory first. They are picked up by NetJs for traspilation.
 
 CODE SIZE AND MINIFICATION

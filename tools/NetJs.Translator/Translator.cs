@@ -100,10 +100,10 @@ namespace NetJs.Translator
         SyntaxTree[] syntaxTrees = Array.Empty<SyntaxTree>();
         List<(string FilePath, string SourceCode)> sources = new();
 
-        MemoryStream dllStream = new MemoryStream();
-        MemoryStream pdbStream = new MemoryStream();
-        MemoryStream docStream = new MemoryStream();
-        EmitResult emitResult = default!;
+        MemoryStream? dllStream;
+        MemoryStream? pdbStream;
+        MemoryStream? docStream;
+        EmitResult? emitResult;
 
         GlobalCompilationVisitor global = default!;
         ReflectionMetadataBuilder metadataBuilder = default!;
@@ -191,7 +191,7 @@ namespace NetJs.Translator
                     var typesInTree = newTree.GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>();
                     foreach (var t in typesInTree)
                     {
-                        var name = t.CreateFullMemberName();
+                        var name = t.CreateFullMemberName()!;
                         var partials = partialClassGroupings[name];
                         foreach (var partial in partials)
                         {
@@ -226,7 +226,7 @@ namespace NetJs.Translator
                             ix++;
                         }
                         tempFile = iTempFile;
-                        var directory = Path.GetDirectoryName(tempFile);
+                        var directory = Path.GetDirectoryName(tempFile)!;
                         if (!Directory.Exists(directory))
                             Directory.CreateDirectory(directory);
                         File.WriteAllText(tempFile, sourceCode);
@@ -279,14 +279,20 @@ namespace NetJs.Translator
             }
         }
 
+        public bool DoEmitDll { get; set; } = true;
         bool EmitDll()
         {
+            if (!DoEmitDll)
+                return true;
             $"Emit dll".Profile(() =>
             {
+                dllStream = new MemoryStream();
+                pdbStream = new MemoryStream();
+                docStream = new MemoryStream();
                 emitResult = csCompilation.Emit(dllStream, pdbStream, docStream, options: new EmitOptions(debugInformationFormat: DebugInformationFormat.PortablePdb));
             });
 
-            if (!emitResult.Success)
+            if (!emitResult!.Success)
             {
                 Console.WriteLine("Compilation failed!");
                 foreach (var diagnostic in emitResult.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error))
@@ -350,27 +356,30 @@ namespace NetJs.Translator
 
         void WriteOwnMetadataToDisk()
         {
-            //output the dll and pdb
-            dllStream.Position = 0;
-            pdbStream.Position = 0;
-            docStream.Position = 0;
-            pendingTask.Add(_output.Output(global, _project.GetName() + ".js.dll", dllStream));
-            pendingTask.Add(_output.Output(global, _project.GetName() + ".js.pdb", pdbStream));
-            pendingTask.Add(_output.Output(global, _project.GetName() + ".js.xml", docStream));
-
-            packages.Add((_project.GetName() + ".js.dll", dllStream));
-            packages.Add((_project.GetName() + ".js.pdb", pdbStream));
-            packages.Add((_project.GetName() + ".js.xml", docStream));
-            packages.Add(("package.yaml", new MemoryStream(Encoding.UTF8.GetBytes(serializer.Serialize(new PackageModel()
+            if (dllStream != null && pdbStream != null && docStream != null)
             {
-                Dependencies = sortedReferences.Select(s =>
+                //output the dll and pdb
+                dllStream.Position = 0;
+                pdbStream.Position = 0;
+                docStream.Position = 0;
+                pendingTask.Add(_output.Output(global, _project.GetName() + ".js.dll", dllStream));
+                pendingTask.Add(_output.Output(global, _project.GetName() + ".js.pdb", pdbStream));
+                pendingTask.Add(_output.Output(global, _project.GetName() + ".js.xml", docStream));
+
+                packages.Add((_project.GetName() + ".js.dll", dllStream));
+                packages.Add((_project.GetName() + ".js.pdb", pdbStream));
+                packages.Add((_project.GetName() + ".js.xml", docStream));
+                packages.Add(("package.yaml", new MemoryStream(Encoding.UTF8.GetBytes(serializer.Serialize(new PackageModel()
                 {
-                    var ret = Path.GetFileNameWithoutExtension(s.Display);
-                    if (ret.EndsWith(".js"))
-                        ret = Path.GetFileNameWithoutExtension(ret);
-                    return ret;
-                })!
-            })))));
+                    Dependencies = sortedReferences.Select(s =>
+                    {
+                        var ret = Path.GetFileNameWithoutExtension(s.Display)!;
+                        if (ret.EndsWith(".js"))
+                            ret = Path.GetFileNameWithoutExtension(ret);
+                        return ret;
+                    })!
+                })))));
+            }
         }
 
         void CopyDependencies()
@@ -382,7 +391,7 @@ namespace NetJs.Translator
                 if (Directory.Exists(refFolder))
                 {
                     var files = Directory.EnumerateFiles(refFolder, "*.*", SearchOption.AllDirectories).ToList();
-                    var projectAssemblyName = Path.GetFileName(_ref.Display);
+                    var projectAssemblyName = Path.GetFileName(_ref.Display)!;
                     if (projectAssemblyName.EndsWith(".dll"))
                         projectAssemblyName = Path.GetFileNameWithoutExtension(projectAssemblyName);
                     if (projectAssemblyName.EndsWith(".js"))
@@ -445,7 +454,7 @@ namespace NetJs.Translator
             {
                 if (global.HasAttribute(symbol, typeof(DependsOnAttribute).FullName!, null, false, out var args))
                 {
-                    var types = (args[0] as IEnumerable<TypedConstant>).Select(c => (INamedTypeSymbol)c.Value!);
+                    var types = ((IEnumerable<TypedConstant>)args[0]!).Select(c => (INamedTypeSymbol)c.Value!);
                     foreach (var type in types)
                     {
                         bool _dependsOnSelf = false;
@@ -664,9 +673,9 @@ namespace NetJs.Translator
                     })
                     .OrderBy(o =>
                     {
-                        if (global.HasAttribute(o.Key, typeof(OutputOrderAttribute).FullName, null, false, out var args))
+                        if (global.HasAttribute(o.Key, typeof(OutputOrderAttribute).FullName!, null, false, out var args))
                         {
-                            int a = int.Parse(args[0].ToString());
+                            int a = int.Parse(args[0]!.ToString()!);
                             return a;
                         }
                         return o.Key.OutputRank(0);
@@ -696,9 +705,9 @@ namespace NetJs.Translator
                     //.OrderBy(e => e.Key.ComputeOutputTypeName(global))  //order in a predictable manner so we dont keep losing breakpoint position when debugging
                     .OrderBy(o =>
                     {
-                        if (global.HasAttribute(o.Key, typeof(OutputOrderAttribute).FullName, null, false, out var args))
+                        if (global.HasAttribute(o.Key, typeof(OutputOrderAttribute).FullName!, null, false, out var args))
                         {
-                            int a = int.Parse(args[0].ToString());
+                            int a = int.Parse(args[0]!.ToString()!);
                             return a;
                         }
                         return o.Key.OutputRank(0);
@@ -731,7 +740,7 @@ namespace NetJs.Translator
                 var outputFileName = Constants.OutputFolderName + Path.DirectorySeparatorChar + _project.GetName() + ".js";
                 var appDomain = isSystemPrivateCoreLib ? (INamedTypeSymbol)global.GetSymbol("System.AppDomain", null) : null;
                 var initDomain = isSystemPrivateCoreLib ? appDomain?.GetMembers("Initialize").Single() : null;
-                var initDomainMetadata = initDomain!= null? global.GetRequiredMetadata(initDomain) : null;
+                var initDomainMetadata = initDomain != null ? global.GetRequiredMetadata(initDomain) : null;
                 var createAssembly = isSystemPrivateCoreLib ? appDomain?.GetMembers("CreateAssembly").Single() : null;
                 var createAssemblyMetadata = createAssembly != null ? global.GetRequiredMetadata(createAssembly) : null;
                 //{ (isSystemPrivateCoreLib ? $"{global.GlobalName}.{Constants.AssemblyRegistryName} = {createAssemblyMetadata?.InvocationName}{global.GlobalName}.{global.GetAssemblyGlobalSlug(global.Compilation.Assembly)}.{(global.BuildFlags.HasFlag(NetJsBuildFlags.MinifyNamespaces) ? "S" : "System")}.AppDomain.{Constants.AssemblyRegistryName};" : "")}
@@ -907,7 +916,7 @@ namespace NetJs.Translator
                             sourceStream.Position = 0;
 
                             var path = $"{localPackageCacheFolder}{Path.DirectorySeparatorChar}{sourceName}";
-                            var dir = Path.GetDirectoryName(path);
+                            var dir = Path.GetDirectoryName(path)!;
                             if (!Directory.Exists(dir))
                                 Directory.CreateDirectory(dir);
 
@@ -929,7 +938,7 @@ namespace NetJs.Translator
                     if (!Directory.Exists(zipPackageFolder))
                         Directory.CreateDirectory(zipPackageFolder);
                     var path = $"{zipPackageFolder}{Path.DirectorySeparatorChar}{targetFramework}{Path.DirectorySeparatorChar}{_project.GetName()}.package.zip";
-                    var folder = Path.GetDirectoryName(path);
+                    var folder = Path.GetDirectoryName(path)!;
                     if (!Directory.Exists(folder))
                         Directory.CreateDirectory(folder);
                     fileStream.Position = 0;

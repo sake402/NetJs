@@ -1297,7 +1297,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 case BaseTypeDeclarationSyntax bt:
                     {
                         name = bt.Identifier.ValueText.TrimEnd('?');
-                        if (bt.HasAnyAttribute([typeof(ForcePartialAttribute).FullName], out var atts2))
+                        if (bt.HasAnyAttribute([typeof(ForcePartialAttribute).FullName!], out var atts2))
                         {
                             var att = atts2.Values.Single().Single();
                             var typeOf = (TypeOfExpressionSyntax)att.ArgumentList!.Arguments[0].Expression;

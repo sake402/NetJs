@@ -97,6 +97,8 @@ var singleBuildOption = new Option<bool>("--single") { Description = "Build only
 singleBuildOption.Aliases.Add("-s");
 var forceBuildOption = new Option<bool>("--force") { Description = "Build this project even if up to date" };
 forceBuildOption.Aliases.Add("-f");
+var noEmitBuildOption = new Option<bool>("--noemit") { Description = "D not emit another dll from cs code rewritten" };
+noEmitBuildOption.Aliases.Add("-ne");
 var propertiesOption = new Option<Dictionary<string, string>>("--property") { Description = "Build properties", Arity = ArgumentArity.ZeroOrMore };
 propertiesOption.Aliases.Add("-p");
 propertiesOption.CustomParser = (result) =>
@@ -122,6 +124,7 @@ buildCommand.Options.Add(projectOption);
 buildCommand.Options.Add(configOption);
 buildCommand.Options.Add(singleBuildOption);
 buildCommand.Options.Add(forceBuildOption);
+buildCommand.Options.Add(noEmitBuildOption);
 buildCommand.Options.Add(propertiesOption);
 buildCommand.SetAction(Build);
 
@@ -409,6 +412,7 @@ async Task Build(ParseResult parseResult, CancellationToken cancellationToken)
     var singleBuild = parseResult.GetValue(singleBuildOption);
     var forceBuild = parseResult.GetValue(forceBuildOption);
     var buildProperties = parseResult.GetValue(propertiesOption);
+    var noEmit = parseResult.GetValue(noEmitBuildOption);
     if (projectFileInfo != null)
     {
         csProjectFile = projectFileInfo.FullName;
@@ -456,7 +460,7 @@ async Task Build(ParseResult parseResult, CancellationToken cancellationToken)
                 consoleWriter.AsyncLocalWriter.Value = logDestination;
             }
             var msBuildProject = new MsBuildProject(csProjectFile, buildProperties, null, projectCollection);
-            bool dependencyBuilt = false;
+            //bool dependencyBuilt = false;
             if (!singleBuild)
             {
                 var csProjectDependencies = msBuildProject.Items.Where(i => i.ItemType == "ProjectReference" && !i.GetMetadataValue("OutputItemType").Equals("Analyzer", StringComparison.InvariantCultureIgnoreCase) && !i.GetMetadataValue("ReferenceOutputAssembly").Equals("false", StringComparison.InvariantCultureIgnoreCase)).Select(e => e.EvaluatedInclude);
@@ -522,7 +526,10 @@ async Task Build(ParseResult parseResult, CancellationToken cancellationToken)
                 {
                     await maxParallelBuild.WaitAsync();
                     Console.WriteLine($"Building \"{csProjectFile}\"");
-                    translator = new Translator(config, dotnetPath, dotnetVersion, sdkPath, sdkVersion, dataFolder, tempFolder, wProject, new ProjectBinOutputProvider(wProject));
+                    translator = new Translator(config, dotnetPath, dotnetVersion, sdkPath, sdkVersion, dataFolder, tempFolder, wProject, new ProjectBinOutputProvider(wProject))
+                    {
+                        DoEmitDll = !noEmit
+                    };
                     //translator.LogTo = logWriter;
                     if (!await translator.Build())
                     {
@@ -534,7 +541,7 @@ async Task Build(ParseResult parseResult, CancellationToken cancellationToken)
                     Console.WriteLine($"BUILD \"{csProjectFile}\" SUCCESS!");
                     if (!File.Exists(timeStampFile))
                     {
-                        var dir = Path.GetDirectoryName(timeStampFile);
+                        var dir = Path.GetDirectoryName(timeStampFile)!;
                         if (!Directory.Exists(dir))
                             Directory.CreateDirectory(dir);
                         var fs = File.Create(timeStampFile);

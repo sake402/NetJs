@@ -20,6 +20,8 @@
         //ShortNames = 1 << 12,
         ShortNamesCreateFromCamelCase = 1 << 13,
         InlineConstants = 1 << 14,
-        Default = Global | InlineConstants | SingleFile// | MinifyNamespaces | MinifyTypeNames | MinifyMemberNames //| ShortNamesCreateFromCamelCase
+        ProfileTraceEntry = 1 << 15,
+        ProfileTraceExit = 1 << 16,
+        Default = Global | InlineConstants | ProfileTraceEntry | SingleFile// | MinifyNamespaces | MinifyTypeNames | MinifyMemberNames //| ShortNamesCreateFromCamelCase
     }
 }

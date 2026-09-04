@@ -2,6 +2,7 @@ using NetJs;
 
 namespace NetJs
 {
+    [NetJs.External]
     public interface IPromise
     {
         [Name("then")]
@@ -12,6 +13,7 @@ namespace NetJs
         IPromise Catch(NativeAction<object?> continuation);
     }
 
+    [NetJs.External]
     public interface IPromise<T> : IPromise
     {
         [Name("then")]

@@ -6,6 +6,8 @@ namespace NetJs
     [NetJs.Reflectable(false)]
     public class ArrayWindowProxyHandler : IArrayProxyHandler
     {
+        [DynamicDependency(nameof(Get))]
+        [DynamicDependency(nameof(Set))]
         public ArrayWindowProxyHandler(Array array, int offset, int length)
         {
             _array = array;

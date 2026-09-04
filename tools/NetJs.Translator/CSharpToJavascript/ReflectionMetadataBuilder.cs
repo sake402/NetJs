@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Reflection.Metadata;
@@ -16,7 +17,8 @@ namespace NetJs.Translator.CSharpToJavascript
     {
         public static readonly JsonSerializerOptions SerializationOption = new JsonSerializerOptions
         {
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
+            WriteIndented = true,
         };
 
         GlobalCompilationVisitor global;
@@ -67,25 +69,29 @@ namespace NetJs.Translator.CSharpToJavascript
             //}
             if (useCachedHandle)
             {
-                var typeSignature = type.CreateSignature(global, withGlobalNamespace: true);
-                var sym = global.Symbols.Types.FirstOrDefault(S => S.Value.Signature == typeSignature).Value;
-                if (sym != null && sym.Handle != null)
-                    return sym.Handle.Value;
-                //if (global.Symbols.Types.TryGetValue(typeSignature, out var symbol) && symbol?.Handle != null)
-                //{
-                //    return symbol.Handle.Value;
-                //}
-                sym = global.ImportedNames.Types.FirstOrDefault(S => S.Value.Signature == typeSignature).Value;
-                if (sym != null && sym.Handle != null)
-                    return sym.Handle.Value;
+                var metadata = global.GetMetadata(type);
+                if (metadata?.Export.Handle != null)
+                    return metadata.Export.Handle.Value;
+                //var typeSignature = type.CreateSignature(global, withGlobalNamespace: true);
+                //var sym = global.Symbols.Types.FirstOrDefault(S => S.Value.Signature == typeSignature).Value;
+                //if (sym != null && sym.Handle != null)
+                //    return sym.Handle.Value;
+                ////if (global.Symbols.Types.TryGetValue(typeSignature, out var symbol) && symbol?.Handle != null)
+                ////{
+                ////    return symbol.Handle.Value;
+                ////}
+                //sym = global.ImportedNames.Types.FirstOrDefault(S => S.Value.Signature == typeSignature).Value;
+                //if (sym != null && sym.Handle != null)
+                //    return sym.Handle.Value;
 
-                //if (global.ImportedNames.Types.TryGetValue(typeSignature, out symbol) && symbol?.Handle != null)
-                //{
-                //    return symbol.Handle.Value;
-                //}
+                ////if (global.ImportedNames.Types.TryGetValue(typeSignature, out symbol) && symbol?.Handle != null)
+                ////{
+                ////    return symbol.Handle.Value;
+                ////}
             }
             if (types!.TryGetValue(type.OriginalDefinition, out int typeHandle))
             {
+                Debug.Assert(typeHandle < 0x10000);
                 return (assemblyHandle << ReflectionHandleExtension.AssemblyShift) |
                        ((ulong)typeHandle << ReflectionHandleExtension.TypeShift);
             }
@@ -95,40 +101,43 @@ namespace NetJs.Translator.CSharpToJavascript
         Handle MemberHandle(ISymbol member, TranslatorSyntaxVisitor? fromVisitor, bool useCachedHandle = true)
         {
             var containingType = member.ContainingType;
+            var typeHandle = TypeHandle(containingType, fromVisitor);
 
             if (useCachedHandle)
             {
                 var metadata = global.GetMetadata(member);
-                if (metadata != null && metadata.OverloadName != null)
+                if (metadata?.Export.Handle != null/* && metadata.OverloadName != null*/)
                 {
-                    //var type = member.ContainingType.CreateSignature(global, withGlobalNamespace: true);
-                    var typeSignature = containingType.CreateSignature(global, withGlobalNamespace: true);
-                    if (global.Symbols.Members.TryGetValue(typeSignature, out var memberMap) && memberMap != null)
+                    var lmemberHandle = metadata.Export.Handle.Value;
+                    if (containingType.IsGenericType)
                     {
-                        if (memberMap.TryGetValue(metadata.OverloadName, out var symbol) && symbol?.Handle != null)
-                        {
-                            return symbol.Handle.Value;
-                        }
+                        return typeHandle.Or($"0x{lmemberHandle & ~(ReflectionHandleExtension.AssemblyMask | ReflectionHandleExtension.TypeMask):X}");
                     }
-
-                    if (global.ImportedNames.Members.TryGetValue(typeSignature, out memberMap) && memberMap != null)
-                    {
-                        if (memberMap.TryGetValue(metadata.OverloadName, out var symbol) && symbol?.Handle != null)
-                        {
-                            return symbol.Handle.Value;
-                        }
-                    }
+                    return lmemberHandle;
                 }
             }
             int index = -1;
-            var allMembers = containingType.GetMembers();
-            for (int i = 0; i < allMembers.Length; i++)
+            var allMembers = containingType.GetMembers().SelectMany(e =>
             {
-                if (allMembers[i].Equals(member, SymbolEqualityComparer.Default))
+                if (e.Kind == SymbolKind.Property && e is IPropertySymbol ps)
+                {
+                    return ((IEnumerable<ISymbol?>)[ps, ps.GetMethod, ps.SetMethod]).Where(e => e != null)!;
+                }
+                else if (e.Kind == SymbolKind.Event && e is IEventSymbol es)
+                {
+                    return ((IEnumerable<ISymbol?>)[es, es.AddMethod, es.RemoveMethod]).Where(e => e != null)!;
+                }
+                return [e];
+            }).OrderBy(e => e.Name);
+            int i = 0;
+            foreach (var imember in allMembers)
+            {
+                if (imember!.Equals(member, SymbolEqualityComparer.Default))
                 {
                     index = i + 1;
                     break;
                 }
+                i++;
             }
 
             if (index <= 0)
@@ -136,19 +145,18 @@ namespace NetJs.Translator.CSharpToJavascript
                 return 0;
             }
 
-            var handle = TypeHandle(containingType, fromVisitor);
             ulong memberHandle = (ulong)index << ReflectionHandleExtension.MemberShift;
 
             if (containingType.IsGenericType)
             {
-                handle = handle.Or($"0x{memberHandle:X}");
+                typeHandle = typeHandle.Or($"0x{memberHandle:X}");
             }
             else
             {
-                handle = handle.Or(memberHandle);
+                typeHandle = typeHandle.Or(memberHandle);
             }
 
-            return handle;
+            return typeHandle;
         }
         public Handle TypeHandle(ITypeSymbol type, TranslatorSyntaxVisitor? fromVisitor)
         {
@@ -157,6 +165,10 @@ namespace NetJs.Translator.CSharpToJavascript
 
             if (!global.ShouldExportType(type, fromVisitor))
                 return default;
+
+            bool isOriginalType = SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, type);
+            if (type.Kind == SymbolKind.NamedType && ((INamedTypeSymbol)type).Arity == 0 && isOriginalType)
+                return NumericTypeHandle((INamedTypeSymbol)type);
 
             IMethodSymbol? GetDeclaringMethodOfAnyTypeParameter(ITypeSymbol nt)
             {
@@ -317,7 +329,6 @@ namespace NetJs.Translator.CSharpToJavascript
                             return NumericTypeHandle(nt);
                         }
                     }
-
                     return $"{nt.ComputeOutputTypeName(global)}.{Constants.PrototypeTypeHandle}";
                 }
 
@@ -546,99 +557,129 @@ namespace NetJs.Translator.CSharpToJavascript
             //TODO: Wont the handle clash between multiple assemblies, we can use a random number for now, but we should have a better way to generate unique assembly handles
             assemblyHandle = (uint)(args?.ElementAtOrDefault(0).Value ?? (isSystemPrivateCoreLib ? 1 : (uint)new Random().Next(32768, 65536)));
             //uint assemblyHandle = (uint)args[0];
-            var types = GetAllTypes(assembly.GlobalNamespace).Concat(assembly.GlobalNamespace
-                    .GetNamespaceMembers()
-                    .SelectMany(GetAllTypes))
-                .Distinct(SymbolEqualityComparer.Default)
-                .Cast<INamedTypeSymbol>()
-                .ToList();
+            var assemblies = global.AllSymbols.Values.Where(e => e.Symbol.Kind == SymbolKind.Assembly);
+            var types = global.AllSymbols.Values.Where(e => SymbolEqualityComparer.Default.Equals(e.Symbol.ContainingAssembly, assembly) && e.Symbol.Kind == SymbolKind.NamedType);
+            //var types = global.AllSymbols.Values.Where(e => e.Symbol.Kind == SymbolKind.NamedType).Cast<INamedTypeSymbol>().ToList();
+            //GetAllTypes(assembly.GlobalNamespace).Concat(assembly.GlobalNamespace
+            //    .GetNamespaceMembers()
+            //    .SelectMany(GetAllTypes))
+            //.Distinct(SymbolEqualityComparer.Default)
+            //.Cast<INamedTypeSymbol>()
+            //.ToList();
             //var _typeNames = new string[] { "" }
             //.Concat(Enumerable.Range(1, isSystemPrivateCoreLib ? 32 : 0)
             //.Select(i => $"$T{i}")).Concat(types.Select(t => t.CreateSignature(global, withGlobalNamespace: false))).Distinct();
             //make sure unknown type is index zero, System.Object is at index 1
             //Order predictably, so we can rebuild an assembly and type handles can be guaranteed to be the same. Unless a nw type was added or one removed
             this.types = (isSystemPrivateCoreLib ? types.OrderBy(t =>
-            SymbolEqualityComparer.Default.Equals(t, global.SystemDynamic) ? (int)KnownTypeHandle.SystemDynamic :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemVoid) ? (int)KnownTypeHandle.SystemVoid :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemObject) ? (int)KnownTypeHandle.SystemObject :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemValueType) ? (int)KnownTypeHandle.SystemValueType :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemBoolean) ? (int)KnownTypeHandle.SystemBool :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemChar) ? (int)KnownTypeHandle.SystemChar :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemSByte) ? (int)KnownTypeHandle.SystemSByte :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemByte) ? (int)KnownTypeHandle.SystemByte :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemInt16) ? (int)KnownTypeHandle.SystemInt16 :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemUInt16) ? (int)KnownTypeHandle.SystemUInt16 :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemInt32) ? (int)KnownTypeHandle.SystemInt32 :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemUInt32) ? (int)KnownTypeHandle.SystemUint32 :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemIntPtr) ? (int)KnownTypeHandle.SystemIntPtr :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemUIntPtr) ? (int)KnownTypeHandle.SystemUIntPtr :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemInt64) ? (int)KnownTypeHandle.SystemInt64 :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemUInt64) ? (int)KnownTypeHandle.SystemUint64 :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemEnum) ? (int)KnownTypeHandle.SystemEnum :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemSingle) ? (int)KnownTypeHandle.SystemSingle :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemDouble) ? (int)KnownTypeHandle.SystemDouble :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemArray) ? (int)KnownTypeHandle.SystemArray :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemString) ? (int)KnownTypeHandle.SystemString :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemPointer) ? (int)KnownTypeHandle.SystemPointer :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemReference) ? (int)KnownTypeHandle.SystemReference :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT1) ? (int)KnownTypeHandle.GenericType1Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT2) ? (int)KnownTypeHandle.GenericType2Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT3) ? (int)KnownTypeHandle.GenericType3Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT4) ? (int)KnownTypeHandle.GenericType4Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT5) ? (int)KnownTypeHandle.GenericType5Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT6) ? (int)KnownTypeHandle.GenericType6Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT7) ? (int)KnownTypeHandle.GenericType7Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT8) ? (int)KnownTypeHandle.GenericType8Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT9) ? (int)KnownTypeHandle.GenericType9Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT10) ? (int)KnownTypeHandle.GenericType10Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT11) ? (int)KnownTypeHandle.GenericType11Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT12) ? (int)KnownTypeHandle.GenericType12Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT13) ? (int)KnownTypeHandle.GenericType13Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT14) ? (int)KnownTypeHandle.GenericType14Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT15) ? (int)KnownTypeHandle.GenericType15Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT16) ? (int)KnownTypeHandle.GenericType16Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT17) ? (int)KnownTypeHandle.GenericType17Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT18) ? (int)KnownTypeHandle.GenericType18Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT19) ? (int)KnownTypeHandle.GenericType19Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT20) ? (int)KnownTypeHandle.GenericType20Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT21) ? (int)KnownTypeHandle.GenericType21Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT22) ? (int)KnownTypeHandle.GenericType22Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT23) ? (int)KnownTypeHandle.GenericType23Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT24) ? (int)KnownTypeHandle.GenericType24Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT25) ? (int)KnownTypeHandle.GenericType25Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT26) ? (int)KnownTypeHandle.GenericType26Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT27) ? (int)KnownTypeHandle.GenericType27Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT28) ? (int)KnownTypeHandle.GenericType28Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT29) ? (int)KnownTypeHandle.GenericType29Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT30) ? (int)KnownTypeHandle.GenericType30Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT31) ? (int)KnownTypeHandle.GenericType31Placeholder :
-            SymbolEqualityComparer.Default.Equals(t, global.SystemT32) ? (int)KnownTypeHandle.GenericType32Placeholder :
-            int.MaxValue).ThenBy(type => type.CreateSignature(global, withTypeParameterNames: false, withGlobalNamespace: false)) : types.OrderBy(type => type.CreateSignature(global, withTypeParameterNames: false, withGlobalNamespace: false)))
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemDynamic) ? (int)KnownTypeHandle.SystemDynamic :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemVoid) ? (int)KnownTypeHandle.SystemVoid :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemObject) ? (int)KnownTypeHandle.SystemObject :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemValueType) ? (int)KnownTypeHandle.SystemValueType :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemBoolean) ? (int)KnownTypeHandle.SystemBool :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemChar) ? (int)KnownTypeHandle.SystemChar :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemSByte) ? (int)KnownTypeHandle.SystemSByte :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemByte) ? (int)KnownTypeHandle.SystemByte :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemInt16) ? (int)KnownTypeHandle.SystemInt16 :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemUInt16) ? (int)KnownTypeHandle.SystemUInt16 :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemInt32) ? (int)KnownTypeHandle.SystemInt32 :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemUInt32) ? (int)KnownTypeHandle.SystemUint32 :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemIntPtr) ? (int)KnownTypeHandle.SystemIntPtr :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemUIntPtr) ? (int)KnownTypeHandle.SystemUIntPtr :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemInt64) ? (int)KnownTypeHandle.SystemInt64 :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemUInt64) ? (int)KnownTypeHandle.SystemUint64 :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemEnum) ? (int)KnownTypeHandle.SystemEnum :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemSingle) ? (int)KnownTypeHandle.SystemSingle :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemDouble) ? (int)KnownTypeHandle.SystemDouble :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemArray) ? (int)KnownTypeHandle.SystemArray :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemString) ? (int)KnownTypeHandle.SystemString :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemPointer) ? (int)KnownTypeHandle.SystemPointer :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemReference) ? (int)KnownTypeHandle.SystemReference :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT1) ? (int)KnownTypeHandle.GenericType1Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT2) ? (int)KnownTypeHandle.GenericType2Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT3) ? (int)KnownTypeHandle.GenericType3Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT4) ? (int)KnownTypeHandle.GenericType4Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT5) ? (int)KnownTypeHandle.GenericType5Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT6) ? (int)KnownTypeHandle.GenericType6Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT7) ? (int)KnownTypeHandle.GenericType7Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT8) ? (int)KnownTypeHandle.GenericType8Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT9) ? (int)KnownTypeHandle.GenericType9Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT10) ? (int)KnownTypeHandle.GenericType10Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT11) ? (int)KnownTypeHandle.GenericType11Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT12) ? (int)KnownTypeHandle.GenericType12Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT13) ? (int)KnownTypeHandle.GenericType13Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT14) ? (int)KnownTypeHandle.GenericType14Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT15) ? (int)KnownTypeHandle.GenericType15Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT16) ? (int)KnownTypeHandle.GenericType16Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT17) ? (int)KnownTypeHandle.GenericType17Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT18) ? (int)KnownTypeHandle.GenericType18Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT19) ? (int)KnownTypeHandle.GenericType19Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT20) ? (int)KnownTypeHandle.GenericType20Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT21) ? (int)KnownTypeHandle.GenericType21Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT22) ? (int)KnownTypeHandle.GenericType22Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT23) ? (int)KnownTypeHandle.GenericType23Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT24) ? (int)KnownTypeHandle.GenericType24Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT25) ? (int)KnownTypeHandle.GenericType25Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT26) ? (int)KnownTypeHandle.GenericType26Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT27) ? (int)KnownTypeHandle.GenericType27Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT28) ? (int)KnownTypeHandle.GenericType28Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT29) ? (int)KnownTypeHandle.GenericType29Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT30) ? (int)KnownTypeHandle.GenericType30Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT31) ? (int)KnownTypeHandle.GenericType31Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT32) ? (int)KnownTypeHandle.GenericType32Placeholder :
+            int.MaxValue).ThenBy(type => type.Symbol.CreateSignature(global, withTypeParameterNames: false, withGlobalNamespace: false)) : types.OrderBy(type => type.Symbol.CreateSignature(global, withTypeParameterNames: false, withGlobalNamespace: false)))
             .Select((o, i) => (o, i))
-            .ToDictionary(x => x.o, x => x.i + (isSystemPrivateCoreLib ? 0/*only dynamic can have handle 0*/ : 1), (IEqualityComparer<ITypeSymbol>)SymbolEqualityComparer.Default);
+            .ToDictionary(x => (ITypeSymbol)x.o.Symbol, x => x.i + (isSystemPrivateCoreLib ? 0/*only dynamic can have handle 0*/ : 1), (IEqualityComparer<ITypeSymbol>)SymbolEqualityComparer.Default);
             //var symbolDictionary = global.Symbols.Types.ToDictionary(e => e.Value.Signature, e => e.Value);
+            var asm = global.GetRequiredMetadata(global.Compilation.Assembly);
+            asm.Export.Handle = assemblyHandle;
             foreach (var type in types)
             {
-                var typeSignature = type.CreateSignature(global, withTypeParameterNames: true, withGlobalNamespace: true);
-                var typeMetadata = global.Symbols.Types.FirstOrDefault(e => e.Value.Signature == typeSignature).Value;// symbolDictionary.GetValueOrDefault(name);
-                if (typeMetadata != null)
+                var ttype = (INamedTypeSymbol)type.Symbol;
+                bool isDynamic = SymbolEqualityComparer.Default.Equals(ttype, global.SystemDynamic);
+                var typeExport = type.Export;
+                // global.GetRequiredMetadata(type).Export;
+                //var typeSignature = type.CreateSignature(global, withTypeParameterNames: true, withGlobalNamespace: true);
+                //var typeMetadata = global.Symbols.Types.FirstOrDefault(e => e.Value.Signature == typeSignature).Value;// symbolDictionary.GetValueOrDefault(name);
+                var typeHandle = (ulong)NumericTypeHandle(ttype, false);
+                if (typeExport != null)
                 {
-                    var handle = NumericTypeHandle(type, false);
-                    typeMetadata.Handle = handle;
+                    if (isDynamic)
+                        typeExport.IsDynamic();
+                    typeExport.Handle = typeHandle;
                 }
-                foreach (var member in type.GetMembers())
+                var members = ttype.GetMembers().SelectMany(e =>
                 {
-                    var metadata = global.GetMetadata(member);
-                    var memberSignature = member.CreateSignature(global, withTypeParameterNames: true, withGlobalNamespace: true);
-                    var memberMetadata = global.Symbols.Members.GetValueOrDefault(typeSignature)?.FirstOrDefault(e => e.Value.Signature == metadata?.Signature).Value;
-                    if (memberMetadata != null)
+                    if (e.Kind == SymbolKind.Property && e is IPropertySymbol ps)
                     {
-                        var memberHandle = MemberHandle(member, null, false);
-                        memberMetadata.Handle = memberHandle;
+                        return ((IEnumerable<ISymbol?>)[ps, ps.GetMethod, ps.SetMethod]).Where(e => e != null)!;
                     }
+                    else if (e.Kind == SymbolKind.Event && e is IEventSymbol es)
+                    {
+                        return ((IEnumerable<ISymbol?>)[es, es.AddMethod, es.RemoveMethod]).Where(e => e != null)!;
+                    }
+                    return [e];
+                })
+                //Order predictably, so we can rebuild an assembly and member handles can be guaranteed to be the same. Unless a member type was added or one removed
+                .OrderBy(e => e!.Name);
+                int memberIndex = 1;
+                foreach (var member in members)
+                {
+                    var memberExport = global.GetRequiredMetadata(member!).Export;
+                    //var memberSignature = member.CreateSignature(global, withTypeParameterNames: true, withGlobalNamespace: true);
+                    //var memberMetadata = global.Symbols.Members.GetValueOrDefault(typeSignature)?.FirstOrDefault(e => e.Value.Signature == metadata?.Signature).Value;
+                    //if (memberExport != null)
+                    //{
+                    ulong memberHandle = typeHandle | ((ulong)memberIndex << ReflectionHandleExtension.MemberShift);
+                    //var memberHandle = MemberHandle(member, null, false);
+                    if (isDynamic)
+                        memberExport.IsDynamic();
+                    memberExport.Handle = memberHandle;
+                    //}
+                    memberIndex++;
                 }
             }
-            return types;
+            return types.Select(t => (INamedTypeSymbol)t.Symbol);
         }
 
         public AssemblyModel FromAssemblySymbol(IAssemblySymbol assembly)
@@ -659,7 +700,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 Attributes = NullIfEmpty(assembly.GetAttributes()
                     .Where(a => a.AttributeClass != null)
                     .Where(a => global.ShouldExportType(a.AttributeClass!, null))
-                    .Select(s => FromAttribute(s, null))
+                    .Select(s => FromAttribute(assembly, s, null))
                     .ToArray())
             };
             List<AssemblyManifestModel> manifests = new List<AssemblyManifestModel>();
@@ -748,7 +789,12 @@ namespace NetJs.Translator.CSharpToJavascript
                     switch (m)
                     {
                         case IPropertySymbol propertySymbol:
-                            propertiesList.Add(FromPropertySymbol(propertySymbol, fromVisitor));
+                            {
+                                var markers = propertySymbol.TrimmableBoundary(global);
+                                propertiesList.Add(PropertyModel.TrimmableMarker.Open(markers.Start));
+                                propertiesList.Add(FromPropertySymbol(propertySymbol, fromVisitor));
+                                propertiesList.Add(PropertyModel.TrimmableMarker.Close(markers.End));
+                            }
                             break;
 
                         case IMethodSymbol methodSymbol:
@@ -756,14 +802,20 @@ namespace NetJs.Translator.CSharpToJavascript
                             {
                                 if (!global.LinkTrimOutMethod(methodSymbol))
                                 {
+                                    var markers = methodSymbol.TrimmableBoundary(global);
+                                    constructorsList.Add(ConstructorModel.TrimmableMarker.Open(markers.Start));
                                     constructorsList.Add(FromConstructorSymbol(methodSymbol, fromVisitor));
+                                    constructorsList.Add(ConstructorModel.TrimmableMarker.Close(markers.End));
                                 }
                             }
                             else if (methodSymbol.MethodKind == MethodKind.Ordinary || methodSymbol.MethodKind == MethodKind.DelegateInvoke)
                             {
                                 if (!global.LinkTrimOutMethod(methodSymbol))
                                 {
+                                    var markers = methodSymbol.TrimmableBoundary(global);
+                                    methodsList.Add(MethodModel.TrimmableMarker.Open(markers.Start));
                                     methodsList.Add(FromMethodSymbol(methodSymbol, fromVisitor));
+                                    methodsList.Add(MethodModel.TrimmableMarker.Close(markers.End));
                                 }
                             }
                             break;
@@ -771,12 +823,20 @@ namespace NetJs.Translator.CSharpToJavascript
                         case IFieldSymbol fieldSymbol:
                             if (fieldSymbol.Name.IndexOf("k__BackingField", StringComparison.Ordinal) < 0)
                             {
+                                var markers = fieldSymbol.TrimmableBoundary(global);
+                                fieldsList.Add(FieldModel.TrimmableMarker.Open(markers.Start));
                                 fieldsList.Add(FromFieldSymbol(fieldSymbol, fromVisitor));
+                                fieldsList.Add(FieldModel.TrimmableMarker.Close(markers.End));
                             }
                             break;
 
                         case IEventSymbol eventSymbol:
-                            eventsList.Add(FromEventSymbol(eventSymbol, fromVisitor));
+                            {
+                                var markers = eventSymbol.TrimmableBoundary(global);
+                                eventsList.Add(EventModel.TrimmableMarker.Open(markers.Start));
+                                eventsList.Add(FromEventSymbol(eventSymbol, fromVisitor));
+                                eventsList.Add(EventModel.TrimmableMarker.Close(markers.End));
+                            }
                             break;
                     }
                 }
@@ -868,7 +928,7 @@ namespace NetJs.Translator.CSharpToJavascript
                         var attr = attributes[i];
                         if (attr.AttributeClass != null && global.ShouldExportType(attr.AttributeClass, null))
                         {
-                            attrList.Add(FromAttribute(attr, fromVisitor));
+                            attrList.Add(FromAttribute(symbol, attr, fromVisitor));
                         }
                     }
                     attributesArray = attrList.Count > 0 ? attrList.ToArray() : null;
@@ -1013,17 +1073,6 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             var model = FromTypeSymbol(symbol, fromVisitor, minimal);
             var json = JsonSerializer.Serialize(model, SerializationOption);
-            //if (symbol is INamedTypeSymbol nt && nt.OriginalDefinition.IsGenericType)
-            //{
-            //    var selfHandle = TypeHandle(nt);
-            //    json = ReplaceWholeWord(json, $"{selfHandle}", $"this.{Constants.PrototypeTypeHandle}");
-            //    foreach (var t in nt.OriginalDefinition.TypeParameters) //replace every handle in the json with the runtime handle of the generic type
-            //    {
-            //        var handle = GenericTypeHandle(t);
-            //        var needle = $"{handle}";
-            //        json = ReplaceWholeWord(json, needle, $"{t.Name}?.{Constants.PrototypeMetadata}?.h??{handle}");
-            //    }
-            //}
             return json;
         }
 
@@ -1031,19 +1080,19 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             foreach (var nested in ns.GetTypeMembers())
             {
-                if (global.ShouldExportType(nested, null) /*&& global.IsReflectable(nested, null)*/)
-                    yield return nested;
+                //if (global.ShouldExportType(nested, null) /*&& global.IsReflectable(nested, null)*/)
+                yield return nested;
                 foreach (var inner in GetInnerTypes(nested))
-                    if (global.ShouldExportType(inner, null)/* && global.IsReflectable(inner, null)*/)
-                        yield return inner;
+                    //if (global.ShouldExportType(inner, null)/* && global.IsReflectable(inner, null)*/)
+                    yield return inner;
             }
         }
         private IEnumerable<INamedTypeSymbol> GetAllTypes(INamespaceSymbol ns)
         {
             foreach (var type in ns.GetTypeMembers())
             {
-                if (global.ShouldExportType(type, null) /*&& global.IsReflectable(type, null)*/)
-                    yield return type;
+                //if (global.ShouldExportType(type, null) /*&& global.IsReflectable(type, null)*/)
+                yield return type;
                 foreach (var inner in GetInnerTypes(type))
                     yield return inner;
             }
@@ -1150,7 +1199,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     var a = attributes[i];
                     if (a.AttributeClass != null && global.ShouldExportType(a.AttributeClass, null))
                     {
-                        attributesList.Add(FromAttribute(a, fromVisitor));
+                        attributesList.Add(FromAttribute(prop, a, fromVisitor));
                     }
                 }
             }
@@ -1266,7 +1315,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     var a = attributes[i];
                     if (a.AttributeClass != null && global.ShouldExportType(a.AttributeClass, null))
                     {
-                        attributesList.Add(FromAttribute(a, fromVisitor));
+                        attributesList.Add(FromAttribute(method, a, fromVisitor));
                     }
                 }
             }
@@ -1367,7 +1416,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     var a = attributes[i];
                     if (a.AttributeClass != null && global.ShouldExportType(a.AttributeClass, null))
                     {
-                        attributesList.Add(FromAttribute(a, fromVisitor));
+                        attributesList.Add(FromAttribute(ctor, a, fromVisitor));
                     }
                 }
             }
@@ -1432,7 +1481,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     var a = attributes[i];
                     if (a.AttributeClass != null && global.ShouldExportType(a.AttributeClass, null))
                     {
-                        attributesList.Add(FromAttribute(a, fromVisitor));
+                        attributesList.Add(FromAttribute(field, a, fromVisitor));
                     }
                 }
             }
@@ -1504,7 +1553,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     var a = attributes[i];
                     if (a.AttributeClass != null && global.ShouldExportType(a.AttributeClass, null))
                     {
-                        attributesList.Add(FromAttribute(a, fromVisitor));
+                        attributesList.Add(FromAttribute(ev, a, fromVisitor));
                     }
                 }
             }
@@ -1585,7 +1634,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     var a = attributes[i];
                     if (a.AttributeClass != null && global.ShouldExportType(a.AttributeClass, null))
                     {
-                        attributesList.Add(FromAttribute(a, fromVisitor));
+                        attributesList.Add(FromAttribute(param, a, fromVisitor));
                     }
                 }
             }
@@ -1627,7 +1676,7 @@ namespace NetJs.Translator.CSharpToJavascript
         //    };
         //}
 
-        object? AdaptAttrValue(object? a, TranslatorSyntaxVisitor? fromVisitor)
+        object? AdaptAttrValue(ISymbol symbol, object? a, TranslatorSyntaxVisitor? fromVisitor)
         {
             if (a == null)
             {
@@ -1636,6 +1685,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
             if (a is ITypeSymbol t)
             {
+                global.RegisterDependencyGraph(symbol, t);
                 return TypeHandle(t, fromVisitor);
             }
 
@@ -1652,6 +1702,8 @@ namespace NetJs.Translator.CSharpToJavascript
                 for (int i = 0; i < tcArray.Length; i++)
                 {
                     var type = tcArray[i].Type;
+                    if (type != null)
+                        global.RegisterDependencyGraph(symbol, type);
                     result[i] = type != null ? TypeHandle(type, fromVisitor) : default;
                 }
                 return result;
@@ -1664,6 +1716,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 var result = new Handle[tArray.Length];
                 for (int i = 0; i < tArray.Length; i++)
                 {
+                    global.RegisterDependencyGraph(symbol, tArray[i]);
                     result[i] = TypeHandle(tArray[i], fromVisitor);
                 }
                 return result;
@@ -1676,6 +1729,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     if (tcItem.Type != null)
                     {
+                        global.RegisterDependencyGraph(symbol, tcItem.Type);
                         list.Add(TypeHandle(tcItem.Type, fromVisitor));
                     }
                 }
@@ -1687,6 +1741,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 var list = new List<Handle>();
                 foreach (var tItem in tt)
                 {
+                    global.RegisterDependencyGraph(symbol, tItem);
                     list.Add(TypeHandle(tItem, fromVisitor));
                 }
                 return list.ToArray();
@@ -1714,10 +1769,15 @@ namespace NetJs.Translator.CSharpToJavascript
         //    return a;
         //}
 
-        AttributeModel FromAttribute(AttributeData att, TranslatorSyntaxVisitor? fromVisitor)
+        AttributeModel FromAttribute(ISymbol symbol, AttributeData att, TranslatorSyntaxVisitor? fromVisitor)
         {
             var attributeClass = att.AttributeClass;
             var attributeConstructor = att.AttributeConstructor;
+
+            if (attributeClass != null)
+                global.RegisterDependencyGraph(symbol, attributeClass);
+            if (attributeConstructor != null)
+                global.RegisterDependencyGraph(symbol, attributeConstructor);
 
             List<AttributeConstructorArgumentModel>? constructorArgsList = null;
             var constructorArgs = att.ConstructorArguments;
@@ -1728,10 +1788,15 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     var arg = constructorArgs[i];
 
+                    if (arg.Type != null)
+                    {
+                        global.RegisterDependencyGraph(symbol, arg.Type);
+                    }
+
                     constructorArgsList.Add(new AttributeConstructorArgumentModel
                     {
                         Type = arg.Type != null ? TypeHandle(arg.Type, fromVisitor) : default,
-                        Value = AdaptAttrValue(arg.Kind == TypedConstantKind.Array ? arg.Values : arg.Value, fromVisitor),
+                        Value = AdaptAttrValue(symbol, arg.Kind == TypedConstantKind.Array ? arg.Values : arg.Value, fromVisitor),
                     });
                 }
             }
@@ -1746,11 +1811,22 @@ namespace NetJs.Translator.CSharpToJavascript
                     var arg = namedArgs[i];
                     var argValue = arg.Value;
 
+                    var property = attributeClass?.GetMembers(arg.Key).OfType<IPropertySymbol>().FirstOrDefault();
+                    if (property != null)
+                    {
+                        global.RegisterDependencyGraph(symbol, property);
+                    }
+
+                    if (argValue.Type != null)
+                    {
+                        global.RegisterDependencyGraph(symbol, argValue.Type);
+                    }
+
                     namedArgsList.Add(new AttributeNamedArgumentModel
                     {
                         Name = arg.Key,
                         Type = argValue.Type != null ? TypeHandle(argValue.Type, fromVisitor) : default,
-                        Value = AdaptAttrValue(argValue.Kind == TypedConstantKind.Array ? argValue.Values : argValue.Value, fromVisitor),
+                        Value = AdaptAttrValue(symbol, argValue.Kind == TypedConstantKind.Array ? argValue.Values : argValue.Value, fromVisitor),
                     });
                 }
             }

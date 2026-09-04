@@ -102,7 +102,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 if (i > 0)
                     CurrentTypeWriter.Write(node, ", ");
                 CurrentTypeWriter.Write(parameter, $"/*{parameter.Type}*/");
-                CurrentTypeWriter.Write(parameter, $"$");
+                //CurrentTypeWriter.Write(parameter, $"$");
                 CurrentTypeWriter.Write(parameter, parameter.Identifier.ValueText);
                 i++;
             }
@@ -114,10 +114,23 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 CurrentTypeWriter.Write(parameter, $"this.", true);
                 CurrentTypeWriter.Write(parameter, parameter.Identifier.ValueText);
-                CurrentTypeWriter.Write(parameter, $" = $");
+                //CurrentTypeWriter.Write(parameter, $" = $");
+                CurrentTypeWriter.Write(parameter, $" = ");
                 CurrentTypeWriter.Write(parameter, parameter.Identifier.ValueText);
                 CurrentTypeWriter.WriteLine(parameter, ";");
                 i++;
+            }
+
+            if (node.BaseList != null)
+            {
+                foreach (var type in node.BaseList.Types)
+                {
+                    if (type is PrimaryConstructorBaseTypeSyntax pcbType)
+                    {
+                        var calledCtor = (IMethodSymbol)_global.GetSymbol(type, this);
+                        WriteCalledConstructor(node, typeSymbol, calledCtor, pcbType.ArgumentList.Arguments.Select(a => new CodeNode(a)));
+                    }
+                }
             }
 
             //Initillize fields/properties that requires the primary constructor parameters, such as fields/properties that are initialized using a primary constructor parameter
@@ -165,8 +178,9 @@ namespace NetJs.Translator.CSharpToJavascript
             CurrentTypeWriter.WriteLine(node, "//End primary constructor", true);
         }
 
-        void WriteCalledConstructor(CSharpSyntaxNode node, INamedTypeSymbol fromTypeSymbol, IMethodSymbol calledConstructor, ConstructorInitializerSyntax? baseInitializer)
+        void WriteCalledConstructor(CSharpSyntaxNode node, INamedTypeSymbol fromTypeSymbol, IMethodSymbol calledConstructor, IEnumerable<CodeNode>? arguments)
         {
+            MarkCurrentClosureDependsOn(calledConstructor);
             var calledConstructorMeta = _global.GetRequiredMetadata(calledConstructor);
             if (calledConstructor.ContainingSymbol.Equals(fromTypeSymbol, SymbolEqualityComparer.Default))
             {
@@ -179,7 +193,7 @@ namespace NetJs.Translator.CSharpToJavascript
             var parametersCount = calledConstructor.Parameters.Length;
             var parameters = Enumerable.Range(0, parametersCount).Select(i =>
             {
-                var argument = baseInitializer?.ArgumentList.Arguments.ElementAtOrDefault(i);
+                var argument = arguments?.ElementAtOrDefault(i);
                 if (argument == null)
                 {
                     var constructorP = calledConstructor.Parameters[i];
@@ -190,7 +204,7 @@ namespace NetJs.Translator.CSharpToJavascript
                             throw new InvalidOperationException();
                     });
                 }
-                return new CodeNode(argument);
+                return argument;
             });
             WriteMethodInvocationParameters(node, calledConstructor, null, parameters, constructorCallConvention != ConstructorCallConvention.InstanceCall ? (Action)(() => CurrentTypeWriter.Write(node, "this")) : null);
             CurrentTypeWriter.WriteLine(node, $";");
@@ -214,16 +228,16 @@ namespace NetJs.Translator.CSharpToJavascript
             var baseType = ((ITypeSymbol)constructorSymbol.ContainingSymbol).BaseType;
             var classInheritsFromExternalClass = baseType != null ? _global.IsExternal(baseType, this) : false;
             var boundBaseConstructor = baseInitializer != null ? GetExpressionBoundTarget(baseInitializer).TypeSyntaxOrSymbol as IMethodSymbol : null;
-            var calledConstructor = baseType != null && baseInitializer != null ? (boundBaseConstructor ?? GetBestOverloadMethod(baseType, ".ctor", null, baseInitializer.ArgumentList.Arguments, null, out _)) : null;
-            var useNativeConstructor = calledConstructor != null ? _global.IsExternal(calledConstructor.ContainingType, this) : false;
-            if (calledConstructor == null && baseType != null && baseInitializer == null) //call default constructor on base type
+            var calledBaseConstructor = baseType != null && baseInitializer != null ? (boundBaseConstructor ?? GetBestOverloadMethod(baseType, ".ctor", null, baseInitializer.ArgumentList.Arguments, null, out _)) : null;
+            var useNativeConstructor = calledBaseConstructor != null ? _global.IsExternal(calledBaseConstructor.ContainingType, this) : false;
+            if (calledBaseConstructor == null && baseType != null && baseInitializer == null) //call default constructor on base type
             {
                 var baseMembers = baseType.GetMembers(".ctor", _global, true);
                 //if there is a base constructor with all parameter having default, prioritize that
-                calledConstructor = (IMethodSymbol?)baseMembers.FirstOrDefault(e => e is IMethodSymbol ms && ms.Parameters.Length > 0 && ms.Parameters.All(e => e.HasExplicitDefaultValue)) ??
+                calledBaseConstructor = (IMethodSymbol?)baseMembers.FirstOrDefault(e => e is IMethodSymbol ms && ms.Parameters.Length > 0 && ms.Parameters.All(e => e.HasExplicitDefaultValue)) ??
                     (IMethodSymbol?)baseMembers.SingleOrDefault(e => e is IMethodSymbol ms && ms.Parameters.Length == 0);
             }
-            if (_global.HasAnyAttribute(constructorSymbol, this, false, typeof(NativeConstructorAttribute).FullName))
+            if (_global.HasAnyAttribute(constructorSymbol, this, false, typeof(NativeConstructorAttribute).FullName!))
             {
                 useNativeConstructor = true;
             }
@@ -235,7 +249,7 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 CurrentTypeWriter.WriteLine(node, $"{modifier}{(constructorCallConvention == ConstructorCallConvention.StaticCall ? "static " : "")}{meta.OverloadName}({cParameters})", true);
             }
-            var isCallingNativeConstructor = classInheritsFromExternalClass && calledConstructor != null && !SymbolEqualityComparer.Default.Equals(calledConstructor.ContainingType, typeSymbol);
+            var isCallingNativeConstructor = classInheritsFromExternalClass && calledBaseConstructor != null && !SymbolEqualityComparer.Default.Equals(calledBaseConstructor.ContainingType, typeSymbol);
             WriteMethodBody(node, null, null, parameters, writePrologue: () =>
             {
                 //var systemObject = _global.GetSymbol("System.Object", this/*, out _, out _*/);
@@ -244,20 +258,21 @@ namespace NetJs.Translator.CSharpToJavascript
 
                 if (isCallingNativeConstructor)
                 {
-                    CurrentTypeWriter.WriteLine(node, $"//Native base constructor call on External class \"{calledConstructor?.ContainingType}\" skipped!", true);
+                    CurrentTypeWriter.WriteLine(node, $"//Native base constructor call on External class \"{calledBaseConstructor?.ContainingType}\" skipped!", true);
                 }
                 else if (useNativeConstructor)
                 {
                     CurrentTypeWriter.Write(node, $"super", true);
-                    WriteMethodInvocationParameters(node, calledConstructor, null, baseInitializer?.ArgumentList.Arguments.Select(a => new CodeNode(a)), constructorCallConvention != ConstructorCallConvention.InstanceCall ? (Action)(() => CurrentTypeWriter.Write(node, "this")) : null);
+                    WriteMethodInvocationParameters(node, calledBaseConstructor, null, baseInitializer?.ArgumentList.Arguments.Select(a => new CodeNode(a)), constructorCallConvention != ConstructorCallConvention.InstanceCall ? (Action)(() => CurrentTypeWriter.Write(node, "this")) : null);
                     CurrentTypeWriter.WriteLine(node, $";");
                 }
                 else
                 {
-                    if (calledConstructor != null)
+                    if (calledBaseConstructor != null)
                     {
                         EnsureImported(baseType);
-                        WriteCalledConstructor(node, typeSymbol, calledConstructor, baseInitializer);
+
+                        WriteCalledConstructor(node, typeSymbol, calledBaseConstructor, baseInitializer?.ArgumentList.Arguments.Select(c => new CodeNode(c)));
                         //var calledConstructorMeta = _global.GetRequiredMetadata(calledConstructor);
                         //if (calledConstructor.ContainingSymbol.Equals(typeSymbol, SymbolEqualityComparer.Default))
                         //{
@@ -284,68 +299,34 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitConstructorDeclaration(ConstructorDeclarationSyntax node)
         {
+            var constructorSymbol = (IMethodSymbol)_global.GetSymbol(node, this);
+
+            RegisterDynamicDependencies(constructorSymbol);
+
             if (node.Modifiers.IsExtern())
             {
                 return;
             }
             if (node.Body == null && node.ExpressionBody == null)
                 return;
-            var constructorSymbol = (IMethodSymbol)OpenClosure(node);// _global.GetTypeSymbol(node, this, out _, out _);
+
+            constructorSymbol = (IMethodSymbol)OpenClosure(node);
+
             if (_global.LinkTrimOutMethod(constructorSymbol))
                 return;
+
+            using var trimmer = WriteTrimmableBoundaryStart(node, constructorSymbol);
+
             bool _static = node.Modifiers.IsStatic();
             if (_static)
             {
+                _global.RegisterDependencyGraph(constructorSymbol.ContainingType, constructorSymbol);
                 CurrentTypeWriter.WriteLine(node, "/*Static constructor*/ static $cctor()", true);
                 WriteMethodBody(node, null, null, node.ParameterList.Parameters);
             }
             else
             {
                 WriteConstructorDeclaration(node, constructorSymbol, node.ParameterList.Parameters, node.Initializer);
-                //string? modifier = null;
-                //if (node.Modifiers.Any(e => e.ValueText == "async"))
-                //{
-                //    modifier += "async ";
-                //}
-                //var typeSymbol = (INamedTypeSymbol)constructorSymbol.ContainingSymbol;
-                //var constructors = typeSymbol.Constructors;
-                ////A class may have multiple constructor, use a named ($ctor) method as the constructor
-                //var meta = _global.GetRequiredMetadata(constructorSymbol);
-                ////need to make sure the parameters of a constructor are available early before body, as base clas call may use it
-                ////this will be repeated uneccassrily by WriteMethodBody though
-                //DefineParametersInClosure(node.ParameterList.Parameters, constructorSymbol);
-                //Writer.WriteLine(node, $"{modifier}{(constructorCallConvention == ConstructorCallConvention.StaticCall ? "static " : "")}{meta.OverloadName}({parameters})", true);
-                //WriteMethodBody(node, null, null, node.ParameterList.Parameters, writePrologue: () =>
-                //{
-                //    var systemObject = _global.GetTypeSymbol("System.Object", this, out _, out _);
-                //    MethodOverloadResult overloadResult = default;
-                //    var baseType = ((ITypeSymbol)constructorSymbol.ContainingSymbol).BaseType;
-                //    var boundBaseConstructor = node.Initializer != null ? GetExpressionBoundMember(node.Initializer).TypeSyntaxOrSymbol as IMethodSymbol : null;
-                //    var baseConstructor = baseType != null && node.Initializer != null ? boundBaseConstructor ?? GetBestOverloadMethod(baseType, ".ctor", null, node.Initializer.ArgumentList.Arguments, null, out overloadResult) : null;
-                //    if (baseConstructor != null)
-                //    {
-                //        var baseConstructorMeta = _global.GetRequiredMetadata(baseConstructor);
-                //        EnsureImported(baseType);
-                //        if (baseConstructor.ContainingSymbol.Equals(typeSymbol, SymbolEqualityComparer.Default))
-                //        {
-                //            Writer.Write(node, $"this.{(baseConstructorMeta?.OverloadName ?? "$ctor")}", true);
-                //        }
-                //        else if (baseConstructorMeta != null)
-                //        {
-                //            Writer.Write(node, $"super.{(baseConstructorMeta.OverloadName ?? "$ctor")}", true);
-                //        }
-                //        WriteMethodInvocationParameter(node, baseConstructor, null, node.Initializer!.ArgumentList.Arguments, constructorCallConvention != ConstructorCallConvention.InstanceCall ? "this" : null);
-                //        Writer.WriteLine(node, $";");
-                //    }
-                //    else if (baseType == null || !baseType.Equals(systemObject, SymbolEqualityComparer.Default))
-                //    {
-                //        //implicit call to base constructor
-                //        //Writer.WriteLine(node, $"super.$ctor();", true);
-                //    }
-                //}, writeEpilogue: () =>
-                //{
-                //    Writer.WriteLine(node, $"return this;", true);
-                //});
             }
             CloseClosure(node);
         }
@@ -604,6 +585,9 @@ namespace NetJs.Translator.CSharpToJavascript
             if (type == null && typeSymbol == null)
                 throw new InvalidOperationException("ONE of type or typeSymbol is required");
             typeSymbol ??= _global.GetTypeSymbol(type!, this)!;
+
+            MarkCurrentClosureDependsOn(typeSymbol);
+
             if (typeSymbol.TypeKind == TypeKind.Delegate)
             {
                 if (arguments != null)
@@ -643,6 +627,9 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
                 boundConstructor ??= GetExpressionBoundTarget(node).TypeSyntaxOrSymbol as IMethodSymbol;
                 var targetConstructor = boundConstructor ?? GetBestOverloadMethod(typeSymbol, ".ctor", null, arguments?.Select(a => a.AsT0), null, out overloadResult) ?? throw new InvalidOperationException("Cannot find the constructor");
+
+                MarkCurrentClosureDependsOn(targetConstructor);
+
                 bool isCompilerGeneratedConstructor = targetConstructor.Parameters.Count() == 0 && targetConstructor.IsImplicitlyDeclared;
                 if (_global.HasAttribute(targetConstructor, typeof(TemplateAttribute).FullName!, this, false, out _))
                 {

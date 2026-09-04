@@ -47,7 +47,8 @@ NetJs build
 NetJs serve -o
 ```
 
-Once build completes, Find a wwwroot folder in your
+Once build completes, Find a wwwroot folder in your output path
+
 Supports and tested with Sdks _Microsoft.NET.Sdk.BlazorWebAssembly_, _Microsoft.NET.Sdk.Razor_, _Microsoft.NET.Sdk_
 
 # Notes

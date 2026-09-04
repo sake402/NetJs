@@ -60,12 +60,12 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                 {
                     return false;
                 }
-                if (node.Parent != null && IsAsyncWrapperCandidate(visitor, node.Parent, out var returnType) && (returnType.IsT0 || returnType.IsT1))
+                if (node.Parent != null && IsAsyncWrapperCandidate(visitor, node.Parent, out var taskType) && (taskType.IsT0 || taskType.IsT1))
                 {
                     _processing.Value.Push(node);
                     try
                     {
-                        var taskSymbol = returnType.IsT0 ? returnType.AsT0 : visitor.Global.GetTypeSymbol(returnType.AsT1, visitor);
+                        var taskSymbol = taskType.IsT0 ? taskType.AsT0 : visitor.Global.GetTypeSymbol(taskType.AsT1, visitor);
                         var returnSymbol = taskSymbol is INamedTypeSymbol nt && nt.Arity == 1 ? nt.TypeArguments[0] : visitor.Global.SystemVoid;
                         if (node.IsKind(SyntaxKind.Block)) //for arrow clause, the brace is already written by method visitor
                         {

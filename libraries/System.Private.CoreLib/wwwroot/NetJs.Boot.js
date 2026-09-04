@@ -40,6 +40,14 @@
         return null;
     }
 
+    let handles = new Set();
+    NetJs.$trace = function (handle) {
+        handles.add(handle);
+    }
+
+    NetJs.$tracex = function (handle) {
+    }
+
     NetJs.$finalizer = function (_this) {
         //TODO: nned a way to map heldValue back to the object being destroyed
         //finalizer.register(myObject, "_");
@@ -296,6 +304,9 @@
     NetJs.$is = function (value, type, outValue) {
         if (value === null || value === undefined)
             return false;
+        if (type.$isProxy && type.$prototype) {
+            type = type.$prototype;
+        }
         let valueType = isValueType(type);
         let unboxedValue = value;
         if (value.$boxed && valueType) { //dont unbox if we are testing against ref type, needs to remain boxed as object

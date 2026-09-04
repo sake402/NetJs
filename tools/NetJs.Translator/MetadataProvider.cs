@@ -574,7 +574,7 @@ namespace NetJs.Translator
             //    options = options.WithModuleName(name);
             return CSharpCompilation.Create(project.GetAssemblyName(),
                 syntaxTrees.ToArray(),
-                references: referenceAndSymbols.Value.Item1,
+                references: references?.ToArray() ?? referenceAndSymbols.Value.Item1,
                 options: options);
         }
     }

@@ -129,6 +129,8 @@ namespace NetJs.Translator.CSharpToJavascript
             new InOfSequentialStructFieldAsNumericSyntaxEmitter(),
 
             new AsyncMethodWrapperSyntaxEmitter(),
+            new ProfileTraceMethodSyntaxEmitter(),
+
             new PrimitiveMethodSyntaxEmitter(),
             new EnumMethodSyntaxEmitter(),
             new GenericTypeGetHashCodeSyntaxEmitter(),
@@ -296,7 +298,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     overloadFullClassName = overloadFullClassName.Substring(_global.GlobalName.Length + 1);
                 }
-                OpenClosure(node);
+                OpenClosure(node, mainEntry);
                 CurrentTypeWriter.WriteLine(node, $"{Constants.AssemblyRegistryName}.{Constants.AssemblyDefineClassName}(\"{overloadFullClassName}\", ($self) => class {typeSymbol.Name}", true);
                 CurrentTypeWriter.WriteLine(node, "{", true);
                 CurrentTypeWriter.WriteLine(node, $"static{(mainEntry.IsAsync ? " async" : "")} {methodMetadata.OverloadName}(args)", true);
@@ -453,7 +455,14 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 if (separator != null && ix > 0)
                     CurrentTypeWriter.Write(node, separator, false);
-                Visit(node);
+                try
+                {
+                    Visit(node);
+                }
+                catch (SkipRemainingStatementsException)
+                {
+                    break;
+                }
                 ix++;
             }
         }
@@ -657,17 +666,20 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public void WriteBlock(CSharpSyntaxNode node, CodeNode code)
         {
-            CurrentTypeWriter.WriteLine(node, "{", true);
+            if (!_blockBraceWritten.Contains(node))
+                CurrentTypeWriter.WriteLine(node, "{", true);
             var blockClosure = CurrentTypeWriter.CurrentClosure;
             OpenClosure(node);
             VisitNode(code);
             CloseClosure(node);
             blockClosure.RaiseOnBlockClosing();
-            CurrentTypeWriter.WriteLine(node, "}", true);
+            if (!_blockBraceWritten.Contains(node))
+                CurrentTypeWriter.WriteLine(node, "}", true);
+            _blockBraceWritten.Remove(node);
         }
 
-        List<BlockSyntax> _blockBraceWritten = new();
-        void MarkBlockBraceWritten(BlockSyntax block)
+        List<CSharpSyntaxNode> _blockBraceWritten = new();
+        public void MarkBlockBraceWritten(CSharpSyntaxNode block)
         {
             _blockBraceWritten.Add(block);
         }
@@ -953,7 +965,16 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             else
             {
-                CurrentTypeWriter.Write(node, "super");
+                bool useThis = false;
+                if (node.Parent.IsKind(SyntaxKind.SimpleMemberAccessExpression)) //cannot access fields via super.field, must be this.field, but super.method() is valid
+                {
+                    var parentType = _global.TryGetSymbol(node.Parent, this);
+                    if (parentType?.Kind == SymbolKind.Field)
+                    {
+                        useThis = true;
+                    }
+                }
+                CurrentTypeWriter.Write(node, useThis ? "this" : "super");
             }
             base.VisitBaseExpression(node);
         }
@@ -1096,6 +1117,8 @@ namespace NetJs.Translator.CSharpToJavascript
             //        }
             //    }
             //}
+            var symbol = _global.GetSymbol(node.Expression, this);
+            MarkCurrentClosureDependsOn(symbol);
             Visit(node.Expression);
             CurrentTypeWriter.Write(node, "[");
             foreach (var a in node.ArgumentList.Arguments)
@@ -1603,7 +1626,10 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             var typeSymbol = typePrototype.IsT0 ? _global.TryGetTypeSymbol(typePrototype.AsT0, this) : null;
             if (typeSymbol != null)
+            {
+                MarkCurrentClosureDependsOn(typeSymbol);
                 CurrentTypeWriter.Write(node, typeSymbol.ComputeOutputTypeName(_global));
+            }
             else
                 VisitNode(typePrototype);
             CurrentTypeWriter.Write(node, ".");

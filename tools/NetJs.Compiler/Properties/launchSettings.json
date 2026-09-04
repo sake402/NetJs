@@ -18,19 +18,28 @@
       "commandName": "Project",
       "commandLineArgs": "doctor \"E:\\Apps\\NetJs\\doctor.libraries.xml\""
     },
-    "NetJs.Compiler.SPC": {
+    "System.Private.CoreLib": {
       "commandName": "Project",
       "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Private.CoreLib\\NetJs.System.Private.CoreLib.csproj\" -c \"Debug\" -s -f",
       "workingDirectory": "E:\\Apps\\NetJs"
     },
-    "NetJs.Compiler.TestApp": {
+    "System.Console": {
+      "commandName": "Project",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Console\\NetJs.System.Console.csproj\" -c \"Debug\" -s -f",
+      "workingDirectory": "E:\\Apps\\NetJs"
+    },
+    "System.Collections": {
+      "commandName": "Project",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Collections\\NetJs.System.Collections.csproj\" -c \"Debug\" -s -f"
+    },
+    "NetJs.TestApp": {
       "commandName": "Project",
       "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\tests\\NetJs.Tests.App\\NetJs.Tests.App.csproj\" -c \"Debug\" -s -f",
       "workingDirectory": "E:\\Apps\\NetJs"
     },
-    "NetJs.Compiler.BareMetal": {
+    "NetJs.Baremetal": {
       "commandName": "Project",
-      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\tests\\NetJs.Tests.BareMetal\\NetJs.Tests.BareMetal.csproj\" -c \"Debug\" -s -f",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\tests\\NetJs.Tests.Baremetal\\NetJs.Tests.Baremetal.csproj\" -c \"Debug\" -s -f",
       "workingDirectory": "E:\\Apps\\NetJs"
     },
     "MudBlazor": {
@@ -47,10 +56,22 @@
       "commandName": "Project",
       "commandLineArgs": "build --project \"C:\\Users\\User\\Desktop\\miniapp\\miniapp.csproj\" -s -f"
     },
+    "Silvaspoon": {
+      "commandName": "Project",
+      "commandLineArgs": "build --project \"C:\\Users\\User\\Downloads\\SilvaSpoon-main\\SilvaSpoon-main\\silvaspoon.csproj\" -s -f"
+    },
     "LivingThing.Core.Frameworks.Common": {
       "commandName": "Project",
       "commandLineArgs": "build --project \"E:\\Apps\\LivingThing\\Libraries\\LivingThing.Frameworks\\LivingThing.Core.Frameworks.Common\\LivingThing.Core.Frameworks.Common.csproj\" -s -f -p TargetFramework=net10.0",
       "workingDirectory": "E:\\Apps\\NetJs"
+    },
+    "PathToRoot": {
+      "commandName": "Project",
+      "commandLineArgs": "findRoot --project \"E:\\Apps\\NetJs\\tests\\NetJs.Tests.Baremetal\\NetJs.Tests.Baremetal.csproj\""
+    },
+    "Trim": {
+      "commandName": "Project",
+      "commandLineArgs": "trim --project \"C:\\Users\\User\\Downloads\\SilvaSpoon-main\\SilvaSpoon-main\\silvaspoon.csproj\""
     }
   }
 }

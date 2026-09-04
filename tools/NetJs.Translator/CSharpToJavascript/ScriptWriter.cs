@@ -225,7 +225,7 @@ namespace NetJs.Translator.CSharpToJavascript
             return currentWriter;
         }
 
-        public CodeLineWriter WriteLine(CSharpSyntaxNode source, string code, bool withTabs = false, bool forbidInsertion = false)
+        public CodeLineWriter WriteLine(SyntaxNode source, string code, bool withTabs = false, bool forbidInsertion = false)
         {
             bool hasTempWriter = temporaryWriter.TryPeek(out var tempWriter);
             var usedLineWriter = hasTempWriter ? tempWriter! : currentWriter;

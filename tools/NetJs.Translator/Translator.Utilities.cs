@@ -19,13 +19,11 @@ namespace NetJs.Translator
         {
             // Ensure the stream is at the beginning for reading
             stream.Position = 0;
-            using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
+            using (StreamReader reader = new StreamReader(stream, Encoding.UTF8, leaveOpen: true))
             {
                 return reader.ReadToEnd();
             }
         }
-
-
 
         void RecursiveDependentTypes(INamedTypeSymbol symbol, HashSet<INamedTypeSymbol> found, int depth)
         {

@@ -5,17 +5,22 @@ namespace NetJs.Translator.CSharpToJavascript
     public record class SymbolMetadata
     {
         GlobalCompilationVisitor _global;
-
-        public SymbolMetadata(GlobalCompilationVisitor global)
+        public SymbolExport Export { get; set; }
+        public SymbolMetadata(GlobalCompilationVisitor global, SymbolExport? exported)
         {
             _global = global;
+            Export = exported ?? new SymbolExport();
         }
 
         public bool Preprocessed { get; set; }
         /// <summary>
         /// Name is only unique within the type. Declared symbol and overriden symbol will share this name within the type
         /// </summary>
-        public string Signature { get; set; } = default!;
+        public string Signature
+        {
+            get => Export.Signature;
+            set => Export.Signature = value;
+        }
         /// <summary>
         /// Name is unique globally
         /// </summary>

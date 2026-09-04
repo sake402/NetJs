@@ -37,9 +37,9 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(CoreLibProject)" />
-	  <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Net.Http.Headers\NetJs.Microsoft.Net.Http.Headers.csproj" />
-	  <ProjectReference Include="$(NewLibrariesProjectRoot)System.IO.Pipelines\NetJs.System.IO.Pipelines.csproj" />
-	  <ProjectReference Include="$(NewLibrariesProjectRoot)System.Text.Encodings.Web\NetJs.System.Text.Encodings.Web.csproj" />
+    <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Net.Http.Headers\NetJs.Microsoft.Net.Http.Headers.csproj" />
+    <ProjectReference Include="$(NewLibrariesProjectRoot)System.IO.Pipelines\NetJs.System.IO.Pipelines.csproj" />
+    <ProjectReference Include="$(NewLibrariesProjectRoot)System.Text.Encodings.Web\NetJs.System.Text.Encodings.Web.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="$(RepoRoot)src\Http\WebUtilities\src\AspNetCoreTempDirectory.cs" />

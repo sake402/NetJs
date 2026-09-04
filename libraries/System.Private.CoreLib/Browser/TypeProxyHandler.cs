@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace NetJs
@@ -9,8 +10,10 @@ namespace NetJs
     /// </summary>
     [NetJs.Boot]
     [NetJs.Reflectable(false)]
-    class TypeProxyHandler
+    class TypeProxyHandler : IJsProxyHandler
     {
+        [DynamicDependency(nameof(Get))]
+        [DynamicDependency(nameof(Set))]
         public TypeProxyHandler(string metadataFullName)
         {
             MetadataFullName = metadataFullName;
@@ -25,10 +28,16 @@ namespace NetJs
         [NetJs.Name("TargetType")] //prevent from name shrinking as we use nameof() on it. We may add this feature to the transpiler in the future to rewrite the nameof parameter accordingly too
         internal Type? TargetType { get; set; }
         [NetJs.Name("Prototype")]
-        internal TypePrototype? Prototype { get; set; }
-        [Name("get")]
+        internal new TypePrototype? Prototype { get; set; }
+
         public object? Get(object target, string property, object receiver)
         {
+            if (property.NativeEquals(Constants.IsProxy))
+                return true.As<object>();
+            if (property.NativeEquals(Constants.TypeProxyHandlerPrototype) && Prototype != null)
+                return Prototype;
+            if (property.NativeEquals(Constants.TypeProxyHandlerTargetType) && TargetType != null)
+                return TargetType;
             if (TargetType is not null && Prototype is not null)
             {
                 var v1 = Prototype[property];
@@ -63,7 +72,7 @@ namespace NetJs
                 //AppDomain.GlobalPrototypeRegistry.SetNested(metadataFullTypeName.NativeReplaceAll("<", "$").NativeReplaceAll(",", "$").NativeReplaceAll(">", "$"), proxy.As<TypePrototype>());
                 return proxy;
             }
-            else if (property.NativeEquals("$isProxy"))
+            else if (property.NativeEquals(Constants.IsProxy))
                 return true.As<object>();
             else if (property.NativeEquals("IsGenericTypeDefinition"))
                 return MetadataFullName.NativeEndsWith(">").As<object>();
@@ -71,8 +80,8 @@ namespace NetJs
                 return this;
             return null;
         }
-        [Name("set")]
-        public bool Set(object target, string property, object value)
+
+        public bool Set(object target, string property, object value, object receiver)
         {
             //Update the target of the proxy
             if (property.NativeEquals(nameof(TargetType)))

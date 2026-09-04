@@ -245,6 +245,18 @@ namespace NetJs.Translator.CSharpToJavascript
                 return SyntaxFactory.IdentifierName(expectedVarName);
             }
 
+            var symbol = GetSymbol(identifier);
+
+            if (symbol is IFieldSymbol || symbol is IPropertySymbol)
+            {
+                // It's a member of the current context class!
+                // Translates to: Expression.PropertyOrField(Expression.Constant(this), "propertyName")
+                return CreateFactoryCall("PropertyOrField",
+                    SyntaxFactory.Argument(CreateFactoryCall("Constant", SyntaxFactory.Argument(SyntaxFactory.ThisExpression()))),
+                    SyntaxFactory.Argument(CreateStringLiteral(name))
+                );
+            }
+
             return CreateFactoryCall("Constant", SyntaxFactory.Argument(identifier));
         }
 

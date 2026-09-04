@@ -209,6 +209,9 @@ namespace NetJs.Translator.CSharpToJavascript
                 IFieldSymbol? fieldSymbol = null;
                 IEventSymbol? eventSymbol = null;
                 var symbol = _global.GetSymbol(var, this/*, out _, out _*/);
+
+                RegisterDynamicDependencies(symbol);
+
                 fieldSymbol = symbol as IFieldSymbol;
                 eventSymbol = symbol as IEventSymbol;
                 if (fieldSymbol == null && eventSymbol == null)
@@ -218,6 +221,9 @@ namespace NetJs.Translator.CSharpToJavascript
                     continue;
                 if (_global.HasAttribute(symbol, typeof(TemplateAttribute).FullName!, this, false, out _))
                     continue;
+
+                using var trimmer = WriteTrimmableBoundaryStart(node, symbol);
+
                 var fieldMetadata = _global.GetRequiredMetadata(symbol);
                 var declaringSymbolMeta = _global.GetRequiredMetadata(symbol.ContainingSymbol);
                 var fieldName = fieldMetadata.OverloadName ?? var.Identifier.ResolveIdentifierName();
@@ -268,6 +274,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
                         CurrentClosure.RegisterTypeInitializer(() =>
                         {
+                            using var trimmer = WriteTrimmableBoundaryStart(node, symbol);
                             if (_global.IsFixedSizeField(symbol, out var fSize, out _))
                             {
                                 CurrentTypeWriter.WriteLine(node, $"//FixedSizeArray({fieldType}, {fSize})", true);
@@ -474,6 +481,10 @@ namespace NetJs.Translator.CSharpToJavascript
             foreach (var variable in node.Declaration.Variables)
             {
                 var symbol = (IEventSymbol)_global.GetSymbol(variable, this/*, out _, out _*/);
+
+                RegisterDynamicDependencies(symbol);
+                using var trimmer = WriteTrimmableBoundaryStart(node, symbol);
+
                 var metadata = _global.GetRequiredMetadata(symbol);
                 var addMetadata = symbol.AddMethod != null ? _global.GetMetadata(symbol.AddMethod) : null;
                 var removeMetadata = symbol.RemoveMethod != null ? _global.GetMetadata(symbol.RemoveMethod) : null;
@@ -491,19 +502,31 @@ namespace NetJs.Translator.CSharpToJavascript
                     CurrentTypeWriter.Write(node, "value");
                 });
 
-                CurrentTypeWriter.WriteLine(node, $"{modifier}{addMetadata?.OverloadName ?? ("add_" + (metadata?.OverloadName ?? symbol.Name))}(/*{node.Declaration.Type.ToString().Trim()}*/ value)", true);
-                CurrentTypeWriter.WriteLine(node, "{", true);
-                CurrentTypeWriter.Write(node, "", true);
-                WriteDelegateCombine(node, left, right);
-                CurrentTypeWriter.WriteLine(node, ";");
-                CurrentTypeWriter.WriteLine(node, "}", true);
+                if (symbol.AddMethod != null)
+                {
+                    using var trimmerAdd = WriteTrimmableBoundaryStart(node, symbol.AddMethod);
+                    CurrentTypeWriter.WriteLine(node, $"{modifier}{addMetadata?.OverloadName ?? ("add_" + (metadata?.OverloadName ?? symbol.Name))}(/*{node.Declaration.Type.ToString().Trim()}*/ value)", true);
+                    CurrentTypeWriter.WriteLine(node, "{", true);
+                    OpenClosure(node, symbol.AddMethod);
+                    CurrentTypeWriter.Write(node, "", true);
+                    WriteDelegateCombine(node, left, right);
+                    CurrentTypeWriter.WriteLine(node, ";");
+                    CurrentTypeWriter.WriteLine(node, "}", true);
+                    CloseClosure(node);
+                }
 
-                CurrentTypeWriter.WriteLine(node, $"{modifier}{removeMetadata?.OverloadName ?? ("remove_" + (metadata?.OverloadName ?? symbol.Name))}(/*{node.Declaration.Type.ToString().Trim()}*/ value)", true);
-                CurrentTypeWriter.WriteLine(node, "{", true);
-                CurrentTypeWriter.Write(node, "", true);
-                WriteDelegateRemove(node, left, right);
-                CurrentTypeWriter.WriteLine(node, ";");
-                CurrentTypeWriter.WriteLine(node, "}", true);
+                if (symbol.RemoveMethod != null)
+                {
+                    using var trimmerRemove = WriteTrimmableBoundaryStart(node, symbol.RemoveMethod);
+                    CurrentTypeWriter.WriteLine(node, $"{modifier}{removeMetadata?.OverloadName ?? ("remove_" + (metadata?.OverloadName ?? symbol.Name))}(/*{node.Declaration.Type.ToString().Trim()}*/ value)", true);
+                    CurrentTypeWriter.WriteLine(node, "{", true);
+                    OpenClosure(node, symbol.RemoveMethod);
+                    CurrentTypeWriter.Write(node, "", true);
+                    WriteDelegateRemove(node, left, right);
+                    CurrentTypeWriter.WriteLine(node, ";");
+                    CurrentTypeWriter.WriteLine(node, "}", true);
+                    CloseClosure(node);
+                }
             }
         }
 

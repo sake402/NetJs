@@ -1,11 +1,13 @@
-﻿using McMaster.Extensions.CommandLineUtils;
-using Microsoft.Build.Evaluation;
+﻿using Microsoft.Build.Evaluation;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
 using Microsoft.Extensions.Options;
+using NetJs;
 using NetJs.Compiler;
 using NetJs.Translator;
+using NetJs.Translator.CSharpToJavascript;
+using Org.BouncyCastle.Utilities.Encoders;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -14,12 +16,14 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using System.Xml.Linq;
+using TextCopy;
 using YamlDotNet.Core.Tokens;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
@@ -170,12 +174,27 @@ serveCommand.Options.Add(serveOpenBrowserOption);
 
 serveCommand.SetAction(Serve);
 
+var pathToRootCommand = new Command("findRoot", "Run a static analysis and print call stack leading to a symbol");
+pathToRootCommand.Options.Add(projectOption);
+pathToRootCommand.Options.Add(propertiesOption);
+var handleOption = new Option<ulong>("--handle") { Description = "Handle to symbol to find" };
+//handleOption.Aliases.Add("-h");
+pathToRootCommand.Options.Add(handleOption);
+pathToRootCommand.SetAction(PrintPathToRoot);
+
+var trimCommand = new Command("trim", "Trim an application based on trace data collected in the browser");
+trimCommand.Options.Add(projectOption);
+trimCommand.Options.Add(propertiesOption);
+trimCommand.SetAction(ProfiledTrimming);
+
 rootCommand.Subcommands.Add(doctorCommand);
 rootCommand.Subcommands.Add(watchCommand);
 rootCommand.Subcommands.Add(buildCommand);
 rootCommand.Subcommands.Add(cacheCommand);
 rootCommand.Subcommands.Add(configCommand);
 rootCommand.Subcommands.Add(serveCommand);
+rootCommand.Subcommands.Add(pathToRootCommand);
+rootCommand.Subcommands.Add(trimCommand);
 
 return await rootCommand.Parse(args).InvokeAsync();
 
@@ -202,10 +221,12 @@ async Task Doctor(ParseResult parseResult)
         List<string> projectFiles = new();
         var allProjects = projects.Select(p => p.Attribute("Include")!.Value.Replace("$(DotnetGitRoot)", doctor.DotnetGitRoot));
 
+        int index = 0;
         foreach (var project in projects)
         {
-            var projectFile = await doctor.Doctor(netJsPath, project, allProjects);
+            var projectFile = await doctor.Doctor(netJsPath, project, allProjects, index);
             projectFiles.Add(projectFile);
+            index++;
         }
         var netJsAll = $@"
 <Project Sdk=""Microsoft.NET.Sdk.Razor"">
@@ -405,14 +426,10 @@ async Task Watch(ParseResult parseResult)
     }
 }
 
-async Task Build(ParseResult parseResult, CancellationToken cancellationToken)
+string? GetCsProjFile(ParseResult parseResult)
 {
     string? csProjectFile = null;
     var projectFileInfo = parseResult.GetValue(projectOption);
-    var singleBuild = parseResult.GetValue(singleBuildOption);
-    var forceBuild = parseResult.GetValue(forceBuildOption);
-    var buildProperties = parseResult.GetValue(propertiesOption);
-    var noEmit = parseResult.GetValue(noEmitBuildOption);
     if (projectFileInfo != null)
     {
         csProjectFile = projectFileInfo.FullName;
@@ -425,6 +442,17 @@ async Task Build(ParseResult parseResult, CancellationToken cancellationToken)
         throw new InvalidOperationException($"No project file found in directory {directory}"));
         csProjectFile = project;
     }
+    return csProjectFile;
+}
+
+async Task Build(ParseResult parseResult, CancellationToken cancellationToken)
+{
+    string? csProjectFile = GetCsProjFile(parseResult);
+    //var projectFileInfo = parseResult.GetValue(projectOption);
+    var singleBuild = parseResult.GetValue(singleBuildOption);
+    var forceBuild = parseResult.GetValue(forceBuildOption);
+    var buildProperties = parseResult.GetValue(propertiesOption);
+    var noEmit = parseResult.GetValue(noEmitBuildOption);
     //var csProjectFile = projectFile;
     var workspace = MSBuildWorkspace.Create();
     var projectCollection = new Microsoft.Build.Evaluation.ProjectCollection();
@@ -569,7 +597,8 @@ async Task Build(ParseResult parseResult, CancellationToken cancellationToken)
                 finally
                 {
                     maxParallelBuild.Release();
-                    var logFile = Path.Combine(tempFolder, Path.GetFileNameWithoutExtension(csProjectFile)!, $"__build.log.txt");
+                    var projectTempFolder = Path.Combine(tempFolder, wProject.GetName());
+                    var logFile = Path.Combine(projectTempFolder, $"__build.log.txt");
                     var directory = Path.GetDirectoryName(logFile);
                     if (!Directory.Exists(directory))
                         Directory.CreateDirectory(directory!);
@@ -652,6 +681,120 @@ void GetConfig(ParseResult parseResult)
     Console.WriteLine("Done!");
 }
 
+async Task<GlobalCompilationVisitor> BuildGlobalContext(ParseResult parseResult)
+{
+    string? csProjectFile = GetCsProjFile(parseResult);
+    var workspace = MSBuildWorkspace.Create();
+    var buildProperties = parseResult.GetValue(propertiesOption);
+    var projectCollection = new Microsoft.Build.Evaluation.ProjectCollection();
+    var codeAnalysisProject = workspace.CurrentSolution.Projects.FirstOrDefault(f => f.FilePath?.Equals(csProjectFile, StringComparison.InvariantCultureIgnoreCase) ?? false) ?? await workspace.OpenProjectAsync(csProjectFile!);
+    var msBuildProject = new MsBuildProject(csProjectFile, buildProperties, null, projectCollection);
+    var wProject = new ProjectWrapper(workspace, projectCollection, codeAnalysisProject, msBuildProject, buildProperties);
+    var metadataProvider = new MetadataProvider(config, dotnetPath, dotnetVersion, sdkPath, sdkVersion, dataFolder, tempFolder, deSerializer);
+    List<MetadataReference> sortedReferences = new();
+    List<string> symbolFiles = new();
+
+    var binPath = wProject.GetOutputPath();
+    var jsdll = $"{binPath}{Path.DirectorySeparatorChar}{wProject.GetAssemblyName()}.js.dll";
+    var dll = $"{binPath}{Path.DirectorySeparatorChar}{wProject.GetAssemblyName()}.dll";
+    var symbol = $"{binPath}{Path.DirectorySeparatorChar}{wProject.GetAssemblyName()}.Symbols.yaml";
+    if (File.Exists(jsdll))
+    {
+        sortedReferences.Add(MetadataReference.CreateFromFile(jsdll));
+    }
+    else if (File.Exists(dll))
+    {
+        sortedReferences.Add(MetadataReference.CreateFromFile(dll));
+    }
+    if (File.Exists(symbol))
+    {
+        symbolFiles.Add(symbol);
+    }
+
+    var csCompilation = await metadataProvider.CreateCompilation(wProject, [], [], null, sortedReferences, symbolFiles);
+    var isSystemPrivateCoreLib = wProject.GetAssemblyName() == "NetJs.System.Private.CoreLib";
+    var importedNames = symbolFiles.Select(s => deSerializer.Deserialize<SymbolDescriptor>(File.ReadAllText(s))).ToList();
+    var global = new GlobalCompilationVisitor(csCompilation, wProject, isSystemPrivateCoreLib, importedNames);
+    return global;
+}
+
+async Task PrintPathToRoot(ParseResult parseResult)
+{
+    var handle = parseResult.GetValue(handleOption);
+    var global = await BuildGlobalContext(parseResult);
+    var staticAnalyzer = new StaticAnalysisMarkAndSweepTrimmer(global);
+
+    if (handle == 0)
+    {
+        while (true)
+        {
+            Console.WriteLine("");
+            Console.Write("Enter symbol handle >");
+            var command = Console.ReadLine();
+            if (command == null)
+                continue;
+            if (command.StartsWith("remove") && ulong.TryParse(command.AsSpan()[7..], out var removeHandle))
+            {
+                staticAnalyzer.ForceRemove.Add(removeHandle);
+            }
+            else if (command == "noremove")
+            {
+                staticAnalyzer.ForceRemove.Clear();
+            }
+            else if (command == "q" || command == "exit")
+                break;
+            if (ulong.TryParse(command, out handle))
+            {
+                staticAnalyzer.PrintPathToRoot(handle);
+            }
+        }
+    }
+    else
+        staticAnalyzer.PrintPathToRoot(handle);
+}
+
+async Task ProfiledTrimming(ParseResult parseResult)
+{
+    var global = await BuildGlobalContext(parseResult);
+
+    do
+    {
+        try
+        {
+            Console.WriteLine("");
+            Console.Write("Paste traced handles >");
+            var paste = Console.ReadLine();
+            IEnumerable<ulong> iHandles;
+            if (paste == "#clipboard")
+            {
+                var handles = (await ClipboardService.GetTextAsync())!.Split([' ', ',']);
+                iHandles = handles.Select(h => ulong.Parse(h)).ToList();
+            }
+            else
+            {
+                var handles = Console.ReadLine()!.Split([' ', ',']);
+                iHandles = handles.Select(h => ulong.Parse(h)).ToList();
+            }
+
+            var staticAnalyzer = new StaticAnalysisMarkAndSweepTrimmer(global);
+            var outputProvider = new ProjectBinOutputProvider(global.Project);
+            outputProvider.NoClean();
+
+            foreach (var ih in iHandles)
+            {
+                staticAnalyzer.Keep(ih);
+            }
+            var jsFiles = Directory.GetFiles(outputProvider.OutputPath, "*.js", SearchOption.AllDirectories).Where(e => !e.EndsWith(".trim.js") && !e.EndsWith(".min.js"));
+            await staticAnalyzer.RunTrimming(outputProvider, jsFiles, runGarbageSymbols: false);
+            Console.WriteLine("Done!");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+        }
+    } while (true);
+}
+
 Task Serve(ParseResult parseResult)
 {
     int port = parseResult.GetValue(servePortOption);
@@ -678,6 +821,6 @@ Task Serve(ParseResult parseResult)
     {
         Port = port == 0 ? null : port,
         OpenBrowser = (open, "")
-    }, PhysicalConsole.Singleton, folder);
+    }, McMaster.Extensions.CommandLineUtils.PhysicalConsole.Singleton, folder);
     return server.RunAsync(CancellationToken.None);
 }

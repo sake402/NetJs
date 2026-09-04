@@ -3,13 +3,185 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using System.Text;
+using static NetJs.Translator.CSharpToJavascript.ILLinkerAssembly.Type;
 
 namespace NetJs.Translator.CSharpToJavascript
 {
     public partial record class GlobalCompilationVisitor
     {
         private Dictionary<string, ILLinkerAssembly.Type.Member>? _linkerSubstitutionsIndex;
+
+        /// <summary>
+        /// Mark a symbol as being dependent on another. This makes trimming works
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="destination"></param>
+        public void RegisterDependencyGraph(ISymbol source, ISymbol destination)
+        {
+            if (source.Kind == SymbolKind.NamedType && source.Name == "ArrayMutationProxyHandler" && destination.Name == "Remove")
+            {
+
+            }
+            if (source.Kind == SymbolKind.NamedType && source.Name == "SR" && destination.Name == "GetUsingResourceKeysSwitchValue")
+            {
+
+            }
+            if (destination.Kind == SymbolKind.Method && destination is IMethodSymbol mds && mds.MethodKind == MethodKind.LocalFunction)
+            {
+                //Depends on a local function, no point in linking that graph
+                return;
+            }
+            while (source.Kind == SymbolKind.Method && source is IMethodSymbol ms && ms.MethodKind == MethodKind.LocalFunction)
+            {
+                //A local function gets replaced by its containig method
+                source = ms.ContainingSymbol;
+            }
+            bool weak = false;//TODO: Static constructor should use a weak reference to the members
+            var sourceExport = GetMetadata(source.OriginalDefinition)?.Export;
+            var destinationExport = GetMetadata(destination.OriginalDefinition)?.Export;
+            if (sourceExport != null && destinationExport?.Handle != null && destinationExport.Handle != 0)
+            {
+                if (!(sourceExport.Dependencies?.Contains(destinationExport.Handle.Value) ?? false))
+                {
+                    if (weak)
+                    {
+                        sourceExport.WeakDependencies ??= new();
+                        sourceExport.WeakDependencies.Add(destinationExport.Handle.Value);
+                    }
+                    else
+                    {
+                        sourceExport.Dependencies ??= new();
+                        sourceExport.Dependencies.Add(destinationExport.Handle.Value);
+                    }
+                }
+            }
+        }
+
+        public void RegisterDynamicDependencies(ISymbol source)
+        {
+            var attributeSymbol = GetSymbol(typeof(DynamicDependencyAttribute).FullName!, null);
+            var attributes = source.OriginalDefinition.GetAttributes().Where(a => a.AttributeClass?.Equals(attributeSymbol, SymbolEqualityComparer.Default) ?? false).ToList();
+            void TryRegisterDependency(INamedTypeSymbol type, ISymbol member, DynamicallyAccessedMemberTypes memberTypes)
+            {
+                bool isMatch = false;
+                bool isPublic = member.DeclaredAccessibility == Accessibility.Public;
+
+                if (memberTypes.HasFlag(DynamicallyAccessedMemberTypes.All))
+                {
+                    RegisterDependencyGraph(source, member);
+                    return;
+                }
+
+                switch (member.Kind)
+                {
+                    case SymbolKind.Method:
+                        var method = (IMethodSymbol)member;
+
+                        if (method.MethodKind == MethodKind.Constructor)
+                        {
+                            if (memberTypes.HasFlag(DynamicallyAccessedMemberTypes.PublicConstructors) && isPublic) isMatch = true;
+                            else if (memberTypes.HasFlag(DynamicallyAccessedMemberTypes.NonPublicConstructors) && !isPublic) isMatch = true;
+                        }
+                        else
+                        {
+                            if (memberTypes.HasFlag(DynamicallyAccessedMemberTypes.PublicMethods) && isPublic) isMatch = true;
+                            else if (memberTypes.HasFlag(DynamicallyAccessedMemberTypes.NonPublicMethods) && !isPublic) isMatch = true;
+                        }
+                        break;
+
+                    case SymbolKind.Field:
+                        if (memberTypes.HasFlag(DynamicallyAccessedMemberTypes.PublicFields) && isPublic) isMatch = true;
+                        else if (memberTypes.HasFlag(DynamicallyAccessedMemberTypes.NonPublicFields) && !isPublic) isMatch = true;
+                        break;
+
+                    case SymbolKind.Property:
+                        if (memberTypes.HasFlag(DynamicallyAccessedMemberTypes.PublicProperties) && isPublic) isMatch = true;
+                        else if (memberTypes.HasFlag(DynamicallyAccessedMemberTypes.NonPublicProperties) && !isPublic) isMatch = true;
+                        break;
+
+                    case SymbolKind.Event:
+                        if (memberTypes.HasFlag(DynamicallyAccessedMemberTypes.PublicEvents) && isPublic) isMatch = true;
+                        else if (memberTypes.HasFlag(DynamicallyAccessedMemberTypes.NonPublicEvents) && !isPublic) isMatch = true;
+                        break;
+
+                    case SymbolKind.NamedType: // Nested types
+                        if (memberTypes.HasFlag(DynamicallyAccessedMemberTypes.PublicNestedTypes) && isPublic) isMatch = true;
+                        else if (memberTypes.HasFlag(DynamicallyAccessedMemberTypes.NonPublicNestedTypes) && !isPublic) isMatch = true;
+                        break;
+                }
+
+                // Interfaces, implicitly declared wrappers, and properties/events can optionally flag 'Interfaces'
+                if (memberTypes.HasFlag(DynamicallyAccessedMemberTypes.Interfaces) && type.TypeKind == TypeKind.Interface)
+                {
+                    isMatch = true;
+                }
+
+                if (isMatch)
+                {
+                    RegisterDependencyGraph(source, member);
+                }
+
+            }
+            foreach (var att in attributes)
+            {
+                var ctorCount = att.ConstructorArguments.Length;
+                switch (ctorCount)
+                {
+                    case 1://DynamicDependencyAttribute(string memberSignature)
+                        {
+                            var memberSignature = att.ConstructorArguments[0].Value!.ToString()!;
+                            var members = source.ContainingType.GetMembers(memberSignature);
+                            foreach (var member in members)
+                            {
+                                RegisterDependencyGraph(source, member);
+                            }
+                        }
+                        break;
+                    case 2: //DynamicDependencyAttribute(string memberSignature, Type type) or DynamicDependencyAttribute(DynamicallyAccessedMemberTypes memberTypes, Type type)
+                        {
+                            INamedTypeSymbol type = (INamedTypeSymbol)att.ConstructorArguments[1].Value!;
+                            if (att.ConstructorArguments[0].Value is string memberSignature)
+                            {
+                                var members = type.GetMembers(memberSignature);
+                                if (members.Length == 0)
+                                {
+
+                                }
+                                foreach (var member in members)
+                                {
+                                    RegisterDependencyGraph(source, member);
+                                }
+                            }
+                            else
+                            {
+                                var memberTypes = (DynamicallyAccessedMemberTypes)(int)att.ConstructorArguments[0].Value!;
+                                var members = type.GetMembers();
+                                foreach (var member in members)
+                                {
+                                    TryRegisterDependency(type, member, memberTypes);
+                                }
+                            }
+                        }
+                        break;
+                    case 3: //DynamicDependencyAttribute(string memberSignature, string typeName, string assemblyName) or DynamicDependencyAttribute(DynamicallyAccessedMemberTypes memberTypes, string typeName, string assemblyName)
+                        {
+                            var typeName = att.ConstructorArguments[1].Value!.ToString();
+                            var assemblyName = att.ConstructorArguments[2].Value!.ToString();
+                            if (att.ConstructorArguments[0].Value is string memberSignature)
+                            {
+                            }
+                            else
+                            {
+                                var memberTypes = (DynamicallyAccessedMemberTypes)(int)att.ConstructorArguments[0].Value!;
+                            }
+                        }
+                        break;
+                }
+            }
+        }
 
         void InitializeLinkerSubstitutionsIndex()
         {

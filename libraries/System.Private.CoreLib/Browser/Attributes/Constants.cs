@@ -222,6 +222,10 @@
         [InlineConst]
         public const string IsProxy = "$isProxy";
         [InlineConst]
+        public const string TypeProxyHandlerPrototype = "$prototype";
+        [InlineConst]
+        public const string TypeProxyHandlerTargetType = "$type";
+        [InlineConst]
         public const string ProxyHandler = "$proxyHandler";
         [InlineConst]
         public const string ProxyType = "$type";
@@ -247,5 +251,9 @@
         public const string VirtualAddressOffset = "$vAddrOff";
         [InlineConst]
         public const string RuntimeTypePrototypeName = "$p";
+        [InlineConst]
+        public const string TraceEntryName = "$trace";
+        [InlineConst]
+        public const string TraceExitName = "$tracex";
     }
 }

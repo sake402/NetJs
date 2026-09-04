@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Host.Mef;
 using NetJs.Translator.CSharpToJavascript;
 using System;
 using System.Collections.Concurrent;
@@ -833,6 +834,111 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     Pragmas.Remove(keyword);
                 }
+            });
+        }
+
+        /// <summary>
+        /// Mark a symbol as being used by the current code closure
+        /// </summary>
+        /// <param name="destination"></param>
+        public void MarkCurrentClosureDependsOn(ISymbol destination)
+        {
+            int i = 0;
+            ISymbol? currentSymbol = null;
+            do
+            {
+                var top = closures.ElementAt(i);
+                var currentSyntax = top.Syntax;
+                currentSymbol = top.Symbol;
+                if ((currentSyntax.IsKind(SyntaxKind.ClassDeclaration) ||
+                    currentSyntax.IsKind(SyntaxKind.StructDeclaration) ||
+                    currentSyntax.IsKind(SyntaxKind.InterfaceDeclaration) ||
+                    currentSyntax.IsKind(SyntaxKind.RecordDeclaration) ||
+                    currentSyntax.IsKind(SyntaxKind.EnumDeclaration) ||
+                    currentSyntax.IsKind(SyntaxKind.RecordStructDeclaration) ||
+                    currentSyntax.IsKind(SyntaxKind.MethodDeclaration) ||
+                    currentSyntax.IsKind(SyntaxKind.OperatorDeclaration) ||
+                    currentSyntax.IsKind(SyntaxKind.ConversionOperatorDeclaration) ||
+                    currentSyntax.IsKind(SyntaxKind.ConstructorDeclaration) ||
+                    currentSyntax.IsKind(SyntaxKind.PropertyDeclaration) ||
+                    currentSyntax.IsKind(SyntaxKind.IndexerDeclaration) ||
+                    currentSyntax.IsKind(SyntaxKind.EventDeclaration) ||
+                    currentSyntax.IsKind(SyntaxKind.EventFieldDeclaration) ||
+                    currentSyntax.IsKind(SyntaxKind.GetAccessorDeclaration) ||
+                    currentSyntax.IsKind(SyntaxKind.SetAccessorDeclaration) ||
+                    currentSyntax.IsKind(SyntaxKind.AddAccessorDeclaration) ||
+                    currentSyntax.IsKind(SyntaxKind.RemoveAccessorDeclaration)) &&
+                    currentSymbol != null &&
+                    (currentSymbol.Kind == SymbolKind.NamedType ||
+                    currentSymbol.Kind == SymbolKind.Field ||
+                    currentSymbol.Kind == SymbolKind.Property ||
+                    currentSymbol.Kind == SymbolKind.Event ||
+                    (currentSymbol.Kind == SymbolKind.Method && currentSymbol is IMethodSymbol ms && ms.MethodKind != MethodKind.LambdaMethod && ms.MethodKind != MethodKind.LocalFunction)))
+                {
+                    break;
+                }
+                i++;
+            } while (i < closures.Count);
+            if (currentSymbol == null)
+                return;
+            if (destination.Kind == SymbolKind.NamedType ||
+                destination.Kind == SymbolKind.Field ||
+                destination.Kind == SymbolKind.Property ||
+                destination.Kind == SymbolKind.Event ||
+                destination.Kind == SymbolKind.Method)
+            {
+                var top = closures.Peek();
+                _global.RegisterDependencyGraph(currentSymbol, destination);
+                var containingType = destination.ContainingType;
+                while (containingType != null)
+                {
+                    _global.RegisterDependencyGraph(currentSymbol, containingType);
+                    containingType = containingType.ContainingType;
+                }
+                if (destination.Kind == SymbolKind.NamedType && destination is INamedTypeSymbol nt && nt.IsGenericType)
+                {
+                    foreach (var typeArgument in nt.TypeArguments)
+                    {
+                        if (typeArgument.Kind == SymbolKind.NamedType)
+                            _global.RegisterDependencyGraph(currentSymbol, typeArgument);
+                    }
+                }
+                else if (destination.Kind == SymbolKind.Method && destination is IMethodSymbol mt && mt.Arity > 0)
+                {
+                    foreach (var typeArgument in mt.TypeArguments)
+                    {
+                        if (typeArgument.Kind == SymbolKind.NamedType)
+                            _global.RegisterDependencyGraph(currentSymbol, typeArgument);
+                    }
+                }
+            }
+        }
+
+        public void RegisterDynamicDependencies(ISymbol source)
+        {
+            _global.RegisterDynamicDependencies(source);
+        }
+
+        IDisposable WriteTrimmableBoundaryStart(SyntaxNode node, ISymbol? symbol)
+        {
+            if (symbol == null)
+            {
+                return new DelegateDispose(() =>
+                {
+                });
+            }
+            (var start, var end) = symbol.TrimmableBoundary(_global);
+            if (start == null || end == null)
+            {
+                return new DelegateDispose(() =>
+                {
+                });
+            }
+            CurrentTypeWriter.WriteLine(node, start, true);
+            return new DelegateDispose(() =>
+            {
+                CurrentTypeWriter.WriteLine(node, end, true);
+                CurrentTypeWriter.WriteLine(node, "", true);
             });
         }
 

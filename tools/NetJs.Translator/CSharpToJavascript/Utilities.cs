@@ -3,8 +3,10 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Operations;
+using NetJs.Translator.OneOf.Types;
 using NuGet.Protocol;
 using System.Buffers;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -18,7 +20,6 @@ using static NetJs.Translator.OneOf.Types.TrueFalseOrNull;
 
 namespace NetJs.Translator.CSharpToJavascript
 {
-
     public static class Utilities
     {
         public static bool IsExtern(this SyntaxTokenList modifiers)
@@ -1032,6 +1033,17 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public static string CreateSignature(this ISymbol symbol, GlobalCompilationVisitor global, bool withTypeParameterNames = false, bool withGlobalNamespace = true, bool withAssemblySlugNamespace = false)
         {
+            if (symbol.Kind == SymbolKind.Assembly && symbol is IAssemblySymbol asm)
+            {
+                if (withGlobalNamespace)
+                {
+                    return global.GlobalName + "." + global.GetAssemblyGlobalSlug(asm);
+                }
+                else
+                {
+                    return global.GetAssemblyGlobalSlug(asm);
+                }
+            }
             //if (global.HasAttribute(symbol, typeof(SignatureAttribute).FullName, null, false, out var pa))
             //{
             //    return (string)pa[0]!;
@@ -3884,6 +3896,98 @@ namespace NetJs.Translator.CSharpToJavascript
                 Console.WriteLine($"Token to shrink: \"{bestSelection.Token}\"");
                 Console.WriteLine($"Potential savings: {bestSelection.TotalBytes} bytes");
             }
+        }
+
+        public static (string Start, string End) TrimmableBoundary(this ISymbol symbol, GlobalCompilationVisitor global)
+        {
+            var metadata = global.GetRequiredMetadata(symbol);
+            if (metadata.Export.Handle == null || metadata.Export.Handle == 0)
+            {
+                return default;
+            }
+            ISymbol? explicitInterfaceImplementation = null;
+            List<ISymbol>? baseMemberImplementation = null;
+            if (symbol.Kind == SymbolKind.Method && symbol is IMethodSymbol ms)
+            {
+                if (ms.ExplicitInterfaceImplementations.Any())
+                {
+                    explicitInterfaceImplementation = ms.ExplicitInterfaceImplementations[0];
+                }
+                else if (ms.IsOverride)
+                {
+                    var @base = ms;
+                    while (@base.IsOverride)
+                    {
+                        @base = @base.OverriddenMethod!;
+                    }
+                    baseMemberImplementation ??= new();
+                    baseMemberImplementation.Add(@base);
+                }
+            }
+            else if (symbol.Kind == SymbolKind.Property && symbol is IPropertySymbol ps)
+            {
+                if (ps.ExplicitInterfaceImplementations.Any())
+                {
+                    explicitInterfaceImplementation = ps.ExplicitInterfaceImplementations[0];
+                }
+                else if (ps.IsOverride)
+                {
+                    var @base = ps;
+                    while (@base.IsOverride)
+                    {
+                        @base = @base.OverriddenProperty!;
+                    }
+                    baseMemberImplementation ??= new();
+                    baseMemberImplementation.Add(@base);
+                }
+            }
+            else if (symbol.Kind == SymbolKind.Event && symbol is IEventSymbol es)
+            {
+                if (es.ExplicitInterfaceImplementations.Any())
+                {
+                    explicitInterfaceImplementation = es.ExplicitInterfaceImplementations[0];
+                }
+                else if (es.IsOverride)
+                {
+                    var @base = es;
+                    while (@base.IsOverride)
+                    {
+                        @base = @base.OverriddenEvent!;
+                    }
+                    baseMemberImplementation ??= new();
+                    baseMemberImplementation.Add(@base);
+                }
+            }
+            SymbolMetadata? explicitInterfaceMetadata = null;
+            IEnumerable<SymbolMetadata>? baseMemberMetadata = null;
+            string start, end;
+            if (explicitInterfaceImplementation != null)
+            {
+                explicitInterfaceMetadata = global.GetRequiredMetadata(explicitInterfaceImplementation);
+                start = $"//--TRIMMABLE-BOUNDARY-START(ALL, {metadata.Export.Handle}, {explicitInterfaceMetadata.Export.Handle})";
+            }
+            else if (baseMemberImplementation != null)
+            {
+                baseMemberMetadata = baseMemberImplementation.Select(c => global.GetRequiredMetadata(c));
+                start = $"//--TRIMMABLE-BOUNDARY-START(ALL, {metadata.Export.Handle}, {string.Join(", ", baseMemberMetadata.Select(c => c.Export.Handle))})";
+            }
+            else
+            {
+                start = $"//--TRIMMABLE-BOUNDARY-START({metadata.Export.Handle})";
+            }
+            if (explicitInterfaceMetadata != null)
+            {
+                end = $"//--TRIMMABLE-BOUNDARY-END(ALL, {metadata.Export.Handle}, {explicitInterfaceMetadata.Export.Handle})";
+            }
+            else if (baseMemberMetadata != null)
+            {
+                end = $"//--TRIMMABLE-BOUNDARY-END(ALL, {metadata.Export.Handle}, {string.Join(", ", baseMemberMetadata.Select(c => c.Export.Handle))})";
+            }
+            else
+            {
+                end = $"//--TRIMMABLE-BOUNDARY-END({metadata.Export.Handle})";
+            }
+            return (start, end);
         }
     }
 }

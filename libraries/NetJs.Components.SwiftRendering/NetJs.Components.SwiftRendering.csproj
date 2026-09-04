@@ -8,4 +8,8 @@
   <ItemGroup>
     <ProjectReference Include="..\Microsoft.AspNetCore.Components\NetJs.Microsoft.AspNetCore.Components.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
 </Project>

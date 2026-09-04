@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using Window;
 
 namespace NetJs
@@ -7,6 +8,9 @@ namespace NetJs
     {
         object _instance;
         TypePrototype _basePrototype;
+
+        [DynamicDependency(nameof(Get))]
+        [DynamicDependency(nameof(Set))]
         public SuperClassProxyHandler(object instance)
         {
             this._instance = instance;

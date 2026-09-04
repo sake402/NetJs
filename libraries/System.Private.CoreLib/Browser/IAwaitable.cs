@@ -58,29 +58,16 @@ namespace NetJs
         [Name("then")]
         void Then(NativeAction<object> continuation, NativeAction<object?> onRejected)
         {
-            static void CollectMethods(TypePrototype prototype, MethodModel[] allMethods)
-            {
-                var metadata = prototype.Metadata;
-                if (NetJs.Script.IsDefined(metadata) && NetJs.Script.IsDefined(metadata!.Methods))
-                {
-                    allMethods.Push(metadata!.Methods!);
-                }
-                var basePrototype = prototype.Base;
-                if (NetJs.Script.IsDefined(basePrototype) && !basePrototype!.Equals(Object.Prototype))
-                {
-                    CollectMethods(basePrototype, allMethods);
-                }
-            }
             var task = this.As<Task<object>>();
             var taskPrototype = Object.GetClassPrototypeOf(task);
             MethodModel[] allMethods = NetJs.Script.NewArray<MethodModel>();
-            CollectMethods(taskPrototype, allMethods);
+            taskPrototype.CollectMethods(allMethods);
             var taskGetAwaiter = allMethods.Filter(m => m.Name.NativeEquals("GetAwaiter")).ArrayFirst();
             var taskGetResult = allMethods!.Filter(m => m.Name.NativeEquals("GetResult")).ArrayFirstOrDefault();
             var taskAwaiter = task[taskGetAwaiter.GetOutputName()].As<NativeFunction<ICriticalNotifyCompletion>>()();
             var taskAwaiterPrototype = Object.GetClassPrototypeOf(taskAwaiter);
             MethodModel[] allMethods2 = NetJs.Script.NewArray<MethodModel>();
-            CollectMethods(taskAwaiterPrototype, allMethods2);
+            taskAwaiterPrototype.CollectMethods(allMethods2);
             var taskAwaiterGetResult = allMethods2.Filter(m => m.Name.NativeEquals("GetResult")).ArrayFirst();
             //var awaiter = NetJs.Script.IsDefined(awt) ? NetJs.Script.Write<ICriticalNotifyCompletion>("awt.call(this)") : this.As<IGetAwaiter>().GetAwaiter();
             taskAwaiter.OnCompleted(() =>

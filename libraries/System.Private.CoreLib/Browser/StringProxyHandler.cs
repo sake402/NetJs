@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace NetJs
 {
     [Reflectable(false)]
     public class StringProxyHandler : IJsProxyHandler
     {
+        [DynamicDependency(nameof(Get))]
+        [DynamicDependency(nameof(Set))]
         public StringProxyHandler(string str)
         {
             _chars = str.ToCharArray();
@@ -52,18 +55,18 @@ namespace NetJs
             reff._dataSource = _proxyChars;
             handler.OnMutated += (s, e) =>
             {
-                if (reff._dataView != null)
-                {
-                    var index = NetJs.Script.ParseInt(e.Property);
-                    if (!NetJs.Script.IsNaN(index))
-                    {
-                        if (e.OldValue != e.Value)
-                        {
-                            //The backing array is mutated directly, if the reff dataView exists, it is no longer valid, not in sync with the backing array
-                            reff._dataView = null;
-                        }
-                    }
-                }
+                //if (reff._dataView != null)
+                //{
+                //    var index = NetJs.Script.ParseInt(e.Property);
+                //    if (!NetJs.Script.IsNaN(index))
+                //    {
+                //        if (e.OldValue != e.Value)
+                //        {
+                //            //The backing array is mutated directly, if the reff dataView exists, it is no longer valid, not in sync with the backing array
+                //            reff._dataView = null;
+                //        }
+                //    }
+                //}
                 strDirty = true;
             };
         }

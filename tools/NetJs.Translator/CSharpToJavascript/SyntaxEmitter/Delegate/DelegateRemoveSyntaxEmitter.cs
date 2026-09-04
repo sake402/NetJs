@@ -19,7 +19,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Delegate
                     leftType.IsDelegate(out _, out _) &&
                     (rightType.IsDelegate(out _, out _) || rightSymbol.Kind == SymbolKind.Method))
                 {
-                    if (leftSymbol.Kind == SymbolKind.Local|| leftSymbol.Kind == SymbolKind.Field)
+                    if (leftSymbol.Kind == SymbolKind.Local || leftSymbol.Kind == SymbolKind.Field)
                     {
                         visitor.WriteDelegateRemove(node, node.Left, node.Right);
                         //var delegateRemoveMethod = visitor.Global.SystemDelegate
@@ -31,6 +31,10 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Delegate
                         //visitor.CurrentTypeWriter.Write(node, " = ");
                         //visitor.WriteMethodInvocation(node, delegateRemoveMethod, null, [node.Left, node.Right], null, null);
                     }
+                    //else if (leftSymbol.Kind == SymbolKind.Event)
+                    //{
+                    //remove_Left(right)
+                    //}
                     else
                     {
                         //var metadata = visitor.Global.GetMetadata(leftSymbol);

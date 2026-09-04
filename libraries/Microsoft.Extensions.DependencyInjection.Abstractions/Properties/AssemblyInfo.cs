@@ -5,5 +5,4 @@ using NetJs;
 
 [assembly: AssemblySlug("mxdi")]
 
-[assembly: AssemblyHandle(AssemblyHandleAttribute.MicrosoftExtensionsDependencyInjectionAbstractions)]
 [assembly: Attached(typeof(ServiceLifetime), typeof(InlineConstAttribute))]

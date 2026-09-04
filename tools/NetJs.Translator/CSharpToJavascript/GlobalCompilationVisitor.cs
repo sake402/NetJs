@@ -9,6 +9,7 @@ using NuGet.Packaging;
 using NuGet.Packaging.Signing;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
+using System.Composition;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -77,7 +78,7 @@ namespace NetJs.Translator.CSharpToJavascript
             //Detect primary constructor parameter
             if (symbol.Kind == SymbolKind.Parameter && symbol.ContainingSymbol is IMethodSymbol mmethod && mmethod.IsPrimaryConstructor(this))
             {
-                return new SymbolMetadata(this)
+                return new SymbolMetadata(this, null)
                 {
                     Symbol = symbol,
                     OriginalOverloadName = symbol.Name,
@@ -234,24 +235,47 @@ namespace NetJs.Translator.CSharpToJavascript
             Symbols = Symbols with
             {
                 GlobalNamespace = GlobalName,
-                AssemblySlug = GetAssemblyGlobalSlug(compilation.Assembly)
+                //AssemblySlug = GetAssemblyGlobalSlug(compilation.Assembly)
             };
             ImportedNames = new SymbolDescriptor();
             $"Merging imported symbols".Profile(() =>
             {
                 foreach (var m in importedSymbols)
                 {
+                    foreach (var kv in m.Assemblies)
+                    {
+                        if (kv.Value.Signature == null)
+                        {
+                            kv.Value.Signature = "Null";/*The yaml deserializer deserializes Null value as null*/
+                        }
+                        ImportedNames.Assemblies.TryAdd(kv.Key, kv.Value);
+                    }
                     foreach (var kv in m.Namespaces)
                     {
+                        if (kv.Value.Signature == null)
+                        {
+                            kv.Value.Signature = "Null";/*The yaml deserializer deserializes Null value as null*/
+                        }
                         ImportedNames.Namespaces.TryAdd(kv.Key, kv.Value);
                     }
                     foreach (var kv in m.Types)
                     {
+                        if (kv.Value.Signature == null)
+                        {
+                            kv.Value.Signature = "Null";/*The yaml deserializer deserializes Null value as null*/
+                        }
                         if (!ImportedNames.Types.TryAdd(kv.Key, kv.Value))
                             Console.WriteLine($"Warning: conflicting symbol type key \"{kv.Key}\"");
                     }
                     foreach (var kv in m.Members)
                     {
+                        foreach (var kvv in kv.Value)
+                        {
+                            if (kvv.Value.Signature == null)
+                            {
+                                kvv.Value.Signature = "Null";/*The yaml deserializer deserializes Null value as null*/
+                            }
+                        }
                         if (!ImportedNames.Members.TryAdd(kv.Key, kv.Value))
                             Console.WriteLine($"Warning: conflicting symbol member key \"{kv.Key}\"");
                     }
@@ -599,12 +623,11 @@ namespace NetJs.Translator.CSharpToJavascript
 
             void AddSymbolWithExtras(ISymbol symbol, HashSet<ISymbol> list)
             {
-                if (!list.Add(symbol)) return; // Short circuit if the symbol was already tracked
+                if (!list.Add(symbol)) return;
 
                 if (symbol.Kind == SymbolKind.Property)
                 {
                     var property = Unsafe.As<IPropertySymbol>(symbol);
-                    // Direct reference equality check is faster than .Equals()
                     if (property.GetMethod != null) list.Add(property.GetMethod);
                     if (property.SetMethod != null) list.Add(property.SetMethod);
                 }
@@ -655,8 +678,10 @@ namespace NetJs.Translator.CSharpToJavascript
             var resultList = new HashSet<ISymbol>(SymbolEqualityComparer.Default);
             $"Collecting symbols".Profile(() =>
             {
+                resultList.Add(compilation.Assembly);
                 foreach (var a in compilation.SourceModule.ReferencedAssemblySymbols)
                 {
+                    resultList.Add(a);
                     GetAllInNamespaces(a.GlobalNamespace, true, resultList);
                 }
 
@@ -725,7 +750,29 @@ namespace NetJs.Translator.CSharpToJavascript
                             signature = returns + " " + signature;
                         }
                     }
-                    return new SymbolMetadata(this)
+
+                    SymbolExport? exported = null;
+                    if (s.symbol.Kind == SymbolKind.Assembly)
+                    {
+                        ImportedNames.Assemblies.TryGetValue(signature, out exported);
+                    }
+                    else if (s.symbol.Kind == SymbolKind.NamedType)
+                    {
+                        ImportedNames.Types.TryGetValue(signature, out exported);
+                    }
+                    else if (s.symbol.Kind == SymbolKind.Namespace)
+                    {
+                    }
+                    else
+                    {
+                        var declaringSignature = s.symbol.ContainingType.CreateSignature(this, withTypeParameterNames: true, withAssemblySlugNamespace: true);
+                        if (ImportedNames.Members.TryGetValue(declaringSignature, out var memberSymbols))
+                        {
+                            memberSymbols.TryGetValue(signature, out exported);
+                        }
+                    }
+
+                    return new SymbolMetadata(this, exported)
                     {
                         Symbol = s.symbol,
                         OriginalFullName = s.withoutTypeParameterNames,
@@ -827,7 +874,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
             var assemblyNamespace = GetAssemblyGlobalSlug(Compilation.Assembly);
             Dictionary<ITypeSymbol, Dictionary<string, HashSet<string>>> usedMemberNames = new(SymbolEqualityComparer.Default);
-            var reversMemberNames = ImportedNames.Members.ToDictionary(e => e.Key, e => e.Value.ToDictionary(ee => ee.Value.Signature ?? "Null"/*The yaml deserializer deserializes Null value as null*/, ee => ee.Key));
+            var reversMemberNames = ImportedNames.Members.ToDictionary(e => e.Key, e => e.Value.ToDictionary(ee => ee.Value.Signature, ee => ee));
 
             void MarkMemberNameUsed(ITypeSymbol type, string overloadName, string nameUsed)
             {
@@ -1137,14 +1184,14 @@ namespace NetJs.Translator.CSharpToJavascript
             $"Preprocessing namespace symbols".Profile(() =>
             {
                 Dictionary<IAssemblySymbol, HashSet<string>> usedNames = new(SymbolEqualityComparer.Default);
-                var reversedTypeNames = ImportedNames.Namespaces.ToDictionary(e => e.Value.Signature, e => e.Key);
+                var reversedNamespaceNames = ImportedNames.Namespaces.ToDictionary(e => e.Value.Signature, e => e.Key);
                 foreach (var name in AllSymbols!.Values.Where(e => e.Symbol.Kind == SymbolKind.Namespace)
                 .OrderBy(e => e.Signature) //order determinititically to ensure we keep getting the same minified name result across various run
                 )
                 {
                     var nname = Unsafe.As<INamespaceSymbol>(name.Symbol);
                     bool isImportedType = !SymbolEqualityComparer.Default.Equals(nname.ContainingAssembly, compilation.Assembly);
-                    if (isImportedType && reversedTypeNames.TryGetValue(name.Signature, out var ovName))
+                    if (isImportedType && reversedNamespaceNames.TryGetValue(name.Signature, out var ovName))
                     {
                         var overloadNames = ovName.Split('|');
                         if (overloadNames?.Length == 2)
@@ -1196,10 +1243,7 @@ namespace NetJs.Translator.CSharpToJavascript
                         name.OverloadName = overloadedName;
                         if (!isImportedType)
                         {
-                            Symbols.Namespaces.Add(overloadedName, new SymbolValue
-                            {
-                                Signature = name.Signature
-                            });
+                            Symbols.Namespaces.Add(overloadedName, name.Export);
                         }
                         //minifiedName = SymbolMetadata.ShortName(this, name.Signature, minifiedName, Symbols.Namespaces);
                     }
@@ -1213,8 +1257,24 @@ namespace NetJs.Translator.CSharpToJavascript
             //    ns.OverloadName = SymbolMetadata.ShortName(this, null, null, ns.FullName, name, usedNamespaceName);
             //}
 
+            void ProcessAssembly(SymbolMetadata assembly)
+            {
+                assembly.OverloadName = assembly.Signature;
+                if (SymbolEqualityComparer.Default.Equals(compilation.Assembly, assembly.Symbol))
+                {
+                    Symbols.Assemblies.Add(assembly.Signature, assembly.Export);
+                }
+            }
+
+            $"Preprocessing assembly symbols".Profile(() =>
+            {
+                foreach (var assembly in AllSymbols!.Values.Where(e => e.Symbol.Kind == SymbolKind.Assembly))
+                {
+                    ProcessAssembly(assembly);
+                }
+            });
             Dictionary<string, HashSet<string>> usedTypeNames = new();
-            var reversedTypeNames = ImportedNames.Types.ToDictionary(e => e.Value.Signature, e => e.Key);
+            var reversedTypeNames = ImportedNames.Types.ToDictionary(e => e.Value.Signature, e => e);
             void ProcessType(SymbolMetadata type)
             {
                 if (type.Preprocessed)
@@ -1237,8 +1297,13 @@ namespace NetJs.Translator.CSharpToJavascript
                 if (ttype.Name.Contains("="))
                     return;
                 bool isImportedType = !SymbolEqualityComparer.Default.Equals(ttype.ContainingAssembly, compilation.Assembly);
-                if (isImportedType && reversedTypeNames.TryGetValue(type.Signature, out var ovName))
+                if (isImportedType && reversedTypeNames.TryGetValue(type.Signature, out var kv))
                 {
+                    var importedSymbolValue = kv.Value;
+                    Debug.Assert(importedSymbolValue.Signature == type.Signature);
+                    type.Export = importedSymbolValue;
+
+                    var ovName = kv.Key;
                     var overloadNames = ovName.Split('|');
                     if (overloadNames?.Length == 2)
                     {
@@ -1268,11 +1333,10 @@ namespace NetJs.Translator.CSharpToJavascript
                     else
                     {
                         var originalName = ttype.Name;
-                        bool hasNameAttribute = false;
-                        if (HasAttribute(type.Symbol, typeof(NameAttribute).FullName!, null, false, out var args))
+                        bool hasNameAttribute = HasAttribute(type.Symbol, typeof(NameAttribute).FullName!, null, false, out var args);
+                        if (hasNameAttribute)
                         {
                             originalName = (string)args![0]!;
-                            hasNameAttribute = true;
                         }
                         if (ttype.Arity > 0)
                         {
@@ -1345,10 +1409,7 @@ namespace NetJs.Translator.CSharpToJavascript
                         }
                         if (!isExtern && !isImportedType)
                         {
-                            Symbols.Types.Add(overloadedName, new SymbolValue
-                            {
-                                Signature = type.Signature
-                            });
+                            Symbols.Types.Add(overloadedName, type.Export);
                         }
                         //overloadedName = SymbolMetadata.ShortName(this, /*shortPrefixOverloadName, originalPrefixOverloadName,*/ type.Signature, overloadedName, !isExtern ? Symbols.Types : new Dictionary<string, SymbolValue>(), generate: !isExtern, export: !hasNameAttribute && !isExtern && !isImportedType);
                     }
@@ -1392,8 +1453,13 @@ namespace NetJs.Translator.CSharpToJavascript
                 bool isImportedType = !SymbolEqualityComparer.Default.Equals(ffield.ContainingAssembly, compilation.Assembly);
                 var declaringType = field.Symbol.ContainingType;
                 var declaringTypeMetadata = SymbolMetadatas![declaringType.OriginalDefinition];
-                if (isImportedType && reversMemberNames.TryGetValue(declaringTypeMetadata.Signature, out var m) && m.TryGetValue(field.Signature, out var ovName))
+                if (isImportedType && reversMemberNames.TryGetValue(declaringTypeMetadata.Signature, out var m) && m.TryGetValue(field.Signature, out var kv))
                 {
+                    var importedSymbolValue = kv.Value;
+                    Debug.Assert(importedSymbolValue.Signature == field.Signature);
+                    field.Export = importedSymbolValue;
+
+                    var ovName = kv.Key;
                     var overloadNames = ovName.Split('|');
                     if (overloadNames.Length == 2)
                     {
@@ -1412,11 +1478,23 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     string overloadedName = ffield.Name;
                     bool isExtern = IsExtern(field.Symbol);
-                    bool hasNameAttribute = false;
-                    if (HasAttribute(field.Symbol, typeof(NameAttribute).FullName!, null, false, out var args))
+                    bool hasNameAttribute = HasAttribute(field.Symbol, typeof(NameAttribute).FullName!, null, false, out var args);
+                    bool export = !isExtern && !isImportedType;
+                    Dictionary<string, SymbolExport> memberNames;
+                    if (!export)
+                    {
+                        memberNames = new Dictionary<string, SymbolExport>();
+                    }
+                    else if (!Symbols.Members.TryGetValue(declaringTypeMetadata.Signature, out memberNames))
+                    {
+                        memberNames = new Dictionary<string, SymbolExport>();
+                        Symbols.Members.Add(declaringTypeMetadata.Signature, memberNames);
+                    }
+                    if (hasNameAttribute)
                     {
                         overloadedName = (string)args![0]!;
-                        hasNameAttribute = true;
+                        field.OriginalOverloadName = overloadedName;
+                        field.OverloadName = overloadedName;
                         MarkMemberNameUsed(ffield.ContainingType, ffield.Name, overloadedName);
                     }
                     else
@@ -1447,51 +1525,38 @@ namespace NetJs.Translator.CSharpToJavascript
                             }
                         }
                         overloadedName = overloadedName.Replace(".", "$").Replace(",", "$").Replace("<", "$").Replace(">", "$").Replace(" ", "");
-                    }
-                    string originalOverloadName = overloadedName;
-                    bool export = !hasNameAttribute && !isExtern && !isImportedType;
-                    Dictionary<string, SymbolValue> memberNames;
-                    if (!export)
-                    {
-                        memberNames = new Dictionary<string, SymbolValue>();
-                    }
-                    else if (!Symbols.Members.TryGetValue(declaringTypeMetadata.Signature, out memberNames))
-                    {
-                        memberNames = new Dictionary<string, SymbolValue>();
-                        Symbols.Members.Add(declaringTypeMetadata.Signature, memberNames);
-                    }
-                    if (BuildFlags.HasFlag(NetJsBuildFlags.MinifyFieldNames) &&
-                            !HasAnyAttribute(ffield, null, false, "System.Runtime.InteropServices.JavaScript.JSExportAttribute") &&
-                            !HasAnyAttribute(ffield.ContainingType, null, false, typeof(KeepMemberNamesAttribute).FullName!))
-                    {
-                        if (!hasNameAttribute && !isExtern)
-                            overloadedName = MinifyMemberLastNameSegment(ffield, overloadedName);
-                        field.OriginalOverloadName = originalOverloadName;
-                        field.OverloadName = overloadedName;
-                    }
-                    else
-                    {
-                        //If we are using shortnames, overload resolution will be handled by the shortname
-                        if (!hasNameAttribute && !isExtern)
+                        string originalOverloadName = overloadedName;
+                        if (BuildFlags.HasFlag(NetJsBuildFlags.MinifyFieldNames) &&
+                                !HasAnyAttribute(ffield, null, false, "System.Runtime.InteropServices.JavaScript.JSExportAttribute") &&
+                                !HasAnyAttribute(ffield.ContainingType, null, false, typeof(KeepMemberNamesAttribute).FullName!))
                         {
-                            int iNameSlug = 1;
-                            string tryName = overloadedName;
-                            HashSet<string>? usedNames = null;
-                            while (IsMemberNameUsed(ffield.ContainingType, overloadedName, tryName, out usedNames))
-                            {
-                                tryName = $"{overloadedName}${iNameSlug}";
-                                iNameSlug++;
-                            }
-                            overloadedName = tryName;
-                            usedNames?.Add(tryName);
+                            if (!hasNameAttribute && !isExtern)
+                                overloadedName = MinifyMemberLastNameSegment(ffield, overloadedName);
+                            field.OriginalOverloadName = originalOverloadName;
+                            field.OverloadName = overloadedName;
                         }
-                        field.OriginalOverloadName = originalOverloadName;
-                        field.OverloadName = overloadedName;
-                        //field.OverloadName = SymbolMetadata.ShortName(this, field.Signature, overloadedName, memberNames, generate: !isExtern, export: export);
+                        else
+                        {
+                            if (!hasNameAttribute && !isExtern)
+                            {
+                                int iNameSlug = 1;
+                                string tryName = overloadedName;
+                                HashSet<string>? usedNames = null;
+                                while (IsMemberNameUsed(ffield.ContainingType, overloadedName, tryName, out usedNames))
+                                {
+                                    tryName = $"{overloadedName}${iNameSlug}";
+                                    iNameSlug++;
+                                }
+                                overloadedName = tryName;
+                                usedNames?.Add(tryName);
+                            }
+                            field.OriginalOverloadName = originalOverloadName;
+                            field.OverloadName = overloadedName;
+                        }
                     }
                     if (export)
                     {
-                        memberNames.Add(overloadedName, new SymbolValue { Signature = field.Signature });
+                        memberNames.Add(overloadedName, field.Export);
                     }
                 }
             }
@@ -1522,8 +1587,13 @@ namespace NetJs.Translator.CSharpToJavascript
                 bool isImportedType = !SymbolEqualityComparer.Default.Equals(eevent.ContainingAssembly, compilation.Assembly);
                 var declaringType = @event.Symbol.ContainingType;
                 var declaringTypeMetadata = SymbolMetadatas![declaringType.OriginalDefinition];
-                if (isImportedType && reversMemberNames.TryGetValue(declaringTypeMetadata.Signature, out var m) && m.TryGetValue(@event.Signature, out var ovName))
+                if (isImportedType && reversMemberNames.TryGetValue(declaringTypeMetadata.Signature, out var m) && m.TryGetValue(@event.Signature, out var kv))
                 {
+                    var importedSymbolValue = kv.Value;
+                    Debug.Assert(importedSymbolValue.Signature == @event.Signature);
+                    @event.Export = importedSymbolValue;
+
+                    var ovName = kv.Key;
                     var overloadNames = ovName.Split('|');
                     if (overloadNames.Length == 2)
                     {
@@ -1540,33 +1610,48 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
                 else
                 {
-                    if (eevent.IsOverride) //an event that overrides a base event must use exactly the same overload name as its base
+                    string overloadedName = eevent.Name;
+                    bool isExtern = IsExtern(@event.Symbol);
+                    bool hasNameAttribute = HasAttribute(@event.Symbol, typeof(NameAttribute).FullName!, null, false, out var args);
+                    bool export = !isExtern && !isImportedType;
+                    Dictionary<string, SymbolExport> memberNames;
+                    if (!export)
                     {
-                        var baseEvent = eevent.OverriddenEvent!;
-                        while (baseEvent.IsOverride)
-                            baseEvent = baseEvent.OverriddenEvent!;
-                        var overriddenMetadata = GetRequiredMetadata(baseEvent);
-                        ProcessEvent(overriddenMetadata);
-                        @event.OriginalOverloadName = overriddenMetadata.OriginalOverloadName;
-                        @event.OverloadName = overriddenMetadata.OverloadName;
+                        memberNames = new Dictionary<string, SymbolExport>();
                     }
-                    else if (eevent.ExplicitInterfaceImplementations.Length > 0 && eevent.ContainingType.TypeKind != TypeKind.Interface)
+                    else if (!Symbols.Members.TryGetValue(declaringTypeMetadata.Signature, out memberNames))
                     {
-                        var originalInterfaceMethod = eevent.ExplicitInterfaceImplementations.First();
-                        var declaringInterfaceMetadata = SymbolMetadatas[originalInterfaceMethod.OriginalDefinition];
-                        ProcessEvent(declaringInterfaceMetadata);
-                        @event.OriginalOverloadName = declaringInterfaceMetadata.OriginalOverloadName;
-                        @event.OverloadName = declaringInterfaceMetadata.OverloadName;
+                        memberNames = new Dictionary<string, SymbolExport>();
+                        Symbols.Members.Add(declaringTypeMetadata.Signature, memberNames);
+                    }
+                    if (hasNameAttribute)
+                    {
+                        overloadedName = (string)args![0]!;
+                        @event.OriginalOverloadName = overloadedName;
+                        @event.OverloadName = overloadedName;
+                        MarkMemberNameUsed(@eevent.ContainingType, @eevent.Name, overloadedName);
                     }
                     else
                     {
-                        string overloadedName = eevent.Name;
-                        bool isExtern = IsExtern(@event.Symbol);
-                        bool hasNameAttribute = false;
-                        if (HasAttribute(@event.Symbol, typeof(NameAttribute).FullName!, null, false, out var args))
+                        if (eevent.IsOverride) //an event that overrides a base event must use exactly the same overload name as its base
                         {
-                            overloadedName = (string)args![0]!;
-                            hasNameAttribute = true;
+                            var baseEvent = eevent.OverriddenEvent!;
+                            while (baseEvent.IsOverride)
+                                baseEvent = baseEvent.OverriddenEvent!;
+                            var overriddenMetadata = GetRequiredMetadata(baseEvent);
+                            ProcessEvent(overriddenMetadata);
+                            @event.OriginalOverloadName = overriddenMetadata.OriginalOverloadName;
+                            overloadedName = @event.OverloadName = overriddenMetadata.OverloadName!;
+                            MarkMemberNameUsed(@eevent.ContainingType, @eevent.Name, overloadedName);
+                        }
+                        else if (eevent.ExplicitInterfaceImplementations.Length > 0 && eevent.ContainingType.TypeKind != TypeKind.Interface)
+                        {
+                            var originalInterfaceMethod = eevent.ExplicitInterfaceImplementations.First();
+                            var declaringInterfaceMetadata = SymbolMetadatas[originalInterfaceMethod.OriginalDefinition];
+                            ProcessEvent(declaringInterfaceMetadata);
+                            @event.OriginalOverloadName = declaringInterfaceMetadata.OriginalOverloadName;
+                            overloadedName = @event.OverloadName = declaringInterfaceMetadata.OverloadName!;
+                            MarkMemberNameUsed(@eevent.ContainingType, @eevent.Name, overloadedName);
                         }
                         else
                         {
@@ -1596,52 +1681,39 @@ namespace NetJs.Translator.CSharpToJavascript
                                 }
                             }
                             overloadedName = overloadedName.Replace(".", "$").Replace(",", "$").Replace("<", "$").Replace(">", "$").Replace(" ", "");
-                        }
-                        string originalOverloadName = overloadedName;
-                        bool export = !hasNameAttribute && !isExtern && !isImportedType;
-                        Dictionary<string, SymbolValue> memberNames;
-                        if (!export)
-                        {
-                            memberNames = new Dictionary<string, SymbolValue>();
-                        }
-                        else if (!Symbols.Members.TryGetValue(declaringTypeMetadata.Signature, out memberNames))
-                        {
-                            memberNames = new Dictionary<string, SymbolValue>();
-                            Symbols.Members.Add(declaringTypeMetadata.Signature, memberNames);
-                        }
-                        if (BuildFlags.HasFlag(NetJsBuildFlags.MinifyEventNames) &&
-                            !HasAnyAttribute(eevent, null, false, "System.Runtime.InteropServices.JavaScript.JSExportAttribute") &&
-                            !HasAnyAttribute(eevent.ContainingType, null, false, typeof(KeepMemberNamesAttribute).FullName!))
-                        {
-                            if (!hasNameAttribute && !isExtern)
-                                overloadedName = MinifyMemberLastNameSegment(eevent, overloadedName);
-                            @event.OriginalOverloadName = originalOverloadName;
-                            @event.OverloadName = overloadedName;
-                        }
-                        else
-                        {
-                            //If we are using shortnames, overload resolution will be handled by the shortname
-                            if (!hasNameAttribute && !isExtern)
+                            string originalOverloadName = overloadedName;
+                            if (BuildFlags.HasFlag(NetJsBuildFlags.MinifyEventNames) &&
+                                !HasAnyAttribute(eevent, null, false, "System.Runtime.InteropServices.JavaScript.JSExportAttribute") &&
+                                !HasAnyAttribute(eevent.ContainingType, null, false, typeof(KeepMemberNamesAttribute).FullName!))
                             {
-                                int iNameSlug = 1;
-                                string tryName = overloadedName;
-                                HashSet<string>? usedNames = null;
-                                while (IsMemberNameUsed(eevent.ContainingType, overloadedName, tryName, out usedNames))
-                                {
-                                    tryName = $"{overloadedName}${iNameSlug}";
-                                    iNameSlug++;
-                                }
-                                overloadedName = tryName;
-                                usedNames?.Add(tryName);
+                                if (!hasNameAttribute && !isExtern)
+                                    overloadedName = MinifyMemberLastNameSegment(eevent, overloadedName);
+                                @event.OriginalOverloadName = originalOverloadName;
+                                @event.OverloadName = overloadedName;
                             }
-                            @event.OriginalOverloadName = overloadedName;
-                            @event.OverloadName = overloadedName;
-                            //@event.OverloadName = SymbolMetadata.ShortName(this, @event.Signature, overloadedName, memberNames, generate: !isExtern, export: export);
+                            else
+                            {
+                                if (!hasNameAttribute && !isExtern)
+                                {
+                                    int iNameSlug = 1;
+                                    string tryName = overloadedName;
+                                    HashSet<string>? usedNames = null;
+                                    while (IsMemberNameUsed(eevent.ContainingType, overloadedName, tryName, out usedNames))
+                                    {
+                                        tryName = $"{overloadedName}${iNameSlug}";
+                                        iNameSlug++;
+                                    }
+                                    overloadedName = tryName;
+                                    usedNames?.Add(tryName);
+                                }
+                                @event.OriginalOverloadName = overloadedName;
+                                @event.OverloadName = overloadedName;
+                            }
                         }
-                        if (export)
-                        {
-                            memberNames.Add(overloadedName, new SymbolValue { Signature = @event.Signature });
-                        }
+                    }
+                    if (export)
+                    {
+                        memberNames.Add(overloadedName, @event.Export);
                     }
                 }
             }
@@ -1655,8 +1727,13 @@ namespace NetJs.Translator.CSharpToJavascript
                 bool isImportedType = !SymbolEqualityComparer.Default.Equals(pproperty.ContainingAssembly, compilation.Assembly);
                 var declaringType = property.Symbol.ContainingType;
                 var declaringTypeMetadata = SymbolMetadatas![declaringType.OriginalDefinition];
-                if (isImportedType && reversMemberNames.TryGetValue(declaringTypeMetadata.Signature, out var m) && m.TryGetValue(property.Signature, out var ovName))
+                if (isImportedType && reversMemberNames.TryGetValue(declaringTypeMetadata.Signature, out var m) && m.TryGetValue(property.Signature, out var kv))
                 {
+                    var importedSymbolValue = kv.Value;
+                    Debug.Assert(importedSymbolValue.Signature == property.Signature);
+                    property.Export = importedSymbolValue;
+
+                    var ovName = kv.Key;
                     var overloadNames = ovName.Split('|');
                     if (overloadNames.Length == 2)
                     {
@@ -1673,33 +1750,50 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
                 else
                 {
-                    if (pproperty.IsOverride) //a property that overrides a base property must use exactly the same overload name as its base
+                    bool isExtern = IsExtern(property.Symbol);
+                    bool hasNameAttribute = HasAttribute(property.Symbol, typeof(NameAttribute).FullName!, null, false, out var args);
+                    bool export = !isExtern && !isImportedType;
+                    string overloadedName = pproperty.Name;
+                    bool isExplicitImplementation = false;
+                    Dictionary<string, SymbolExport> memberNames;
+                    if (!export)
                     {
-                        var baseProperty = pproperty.OverriddenProperty!;
-                        while (baseProperty.IsOverride)
-                            baseProperty = baseProperty.OverriddenProperty!;
-                        var overriddenMetadata = GetRequiredMetadata(baseProperty);
-                        ProcessProperty(overriddenMetadata);
-                        property.OriginalOverloadName = overriddenMetadata.OriginalOverloadName;
-                        property.OverloadName = overriddenMetadata.OverloadName;
+                        memberNames = new Dictionary<string, SymbolExport>();
                     }
-                    else if (pproperty.ExplicitInterfaceImplementations.Length > 0 && pproperty.ContainingType.TypeKind != TypeKind.Interface)
+                    else if (!Symbols.Members.TryGetValue(declaringTypeMetadata.Signature, out memberNames))
                     {
-                        var originalInterfaceMethod = pproperty.ExplicitInterfaceImplementations.First();
-                        var declaringInterfaceMetadata = SymbolMetadatas[originalInterfaceMethod.OriginalDefinition];
-                        ProcessProperty(declaringInterfaceMetadata);
-                        property.OriginalOverloadName = declaringInterfaceMetadata.OriginalOverloadName;
-                        property.OverloadName = declaringInterfaceMetadata.OverloadName;
+                        memberNames = new Dictionary<string, SymbolExport>();
+                        Symbols.Members.Add(declaringTypeMetadata.Signature, memberNames);
+                    }
+                    if (hasNameAttribute)
+                    {
+                        overloadedName = (string)args![0]!;
+                        property.OriginalOverloadName = overloadedName;
+                        property.OverloadName = overloadedName;
+                        MarkMemberNameUsed(pproperty.ContainingType, pproperty.Name, overloadedName);
                     }
                     else
                     {
-                        string overloadedName = pproperty.Name;
-                        bool isExtern = IsExtern(property.Symbol);
-                        bool hasNameAttribute = false;
-                        if (HasAttribute(property.Symbol, typeof(NameAttribute).FullName!, null, false, out var args))
+                        if (pproperty.IsOverride) //a property that overrides a base property must use exactly the same overload name as its base
                         {
-                            overloadedName = (string)args![0]!;
-                            hasNameAttribute = true;
+                            var baseProperty = pproperty.OverriddenProperty!;
+                            while (baseProperty.IsOverride)
+                                baseProperty = baseProperty.OverriddenProperty!;
+                            var overriddenMetadata = GetRequiredMetadata(baseProperty);
+                            ProcessProperty(overriddenMetadata);
+                            property.OriginalOverloadName = overriddenMetadata.OriginalOverloadName;
+                            overloadedName = property.OverloadName = overriddenMetadata.OverloadName!;
+                            MarkMemberNameUsed(pproperty.ContainingType, pproperty.Name, overloadedName);
+                        }
+                        else if (pproperty.ExplicitInterfaceImplementations.Length > 0 && pproperty.ContainingType.TypeKind != TypeKind.Interface)
+                        {
+                            isExplicitImplementation = true;
+                            var originalInterfaceMethod = pproperty.ExplicitInterfaceImplementations.First();
+                            var declaringInterfaceMetadata = SymbolMetadatas[originalInterfaceMethod.OriginalDefinition];
+                            ProcessProperty(declaringInterfaceMetadata);
+                            property.OriginalOverloadName = declaringInterfaceMetadata.OriginalOverloadName;
+                            overloadedName = property.OverloadName = declaringInterfaceMetadata.OverloadName!;
+                            MarkMemberNameUsed(pproperty.ContainingType, pproperty.Name, overloadedName);
                         }
                         else
                         {
@@ -1733,52 +1827,45 @@ namespace NetJs.Translator.CSharpToJavascript
                                 }
                             }
                             overloadedName = overloadedName.Replace(".", "$").Replace(",", "$").Replace("<", "$").Replace(">", "$").Replace(" ", "");
+                            string originalOverloadName = overloadedName;
+                            if (BuildFlags.HasFlag(NetJsBuildFlags.MinifyPropertyNames) &&
+                                !HasAnyAttribute(pproperty, null, false, "System.Runtime.InteropServices.JavaScript.JSExportAttribute") &&
+                                !HasAnyAttribute(pproperty.ContainingType, null, false, typeof(KeepMemberNamesAttribute).FullName!))
+                            {
+                                if (!hasNameAttribute && !isExtern)
+                                    overloadedName = MinifyMemberLastNameSegment(pproperty, overloadedName);
+                                property.OriginalOverloadName = originalOverloadName;
+                                property.OverloadName = overloadedName;
+                            }
+                            else
+                            {
+                                if (!hasNameAttribute && !isExtern)
+                                {
+                                    int iNameSlug = 1;
+                                    string tryName = overloadedName;
+                                    HashSet<string>? usedNames = null;
+                                    while (IsMemberNameUsed(pproperty.ContainingType, overloadedName, tryName, out usedNames))
+                                    {
+                                        tryName = $"{overloadedName}${iNameSlug}";
+                                        iNameSlug++;
+                                    }
+                                    overloadedName = tryName;
+                                    usedNames?.Add(tryName);
+                                }
+                                property.OriginalOverloadName = overloadedName;
+                                property.OverloadName = overloadedName;
+                            }
                         }
-                        string originalOverloadName = overloadedName;
-                        bool export = !hasNameAttribute && !isExtern && !isImportedType;
-                        Dictionary<string, SymbolValue> memberNames;
-                        if (!export)
+                    }
+                    if (export)
+                    {
+                        if (isExplicitImplementation && memberNames.TryGetValue(overloadedName, out var existingExport))
                         {
-                            memberNames = new Dictionary<string, SymbolValue>();
-                        }
-                        else if (!Symbols.Members.TryGetValue(declaringTypeMetadata.Signature, out memberNames))
-                        {
-                            memberNames = new Dictionary<string, SymbolValue>();
-                            Symbols.Members.Add(declaringTypeMetadata.Signature, memberNames);
-                        }
-                        if (BuildFlags.HasFlag(NetJsBuildFlags.MinifyPropertyNames) &&
-                            !HasAnyAttribute(pproperty, null, false, "System.Runtime.InteropServices.JavaScript.JSExportAttribute") &&
-                            !HasAnyAttribute(pproperty.ContainingType, null, false, typeof(KeepMemberNamesAttribute).FullName!))
-                        {
-                            if (!hasNameAttribute && !isExtern)
-                                overloadedName = MinifyMemberLastNameSegment(pproperty, overloadedName);
-                            property.OriginalOverloadName = originalOverloadName;
-                            property.OverloadName = overloadedName;
+                            //TODO: A class implement eg IEnumerable<int> and IEnumerable<string> member explicitly
+                            //They both have the same overload name
                         }
                         else
-                        {
-                            //If we are using shortnames, overload resolution will be handled by the shortname
-                            if (!hasNameAttribute && !isExtern)
-                            {
-                                int iNameSlug = 1;
-                                string tryName = overloadedName;
-                                HashSet<string>? usedNames = null;
-                                while (IsMemberNameUsed(pproperty.ContainingType, overloadedName, tryName, out usedNames))
-                                {
-                                    tryName = $"{overloadedName}${iNameSlug}";
-                                    iNameSlug++;
-                                }
-                                overloadedName = tryName;
-                                usedNames?.Add(tryName);
-                            }
-                            property.OriginalOverloadName = overloadedName;
-                            property.OverloadName = overloadedName;
-                            //property.OverloadName = SymbolMetadata.ShortName(this, property.Signature, overloadedName, memberNames, generate: !isExtern, export: export);
-                        }
-                        if (export)
-                        {
-                            memberNames.Add(overloadedName, new SymbolValue { Signature = property.Signature });
-                        }
+                            memberNames.Add(overloadedName, property.Export);
                     }
                 }
             }
@@ -1810,8 +1897,13 @@ namespace NetJs.Translator.CSharpToJavascript
                 var declaringType = method.Symbol.ContainingType;
                 var declaringTypeMetadata = SymbolMetadatas![declaringType.OriginalDefinition];
 
-                if (isImportedType && reversMemberNames.TryGetValue(declaringTypeMetadata.Signature, out var m) && m.TryGetValue(method.Signature, out var ovName))
+                if (isImportedType && reversMemberNames.TryGetValue(declaringTypeMetadata.Signature, out var m) && m.TryGetValue(method.Signature, out var kv))
                 {
+                    var importedSymbolValue = kv.Value;
+                    Debug.Assert(importedSymbolValue.Signature == method.Signature);
+                    method.Export = importedSymbolValue;
+
+                    var ovName = kv.Key;
                     var overloadNames = ovName.Split('|');
                     if (overloadNames.Length == 2)
                     {
@@ -1856,42 +1948,59 @@ namespace NetJs.Translator.CSharpToJavascript
                             method.OverloadName = Constants.DefaultConstructorName;
                         }
                     }
-                    if (mmethod.IsOverride) //a method that overrides a base method must use exactly the same overload name as its base
+                    bool isExtern = IsExtern(method.Symbol);
+                    bool hasNameAttribute = HasAttribute(method.Symbol, typeof(NameAttribute).FullName!, null, false, out var args);
+                    bool export = !isExtern && !isImportedType && mmethod.MethodKind != MethodKind.LocalFunction;
+                    Dictionary<string, SymbolExport> memberNames;
+                    bool isExplicitImplementation = false;
+                    if (!export)
                     {
-                        var baseMethod = mmethod.OverriddenMethod!;
-                        while (baseMethod.IsOverride)
-                            baseMethod = baseMethod.OverriddenMethod!;
-                        var overriddenMetadata = GetRequiredMetadata(baseMethod);
-                        ProcessMethod(overriddenMetadata);
-                        method.OriginalOverloadName = overriddenMetadata.OriginalOverloadName;
-                        method.OverloadName = overriddenMetadata.OverloadName;
+                        memberNames = new Dictionary<string, SymbolExport>();
                     }
-                    else if (mmethod.ExplicitInterfaceImplementations.Length > 0 && mmethod.ContainingType.TypeKind != TypeKind.Interface)
+                    else if (!Symbols.Members.TryGetValue(declaringTypeMetadata.Signature, out memberNames))
                     {
-                        var originalInterfaceMethod = mmethod.ExplicitInterfaceImplementations.First();
-                        var declaringInterfaceMetadata = SymbolMetadatas[originalInterfaceMethod.OriginalDefinition];
-                        ProcessMethod(declaringInterfaceMetadata);
-                        method.OriginalOverloadName = declaringInterfaceMetadata.OriginalOverloadName;
-                        method.OverloadName = declaringInterfaceMetadata.OverloadName;
+                        memberNames = new Dictionary<string, SymbolExport>();
+                        Symbols.Members.Add(declaringTypeMetadata.Signature, memberNames);
+                    }
+                    string overloadedName = mmethod.Name.RemoveGenericParameterNames(out _);
+                    if (hasNameAttribute)
+                    {
+                        overloadedName = (string)args![0]!;
+                        method.OriginalOverloadName = overloadedName;
+                        method.OverloadName = overloadedName;
+                        MarkMemberNameUsed(mmethod.ContainingType, mmethod.Name, overloadedName);
                     }
                     else
                     {
-                        string overloadedName = mmethod.Name.RemoveGenericParameterNames(out _);
-                        //if we have added an overload to Item accessor name eg Item$1, we want to make sure the same reflects in the methods get_Item$1
-                        if (mmethod.AssociatedSymbol != null && mmethod.AssociatedSymbol is IPropertySymbol p && p.IsIndexer)
+                        if (mmethod.IsOverride) //a method that overrides a base method must use exactly the same overload name as its base
                         {
-                            var metadata = GetRequiredMetadata(mmethod.AssociatedSymbol);
-                            overloadedName = overloadedName.Replace("_Item", "_" + metadata.OverloadName);
+                            var baseMethod = mmethod.OverriddenMethod!;
+                            while (baseMethod.IsOverride)
+                                baseMethod = baseMethod.OverriddenMethod!;
+                            var overriddenMetadata = GetRequiredMetadata(baseMethod);
+                            ProcessMethod(overriddenMetadata);
+                            method.OriginalOverloadName = overriddenMetadata.OriginalOverloadName;
+                            overloadedName = method.OverloadName = overriddenMetadata.OverloadName!;
+                            MarkMemberNameUsed(mmethod.ContainingType, mmethod.Name, overloadedName);
                         }
-                        bool isExtern = IsExtern(method.Symbol);
-                        bool hasNameAttribute = false;
-                        if (HasAttribute(method.Symbol, typeof(NameAttribute).FullName!, null, false, out var args))
+                        else if (mmethod.ExplicitInterfaceImplementations.Length > 0 && mmethod.ContainingType.TypeKind != TypeKind.Interface)
                         {
-                            overloadedName = (string)args![0]!;
-                            hasNameAttribute = true;
+                            isExplicitImplementation = true;
+                            var originalInterfaceMethod = mmethod.ExplicitInterfaceImplementations.First();
+                            var declaringInterfaceMetadata = SymbolMetadatas[originalInterfaceMethod.OriginalDefinition];
+                            ProcessMethod(declaringInterfaceMetadata);
+                            method.OriginalOverloadName = declaringInterfaceMetadata.OriginalOverloadName;
+                            overloadedName = method.OverloadName = declaringInterfaceMetadata.OverloadName!;
+                            MarkMemberNameUsed(mmethod.ContainingType, mmethod.Name, overloadedName);
                         }
                         else
                         {
+                            //if we have added an overload to Item accessor name eg Item$1, we want to make sure the same reflects in the methods get_Item$1
+                            if (mmethod.AssociatedSymbol != null && mmethod.AssociatedSymbol is IPropertySymbol p && p.IsIndexer)
+                            {
+                                var metadata = GetRequiredMetadata(mmethod.AssociatedSymbol);
+                                overloadedName = overloadedName.Replace("_Item", "_" + metadata.OverloadName);
+                            }
                             overloadedName = mmethod.Name.RemoveGenericParameterNames(out _);
                             if (!overloadedName.Contains(".")) //doesnt apply to explicit interface implementations
                             {
@@ -1917,57 +2026,46 @@ namespace NetJs.Translator.CSharpToJavascript
                                 }
                             }
                             overloadedName = overloadedName.Replace(".", "$").Replace(",", "$").Replace("<", "$").Replace(">", "$").Replace(" ", "");
+                            string originalOverloadName = overloadedName;
+                            bool hasJsExport = HasAnyAttribute(mmethod, null, false, "System.Runtime.InteropServices.JavaScript.JSExportAttribute");
+                            if (BuildFlags.HasFlag(NetJsBuildFlags.MinifyMethodNames) &&
+                                !hasJsExport &&
+                                !HasAnyAttribute(mmethod.ContainingType, null, false, typeof(KeepMemberNamesAttribute).FullName!))
+                            {
+                                if (!hasNameAttribute && !isExtern && !hasJsExport)
+                                    overloadedName = MinifyMemberLastNameSegment(mmethod, overloadedName);
+                                method.OriginalOverloadName = originalOverloadName;
+                                method.OverloadName = overloadedName;
+                            }
+                            else
+                            {
+                                if (!hasNameAttribute && !isExtern && !hasJsExport)
+                                {
+                                    int iNameSlug = 1;
+                                    string tryName = overloadedName;
+                                    HashSet<string>? usedNames = null;
+                                    while (IsMemberNameUsed(mmethod.ContainingType, overloadedName, tryName, out usedNames))
+                                    {
+                                        tryName = $"{overloadedName}${iNameSlug}";
+                                        iNameSlug++;
+                                    }
+                                    overloadedName = tryName;
+                                    usedNames?.Add(tryName);
+                                }
+                                method.OriginalOverloadName = overloadedName;
+                                method.OverloadName = overloadedName;
+                            }
                         }
-                        string originalOverloadName = overloadedName;
-                        bool export = !hasNameAttribute && !isExtern && !isImportedType && mmethod.MethodKind != MethodKind.LocalFunction;
-                        Dictionary<string, SymbolValue> memberNames;
-                        if (!export)
+                    }
+                    if (export)
+                    {
+                        if (isExplicitImplementation && memberNames.TryGetValue(overloadedName, out var existingExport))
                         {
-                            memberNames = new Dictionary<string, SymbolValue>();
-                        }
-                        else if (!Symbols.Members.TryGetValue(declaringTypeMetadata.Signature, out memberNames))
-                        {
-                            memberNames = new Dictionary<string, SymbolValue>();
-                            Symbols.Members.Add(declaringTypeMetadata.Signature, memberNames);
-                        }
-                        bool hasJsExport = HasAnyAttribute(mmethod, null, false, "System.Runtime.InteropServices.JavaScript.JSExportAttribute");
-                        if (BuildFlags.HasFlag(NetJsBuildFlags.MinifyMethodNames) &&
-                            !hasJsExport &&
-                            !HasAnyAttribute(mmethod.ContainingType, null, false, typeof(KeepMemberNamesAttribute).FullName!))
-                        {
-                            if (!hasNameAttribute && !isExtern && !hasJsExport)
-                                overloadedName = MinifyMemberLastNameSegment(mmethod, overloadedName);
-                            method.OriginalOverloadName = originalOverloadName;
-                            method.OverloadName = overloadedName;
+                            //TODO: A class implement eg IEnumerable<int> and IEnumerable<string> member explicitly
+                            //They both have the same overload name
                         }
                         else
-                        {
-                            //If we are using shortnames, overload resolution will be handled by the shortname
-                            if (!hasNameAttribute && !isExtern && !hasJsExport)
-                            {
-                                int iNameSlug = 1;
-                                string tryName = overloadedName;
-                                HashSet<string>? usedNames = null;
-                                while (IsMemberNameUsed(mmethod.ContainingType, overloadedName, tryName, out usedNames))
-                                {
-                                    tryName = $"{overloadedName}${iNameSlug}";
-                                    iNameSlug++;
-                                }
-                                overloadedName = tryName;
-                                usedNames?.Add(tryName);
-                            }
-                            method.OriginalOverloadName = overloadedName;
-                            method.OverloadName = overloadedName;
-                            //method.OverloadName = SymbolMetadata.ShortName(this, method.Signature, overloadedName, memberNames, generate: !isExtern, export: export);
-                        }
-                        if (export)
-                        {
-                            if (memberNames.ContainsKey(overloadedName))
-                            {
-
-                            }
-                            memberNames.Add(overloadedName, new SymbolValue { Signature = method.Signature });
-                        }
+                            memberNames.Add(overloadedName, method.Export);
                     }
                 }
             }
@@ -2632,7 +2730,9 @@ namespace NetJs.Translator.CSharpToJavascript
             ISymbol Return(ISymbol symbol)
             {
                 if (visitor != null && symbol is INamedTypeSymbol ns)
+                {
                     visitor.Dependencies.Add(ns);
+                }
                 if (genericTypes?.Length > 0 && genericTypes.All(e => e.Length > 0))
                 {
                     var ps = genericTypes.Select((s, i) => TryGetSymbol(s, visitor, filterCandidate: (s) => s is ITypeSymbol) ?? ((INamedTypeSymbol)symbol).TypeArguments.ElementAt(i)).ToList();
@@ -2958,7 +3058,9 @@ namespace NetJs.Translator.CSharpToJavascript
                 if (ret != null)
                 {
                     if (visitor != null && ret is INamedTypeSymbol ns)
+                    {
                         visitor.Dependencies.Add(ns);
+                    }
                     //declaringSymbol = ret.ContainingSymbol;
                     //declaringKind = declaringSymbol?.Kind ?? SymbolKind.ErrorType;
                     return ret;
@@ -3459,7 +3561,13 @@ namespace NetJs.Translator.CSharpToJavascript
             return false;
         }
 
-        public bool HasAttribute(ISymbol symbol, string attributeName, TranslatorSyntaxVisitor? visitor, bool inherits, out Dictionary<object, object?> constructorArgs)
+        public bool HasAttribute(
+            ISymbol symbol,
+            string attributeName,
+            TranslatorSyntaxVisitor? visitor,
+            bool inherits,
+            out Dictionary<object, object?> constructorArgs,
+            bool checkAttached = true)
         {
             if (symbol.Kind == SymbolKind.Namespace ||
                 (Constants.DisableBootClass && attributeName == typeof(BootAttribute).FullName))
@@ -3475,14 +3583,16 @@ namespace NetJs.Translator.CSharpToJavascript
                 attributeName += "Attribute";
             }
 
-            // Check attached cache attributes safely
-            var symbolSignature = symbol.CreateSignature(this, withGlobalNamespace: false);
-            if (HasAttachedAttribute(symbolSignature, attributeName, out var args))
+            if (checkAttached)
             {
-                constructorArgs = args;
-                return true;
+                // Check attached cache attributes safely
+                var symbolSignature = symbol.CreateSignature(this, withGlobalNamespace: false);
+                if (HasAttachedAttribute(symbolSignature, attributeName, out var args))
+                {
+                    constructorArgs = args;
+                    return true;
+                }
             }
-
             var attrSymbol = TryGetSymbol(attributeName, visitor);
             if (attrSymbol == null)
             {
@@ -3735,7 +3845,7 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (IsAnonymousFunction(symbol))
                 return true;
-            if (HasAttribute(symbol, typeof(NativeDelegateAttribute).FullName, null, false, out _))
+            if (HasAttribute(symbol, typeof(NativeDelegateAttribute).FullName!, null, false, out _))
                 return true;
             return false;
         }
@@ -3744,7 +3854,7 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (symbol.IsExtern)
                 return true;
-            if (HasAnyAttribute(symbol, visitor, false, typeof(ExternalAttribute).FullName))
+            if (HasAnyAttribute(symbol, visitor, false, typeof(ExternalAttribute).FullName!))
                 return true;
             if (symbol.ContainingType != null)
             {
@@ -3759,7 +3869,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 return false;
             //if (IsInlineArray(symbol, out _, out _))  //replace by array type at runtime
             //    return false;
-            if (HasAnyAttribute(symbol, visitor, false, typeof(ExternalAttribute).FullName, typeof(NonScriptableAttribute).FullName, typeof(ObjectLiteralAttribute).FullName))
+            if (HasAnyAttribute(symbol, visitor, false, typeof(ExternalAttribute).FullName!, typeof(NonScriptableAttribute).FullName!, typeof(ObjectLiteralAttribute).FullName!))
                 return false;
             if (symbol.ContainingType != null)
             {
@@ -3770,7 +3880,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public bool IsReflectable(ISymbol symbol, TranslatorSyntaxVisitor? visitor, bool skipAssemblyCheck = false)
         {
-            var has = HasAttribute(symbol, typeof(ReflectableAttribute).FullName, visitor, false, out var args);
+            var has = HasAttribute(symbol, typeof(ReflectableAttribute).FullName!, visitor, false, out var args);
             if (has)
             {
                 if (args == null || args.Count == 0)
@@ -3782,7 +3892,7 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             if (!skipAssemblyCheck)
             {
-                has = HasAttribute(symbol.ContainingAssembly, typeof(ReflectableAttribute).FullName, visitor, false, out args);
+                has = HasAttribute(symbol.ContainingAssembly, typeof(ReflectableAttribute).FullName!, visitor, false, out args);
                 if (has)
                 {
                     if (args == null || args.Count == 0)
@@ -3978,7 +4088,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 return Constants.SystemPrivateCoreLibSlug;
             if (assemblyGlobalNamespaceCache.TryGetValue(assembly.Name, out var slug))
                 return slug;
-            if (HasAttribute(assembly, typeof(AssemblySlugAttribute).FullName!, null, false, out var args))
+            if (HasAttribute(assembly, typeof(AssemblySlugAttribute).FullName!, null, false, out var args, checkAttached: false))
             {
                 slug = (string)args![0]!;
                 if (!slug.StartsWith("$"))

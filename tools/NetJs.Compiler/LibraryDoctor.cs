@@ -49,207 +49,7 @@ namespace NetJs.Compiler
             //var MsBuildThisFileDirectory = $"$(DotnetRuntimeRoot)src/mono/System.Private.CoreLib/";
         }
 
-        //public async Task<string> Doctor(string originalCsProjectFilePath,
-        //    Dictionary<string, string> addPropertyGroups,
-        //    Dictionary<string, List<string>> addCompilations,
-        //    Dictionary<string, string> variables,
-        //    Dictionary<string, List<string>> removePath,
-        //    List<string> addReferences)
-        //{
-        //    var projectFileName = Path.GetFileName(originalCsProjectFilePath);
-        //    var projectName = Path.GetFileNameWithoutExtension(originalCsProjectFilePath);
-        //    var projectFolderPath = Path.GetDirectoryName(originalCsProjectFilePath)!;
-        //    var projectFolderPathAsVariable = projectFolderPath.Replace("E:\\dotnet\\runtime\\", $"$(DotnetRuntimeRoot)");
-        //    var projectFolderName = Path.GetFileName(projectFolderPath);
-
-        //    var newProjectDirectory = Path.Join(_dotnetJsSolutionPath, "libraries", projectName);
-        //    bool isNewProject = false; ;
-        //    if (!Directory.Exists(newProjectDirectory))
-        //    {
-        //        isNewProject = true;
-        //        Directory.CreateDirectory(newProjectDirectory);
-        //    }
-
-        //    var xml = File.ReadAllText(originalCsProjectFilePath);
-
-        //    if (variables.Count > 0)
-        //    {
-        //        foreach (var kv in variables)
-        //        {
-        //            xml = xml.Replace($"$({kv.Key})", kv.Value);
-        //        }
-        //    }
-
-        //    var doc = XElement.Parse(xml);
-
-        //    if (removePath.Count > 0)
-        //    {
-        //        foreach (var r in removePath)
-        //        {
-        //            var key = r.Key.Split('@');
-        //            foreach (var value in r.Value)
-        //            {
-        //                var path = $"{key[0]}[@{key[1]}=\"{value}\"]";
-        //                var nodes = doc.XPathSelectElements(path);
-        //                foreach (var node in nodes)
-        //                {
-        //                    XComment comment = new XComment(node.ToString());
-        //                    node.AddBeforeSelf(comment);
-        //                }
-        //                nodes.Remove();
-        //            }
-        //        }
-        //    }
-
-        //    const bool forceTargetBrowserOnly = true;
-
-        //    var tfmMulti = doc.XPathSelectElement("//PropertyGroup/TargetFrameworks");
-        //    bool isMultiTarget = false;
-        //    bool targetsBrowser = false;
-        //    if (tfmMulti != null)
-        //    {
-        //        isMultiTarget = tfmMulti.Value.Contains(";");
-        //        if (forceTargetBrowserOnly)
-        //        {
-        //            var tfmComment = new XComment(tfmMulti!.ToString());
-        //            tfmMulti.AddBeforeSelf(tfmComment);
-        //            tfmMulti.Remove();
-        //        }
-        //        else if (tfmMulti.Value.Contains("-browser"))
-        //        {
-        //            targetsBrowser = true;
-        //            tfmMulti.Value = "$(NetCoreAppCurrent)-browser;$(NetCoreAppCurrent)";
-        //        }
-        //        else
-        //        {
-        //            tfmMulti.Value = "$(NetCoreAppCurrent)";
-        //        }
-
-        //    }
-
-        //    if (forceTargetBrowserOnly)
-        //    {
-        //        var tfmSingle = doc.XPathSelectElement("//PropertyGroup/TargetFramework");
-        //        if (tfmSingle != null)
-        //        {
-        //            var tfmComment = new XComment(tfmSingle!.ToString());
-        //            tfmSingle.AddBeforeSelf(tfmComment);
-        //            tfmSingle.Remove();
-        //        }
-        //    }
-        //    //var tpi = doc.XPathSelectElement("//PropertyGroup/TargetPlatformIdentifier");
-        //    //if (tpi != null)
-        //    //{
-        //    //    //tpi.Value="browser";
-        //    //    var tfmComment = new XComment(tpi!.ToString());
-        //    //    tpi.AddBeforeSelf(tfmComment);
-        //    //    tpi.Remove();
-        //    //}
-
-        //    string[] includes = ["//ItemGroup/Compile", "//ItemGroup/Compile/DependentUpon", "//ItemGroup/AsnXml"];
-
-        //    foreach (var includePath in includes)
-        //    {
-        //        doc.XPathSelectElements(includePath).FirstOrDefault(e =>
-        //        {
-        //            var include = e.Attribute("Include");
-        //            if (include != null)
-        //            {
-        //                if (!include.Value.StartsWith("$("))
-        //                {
-        //                    include.Value = $"{projectFolderPathAsVariable}\\{include.Value}";
-        //                }
-        //            }
-        //            var remove = e.Attribute("Remove");
-        //            if (remove != null)
-        //            {
-        //                if (!remove.Value.StartsWith("$("))
-        //                {
-        //                    remove.Value = $"{projectFolderPathAsVariable}\\{remove.Value}";
-        //                }
-        //            }
-        //            return false;
-        //        });
-        //    }
-        //    doc.XPathSelectElements("//ItemGroup/ProjectReference").FirstOrDefault(e =>
-        //    {
-        //        if (e.Attribute("OutputItemType")?.Value == "Analyzer")
-        //        {
-        //            //Skip analyzers
-        //            return false;
-        //        }
-        //        var include = e.Attribute("Include");
-        //        if (include != null)
-        //        {
-        //            if (include.Value.StartsWith("$(LibrariesProjectRoot)"))
-        //            {
-        //                var newPath = include.Value.Replace("$(LibrariesProjectRoot)", "$(NewLibrariesProjectRoot)");
-        //                var split = newPath.Split('\\');
-        //                //split[split.Length-1] = "NetJs." + split[split.Length - 1];
-        //                //include.Value = string.Join("\\", split);
-        //                include.Value = $"$(NewLibrariesProjectRoot){Path.GetFileNameWithoutExtension(split[split.Length - 1])}\\NetJs.{split[split.Length - 1]}";
-        //            }
-        //        }
-        //        return false;
-        //    });
-
-        //    if (addPropertyGroups.Count > 0)
-        //    {
-        //        var propertyGroup = doc.XPathSelectElement("//PropertyGroup");
-        //        foreach (var kv in addPropertyGroups)
-        //        {
-        //            propertyGroup!.Add(new XElement(kv.Key, kv.Value));
-        //        }
-        //    }
-
-        //    if (addCompilations.Count > 0)
-        //    {
-        //        foreach (var conditionalCompilation in addCompilations)
-        //        {
-        //            var itemGroup = new XElement("ItemGroup");
-        //            if (!string.IsNullOrEmpty(conditionalCompilation.Key))
-        //            {
-        //                itemGroup.Add(new XAttribute("Condition", $"'$(TargetPlatformIdentifier)' == '{conditionalCompilation.Key.Trim('_')}'"));
-        //            }
-        //            foreach (var kv in conditionalCompilation.Value)
-        //            {
-        //                var compile = new XElement("Compile");
-        //                compile.Add(new XAttribute("Include", kv));
-        //                itemGroup!.Add(compile);
-        //            }
-        //            doc.Add(itemGroup);
-        //        }
-        //    }
-        //    if (addReferences.Count > 0)
-        //    {
-        //        var itemGroup = new XElement("ItemGroup");
-        //        foreach (var kv in addReferences)
-        //        {
-        //            var compile = new XElement("ProjectReference");
-        //            compile.Add(new XAttribute("Include", kv));
-        //            itemGroup!.Add(compile);
-        //        }
-        //        doc.Add(itemGroup);
-        //    }
-
-        //    GenerateStaticResource(doc, projectName, projectFolderPath, newProjectDirectory);
-
-        //    var doctored = doc.ToString();
-        //    var outPath = Path.Join(newProjectDirectory, $"NetJs.{projectFileName}");
-        //    File.WriteAllText(outPath, doc.ToString());
-
-
-        //    if (isNewProject)
-        //    {
-        //        //Make sure the project is added to solution
-        //        await $"cd {newProjectDirectory} & dotnet sln ../../dotnetJs.sln add NetJs.{projectFileName} --solution-folder libraries".CLI();
-        //    }
-
-        //    return $"$(NewLibrariesProjectRoot){projectName}\\NetJs.{projectFileName}";
-        //}
-
-
-        public async Task<string> Doctor(string netJsPath, XElement sourceNode, IEnumerable<string> allProjects)
+        public async Task<string> Doctor(string netJsPath, XElement sourceNode, IEnumerable<string> allProjects, int indexInAllProject)
         {
             var csProj = sourceNode.Attribute("Include")!.Value;
             var originalCsProjectFilePath = csProj.Replace("$(DotnetGitRoot)", $"{netJsPath}\\dotnet\\").Replace("\\\\", "\\").Replace("/\\", "\\").Replace("\\/", "\\");
@@ -765,6 +565,17 @@ namespace NetJs.Compiler
             {
                 Console.WriteLine(e.Message);
             }
+
+            var assemblyInfo = $@"
+[assembly: NetJs.AssemblyHandle({indexInAllProject + 1})]
+";
+            var assemblyInfoPath = Path.Join(newProjectDirectory, "Properties", "AssemblyInfo.g.cs");
+            var dir = Path.GetDirectoryName(assemblyInfoPath);
+            if (!Directory.Exists(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
+            File.WriteAllText(assemblyInfoPath, assemblyInfo);
 
             return $"$(NewLibrariesProjectRoot){projectName}\\NetJs.{projectFileName}";
         }

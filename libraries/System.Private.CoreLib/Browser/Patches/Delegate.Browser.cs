@@ -286,7 +286,9 @@ namespace System
                 {
                     unchecked
                     {
-                        var methodModel = prototype.Metadata!.Methods!.Filter(f => (f.GetOutputName()).NativeEquals(nativeFunctionName))[0] ?? null;
+                        MethodModel[] allMethods = NetJs.Script.NewArray<MethodModel>();
+                        prototype.CollectMethods(allMethods);
+                        var methodModel = allMethods!.Filter(f => (f.GetOutputName()).NativeEquals(nativeFunctionName))[0] ?? null;
                         if (NetJs.Script.IsDefined(methodModel))
                         {
                             var info = (MethodInfo?)AppDomain.GetMember(methodModel!.Handle.As<uint>());

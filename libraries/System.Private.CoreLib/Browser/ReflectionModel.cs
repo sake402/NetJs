@@ -27,7 +27,7 @@ public struct Handle
         return Expression;
     }
 }
-public class HandleSerializer : JsonConverter<Handle>
+class HandleSerializer : JsonConverter<Handle>
 {
     public override Handle Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
@@ -370,7 +370,32 @@ namespace NetJs
         //[JsonIgnore][Name("(f & 128) != 0")] public extern bool IsVirtual { get; }
     }
 
+    [External]
+    public interface ITrimmableMarker
+    {
+        string Marker { get; }
+    }
+
+#if TRANSLATOR
+    class TrimmableMarkerConverter<T> : JsonConverter<T> where T : ITrimmableMarker
+    {
+        public override T? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
+        {
+            writer.WriteRawValue("\n" + value.Marker, skipInputValidation: true);
+        }
+    }
+#endif
+
     [ObjectLiteral]
+#if TRANSLATOR
+    [JsonDerivedType(typeof(PropertyModel))]
+    [JsonDerivedType(typeof(PropertyModel.TrimmableMarker))]
+#endif
     public class PropertyModel : MemberModel
     {
         [JsonPropertyName("p")][Name("p")] public Handle PropertyType { get; set; }
@@ -378,6 +403,16 @@ namespace NetJs
         [JsonPropertyName("g")][Name("g")] public MethodModel? GetMethod { get; set; }
         [JsonPropertyName("s")][Name("s")] public MethodModel? SetMethod { get; set; }
         //[JsonIgnore][Name("(f & 16384) != 0")] public extern bool IsIndexer { get; }
+        [ObjectLiteral]
+#if TRANSLATOR
+        [JsonConverter(typeof(TrimmableMarkerConverter<TrimmableMarker>))]
+#endif
+        public class TrimmableMarker : PropertyModel, ITrimmableMarker
+        {
+            public string Marker { get; set; }
+            public static TrimmableMarker Open(string marker) => new TrimmableMarker() { Marker = marker };
+            public static TrimmableMarker Close(string marker) => new TrimmableMarker() { Marker = marker };
+        }
     }
 
     //public class AccessorModel
@@ -386,6 +421,10 @@ namespace NetJs
     //}
 
     [ObjectLiteral]
+#if TRANSLATOR
+    [JsonDerivedType(typeof(MethodModel))]
+    [JsonDerivedType(typeof(MethodModel.TrimmableMarker))]
+#endif
     public class MethodModel : MemberModel
     {
 #if TRANSLATOR
@@ -402,27 +441,79 @@ namespace NetJs
         //[JsonIgnore][Name("(f & 2048) != 0")] public extern bool IsExtensionMethod { get; }
         //[JsonIgnore][Name("(f & 4096) != 0")] public extern bool IsAsync { get; }
         //[JsonIgnore][Name("(f & 8192) != 0")] public extern bool IsOperator { get; }
+        [ObjectLiteral]
+#if TRANSLATOR
+        [JsonConverter(typeof(TrimmableMarkerConverter<TrimmableMarker>))]
+#endif
+        public class TrimmableMarker : MethodModel, ITrimmableMarker
+        {
+            public string Marker { get; set; }
+            public static TrimmableMarker Open(string marker) => new TrimmableMarker() { Marker = marker };
+            public static TrimmableMarker Close(string marker) => new TrimmableMarker() { Marker = marker };
+        }
     }
 
     [ObjectLiteral]
+#if TRANSLATOR
+    [JsonDerivedType(typeof(FieldModel))]
+    [JsonDerivedType(typeof(FieldModel.TrimmableMarker))]
+#endif
     public class FieldModel : MemberModel
     {
         [JsonPropertyName("s")][Name("s")] public int? Offset { get; set; }
         [JsonPropertyName("t")][Name("t")] public Handle FieldType { get; set; } = default!;
+        [ObjectLiteral]
+#if TRANSLATOR
+        [JsonConverter(typeof(TrimmableMarkerConverter<TrimmableMarker>))]
+#endif
+        public class TrimmableMarker : FieldModel, ITrimmableMarker
+        {
+            public string Marker { get; set; }
+            public static TrimmableMarker Open(string marker) => new TrimmableMarker() { Marker = marker };
+            public static TrimmableMarker Close(string marker) => new TrimmableMarker() { Marker = marker };
+        }
     }
 
     [ObjectLiteral]
+#if TRANSLATOR
+    [JsonDerivedType(typeof(ConstructorModel))]
+    [JsonDerivedType(typeof(ConstructorModel.TrimmableMarker))]
+#endif
     public class ConstructorModel : MethodModel
     {
+        [ObjectLiteral]
+#if TRANSLATOR
+        [JsonConverter(typeof(TrimmableMarkerConverter<TrimmableMarker>))]
+#endif
+        public class TrimmableMarker : ConstructorModel, ITrimmableMarker
+        {
+            public string Marker { get; set; }
+            public static TrimmableMarker Open(string marker) => new TrimmableMarker() { Marker = marker };
+            public static TrimmableMarker Close(string marker) => new TrimmableMarker() { Marker = marker };
+        }
     }
 
     [ObjectLiteral]
+#if TRANSLATOR
+    [JsonDerivedType(typeof(EventModel))]
+    [JsonDerivedType(typeof(EventModel.TrimmableMarker))]
+#endif
     public class EventModel : MemberModel
     {
         [JsonPropertyName("e")][Name("e")] public Handle EventHandlerType { get; set; }
         [JsonPropertyName("m")][Name("m")] public MethodModel? AddMethod { get; set; }
         [JsonPropertyName("r")][Name("r")] public MethodModel? RemoveMethod { get; set; }
         [JsonPropertyName("y")][Name("y")] public MethodModel? RaiseMethod { get; set; }
+        [ObjectLiteral]
+#if TRANSLATOR
+        [JsonConverter(typeof(TrimmableMarkerConverter<TrimmableMarker>))]
+#endif
+        public class TrimmableMarker : EventModel, ITrimmableMarker
+        {
+            public string Marker { get; set; }
+            public static TrimmableMarker Open(string marker) => new TrimmableMarker() { Marker = marker };
+            public static TrimmableMarker Close(string marker) => new TrimmableMarker() { Marker = marker };
+        }
     }
 
     [ObjectLiteral]

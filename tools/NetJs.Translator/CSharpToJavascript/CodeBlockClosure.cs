@@ -5,12 +5,17 @@ using System.Runtime.CompilerServices;
 
 namespace NetJs.Translator.CSharpToJavascript
 {
+    //public enum GeneratedClosureKind
+    //{
+    //    None,
+    //    StaticInitilization
+    //}
     public class CodeBlockClosure : IDisposable
     {
         GlobalCompilationVisitor _global;
         public CSharpSyntaxNode Syntax { get; }
         public ISymbol? Symbol { get; }
-
+        public string? GeneratedMethodName { get; set; }
         public CodeBlockClosure(GlobalCompilationVisitor global, TranslatorSyntaxVisitor visitor, CSharpSyntaxNode syntax, ISymbol? symbol = null, CodeBlockClosure? parent = null)
         {
             _global = global;

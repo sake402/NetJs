@@ -24,9 +24,9 @@ namespace NetJs.Translator.CSharpToJavascript
             }
         }
 
-        public ISymbol OpenClosure(CSharpSyntaxNode node)
+        public ISymbol OpenClosure(CSharpSyntaxNode node, ISymbol? symbol = null)
         {
-            var symbol = _global.TryGetSymbol(node, this/*, out _, out _*/);
+            symbol ??= _global.TryGetSymbol(node, this);
             closures.Push(new CodeBlockClosure(_global, this, node, symbol, CurrentClosure));
             return symbol!;
         }

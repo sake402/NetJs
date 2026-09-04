@@ -365,20 +365,34 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitArrowExpressionClause(ArrowExpressionClauseSyntax node)
         {
-            if (node.Parent.IsKind(SyntaxKind.ConstructorDeclaration) || node.Expression.IsKind(SyntaxKind.ThrowExpression))
+            WriteBlock(node, new CodeNode(() =>
             {
                 //Arrow constructor body should not use return as we need to explicitly return this
                 //Throw should not use return too;
-            }
-            else
-            {
-                WriteReturn(node, node.Expression);
-                return;
-            }
-            CurrentTypeWriter.Write(node, "", true);
-            Visit(node.Expression);
-            CurrentTypeWriter.WriteLine(node, ";");
-            //base.VisitArrowExpressionClause(node);
+                if (!node.Parent.IsKind(SyntaxKind.ConstructorDeclaration) && !node.Expression.IsKind(SyntaxKind.ThrowExpression))
+                {
+                    WriteReturn(node, node.Expression);
+                    return;
+                }
+                else
+                    CurrentTypeWriter.Write(node, $"", true);
+                Visit(node.Expression);
+                CurrentTypeWriter.WriteLine(node, $";");
+            }));
+            //if (node.Parent.IsKind(SyntaxKind.ConstructorDeclaration) || node.Expression.IsKind(SyntaxKind.ThrowExpression))
+            //{
+            //    //Arrow constructor body should not use return as we need to explicitly return this
+            //    //Throw should not use return too;
+            //}
+            //else
+            //{
+            //    WriteReturn(node, node.Expression);
+            //    return;
+            //}
+            //CurrentTypeWriter.Write(node, "", true);
+            //Visit(node.Expression);
+            //CurrentTypeWriter.WriteLine(node, ";");
+            ////base.VisitArrowExpressionClause(node);
         }
 
         public override void VisitReturnStatement(ReturnStatementSyntax node)

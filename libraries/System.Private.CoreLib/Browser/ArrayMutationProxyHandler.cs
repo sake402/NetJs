@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace NetJs
@@ -13,6 +14,8 @@ namespace NetJs
     [NetJs.Reflectable(false)]
     public class ArrayMutationProxyHandler : IArrayProxyHandler
     {
+        [DynamicDependency(nameof(Get))]
+        [DynamicDependency(nameof(Set))]
         public ArrayMutationProxyHandler(Array array)
         {
             _array = array;

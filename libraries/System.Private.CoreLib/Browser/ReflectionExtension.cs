@@ -102,5 +102,76 @@ namespace NetJs
             }
             return handle.As<uint>();
         }
+
+        public static void CollectConstructors(this TypePrototype prototype, ConstructorModel[] allCOnstructors)
+        {
+            var metadata = prototype.Metadata;
+            if (NetJs.Script.IsDefined(metadata) && NetJs.Script.IsDefined(metadata!.Constructors))
+            {
+                allCOnstructors.Push(metadata!.Constructors!);
+            }
+            var basePrototype = prototype.Base;
+            if (NetJs.Script.IsDefined(basePrototype) && !basePrototype!.Equals(Object.Prototype))
+            {
+                CollectConstructors(basePrototype, allCOnstructors);
+            }
+        }
+
+        public static void CollectMethods(this TypePrototype prototype, MethodModel[] allMethods)
+        {
+            var metadata = prototype.Metadata;
+            if (NetJs.Script.IsDefined(metadata) && NetJs.Script.IsDefined(metadata!.Methods))
+            {
+                allMethods.Push(metadata!.Methods!);
+            }
+            var basePrototype = prototype.Base;
+            if (NetJs.Script.IsDefined(basePrototype) && !basePrototype!.Equals(Object.Prototype))
+            {
+                CollectMethods(basePrototype, allMethods);
+            }
+        }
+
+        public static void CollectProperties(this TypePrototype prototype, PropertyModel[] allProperties)
+        {
+            var metadata = prototype.Metadata;
+            if (NetJs.Script.IsDefined(metadata) && NetJs.Script.IsDefined(metadata!.Properties))
+            {
+                allProperties.Push(metadata!.Properties!);
+            }
+            var basePrototype = prototype.Base;
+            if (NetJs.Script.IsDefined(basePrototype) && !basePrototype!.Equals(Object.Prototype))
+            {
+                CollectProperties(basePrototype, allProperties);
+            }
+        }
+
+        public static void CollectFields(this TypePrototype prototype, FieldModel[] allFields)
+        {
+            var metadata = prototype.Metadata;
+            if (NetJs.Script.IsDefined(metadata) && NetJs.Script.IsDefined(metadata!.Fields))
+            {
+                allFields.Push(metadata!.Fields!);
+            }
+            var basePrototype = prototype.Base;
+            if (NetJs.Script.IsDefined(basePrototype) && !basePrototype!.Equals(Object.Prototype))
+            {
+                CollectFields(basePrototype, allFields);
+            }
+        }
+
+        public static void CollectEvents(this TypePrototype prototype, EventModel[] allEvents)
+        {
+            var metadata = prototype.Metadata;
+            if (NetJs.Script.IsDefined(metadata) && NetJs.Script.IsDefined(metadata!.Events))
+            {
+                allEvents.Push(metadata!.Events!);
+            }
+            var basePrototype = prototype.Base;
+            if (NetJs.Script.IsDefined(basePrototype) && !basePrototype!.Equals(Object.Prototype))
+            {
+                CollectEvents(basePrototype, allEvents);
+            }
+        }
+
     }
 }

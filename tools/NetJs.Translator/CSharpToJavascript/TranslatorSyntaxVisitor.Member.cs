@@ -36,6 +36,7 @@ namespace NetJs.Translator.CSharpToJavascript
             //, CodeNode? thisExpression = null, bool? isGet = null, CodeNode? setValue = null
             )
         {
+            MarkCurrentClosureDependsOn(member);
             var template = member.GetTemplateAttribute(_global, this);
             //if (template == null && isGet != null && member.Kind == SymbolKind.Property)
             //{
@@ -96,7 +97,7 @@ namespace NetJs.Translator.CSharpToJavascript
         public void WriteMemberAccess(
              CSharpSyntaxNode node,
              CodeNode? thisExpression,
-             ITypeSymbol? thisSymbol,
+             ISymbol? thisSymbol,
              string? memberName,
              ISymbol? member,
              CodeNode? setValue = null)
@@ -121,11 +122,15 @@ namespace NetJs.Translator.CSharpToJavascript
             memberName ??= member.Name;
             bool isStaticConvention = member?.IsStaticCallConvention(_global) ?? false;
             bool isExtensionMember = member?.IsExtensionPropertyMember(_global) ?? false;
+
+            MarkCurrentClosureDependsOn(thisSymbol);
+            MarkCurrentClosureDependsOn(member!);
+
             if (member is IFieldSymbol field &&
                 field.IsConst &&
                 field.ConstantValue != null &&
-                (_global.BuildFlags.HasFlag(NetJsBuildFlags.InlineConstants) || _global.HasAttribute(member, typeof(InlineConstAttribute).FullName, this, false, out _) || _global.HasAttribute(member.ContainingType, typeof(InlineConstAttribute).FullName, this, false, out _)) &&
-                !_global.HasAttribute(member, typeof(TemplateAttribute).FullName, this, false, out _))
+                (_global.BuildFlags.HasFlag(NetJsBuildFlags.InlineConstants) || _global.HasAttribute(member, typeof(InlineConstAttribute).FullName!, this, false, out _) || _global.HasAttribute(member.ContainingType, typeof(InlineConstAttribute).FullName, this, false, out _)) &&
+                !_global.HasAttribute(member, typeof(TemplateAttribute).FullName!, this, false, out _))
             {
                 TryWriteConstant(node, field.Type, null, new Optional<object?>(field.ConstantValue));
                 //var systemString = _global.GetTypeSymbol("System.String", this, out _, out _);
@@ -136,7 +141,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 //    Writer.Write(node, "\"");
                 return;
             }
-            bool isAssignment = false;
+            bool isAssignment = setValue != null;
             ExpressionSyntax? assignmentRhs = null;
             if (node.Parent is EqualsValueClauseSyntax eq)
             {
@@ -148,22 +153,36 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             IMethodSymbol? method = member as IMethodSymbol;
             AttributeData? attribute = member?.GetTemplateAttribute(_global, this);
-            if (attribute == null)
+            if (member is IPropertySymbol property)
             {
-                if (member is IPropertySymbol property)
+                if (isAssignment)
                 {
-                    if (isAssignment)
-                    {
-                        method = property.SetMethod;
-                        attribute = property.SetMethod?.GetTemplateAttribute(_global, this);
-                    }
-                    else
-                    {
-                        method = property.GetMethod;
-                        attribute = property.GetMethod?.GetTemplateAttribute(_global, this);
-                    }
+                    method = property.SetMethod;
+                    attribute ??= property.SetMethod?.GetTemplateAttribute(_global, this);
+                }
+                else
+                {
+                    method = property.GetMethod;
+                    attribute ??= property.GetMethod?.GetTemplateAttribute(_global, this);
                 }
             }
+            else if (member is IEventSymbol eevent)
+            {
+                if (isAssignment)
+                {
+                    method = eevent.AddMethod;
+                    //attribute ??= property.SetMethod?.GetTemplateAttribute(_global, this);
+                }
+                else
+                {
+                    method = eevent.RemoveMethod;
+                    //attribute ??= property.GetMethod?.GetTemplateAttribute(_global, this);
+                }
+            }
+
+            if (method != null)
+                MarkCurrentClosureDependsOn(method);
+
             if (attribute != null)
             {
                 WriteMethodTemplate(node, thisExpression, thisSymbol, false, method, null, attribute, default, assignmentRhs);
@@ -351,11 +370,12 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 memberName = node.Name.Identifier.ValueText;
             }
-            var lhsType = _global.TryGetTypeSymbol(node.Expression, this);
-            if (lhsType != null)
+            var lhs = _global.TryGetSymbol(node.Expression, this);
+            //var lhsType = _global.TryGetTypeSymbol(node.Expression, this);
+            if (lhs != null)
             {
                 var memberType = _global.GetSymbol(node, this);
-                WriteMemberAccess(node, node.Expression, lhsType, memberName, memberType);
+                WriteMemberAccess(node, node.Expression, lhs, memberName, memberType);
             }
             else
             {

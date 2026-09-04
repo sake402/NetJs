@@ -4,19 +4,9 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Emit;
 using NetJs.Translator.CSharpToJavascript;
-using NetJs.Translator.RazorToCSharp;
-using NUglify;
-using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Runtime.Serialization;
 using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
-using System.Threading;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -312,7 +302,10 @@ namespace NetJs.Translator
                 var importedNames = symbolFiles.Select(s => deSerializer.Deserialize<SymbolDescriptor>(File.ReadAllText(s))).ToList();
                 global = new GlobalCompilationVisitor(csCompilation, _project, isSystemPrivateCoreLib, importedNames);
                 metadataBuilder = new ReflectionMetadataBuilder(global, isSystemPrivateCoreLib, contentFiles.Where(e => e.EndsWith(".resx")).ToArray(), embeddedFiles.ToArray());
-                metadataBuilder.InitializeForAssembly(csCompilation.Assembly);
+                $"Initializing metadata".Profile(() =>
+                {
+                    metadataBuilder.InitializeForAssembly(csCompilation.Assembly);
+                });
                 global.Reflection = metadataBuilder;
             });
         }
@@ -745,7 +738,9 @@ namespace NetJs.Translator
                 var createAssemblyMetadata = createAssembly != null ? global.GetRequiredMetadata(createAssembly) : null;
                 //{ (isSystemPrivateCoreLib ? $"{global.GlobalName}.{Constants.AssemblyRegistryName} = {createAssemblyMetadata?.InvocationName}{global.GlobalName}.{global.GetAssemblyGlobalSlug(global.Compilation.Assembly)}.{(global.BuildFlags.HasFlag(NetJsBuildFlags.MinifyNamespaces) ? "S" : "System")}.AppDomain.{Constants.AssemblyRegistryName};" : "")}
                 //{ (isSystemPrivateCoreLib ? $"{global.GlobalName}.{global.GetAssemblyGlobalSlug(global.Compilation.Assembly)}.{(global.BuildFlags.HasFlag(NetJsBuildFlags.MinifyNamespaces) ? "S" : "System")}.AppDomain.{Constants.AppDomainInitialize}($asm)" : "")}
+                var trimming = global.Compilation.Assembly.TrimmableBoundary(global);
                 var jsCode = global.BuildFlags.HasFlag(NetJsBuildFlags.Global) ? @$"
+{trimming.Start}
 (function ($global, {global.GlobalName}{(refAssemblySlugs.Length > 0 ? ", " : "")}{refAssemblySlugs}) {{
     ""use strict"";
     let _;
@@ -761,7 +756,9 @@ namespace NetJs.Translator
         {(isSystemPrivateCoreLib ? $"{initDomainMetadata?.InvocationName}($asm)" : "")}
         {codes}
 	}});
-}})(window, window.{Constants.ProjectName}.{Constants.BootName}(), ...window.{Constants.ProjectName}.$require({refAssemblyNames}))" : codes;
+}})(window, window.{Constants.ProjectName}.{Constants.BootName}(), ...window.{Constants.ProjectName}.$require({refAssemblyNames}))
+{trimming.End}
+" : codes;
                 var stream = StringToStream(jsCode);
                 pendingTask.Add(_output.Output(global, outputFileName, stream));
                 sortedOutputtedJsFiles.Add(outputFileName);
@@ -781,7 +778,7 @@ namespace NetJs.Translator
                     //sortedOutputtedJsFiles.Add(uglyFileName);
                     packages.Add((uglyFileName, uglyStream));
 #if DEBUG
-                    minified.Code.TokenHistogram();
+                    //minified.Code.TokenHistogram();
 #endif
                 }
             }
@@ -827,7 +824,7 @@ namespace NetJs.Translator
             packages.Add((yamlFileName, yamlStream));
         }
 
-        void WriteIndexHtml()
+        void WriteIndexHtml(bool fromTrimming = false)
         {
             if (global.MainEntry != null)
             {
@@ -836,7 +833,15 @@ namespace NetJs.Translator
                 var jss = sortedOutputtedJsFiles
                     .Where(o => indexFile == null || !o.EndsWith("blazor.netjs.js"))//dont add blazor file again to index.html, already there
                     .Where(o => o.StartsWith(Constants.OutputFolderName) && o.EndsWith(".js"))
-                    .Select(o => o.Replace(Constants.OutputFolderName + "/", "").Replace(Constants.OutputFolderName + "\\", ""))
+                    .Select(o =>
+                    {
+                        var ret = o.Replace(Constants.OutputFolderName + "/", "").Replace(Constants.OutputFolderName + "\\", "");
+                        if (fromTrimming && ret.StartsWith("NetJs.") && ret != "NetJs.Boot.js")
+                        {
+                            ret = Path.ChangeExtension(ret, ".trim.js");
+                        }
+                        return ret;
+                    })
                     .Distinct()
                     .ToArray();
                 bool hasBlazorNet = jss.Any(o => o.EndsWith("blazor.netjs.js"));
@@ -861,7 +866,7 @@ namespace NetJs.Translator
                     text = text.Replace("</head>", insertHead + "\r\n</head>")
                         .Replace("</body>", insertScripts + "\r\n</body>")
                         .Replace("_framework/blazor.webassembly#[.{fingerprint}].js", "_framework/blazor.netjs.js");
-                    var relativePath = Path.GetRelativePath(_project.GetFolder(), indexFile);
+                    var relativePath = Path.GetRelativePath(_project.GetFolder(), fromTrimming ? Path.ChangeExtension(indexFile, ".trim.html") : indexFile);
                     pendingTask.Add(_output.Output(global,
                         !relativePath.StartsWith(Constants.OutputFolderName + Path.DirectorySeparatorChar) ? Constants.OutputFolderName + Path.DirectorySeparatorChar + relativePath : relativePath,
                         new MemoryStream(Encoding.UTF8.GetBytes(text))));
@@ -887,8 +892,18 @@ namespace NetJs.Translator
 </body>
 </html>
 ";
-                    pendingTask.Add(_output.Output(global, Constants.OutputFolderName + Path.DirectorySeparatorChar + "index.html", StringToStream(index)));
+                    pendingTask.Add(_output.Output(global, Constants.OutputFolderName + Path.DirectorySeparatorChar + (fromTrimming ? "index.trim.html" : "index.html"), StringToStream(index)));
                 }
+            }
+        }
+
+        async Task TrimAssemblies()
+        {
+            if (global.MainEntry != null)
+            {
+                var trimmer = new StaticAnalysisMarkAndSweepTrimmer(global);
+                await trimmer.RunTrimming(_output, sortedOutputtedJsFiles);
+                WriteIndexHtml(true);
             }
         }
 
@@ -990,6 +1005,8 @@ namespace NetJs.Translator
             WriteOwnSymbolToDisk();
 
             WriteIndexHtml();
+
+            await TrimAssemblies();
 
             WritePackages();
 

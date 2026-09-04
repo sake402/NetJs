@@ -103,6 +103,10 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 identifierSymbol = _global.TryGetSymbol(node, this);
             }
+            if (identifierSymbol!= null)
+            {
+                MarkCurrentClosureDependsOn(identifierSymbol);
+            }
             if (identifierSymbol is INamespaceSymbol ns)
             {
                 if (currentExpressionNamespace?.Length > 0)

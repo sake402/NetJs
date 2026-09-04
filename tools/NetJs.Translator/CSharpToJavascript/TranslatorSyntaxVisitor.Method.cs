@@ -845,13 +845,13 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 CurrentTypeWriter.WriteLine(node, "{", true);
             }
-            writePrologue?.Invoke();
             bool needClosurePop = false;
             if (CurrentClosure.Syntax != node)
             {
                 OpenClosure(node);
                 needClosurePop = true;
             }
+            writePrologue?.Invoke();
             DefineParametersInClosure(parameters, methodSymbol);
             if (typeParameters != null)
             {
@@ -938,6 +938,17 @@ namespace NetJs.Translator.CSharpToJavascript
             CodeNode? suffixArguments = null,
             MethodOverloadResult overloadResult = default)
         {
+            if (method != null)
+            {
+                MarkCurrentClosureDependsOn(method);
+                if (method.TypeArguments.Length > 0)
+                {
+                    foreach (var ta in method.TypeArguments)
+                    {
+                        MarkCurrentClosureDependsOn(ta);
+                    }
+                }
+            }
             Dictionary<object, object?>? conditonalConstructorArgs = null;
             var hasConditional = method != null && _global.HasAttribute(method, typeof(ConditionalAttribute).FullName!, this, false, out conditonalConstructorArgs);
             if (hasConditional)
@@ -1427,6 +1438,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 @class = ((INamedTypeSymbol)@class).Construct(classGenericTypes);
             }
             var method = (IMethodSymbol)@class.GetMembers(methodName).Where(e => e is IMethodSymbol m && (!(methodGenericTypes?.Any() ?? false) || methodGenericTypes.Length == m.TypeArguments.Length) && (methodFilter?.Invoke(m) ?? true)).Single();
+
             if (methodGenericTypes != null)
             {
                 method = method.Construct(methodGenericTypes);
@@ -1713,13 +1725,18 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public override void VisitMethodDeclaration(MethodDeclarationSyntax node)
         {
+            var methodSymbol = (IMethodSymbol)_global.GetSymbol(node, this);
+
+            RegisterDynamicDependencies(methodSymbol);
+
             if (!ShouldExportMethod(node))
                 return;
             if (node.Modifiers.IsPartial() && node.Body == null && node.ExpressionBody == null)
                 return;
             //if (node.Body == null && node.ExpressionBody == null)
             //    return;
-            var methodSymbol = (IMethodSymbol)OpenClosure(node);// _global.TryGetTypeSymbol(node, this, out _, out _);
+            methodSymbol = (IMethodSymbol)OpenClosure(node);// _global.TryGetTypeSymbol(node, this, out _, out _);
+
             if (!_global.LinkTrimOutMethod(methodSymbol))
             {
                 //if (methodSymbol.Name== "FilterHelper")
@@ -1729,6 +1746,8 @@ namespace NetJs.Translator.CSharpToJavascript
                 bool export = _global.ShouldExportType(methodSymbol, this);
                 if (export && !external && !node.Modifiers.IsAbstract() && (node.Body != null || node.ExpressionBody != null))
                 {
+                    using var trimmer = WriteTrimmableBoundaryStart(node, methodSymbol);
+
                     if (methodSymbol.Arity > 0)
                     {
                         foreach (var tp in methodSymbol.TypeParameters)
@@ -1756,11 +1775,11 @@ namespace NetJs.Translator.CSharpToJavascript
                     //}
 
                     var methodName = metadata.OverloadName ?? Utilities.ResolveMethodName(node);
-                    if (node.ExplicitInterfaceSpecifier != null)
-                    {
-                        //var implementingType = GetTypeSymbol(node.ExplicitInterfaceSpecifier.Name);                
-                        //methodName = implementingType.ToString()!.Replace(".", "$").Replace("<", "$").Replace(">", "$") + "$" + .;
-                    }
+                    //if (node.ExplicitInterfaceSpecifier != null)
+                    //{
+                    //    //var implementingType = GetTypeSymbol(node.ExplicitInterfaceSpecifier.Name);                
+                    //    //methodName = implementingType.ToString()!.Replace(".", "$").Replace("<", "$").Replace(">", "$") + "$" + .;
+                    //}
                     //Writer.WriteLine($"{modifier}{node.Identifier.Text.Trim()}({requiredParameters}{(requiredParameters.Length > 0 ? ", " : "")}{optionalParameters})", true);
                     CurrentTypeWriter.Write(node, $"{smodifier}{modifier} {methodName}", true);
                     WriteMethodArguments(node, node.Modifiers, methodSymbol, node.TypeParameterList?.Parameters ?? default, node.ParameterList.Parameters);
@@ -1830,12 +1849,12 @@ namespace NetJs.Translator.CSharpToJavascript
                 //    //we need to create an alias to this method with the interface name
                 //    TryWriteImplementedMethod(node, node.ExplicitInterfaceSpecifier, node.ParameterList, methodSymbol);
                 //}
-
             }
             if (methodSymbol != null && methodSymbol.IsStatic && _global.HasAttribute(methodSymbol, "System.Runtime.CompilerServices.ModuleInitializerAttribute", this, false, out _))
             {
                 var metadata = _global.GetRequiredMetadata(methodSymbol);
                 _global.RegisterModuleInitializer($"{metadata.InvocationName}();");
+                _global.RegisterDependencyGraph(_global.Compilation.Assembly, methodSymbol);
             }
             CloseClosure(node);
             //base.VisitMethodDeclaration(node);
@@ -1853,6 +1872,9 @@ namespace NetJs.Translator.CSharpToJavascript
             //closures.Push(new CodeBlockClosure(global, semanticModel, node));
             string? modifier = GetMethodModifier(node, node.Modifiers, node.ReturnType);
             var operatorSymbol = OpenClosure(node);// _global.GetTypeSymbol(node, this, out _, out _);
+
+            using var trimmer = WriteTrimmableBoundaryStart(node, operatorSymbol);
+
             var metadata = _global.GetRequiredMetadata(operatorSymbol);
             CurrentTypeWriter.Write(node, $"{modifier} {metadata.OverloadName ?? node.OperatorToken.ValueText.ResolveOperatorMethodName(node.ParameterList.Parameters.Count)}(", true);
             WriteMethodDeclarationParameters(node, node.ParameterList.Parameters);
@@ -1869,6 +1891,9 @@ namespace NetJs.Translator.CSharpToJavascript
                 return;
             EnsureImported(node.Type);
             var symbol = OpenClosure(node);
+
+            using var trimmer = WriteTrimmableBoundaryStart(node, symbol);
+
             var meta = _global.GetRequiredMetadata(symbol);
             //closures.Push(new CodeBlockClosure(global, semanticModel, node));
             string? modifier = GetMethodModifier(node, node.Modifiers, node.Type);

@@ -68,9 +68,15 @@ namespace NetJs
         [Template("new {this}()")]
         public extern object New();
         [Template("new {this}({args})")]
-        public extern object New(params object[] args);
+        public extern object New([Spread] params object?[] args);
         [Template("new {this}()." + Constants.DefaultConstructorName + "()")]
         public extern object NewWithDefaultConstructor();
+        [Template("new {this}()." + Constants.DefaultConstructorName + "({arg})")]
+        public extern object NewWithDefaultConstructor(object? arg);
+        [Template("new {this}()." + Constants.DefaultConstructorName + "({arg1}, {arg2})")]
+        public extern object NewWithDefaultConstructor(object? arg1, object? arg2);
+        [Template("new {this}()." + Constants.DefaultConstructorName + "({arg1}, {arg2}, {arg3})")]
+        public extern object NewWithDefaultConstructor(object? arg1, object? arg2, object? arg3);
     }
 
     [External]

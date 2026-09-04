@@ -30,6 +30,11 @@ namespace NetJs.Compiler
             this.project = project;
         }
 
+        public void NoClean()
+        {
+            cleaned = true;
+        }
+
         public async Task Output(GlobalCompilationVisitor global, string destinationRelativePath, OneOf<string, Stream> content)
         {
             bool debugLog = false;

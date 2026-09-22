@@ -7,7 +7,12 @@
         {
             _isDynamic = true;
         }
-        public string Signature { get; set; } = default!;
+        string? ovName;
+        public string OverloadName
+        {
+            get => ovName ?? "Null"; //out yaml serializer deserializes Null string into null
+            set => ovName = value;
+        }
         ulong? _handle;
         public ulong? Handle
         {
@@ -15,15 +20,15 @@
             set
             {
                 //if (value == 0 || (value & ReflectionHandleExtension.AssemblyMask) == 0 || ((value & ReflectionHandleExtension.TypeMask) == 0 && !_isDynamic) /*|| (value & ReflectionHandleExtension.MemberMask) == 0*/)
-                    //throw new InvalidOperationException();
+                //throw new InvalidOperationException();
                 _handle = value;
             }
         }
         public List<ulong>? Dependencies { get; set; }
-        public List<ulong>? WeakDependencies { get; set; }
+        public List<(ulong Handle, KeepDependencyFlags Condition)>? WeakDependencies { get; set; }
         public override string ToString()
         {
-            return Signature;
+            return OverloadName;
         }
     }
 

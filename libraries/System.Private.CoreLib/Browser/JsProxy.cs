@@ -9,8 +9,10 @@ namespace NetJs
         //[Name("$isProxy")]
         //bool IsProxy => true;
         [Name("get")]
+        [TrimmerKeep(KeepDependencyFlags.TargetConstructorCalled)]
         public object? Get(object target, string property, object receiver);
         [Name("set")]
+        [TrimmerKeep(KeepDependencyFlags.TargetConstructorCalled)]
         public bool Set(object target, string property, object value, object receiver);
     }
 

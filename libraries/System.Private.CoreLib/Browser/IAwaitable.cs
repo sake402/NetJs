@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
@@ -56,6 +57,7 @@ namespace NetJs
     public interface IAwaitable //: IGetAwaiter
     {
         [Name("then")]
+        [TrimmerKeep]
         void Then(NativeAction<object> continuation, NativeAction<object?> onRejected)
         {
             var task = this.As<Task<object>>();

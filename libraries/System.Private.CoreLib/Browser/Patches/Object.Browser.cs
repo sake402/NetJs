@@ -487,8 +487,9 @@ namespace System
 
         //A struct whose member is only numeric type, safe to use DataView for its backing fields
         [NetJs.Name("$pureStruct")]
-        internal bool IsPureStruct => Object.GetClassPrototypeOf(this).Flags.TypeHasFlag(TypeFlagsModel.IsPureStruct);
-        internal object[] fieldsAsArray => (_fields ??= NetJs.Script.NewArray<object>()).As<object[]>();
+        internal bool IsPureStruct => GetClassPrototypeOf(this).Flags.TypeHasFlag(TypeFlagsModel.IsPureStruct);
+        [NetJs.Name(Constants.StructFieldsAsArrayName)]
+        internal object[] fieldsAsArray => (_fields ??= NetJs.Script.NewArray<object>(GetClassPrototypeOf(this).Size)).As<object[]>();
         internal DataView fieldsAsDataView => (_fields ??= new DataView(new ArrayBuffer(GetClassPrototype().Size))).As<DataView>();
         internal Array fieldsToObjectArray => IsPureStruct ? Array.from(new Uint8Array(fieldsAsDataView.buffer)) : fieldsAsArray;
 
@@ -734,7 +735,7 @@ namespace System
                         if (fieldsAsArray.Length < offset)
                             NetJs.Script.Write("this.$fields.length = offset");
                         var sourceFields = value._fields;
-                        if (sourceFields.As<object>()["$isProxy"].As<bool>() == true)
+                        if (sourceFields != null && sourceFields.As<object>()["$isProxy"].As<bool>() == true)
                         {
                             throw null;
                         }
@@ -742,7 +743,7 @@ namespace System
                         //{
                         //    throw null;
                         //}
-                        fieldsAsArray.Splice(offset, 0, sourceFields);
+                        fieldsAsArray.Splice(offset, 0, value.fieldsAsArray);
                         return;
                     }
                 }

@@ -301,6 +301,10 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             var constructorSymbol = (IMethodSymbol)_global.GetSymbol(node, this);
 
+            if (constructorSymbol.ContainingType.Name== "DependencyInjectionEventSource")
+            {
+
+            }
             RegisterDynamicDependencies(constructorSymbol);
 
             if (node.Modifiers.IsExtern())
@@ -340,6 +344,7 @@ namespace NetJs.Translator.CSharpToJavascript
             CodeNode? suffixArguments = null,
             MethodOverloadResult overloadResult = default)
         {
+            MarkCurrentClosureDependsOn(targetConstructor);
             var typeMetadata = typeSymbol.Kind != SymbolKind.TypeParameter ? _global.GetRequiredMetadata(typeSymbol) : null;
             void CallDefaultConstructor()
             {
@@ -461,6 +466,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     {
                         var addMethod = instanceType.GetMembers("set_Item").SingleOrDefault(e => e is IMethodSymbol ms && ms.Parameters.Count() == 1 + imp.ArgumentList.Arguments.Count) ??
                             instanceType.GetMembers("Add").Single(e => e is IMethodSymbol ms && ms.Parameters.Count() == 1 + imp.ArgumentList.Arguments.Count);
+                        MarkCurrentClosureDependsOn(addMethod);
                         var metadata = _global.GetRequiredMetadata(addMethod);
                         CurrentTypeWriter.Write(node, $"{instanceName}.{metadata.OverloadName}(", true);
                         int ix = 0;
@@ -491,6 +497,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 else if (expression is InitializerExpressionSyntax init)
                 {
                     var addMethod = instanceType.GetMembers("Add").Single(e => e is IMethodSymbol ms && ms.Parameters.Count() == init.Expressions.Count);
+                    MarkCurrentClosureDependsOn(addMethod);
                     var metadata = _global.GetRequiredMetadata(addMethod);
                     CurrentTypeWriter.Write(node, $"{instanceName}.{metadata.OverloadName}(", true);
                     int ix = 0;
@@ -507,6 +514,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 else if (expression is ExpressionElementSyntax element)
                 {
                     var addMethod = instanceType.GetMembers("Add").Single(e => e is IMethodSymbol ms && ms.Parameters.Count() == 1);
+                    MarkCurrentClosureDependsOn(addMethod);
                     var metadata = _global.GetRequiredMetadata(addMethod);
                     CurrentTypeWriter.Write(node, $"{instanceName}.{metadata.OverloadName}(", true);
                     Visit(element);
@@ -518,6 +526,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     var addRangeMethod = instanceType.GetMembers("AddRange").SingleOrDefault(e => e is IMethodSymbol ms && ms.Parameters.Count() == 1);
                     if (addRangeMethod != null)
                     {
+                        MarkCurrentClosureDependsOn(addRangeMethod);
                         var metadata = _global.GetRequiredMetadata(addRangeMethod);
                         CurrentTypeWriter.Write(node, $"{instanceName}.{metadata.OverloadName}(", true);
                         Visit(spread.Expression);
@@ -526,6 +535,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     else
                     {
                         var addMethod = (IMethodSymbol)instanceType.GetMembers("Add").Single(e => e is IMethodSymbol ms && ms.Parameters.Count() == 1);
+                        MarkCurrentClosureDependsOn(addMethod);
                         var metadata = _global.GetRequiredMetadata(addMethod);
                         CurrentTypeWriter.Write(node, "", true);
                         WriteMethodInvocation(node,
@@ -585,7 +595,6 @@ namespace NetJs.Translator.CSharpToJavascript
             if (type == null && typeSymbol == null)
                 throw new InvalidOperationException("ONE of type or typeSymbol is required");
             typeSymbol ??= _global.GetTypeSymbol(type!, this)!;
-
             MarkCurrentClosureDependsOn(typeSymbol);
 
             if (typeSymbol.TypeKind == TypeKind.Delegate)

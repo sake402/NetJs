@@ -442,6 +442,8 @@ namespace NetJs.Translator.CSharpToJavascript
                             }
                             WrapStatementsInExpression(node, () =>
                             {
+                                if (typeSymbol != null)
+                                    MarkCurrentClosureDependsOnDeconstructTypeMember(typeSymbol);
                                 CurrentTypeWriter.Write(node, _global.GlobalName, true);
                                 CurrentTypeWriter.Write(node, ".");
                                 CurrentTypeWriter.Write(node, Constants.DestructureName);
@@ -467,6 +469,8 @@ namespace NetJs.Translator.CSharpToJavascript
                     }
                     else
                     {
+                        if (typeSymbol != null)
+                            MarkCurrentClosureDependsOnDeconstructTypeMember(typeSymbol);
                         CurrentTypeWriter.InsertAbove(node, () =>
                         {
                             CurrentTypeWriter.Write(node, "let [ ");

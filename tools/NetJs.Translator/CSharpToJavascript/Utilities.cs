@@ -682,7 +682,36 @@ namespace NetJs.Translator.CSharpToJavascript
         //    }
         //    return new string(newChars, 0, cLen);
         //}
+        private static bool IsFromSource(this ISymbol symbol)
+        {
+            return symbol.Locations.Any(loc => loc.IsInSource);
+        }
+        public static bool IsFileLocalCrossPlatform(this INamedTypeSymbol symbol)
+        {
+            if (symbol.IsFileLocal)
+            {
+                return true;
+            }
 
+            if (symbol.IsFromSource() == false)
+            {
+                // File-local types emitted to metadata are always enclosed in '<' and '>'
+                // and contain a double underscore separating the file token from the original type name.
+                string name = symbol.MetadataName;
+
+                return name.StartsWith("<") &&
+                       name.Contains(">") &&
+                       name.Contains("__");
+            }
+
+            return false;
+            //return symbol.GetAttributes().Any(attr =>
+            //    attr.AttributeClass?.ToDisplayString() == "System.Runtime.CompilerServices.CompilerFeatureRequiredAttribute" &&
+            //    attr.ConstructorArguments.Length > 0 &&
+            //    attr.ConstructorArguments[0].Value is string featureName &&
+            //    featureName == "FileLocalTypes"
+            //);
+        }
         static ThreadLocal<StringBuilder> _discardTypeParameter = new ThreadLocal<StringBuilder>(() => new StringBuilder());
         private static readonly Regex FileScopeRegex = new Regex(@"^<(?<Assembly>[^>]+)>F(?<FileHash>[0-9A-F]+)__(?<TypeName>.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         public static void __CreateSignatures((StringBuilder WithTypeParameter, StringBuilder WithoutTypeParameter) builder, ISymbol current, GlobalCompilationVisitor global, bool withGlobalNamespace = true)
@@ -725,7 +754,7 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 void TryWriteFileScopedNameHash(ISymbol lcurrent)
                 {
-                    if (lcurrent.Kind == SymbolKind.NamedType && ((INamedTypeSymbol)lcurrent).IsFileLocal)
+                    if (lcurrent.Kind == SymbolKind.NamedType && ((INamedTypeSymbol)lcurrent).IsFileLocalCrossPlatform())
                     {
                         var match = FileScopeRegex.Match(((INamedTypeSymbol)lcurrent).MetadataName);
                         if (match.Success)
@@ -3905,88 +3934,96 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 return default;
             }
-            ISymbol? explicitInterfaceImplementation = null;
-            List<ISymbol>? baseMemberImplementation = null;
-            if (symbol.Kind == SymbolKind.Method && symbol is IMethodSymbol ms)
-            {
-                if (ms.ExplicitInterfaceImplementations.Any())
-                {
-                    explicitInterfaceImplementation = ms.ExplicitInterfaceImplementations[0];
-                }
-                else if (ms.IsOverride)
-                {
-                    var @base = ms;
-                    while (@base.IsOverride)
-                    {
-                        @base = @base.OverriddenMethod!;
-                    }
-                    baseMemberImplementation ??= new();
-                    baseMemberImplementation.Add(@base);
-                }
-            }
-            else if (symbol.Kind == SymbolKind.Property && symbol is IPropertySymbol ps)
-            {
-                if (ps.ExplicitInterfaceImplementations.Any())
-                {
-                    explicitInterfaceImplementation = ps.ExplicitInterfaceImplementations[0];
-                }
-                else if (ps.IsOverride)
-                {
-                    var @base = ps;
-                    while (@base.IsOverride)
-                    {
-                        @base = @base.OverriddenProperty!;
-                    }
-                    baseMemberImplementation ??= new();
-                    baseMemberImplementation.Add(@base);
-                }
-            }
-            else if (symbol.Kind == SymbolKind.Event && symbol is IEventSymbol es)
-            {
-                if (es.ExplicitInterfaceImplementations.Any())
-                {
-                    explicitInterfaceImplementation = es.ExplicitInterfaceImplementations[0];
-                }
-                else if (es.IsOverride)
-                {
-                    var @base = es;
-                    while (@base.IsOverride)
-                    {
-                        @base = @base.OverriddenEvent!;
-                    }
-                    baseMemberImplementation ??= new();
-                    baseMemberImplementation.Add(@base);
-                }
-            }
-            SymbolMetadata? explicitInterfaceMetadata = null;
-            IEnumerable<SymbolMetadata>? baseMemberMetadata = null;
+            //ISymbol? explicitInterfaceImplementation = null;
+            //List<ISymbol>? baseMemberImplementation = null;
+            //if (symbol.Kind == SymbolKind.Method && symbol is IMethodSymbol ms)
+            //{
+            //    if (ms.ExplicitInterfaceImplementations.Any())
+            //    {
+            //        explicitInterfaceImplementation = ms.ExplicitInterfaceImplementations[0];
+            //    }
+            //    else if (ms.IsOverride)
+            //    {
+            //        var @base = ms;
+            //        while (@base.IsOverride)
+            //        {
+            //            @base = @base.OverriddenMethod!;
+            //        }
+            //        baseMemberImplementation ??= new();
+            //        baseMemberImplementation.Add(@base);
+            //    }
+            //}
+            //else if (symbol.Kind == SymbolKind.Property && symbol is IPropertySymbol ps)
+            //{
+            //    if (ps.ExplicitInterfaceImplementations.Any())
+            //    {
+            //        explicitInterfaceImplementation = ps.ExplicitInterfaceImplementations[0];
+            //    }
+            //    else if (ps.IsOverride)
+            //    {
+            //        var @base = ps;
+            //        while (@base.IsOverride)
+            //        {
+            //            @base = @base.OverriddenProperty!;
+            //        }
+            //        baseMemberImplementation ??= new();
+            //        baseMemberImplementation.Add(@base);
+            //    }
+            //}
+            //else if (symbol.Kind == SymbolKind.Event && symbol is IEventSymbol es)
+            //{
+            //    if (es.ExplicitInterfaceImplementations.Any())
+            //    {
+            //        explicitInterfaceImplementation = es.ExplicitInterfaceImplementations[0];
+            //    }
+            //    else if (es.IsOverride)
+            //    {
+            //        var @base = es;
+            //        while (@base.IsOverride)
+            //        {
+            //            @base = @base.OverriddenEvent!;
+            //        }
+            //        baseMemberImplementation ??= new();
+            //        baseMemberImplementation.Add(@base);
+            //    }
+            //}
+            //SymbolMetadata? explicitInterfaceMetadata = null;
+            //IEnumerable<SymbolMetadata>? baseMemberMetadata = null;
             string start, end;
-            if (explicitInterfaceImplementation != null)
-            {
-                explicitInterfaceMetadata = global.GetRequiredMetadata(explicitInterfaceImplementation);
-                start = $"//--TRIMMABLE-BOUNDARY-START(ALL, {metadata.Export.Handle}, {explicitInterfaceMetadata.Export.Handle})";
-            }
-            else if (baseMemberImplementation != null)
-            {
-                baseMemberMetadata = baseMemberImplementation.Select(c => global.GetRequiredMetadata(c));
-                start = $"//--TRIMMABLE-BOUNDARY-START(ALL, {metadata.Export.Handle}, {string.Join(", ", baseMemberMetadata.Select(c => c.Export.Handle))})";
-            }
-            else
+            //if (explicitInterfaceImplementation != null)
+            //{
+            //    explicitInterfaceMetadata = global.GetRequiredMetadata(explicitInterfaceImplementation);
+            //    start = $"//--TRIMMABLE-BOUNDARY-START(ALL, {metadata.Export.Handle}, {explicitInterfaceMetadata.Export.Handle})";
+            //}
+            //else if (baseMemberImplementation != null)
+            //{
+            //    baseMemberMetadata = baseMemberImplementation.Select(c => global.GetRequiredMetadata(c));
+            //    start = $"//--TRIMMABLE-BOUNDARY-START(ALL, {metadata.Export.Handle}, {string.Join(", ", baseMemberMetadata.Select(c => c.Export.Handle))})";
+            //}
+            //else
             {
                 start = $"//--TRIMMABLE-BOUNDARY-START({metadata.Export.Handle})";
             }
-            if (explicitInterfaceMetadata != null)
-            {
-                end = $"//--TRIMMABLE-BOUNDARY-END(ALL, {metadata.Export.Handle}, {explicitInterfaceMetadata.Export.Handle})";
-            }
-            else if (baseMemberMetadata != null)
-            {
-                end = $"//--TRIMMABLE-BOUNDARY-END(ALL, {metadata.Export.Handle}, {string.Join(", ", baseMemberMetadata.Select(c => c.Export.Handle))})";
-            }
-            else
+            //if (explicitInterfaceMetadata != null)
+            //{
+            //    end = $"//--TRIMMABLE-BOUNDARY-END(ALL, {metadata.Export.Handle}, {explicitInterfaceMetadata.Export.Handle})";
+            //}
+            //else if (baseMemberMetadata != null)
+            //{
+            //    end = $"//--TRIMMABLE-BOUNDARY-END(ALL, {metadata.Export.Handle}, {string.Join(", ", baseMemberMetadata.Select(c => c.Export.Handle))})";
+            //}
+            //else
             {
                 end = $"//--TRIMMABLE-BOUNDARY-END({metadata.Export.Handle})";
             }
+            return (start, end);
+        }
+
+        public static (string Start, string End) TrimmableBoundary(this string marker, GlobalCompilationVisitor global)
+        {
+            string start, end;
+            start = $"//--TRIMMABLE-BOUNDARY-START({marker})";
+            end = $"//--TRIMMABLE-BOUNDARY-END({marker})";
             return (start, end);
         }
     }

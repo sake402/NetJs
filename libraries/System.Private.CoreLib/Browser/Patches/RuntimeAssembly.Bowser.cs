@@ -291,9 +291,9 @@ namespace System.Reflection
             //dont try so set inner types, they are managed and readonly static within the containing type
             if (!isNestedClass)
             {
-                static NativeFunction<Union<TypePrototype, TypePrototypeProvider>, bool>? CreateCompleter(RuntimeType type, RuntimeAssembly_Partial assembly)
+                static NativeFunction<Union<TypePrototype, TypePrototypeProvider>, bool>? create_type_completer(RuntimeType type, RuntimeAssembly_Partial assembly)
                 {
-                    bool Completer(Union<TypePrototype, TypePrototypeProvider> _)
+                    bool type_completer(Union<TypePrototype, TypePrototypeProvider> _)
                     {
                         if (assembly._isCompleted && !type._isCompleted)
                         {
@@ -301,11 +301,11 @@ namespace System.Reflection
                         }
                         return type._isCompleted;
                     }
-                    return Completer;
+                    return type_completer;
                 }
                 //Dont initialize type until they are actually accessed
                 //Dont static initialize open generic types
-                prototypeRegistry.SetNested(jsName, isGenericDefinition ? provider : prototype, onAccess: CreateCompleter(type, this));
+                prototypeRegistry.SetNested(jsName, isGenericDefinition ? provider : prototype, onAccess: create_type_completer(type, this));
             }
             if (!isInterfaceMixin && !isGenericDefinition)
                 AppDomain.SetupDefaults(type);

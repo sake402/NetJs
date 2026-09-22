@@ -34,7 +34,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
             //var enumerationRhsType = GetExpressionReturnSymbol(node.Expression);
 
-            ITypeSymbol? enumeratorItemSymbol = null;
+            ITypeSymbol? enumeratorItemTypeSymbol = null;
             string? enumeratorMoveNextInvocationName = null;
             string? enumeratorCurrentInvocationName = null;
 
@@ -59,14 +59,14 @@ namespace NetJs.Translator.CSharpToJavascript
                     enumeratorCurrentInvocationName = GetMemberName(enumeratorTypeSymbol, "Current");
                     enumeratorMoveNext = (IMethodSymbol?)(enumeratorTypeSymbol.GetMembers(isAsync ? "MoveNextAsync" : "MoveNext", _global).FirstOrDefault());
                     enumeratorCurrent = (IPropertySymbol?)(enumeratorTypeSymbol.GetMembers("Current", _global).FirstOrDefault());
-                    enumeratorItemSymbol ??= enumeratorCurrent?.Type;
+                    enumeratorItemTypeSymbol ??= enumeratorCurrent?.Type;
                 }
                 else
                 {
                     if (enumerationTargetRhsTypeSymbol.IsArray(out var elementType))
                     {
-                        enumeratorItemSymbol = elementType;
-                        iEnumerableTTypeSymbol = ((INamedTypeSymbol)iEnumerableTTypeSymbol).Construct([enumeratorItemSymbol]);
+                        enumeratorItemTypeSymbol = elementType;
+                        iEnumerableTTypeSymbol = ((INamedTypeSymbol)iEnumerableTTypeSymbol).Construct([enumeratorItemTypeSymbol]);
                     }
                     else if (!enumerationTargetRhsTypeSymbol.IsEnumerable(out _) &&
                         !enumerationTargetRhsTypeSymbol.IsEnumerable() &&
@@ -74,18 +74,18 @@ namespace NetJs.Translator.CSharpToJavascript
                     {
                         var ienumerable = enumerationTargetRhsTypeSymbol.AllInterfaces.FirstOrDefault(o => o.IsEnumerable(out _) || o.IsAsyncEnumerable(out _)) ??
                             enumerationTargetRhsTypeSymbol.AllInterfaces.First(o => o.IsEnumerable() || o.IsAsyncEnumerable(out _));
-                        enumeratorItemSymbol = ienumerable.TypeArguments.FirstOrDefault() ?? _global.Compilation.ObjectType;
-                        iEnumerableTTypeSymbol = ((INamedTypeSymbol)iEnumerableTTypeSymbol).Construct([enumeratorItemSymbol]);
+                        enumeratorItemTypeSymbol = ienumerable.TypeArguments.FirstOrDefault() ?? _global.Compilation.ObjectType;
+                        iEnumerableTTypeSymbol = ((INamedTypeSymbol)iEnumerableTTypeSymbol).Construct([enumeratorItemTypeSymbol]);
                     }
                     else if (enumerationTargetRhsTypeSymbol.IsEnumerable())
                     {
-                        enumeratorItemSymbol = _global.SystemObject;
+                        enumeratorItemTypeSymbol = _global.SystemObject;
                         iEnumerableTTypeSymbol = _global.SystemIEnumerable;
                     }
                     else
                     {
-                        enumeratorItemSymbol = ((INamedTypeSymbol)enumerationTargetRhsTypeSymbol).TypeArguments[0];
-                        iEnumerableTTypeSymbol = ((INamedTypeSymbol)iEnumerableTTypeSymbol).Construct([enumeratorItemSymbol]);
+                        enumeratorItemTypeSymbol = ((INamedTypeSymbol)enumerationTargetRhsTypeSymbol).TypeArguments[0];
+                        iEnumerableTTypeSymbol = ((INamedTypeSymbol)iEnumerableTTypeSymbol).Construct([enumeratorItemTypeSymbol]);
                     }
 
                     INamedTypeSymbol enumeratorSymbol;
@@ -96,7 +96,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     else
                     {
                         enumeratorSymbol = isAsync ? _global.SystemIAsyncEnumeratorT : _global.SystemIEnumeratorT;
-                        enumeratorSymbol = enumeratorSymbol.Construct([enumeratorItemSymbol]);
+                        enumeratorSymbol = enumeratorSymbol.Construct([enumeratorItemTypeSymbol]);
                     }
 
                     iEnumerableTGetEnumerator = (IMethodSymbol)(iEnumerableTTypeSymbol.GetMembers(isAsync ? "GetAsyncEnumerator" : "GetEnumerator", _global).First());
@@ -127,11 +127,13 @@ namespace NetJs.Translator.CSharpToJavascript
 
             if (directGetEnumerator != null)
             {
+                MarkCurrentClosureDependsOn(directGetEnumerator);
                 WriteMethodInvocation(node, directGetEnumerator, null, null, node.Expression, iEnumerableTTypeSymbol);
                 CurrentTypeWriter.WriteLine(node, $";");
             }
             else
             {
+                MarkCurrentClosureDependsOn(iEnumerableTGetEnumerator);
                 WriteVariableAssignment(node, null, iEnumerableTTypeSymbol, null, node.Expression, enumerationTargetRhsTypeSymbol);
                 //Visit(node.Expression);
                 CurrentTypeWriter.Write(node, $".{getEnumeratorInvocationName}(");
@@ -154,6 +156,10 @@ namespace NetJs.Translator.CSharpToJavascript
             //    CurrentTypeWriter.WriteLine(node, $")");
             //}
             //else
+            if (enumeratorMoveNext != null)
+                MarkCurrentClosureDependsOn(enumeratorMoveNext);
+            if (enumeratorCurrent != null)
+                MarkCurrentClosureDependsOn(enumeratorCurrent);
             CurrentTypeWriter.WriteLine(node, $"while ({(isAsync ? "await " : "")}{enumarableName}.{enumeratorMoveNextInvocationName}())", true);
             //if (!node.Statement.IsKind(SyntaxKind.Block))
             CurrentTypeWriter.WriteLine(node, "{", true);
@@ -188,6 +194,10 @@ namespace NetJs.Translator.CSharpToJavascript
                 CurrentTypeWriter.Write(node, "(");
                 CurrentTypeWriter.Write(node, readCurrent);
                 CurrentTypeWriter.WriteLine(node, ");");
+                if (enumeratorItemTypeSymbol != null)
+                {
+                    MarkCurrentClosureDependsOnDeconstructTypeMember(enumeratorItemTypeSymbol);
+                }
             }
             else if (variable is TupleExpressionSyntax tp)
             {

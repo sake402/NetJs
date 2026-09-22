@@ -32,10 +32,38 @@
       "commandName": "Project",
       "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Collections\\NetJs.System.Collections.csproj\" -c \"Debug\" -s -f"
     },
+    "System.Linq": {
+      "commandName": "Project",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Linq\\NetJs.System.Linq.csproj\" -c \"Debug\" -s -f"
+    },
+    "System.Text.Json": {
+      "commandName": "Project",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Text.Json\\NetJs.System.Text.Json.csproj\" -c \"Debug\" -s -f"
+    },
+    "Microsoft.Extensions.DependencyInjection": {
+      "commandName": "Project",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\Microsoft.Extensions.DependencyInjection\\NetJs.Microsoft.Extensions.DependencyInjection.csproj\" -c \"Debug\" -s -f"
+    },
+    "Microsoft.AspNetCore.Components": {
+      "commandName": "Project",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\Microsoft.AspNetCore.Components\\NetJs.Microsoft.AspNetCore.Components.csproj\" -c \"Debug\" -s -f"
+    },
+    "Microsoft.AspNetCore.Components.Authorization": {
+      "commandName": "Project",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\Microsoft.AspNetCore.Components.Authorization\\NetJs.Microsoft.AspNetCore.Components.Authorization.csproj\" -c \"Debug\" -s -f"
+    },
+    "Microsoft.JSInterop": {
+      "commandName": "Project",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\Microsoft.JSInterop\\NetJs.Microsoft.JSInterop.csproj\" -c \"Debug\" -s -f"
+    },
     "NetJs.TestApp": {
       "commandName": "Project",
       "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\tests\\NetJs.Tests.App\\NetJs.Tests.App.csproj\" -c \"Debug\" -s -f",
       "workingDirectory": "E:\\Apps\\NetJs"
+    },
+    "NetJs.All": {
+      "commandName": "Project",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\NetJs.All\\NetJs.All.csproj\" -c \"Debug\" -s -f"
     },
     "NetJs.Baremetal": {
       "commandName": "Project",

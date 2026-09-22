@@ -170,6 +170,8 @@
         [InlineConst]
         public const string StructFieldsLayoutName = "$fields";
         [InlineConst]
+        public const string StructFieldsAsArrayName = "$fieldsArray";
+        [InlineConst]
         public const string StaticStructFieldsLayoutName = "$sfields";
         [InlineConst]
         public const string SuperClassAccessName = "$super";

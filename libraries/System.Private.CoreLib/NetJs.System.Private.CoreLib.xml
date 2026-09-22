@@ -292,6 +292,11 @@
             TemplateAttribute is instruction to replace method calling (in expression) by required code
             </summary>
         </member>
+        <member name="T:NetJs.TrimmerKeepAttribute">
+            <summary>
+            Specify a symbol be not trimmed even if not referenced
+            </summary>
+        </member>
         <member name="T:NetJs.UnboxAttribute">
             <summary>
             For classes marked with [External], controls unboxing for method parameters of type object.

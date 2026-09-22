@@ -8,37 +8,38 @@ namespace System.Collections
     public partial interface IEnumerable_Partial
     {
         [NetJs.Name("[Symbol.iterator]")]
-        public IGenerator<object> Iterator()
+        [NetJs.TrimmerKeep]
+        public IGenerator<object?> Iterator()
         {
             if (Array.Is(this, null))
             {
-                return NetJs.Script.Write<IGenerator<object>>("Array.prototype[Symbol.iterator].call(this)"); //Native array iterator will be faster
+                return NetJs.Script.Write<IGenerator<object?>>("Array.prototype[Symbol.iterator].call(this)"); //Native array iterator will be faster
             }
             return new IEnumerableIterator(this.As<IEnumerable>());
         }
     }
 
     [NetJs.Reflectable(false)]
-    class IEnumerableIterator : IGenerator<object>
+    class IEnumerableIterator : IGenerator<object?>
     {
         IEnumerator enumerator;
 
-        public IEnumerableIterator(IEnumerable enumerator)
+        public IEnumerableIterator(IEnumerable enumerable)
         {
-            this.enumerator = enumerator.GetEnumerator();
+            this.enumerator = enumerable.GetEnumerator();
         }
 
         bool alreadyDone;
-        public IGeneratorIteratorResult<object> Next()
+        public IGeneratorIteratorResult<object?> Next()
         {
             if (alreadyDone)
-                return new GeneratorIteratorResult<object> { Done = true };
+                return new GeneratorIteratorResult<object?> { Done = true };
             var nxt = enumerator.MoveNext();
             alreadyDone = !nxt;
-            return new GeneratorIteratorResult<object>
+            return new GeneratorIteratorResult<object?>
             {
                 Done = alreadyDone,
-                Value = nxt ? enumerator.Current : null!
+                Value = nxt ? enumerator.Current : null
             };
         }
     }

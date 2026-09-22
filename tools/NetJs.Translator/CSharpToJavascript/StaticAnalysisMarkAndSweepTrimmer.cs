@@ -2,7 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Resources;
 using System.Text;
 using static System.Net.Mime.MediaTypeNames;
 
@@ -12,7 +14,7 @@ namespace NetJs.Translator.CSharpToJavascript
     {
         GlobalCompilationVisitor _global;
         Dictionary<string, (HashSet<ulong> Sweep, HashSet<ulong> Keep)> states;
-        int kept;
+        HashSet<ISymbol> kept = new HashSet<ISymbol>(SymbolEqualityComparer.Default);
         public List<ISymbol> RootSymbols { get; } = new List<ISymbol>();
         Dictionary<ulong, SymbolMetadata> metadataByHandle;
         public List<ulong> ForceRemove { get; } = new List<ulong>();
@@ -22,6 +24,8 @@ namespace NetJs.Translator.CSharpToJavascript
                 RootSymbols.Add(global.MainEntry);
             //RootSymbols.Add(global.Compilation.Assembly);
             _global = global;
+            var blazorIComponent = _global.TryGetSymbol("Microsoft.AspNetCore.Components.IComponent", null);
+            var layoutComponentBase = _global.TryGetSymbol("Microsoft.AspNetCore.Components.LayoutComponentBase", null);
             states = global.AllSymbols
                 .Where(e =>
                 {
@@ -37,15 +41,63 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     var keepLookup = e.ToLookup(eee =>
                     {
+                        //Root all blazor page components constructor
+                        if (blazorIComponent != null)
+                        {
+                            bool InheritsFromLayoutComponentBase(INamedTypeSymbol? nt)
+                            {
+                                while(nt != null)
+                                {
+                                    if (SymbolEqualityComparer.Default.Equals(nt, layoutComponentBase))
+                                        return true;
+                                    nt = nt.BaseType;
+                                }
+                                return false;
+                            }
+                            var isImportedType = !SymbolEqualityComparer.Default.Equals(_global.Compilation.Assembly, eee.Value.Symbol.ContainingAssembly);
+                            if (eee.Value.Symbol.Kind == SymbolKind.Method &&
+                                ((IMethodSymbol)eee.Value.Symbol).MethodKind == MethodKind.Constructor &&
+                                eee.Value.Symbol.ContainingType.AllInterfaces.Contains(blazorIComponent, SymbolEqualityComparer.Default))
+                            {
+                                if (_global.HasAttribute(eee.Value.Symbol.ContainingType, "Microsoft.AspNetCore.Components.RouteAttribute", null, false, out _)||
+                                    InheritsFromLayoutComponentBase(eee.Value.Symbol.ContainingType))
+                                {
+                                    RootSymbols.Add(eee.Value.Symbol);
+                                    RootSymbols.Add(eee.Value.Symbol.ContainingType);
+                                    return true;
+                                }
+                            }
+                        }
                         if (global.HasAttribute(eee.Value.Symbol, typeof(NameAttribute).FullName!, null, false, out var args))
                         {
                             var name = args[0]!.ToString()!;
                             if (name.StartsWith('$'))
                             {
-                                //this symbol is expected to be accessible externally, mark it as root so all its dependencies are not trimmed
+                                //All dollar prefixed symbol are expected to be accessible externally, mark it as root so all its dependencies are not trimmed
                                 RootSymbols.Add(eee.Value.Symbol);
                                 return true;
                             }
+                        }
+                        if (global.HasAttribute(eee.Value.Symbol, typeof(TrimmerKeepAttribute).FullName!, null, false, out var argss))
+                        {
+                            //if (eee.Value.Symbol.Kind == SymbolKind.NamedType &&
+                            //    argss.Count == 2 &&
+                            //    argss[0] is int filter &&
+                            //    filter != (int)DynamicallyAccessedMemberTypes.All)
+                            //{
+                            //    RootSymbols.Add(eee.Value.Symbol);
+                            //    var members = ((INamedTypeSymbol)eee.Value.Symbol).GetMembers();
+                            //    foreach (var member in members)
+                            //    {
+                            //        if (_global.MatchMemberTypes(member, (DynamicallyAccessedMemberTypes)filter))
+                            //        {
+                            //            RootSymbols.Add(member);
+                            //        }
+                            //    }
+                            //    return true;
+                            //}
+                            RootSymbols.Add(eee.Value.Symbol);
+                            return true;
                         }
                         return false;
                     });
@@ -53,7 +105,8 @@ namespace NetJs.Translator.CSharpToJavascript
                     var sweep = keepLookup[false].Select(e => e.Value.Export.Handle ?? 0).ToHashSet();
                     return (sweep, keep);
                 });
-            metadataByHandle = global.AllSymbols.Where(e => e.Value.Export.Handle != null && e.Value.Export.Handle != 0).ToDictionary(e => e.Value.Export.Handle!.Value, e => e.Value);
+            //Dynamic type has a handle of 1(AssemblyHandle|TypeHandle) too because its typehandle is zero
+            metadataByHandle = global.AllSymbols.Where(e => !SymbolEqualityComparer.Default.Equals(e.Value.Symbol, global.SystemDynamic) && e.Value.Export.Handle != null && e.Value.Export.Handle != 0).ToDictionary(e => e.Value.Export.Handle!.Value, e => e.Value);
         }
 
         void Log(SymbolMetadata metadata)
@@ -189,38 +242,192 @@ namespace NetJs.Translator.CSharpToJavascript
             }
         }
 
+        bool IsKept(ulong handle)
+        {
+            if (metadataByHandle.TryGetValue(handle, out var metadata))
+            {
+                var asm = metadata.Symbol.ContainingAssembly ?? metadata.Symbol as IAssemblySymbol;
+                return states[asm.Name].Keep.Contains(handle);
+            }
+            return false;
+        }
+
         void Keep(SymbolMetadata metadata)
         {
-            if (metadata.Export.Handle == 1)
-            {
-
-            }
             var asm = metadata.Symbol.ContainingAssembly ?? metadata.Symbol as IAssemblySymbol;
             if (asm == null)
                 return;
-            if (states[asm.Name].Keep.Contains(metadata.Export.Handle!.Value)) //already processed symbol, avoid recursion
+            if (!kept.Add(metadata.Symbol)) //already processed symbol, avoid recursion
                 return;
             states[asm.Name].Sweep.Remove(metadata.Export.Handle!.Value);
             states[asm.Name].Keep.Add(metadata.Export.Handle.Value);
             if (metadata.Symbol is IAssemblySymbol iasm)
             {
                 //dependencies of an assembly are its attribute type, keep them
-                var amete = _global.GetRequiredMetadata(iasm).Export;
-                if (amete.Dependencies != null)
+                var assemblyMetadata = _global.GetRequiredMetadata(iasm).Export;
+                if (assemblyMetadata.Dependencies != null)
                 {
-                    foreach (var a in amete.Dependencies)
+                    foreach (var a in assemblyMetadata.Dependencies)
                     {
                         Keep(a);
                     }
                 }
             }
-            kept++;
+            //TryKeepOverrideMembers(metadata);
         }
+
+        bool ConstructorKept(INamedTypeSymbol typeSymbol)
+        {
+            if (typeSymbol.IsValueType && kept.Contains(typeSymbol)) //keep default constructor in primitive type like byte, char as long as the type is kept
+                return true;
+            if (typeSymbol.IsArray(out _))
+                return true;
+            var constructors = typeSymbol.InstanceConstructors;
+            for (int i = 0; i < constructors.Length; i++)
+            {
+                if (kept.Contains(constructors[i]))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        void TryKeepOverrideMembers(SymbolMetadata virtualMember)
+        {
+            var symbol = virtualMember.Symbol;
+            if (symbol == null) return;
+
+            var containingType = symbol.ContainingType;
+            if (containingType == null) return;
+
+            if (symbol.Name.EndsWith("MoveNext") && containingType.Name == "IEnumerator")
+            {
+
+            }
+            // Fast-path short circuit
+            bool isPolymorphic = symbol.IsVirtual || symbol.IsAbstract || symbol.IsOverride || symbol.ContainingType.TypeKind == TypeKind.Interface;
+            //bool isInterfaceMember = containingType.TypeKind == TypeKind.Interface;
+            //bool implicitlyImplementsInterfaceMember = symbol.ContainingType
+            //    .AllInterfaces
+            //    .Any(i => i.GetMembers().Any(m => SymbolEqualityComparer.Default.Equals(symbol.ContainingType.FindImplementationForInterfaceMember(m)?.OriginalDefinition, symbol.OriginalDefinition)));
+
+            if (!isPolymorphic) return;
+
+            // Get only the types that actually implement/inherit the containing type
+            if (!inheritanceCache.TryGetValue(containingType.OriginalDefinition, out var inheritors))
+            {
+                return; // No one inherits or implements this type in the entire codebase
+            }
+
+            // Scan ONLY the valid inheritors instead of thousands of unrelated global types
+            foreach (var inheritor in inheritors)
+            {
+                ISymbol? implementationSymbol = null;
+
+                if (symbol.ContainingType.TypeKind == TypeKind.Interface)
+                {
+                    ISymbol iSymbol = symbol;
+                    if (symbol.ContainingType.IsGenericType && SymbolEqualityComparer.Default.Equals(iSymbol.OriginalDefinition, iSymbol))
+                    {
+                        var symbolContainers = inheritor.AllInterfaces.Where(e => SymbolEqualityComparer.Default.Equals(e.OriginalDefinition, symbol.ContainingType));
+                        iSymbol = symbolContainers.SelectMany(e => e.GetMembers()).FirstOrDefault(m => SymbolEqualityComparer.Default.Equals(m.OriginalDefinition, symbol)) ?? iSymbol;
+                    }
+                    //Interface mapping lookup
+                    implementationSymbol = inheritor.FindImplementationForInterfaceMember(iSymbol);
+                }
+                else
+                {
+                    // Targeted Member Lookup (No strings, direct kind and origin match)
+                    var members = inheritor.GetMembers(symbol.Name);
+                    for (int i = 0; i < members.Length; i++)
+                    {
+                        var m = members[i];
+                        if (m.Kind != symbol.Kind) continue;
+
+                        if (m.Kind == SymbolKind.Method && m is IMethodSymbol method)
+                        {
+                            var current = method.OverriddenMethod;
+                            while (current != null)
+                            {
+                                if (SymbolEqualityComparer.Default.Equals(current.OriginalDefinition, symbol.OriginalDefinition))
+                                {
+                                    implementationSymbol = m;
+                                    break;
+                                }
+                                current = current.OverriddenMethod;
+                            }
+                        }
+                        else if (m.Kind == SymbolKind.Property && m is IPropertySymbol property)
+                        {
+                            var current = property.OverriddenProperty;
+                            while (current != null)
+                            {
+                                if (SymbolEqualityComparer.Default.Equals(current.OriginalDefinition, symbol.OriginalDefinition))
+                                {
+                                    implementationSymbol = m;
+                                    break;
+                                }
+                                current = current.OverriddenProperty;
+                            }
+                        }
+                        else if (m.Kind == SymbolKind.Event && m is IEventSymbol @event)
+                        {
+                            var current = @event.OverriddenEvent;
+                            while (current != null)
+                            {
+                                if (SymbolEqualityComparer.Default.Equals(current.OriginalDefinition, symbol.OriginalDefinition))
+                                {
+                                    implementationSymbol = m;
+                                    break;
+                                }
+                                current = current.OverriddenEvent;
+                            }
+                        }
+
+                        if (implementationSymbol != null) break;
+                    }
+                }
+
+                if (implementationSymbol == null) continue;
+
+                // Verify if constructor is kept before queuing up dependency markings
+                if (ConstructorKept(inheritor))
+                {
+                    if (_global.SymbolMetadatas.TryGetValue(implementationSymbol, out var overrideMetadata))
+                    {
+                        if (processed.Add(overrideMetadata))
+                        {
+                            toProcess.Enqueue(overrideMetadata);
+                        }
+                    }
+                }
+            }
+        }
+
+        HashSet<SymbolMetadata> processed = new HashSet<SymbolMetadata>();
+        Queue<SymbolMetadata> toProcess = new Queue<SymbolMetadata>();
+        HashSet<SymbolMetadata> symbolsWithWeakDependencies = new HashSet<SymbolMetadata>();
+        Dictionary<ISymbol, List<INamedTypeSymbol>> inheritanceCache = default!;
 
         void GarbageSymbols()
         {
-            HashSet<SymbolMetadata> processed = new HashSet<SymbolMetadata>();
-            Queue<SymbolMetadata> toProcess = new Queue<SymbolMetadata>();
+            static IEnumerable<INamedTypeSymbol> WalkBaseTypes(INamedTypeSymbol t)
+            {
+                var curr = t.BaseType;
+                while (curr != null) { yield return curr; curr = curr.BaseType; }
+            }
+
+            inheritanceCache ??= _global.AllSymbols
+                .Where(e => e.Value.Symbol is INamedTypeSymbol)
+                .Select(e => (INamedTypeSymbol)e.Value.Symbol)
+                .SelectMany(t => t.AllInterfaces.Concat(WalkBaseTypes(t)).Select(baseType => new { Base = baseType.OriginalDefinition, Derived = t }))
+                .GroupBy(x => x.Base, SymbolEqualityComparer.Default)
+                .ToDictionary(g => g.Key!, g => g.Select(x => x.Derived).ToList(), SymbolEqualityComparer.Default);
+            processed.Clear();
+            toProcess.Clear();
+            symbolsWithWeakDependencies.Clear();
+
             foreach (var root in RootSymbols)
             {
                 var metadata = _global.GetMetadata(root);
@@ -230,40 +437,121 @@ namespace NetJs.Translator.CSharpToJavascript
                         toProcess.Enqueue(metadata);
                 }
             }
-            while (toProcess.Count > 0)
+            void ProcessQueue()
             {
-                var metadata = toProcess.Dequeue();
-                if (metadata.Export.Handle != null)
+                while (toProcess.Count > 0)
                 {
-                    Keep(metadata);
-                }
-                // if we are keeping a member, we keep the type
-                var contanier = metadata.Symbol.ContainingSymbol;
-                while (contanier != null)
-                {
-                    //if (contanier.Kind == SymbolKind.Namespace)
-                    //break;
-                    var cmetadata = _global.GetMetadata(contanier);
-                    if (cmetadata?.Export.Handle != null)
+                    var metadata = toProcess.Dequeue();
+                    if (metadata.Export.Handle != null)
                     {
-                        Keep(cmetadata);
+                        Keep(metadata);
                     }
-                    contanier = contanier.ContainingSymbol;
-                }
-                var dependencies = metadata.Export.Dependencies;
-                if (dependencies != null)
-                {
-                    foreach (var dep in dependencies)
+                    // if we are keeping a member, we keep the type
+                    var contanier = metadata.Symbol.ContainingSymbol;
+                    while (contanier != null)
                     {
-                        if (metadataByHandle.TryGetValue(dep, out var depMetadata))
+                        //if (contanier.Kind == SymbolKind.Namespace)
+                        //break;
+                        var cmetadata = _global.GetMetadata(contanier);
+                        if (cmetadata?.Export.Handle != null)
                         {
-                            if (processed.Add(depMetadata))
-                                toProcess.Enqueue(depMetadata);
+                            Keep(cmetadata);
+                        }
+                        contanier = contanier.ContainingSymbol;
+                    }
+                    var dependencies = metadata.Export.Dependencies;
+                    if (dependencies != null)
+                    {
+                        foreach (var dep in dependencies)
+                        {
+                            if (metadataByHandle.TryGetValue(dep, out var depMetadata))
+                            {
+                                if (processed.Add(depMetadata))
+                                    toProcess.Enqueue(depMetadata);
+                            }
+                        }
+                    }
+                    if (metadata.Export.WeakDependencies?.Any() ?? false)
+                    {
+                        symbolsWithWeakDependencies.Add(metadata);
+                    }
+                }
+            }
+            void ProcessWeakReferences()
+            {
+                //we have kept all hard references, now we evaluate weak references and if the condition is satisfied we keep
+                //We keep doing this to pull all referenced weak reference in
+                while (symbolsWithWeakDependencies.Count > 0)
+                {
+                    //Clone the current weak dependencies and clear
+                    var clonedSymbolsWithWeakDependencies = symbolsWithWeakDependencies.ToHashSet();
+                    symbolsWithWeakDependencies.Clear();
+                    foreach (var mt in clonedSymbolsWithWeakDependencies)
+                    {
+                        var dependencies = mt.Export.WeakDependencies;
+                        if (dependencies != null)
+                        {
+                            foreach (var dep in dependencies)
+                            {
+                                if (metadataByHandle.TryGetValue(dep.Handle, out var depMetadata))
+                                {
+                                    switch (dep.Condition)
+                                    {
+                                        case KeepDependencyFlags.TargetConstructorCalled:
+                                            var ctors = depMetadata.Symbol.ContainingType.GetMembers(".ctor");
+                                            foreach (var ctor in ctors)
+                                            {
+                                                if (kept.Contains(ctor))
+                                                {
+                                                    if (processed.Add(depMetadata))
+                                                        toProcess.Enqueue(depMetadata);
+                                                }
+                                            }
+                                            break;
+                                        case KeepDependencyFlags.TargetTypeUsed:
+                                            if (kept.Contains(depMetadata.Symbol.ContainingType))
+                                            {
+                                                if (processed.Add(depMetadata))
+                                                    toProcess.Enqueue(depMetadata);
+                                            }
+                                            break;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
-            //we have kept all hard references, now we keep all soft references
+            HashSet<ISymbol> processedOverride = new(SymbolEqualityComparer.Default);
+            void ProcessOverrides()
+            {
+                foreach (var kp in kept.ToList())
+                {
+                    if (_global.SymbolMetadatas.TryGetValue(kp, out var metadata))
+                        //if (processedOverride.Add(metadata.Symbol))
+                        TryKeepOverrideMembers(metadata);
+                }
+            }
+            int originalKept = 0;
+            while (toProcess.Count > 0 || symbolsWithWeakDependencies.Count > 0 || originalKept != kept.Count)
+            {
+                originalKept = kept.Count;
+                ProcessQueue();
+                ProcessWeakReferences();
+                ProcessOverrides();
+            }
+
+            //foreach (var kp in kept.ToList())
+            //{
+            //    if (_global.SymbolMetadatas.TryGetValue(kp, out var metadata))
+            //        TryKeepOverrideMembers(metadata, processed, toProcess, inheritanceCache);
+            //}
+
+            //while (toProcess.Count > 0 || symbolsWithWeakDependencies.Count > 0)
+            //{
+            //    ProcessQueue();
+            //    ProcessWeakReferences();
+            //}
         }
 
         //public Task RunTrimming(IProjectOutputProvider outputProvider, IEnumerable<string> jsAssemblyFiles)
@@ -442,10 +730,18 @@ namespace NetJs.Translator.CSharpToJavascript
         //    return Task.WhenAll(pendingTasks);
         //}
 
-        private bool TryParseMarkerPayload(ReadOnlySpan<char> payload, HashSet<ulong>? sweepCollection, out ulong primaryHandle, out bool isMatch)
+        private bool TryParseMarkerPayload(
+            ReadOnlySpan<char> payload,
+            HashSet<ulong>? sweepCollection,
+            out ulong[] handles,
+            out bool sweep,
+            out bool primaryHandleSweep,
+            out bool virtualHandleSweep)
         {
-            primaryHandle = 0UL;
-            isMatch = false;
+            handles = Array.Empty<ulong>();
+            sweep = false;
+            primaryHandleSweep = false;
+            virtualHandleSweep = false;
 
             payload = payload.Trim();
             if (payload.Length == 0) return false;
@@ -457,11 +753,10 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 // Slice out the directive ("ALL" or "ANY") to read the following comma-separated list
                 ReadOnlySpan<char> listContent = payload.Slice(3).TrimStart(',');
-                bool hasPrimary = false;
 
                 // Use conditional defaults: ALL mode defaults to true (failing if an exception is missing), ANY defaults to false
-                isMatch = evaluateAll;
-
+                sweep = evaluateAll;
+                List<ulong> handless = new();
                 while (listContent.Length > 0)
                 {
                     int commaIdx = listContent.IndexOf(',');
@@ -470,24 +765,27 @@ namespace NetJs.Translator.CSharpToJavascript
 
                     if (ulong.TryParse(segment, out ulong currentHandle))
                     {
-                        if (!hasPrimary)
-                        {
-                            primaryHandle = currentHandle;
-                            hasPrimary = true;
-                        }
-
                         if (sweepCollection != null)
                         {
-                            bool dynamicContained = sweepCollection.Contains(currentHandle);
-                            if (evaluateAll) isMatch &= dynamicContained;
-                            if (evaluateAny) isMatch |= dynamicContained;
+                            bool iSweep = sweepCollection.Contains(currentHandle);
+                            if (handless.Count == 0 && iSweep)
+                            {
+                                primaryHandleSweep = true;
+                            }
+                            else if (handless.Count != 0 && iSweep)
+                            {
+                                virtualHandleSweep = true;
+                            }
+                            if (evaluateAll) sweep &= iSweep;
+                            if (evaluateAny) sweep |= iSweep;
                         }
+                        handless.Add(currentHandle);
                     }
 
                     listContent = commaIdx == -1 ? ReadOnlySpan<char>.Empty : listContent.Slice(commaIdx + 1);
                 }
-
-                return hasPrimary;
+                handles = handless.ToArray();
+                return handles.Length > 0;
             }
             else
             {
@@ -495,19 +793,20 @@ namespace NetJs.Translator.CSharpToJavascript
                 int commaIdx = payload.IndexOf(',');
                 ReadOnlySpan<char> firstParam = commaIdx == -1 ? payload : payload.Slice(0, commaIdx);
                 firstParam = firstParam.Trim();
-                if (ulong.TryParse(firstParam, out primaryHandle))
+                if (ulong.TryParse(firstParam, out var primaryHandle))
                 {
                     if (sweepCollection != null)
                     {
-                        isMatch = sweepCollection.Contains(primaryHandle);
+                        sweep = sweepCollection.Contains(primaryHandle);
                     }
+                    handles = [primaryHandle];
                     return true;
                 }
                 return false;
             }
         }
 
-        public Task RunTrimming(IProjectOutputProvider outputProvider, IEnumerable<string> jsAssemblyFiles, bool runGarbageSymbols = true, bool trimTraceHooks = false)
+        public Task RunTrimming(IProjectOutputProvider outputProvider, IEnumerable<string> jsAssemblyFiles, bool runGarbageSymbols = true, bool trimTraceHooks = true)
         {
             if (runGarbageSymbols)
                 GarbageSymbols();
@@ -523,7 +822,6 @@ namespace NetJs.Translator.CSharpToJavascript
                 var assemblyName = Path.GetFileNameWithoutExtension(assembly);
                 if (!states.TryGetValue(assemblyName, out var state))
                     continue;
-
                 var filePath = Path.Combine(outputProvider.OutputPath, assembly);
                 var fileContent = File.ReadAllText(filePath);
                 var originalLen = fileContent.Length;
@@ -570,15 +868,16 @@ namespace NetJs.Translator.CSharpToJavascript
 
                                 nestingStack.Push((0UL, lineStartIndex, shouldTrimThisNode, true));
                             }
-                            else if (TryParseMarkerPayload(paramContent, state.Sweep, out ulong primaryHandle, out bool targetSweepMatch))
+                            else if (TryParseMarkerPayload(paramContent, state.Sweep, out var handles, out bool sweep, out bool primaryHandleSweep, out bool virtualHandleSweep))
                             {
+                                var primaryHandle = handles[0];
                                 bool shouldTrimThisNode = false;
 
                                 if (nestingStack.Count > 0 && nestingStack.Peek().IsBeingTrimmed)
                                 {
                                     shouldTrimThisNode = true;
                                 }
-                                else if (targetSweepMatch)
+                                else if (sweep)
                                 {
                                     var typeHandle = primaryHandle & ReflectionHandleExtension.TypeMask;
                                     shouldTrimThisNode = true;
@@ -586,6 +885,16 @@ namespace NetJs.Translator.CSharpToJavascript
                                     if ((primaryHandle & ReflectionHandleExtension.MemberMask) != 0UL && typesSwept.Contains(typeHandle))
                                     {
                                         shouldTrimThisNode = false;
+                                    }
+                                }
+                                else if (primaryHandleSweep && !virtualHandleSweep && handles.Length > 1) //member is not referenced directly, so swept. But its overriden memeber is referenced
+                                {
+                                    if (metadataByHandle.TryGetValue(primaryHandle, out var metadata) && metadata.Symbol.ContainingType != null)
+                                    {
+                                        if (!ConstructorKept(metadata.Symbol.ContainingType))
+                                        {
+                                            shouldTrimThisNode = true;
+                                        }
                                     }
                                 }
 
@@ -630,7 +939,7 @@ namespace NetJs.Translator.CSharpToJavascript
                                 var peekNode = nestingStack.Peek();
                                 bool matches = isEndTrace
                                     ? peekNode.IsTrace
-                                    : (!peekNode.IsTrace && TryParseMarkerPayload(paramContent, null, out ulong primaryHandle, out _) && peekNode.PrimaryHandle == primaryHandle);
+                                    : (!peekNode.IsTrace && TryParseMarkerPayload(paramContent, null, out var handles, out _, out _, out _) && peekNode.PrimaryHandle == handles[0]);
 
                                 if (matches)
                                 {
@@ -660,8 +969,12 @@ namespace NetJs.Translator.CSharpToJavascript
                     }
                 }
 
+                if (state.Keep.Count <= 1) //keeping only the assembly handle, we can remove the entire file if no other handles are kept
+                {
+                    fileContent = "";
+                }
                 // Reconstruct file if items need to be removed
-                if (intervalsToRemove.Count > 0)
+                else if (intervalsToRemove.Count > 0)
                 {
                     var optimizedBuilder = new StringBuilder(originalLen);
                     int currentPointer = 0;
@@ -680,8 +993,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     fileContent = optimizedBuilder.ToString();
                 }
 
-                // Task pipeline execution hooks
-                var outFilePath = Path.ChangeExtension(assembly, ".trim.js");
+                var outFilePath = Path.ChangeExtension(assembly, ".trimmed.js");
                 pendingTasks.Add(outputProvider.Output(_global, outFilePath, new MemoryStream(Encoding.UTF8.GetBytes(fileContent))));
 
                 var minified = NUglify.Uglify.Js(fileContent, new NUglify.JavaScript.CodeSettings
@@ -692,7 +1004,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 var laxEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: false);
                 byte[] fileBytes = laxEncoding.GetBytes(minified.Code);
                 var uglyStream = new MemoryStream(fileBytes);
-                var uglyFileName = Path.ChangeExtension(assembly, ".trim.min.js");
+                var uglyFileName = Path.ChangeExtension(assembly, ".trimmed.min.js");
                 pendingTasks.Add(outputProvider.Output(_global, uglyFileName, uglyStream));
             }
 

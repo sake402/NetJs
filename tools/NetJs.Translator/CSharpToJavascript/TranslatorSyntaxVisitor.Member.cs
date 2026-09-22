@@ -150,6 +150,13 @@ namespace NetJs.Translator.CSharpToJavascript
                     isAssignment = true;
                     assignmentRhs = eq.Value;
                 }
+            }else if (node.Parent is AssignmentExpressionSyntax ass)
+            {
+                if (ass.Left == node)
+                {
+                    isAssignment = true;
+                    assignmentRhs = ass.Right;
+                }
             }
             IMethodSymbol? method = member as IMethodSymbol;
             AttributeData? attribute = member?.GetTemplateAttribute(_global, this);
@@ -197,12 +204,14 @@ namespace NetJs.Translator.CSharpToJavascript
                         if (setValue != null)
                         {
                             var propertySet = ((IPropertySymbol)member).SetMethod!;
+                            MarkCurrentClosureDependsOn(propertySet);
                             var setMetadata = _global.GetMetadata(propertySet);
                             CurrentTypeWriter.Write(node, setMetadata?.InvocationName ?? propertySet.Name);
                         }
                         else
                         {
                             var propertyGet = ((IPropertySymbol)member).GetMethod!;
+                            MarkCurrentClosureDependsOn(propertyGet);
                             var getMetadata = _global.GetMetadata(propertyGet);
                             CurrentTypeWriter.Write(node, getMetadata?.InvocationName ?? propertyGet.Name);
                         }
@@ -268,11 +277,13 @@ namespace NetJs.Translator.CSharpToJavascript
                         var eevent = (IEventSymbol)member;
                         if (assignmentParent.IsKind(SyntaxKind.AddAssignmentExpression) && eevent.AddMethod != null)
                         {
+                            MarkCurrentClosureDependsOn(eevent.AddMethod);
                             var memberMetadata = _global.GetMetadata(eevent.AddMethod);
                             memberName = memberMetadata?.InvocationName ?? memberName;
                         }
                         else if (assignmentParent.IsKind(SyntaxKind.SubtractAssignmentExpression) && eevent.RemoveMethod != null)
                         {
+                            MarkCurrentClosureDependsOn(eevent.RemoveMethod);
                             var memberMetadata = _global.GetMetadata(eevent.RemoveMethod);
                             memberName = memberMetadata?.InvocationName ?? memberName;
                         }

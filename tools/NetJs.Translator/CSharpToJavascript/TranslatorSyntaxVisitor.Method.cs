@@ -941,6 +941,10 @@ namespace NetJs.Translator.CSharpToJavascript
             if (method != null)
             {
                 MarkCurrentClosureDependsOn(method);
+                if (method.AssociatedSymbol != null)
+                {
+                    MarkCurrentClosureDependsOn(method.AssociatedSymbol);
+                }
                 if (method.TypeArguments.Length > 0)
                 {
                     foreach (var ta in method.TypeArguments)

@@ -16,11 +16,11 @@ namespace NetJs.Translator.CSharpToJavascript
         /// <summary>
         /// Name is only unique within the type. Declared symbol and overriden symbol will share this name within the type
         /// </summary>
-        public string Signature
-        {
-            get => Export.Signature;
-            set => Export.Signature = value;
-        }
+        public string Signature { get; set; }
+        //{
+        //    get => Export.Signature;
+        //    set => Export.Signature = value;
+        //}
         /// <summary>
         /// Name is unique globally
         /// </summary>

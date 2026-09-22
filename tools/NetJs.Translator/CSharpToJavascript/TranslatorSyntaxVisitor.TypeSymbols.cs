@@ -3,10 +3,12 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Host.Mef;
 using NetJs.Translator.CSharpToJavascript;
+using NUglify;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Numerics;
 using System.Reflection.Metadata;
@@ -837,11 +839,20 @@ namespace NetJs.Translator.CSharpToJavascript
             });
         }
 
+        public void MarkCurrentClosureDependsOnDeconstructTypeMember(ITypeSymbol type)
+        {
+            var deconstructMember = type.GetMembers("Deconstruct")
+                .FirstOrDefault(m => m is IMethodSymbol ms && ms.Parameters.All(e => e.RefKind == RefKind.Out));
+            if (deconstructMember != null)
+            {
+                MarkCurrentClosureDependsOn(deconstructMember);
+            }
+        }
         /// <summary>
         /// Mark a symbol as being used by the current code closure
         /// </summary>
         /// <param name="destination"></param>
-        public void MarkCurrentClosureDependsOn(ISymbol destination)
+        public void MarkCurrentClosureDependsOn(ISymbol destination, IParameterSymbol? methodCallParameter = null)
         {
             int i = 0;
             ISymbol? currentSymbol = null;
@@ -905,11 +916,22 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
                 else if (destination.Kind == SymbolKind.Method && destination is IMethodSymbol mt && mt.Arity > 0)
                 {
+                    int ix = 0;
                     foreach (var typeArgument in mt.TypeArguments)
                     {
                         if (typeArgument.Kind == SymbolKind.NamedType)
+                        {
                             _global.RegisterDependencyGraph(currentSymbol, typeArgument);
+                            var tParam = mt.OriginalDefinition.TypeParameters[ix];
+                            _global.RegisterDynamicallyAccessedMembers(currentSymbol, (INamedTypeSymbol)typeArgument, tParam);
+                        }
+                        ix++;
                     }
+                }
+
+                if (destination.Kind == SymbolKind.NamedType && methodCallParameter != null)
+                {
+                    _global.RegisterDynamicallyAccessedMembers(currentSymbol, (INamedTypeSymbol)destination, methodCallParameter);
                 }
             }
         }
@@ -928,6 +950,29 @@ namespace NetJs.Translator.CSharpToJavascript
                 });
             }
             (var start, var end) = symbol.TrimmableBoundary(_global);
+            if (start == null || end == null)
+            {
+                return new DelegateDispose(() =>
+                {
+                });
+            }
+            CurrentTypeWriter.WriteLine(node, start, true);
+            return new DelegateDispose(() =>
+            {
+                CurrentTypeWriter.WriteLine(node, end, true);
+                CurrentTypeWriter.WriteLine(node, "", true);
+            });
+        }
+
+        IDisposable WriteTrimmableBoundaryStart(SyntaxNode node, string? marker)
+        {
+            if (marker == null)
+            {
+                return new DelegateDispose(() =>
+                {
+                });
+            }
+            (var start, var end) = marker.TrimmableBoundary(_global);
             if (start == null || end == null)
             {
                 return new DelegateDispose(() =>

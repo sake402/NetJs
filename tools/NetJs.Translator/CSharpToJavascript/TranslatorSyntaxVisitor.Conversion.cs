@@ -55,6 +55,7 @@ namespace NetJs.Translator.CSharpToJavascript
         public override void VisitCastExpression(CastExpressionSyntax node)
         {
             var castToType = _global.GetTypeSymbol(node.Type, this);
+            MarkCurrentClosureDependsOn(castToType);
             var parentIsEnum = node.FindClosestParent<EnumDeclarationSyntax>();
             //Don't generate cast for enum value initialization
             //var type = _global.GetSymbol(node.Type, this/*, out _, out _*/);

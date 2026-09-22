@@ -338,7 +338,7 @@ namespace NetJs.Translator.CSharpToJavascript
             if (types.TryGetValue(type.OriginalDefinition, out int typeHandle))
             {
                 var nn = type.CreateSignature(global, withGlobalNamespace: true);
-                if (global.ImportedNames.Types.TryGetValue(nn, out var symbol) && symbol?.Handle != null)
+                if (global.ImportedSymbols.Types.TryGetValue(nn, out var symbol) && symbol?.Handle != null)
                 {
                     return symbol.Handle.Value;
                 }
@@ -660,12 +660,13 @@ namespace NetJs.Translator.CSharpToJavascript
                     }
                     return [e];
                 })
-                //Order predictably, so we can rebuild an assembly and member handles can be guaranteed to be the same. Unless a member type was added or one removed
-                .OrderBy(e => e!.Name);
+                .Select(e => global.GetRequiredMetadata(e!))
+                //Order predictably, so when we can rebuild, handles can be guaranteed to be the same. Unless a member type was added or one removed
+                .OrderBy(e => e.Signature);
                 int memberIndex = 1;
                 foreach (var member in members)
                 {
-                    var memberExport = global.GetRequiredMetadata(member!).Export;
+                    var memberExport = member.Export;
                     //var memberSignature = member.CreateSignature(global, withTypeParameterNames: true, withGlobalNamespace: true);
                     //var memberMetadata = global.Symbols.Members.GetValueOrDefault(typeSignature)?.FirstOrDefault(e => e.Value.Signature == metadata?.Signature).Value;
                     //if (memberExport != null)
@@ -679,6 +680,66 @@ namespace NetJs.Translator.CSharpToJavascript
                     memberIndex++;
                 }
             }
+            //foreach (var kv in global.AllSymbols)
+            //{
+            //    var metadata = kv.Value;
+            //    var symbol = metadata.Symbol;
+            //    bool isImportedType = !SymbolEqualityComparer.Default.Equals(symbol.ContainingAssembly, global.Compilation.Assembly);
+            //    if (isImportedType)
+            //        continue;
+
+            //    if (symbol.Kind == SymbolKind.Method && symbol is IMethodSymbol methodSymbol)
+            //    {
+            //        if (methodSymbol.IsOverride)
+            //        {
+            //            var baseMethod = methodSymbol.OverriddenMethod;
+            //            while (baseMethod != null)
+            //            {
+            //                global.RegisterDependencyGraph(baseMethod, methodSymbol, WeakDependencyReason.TargetConstructorCalled);
+            //                baseMethod = baseMethod.OverriddenMethod;
+            //            }
+            //        }
+            //        else if (methodSymbol.ExplicitInterfaceImplementations.Length > 0)
+            //        {
+            //            var interfaceMethod = methodSymbol.ExplicitInterfaceImplementations.First();
+            //            global.RegisterDependencyGraph(interfaceMethod, methodSymbol, interfaceMethod.IsStatic ? WeakDependencyReason.TargetTypeUsed : WeakDependencyReason.TargetConstructorCalled);
+            //        }
+            //    }
+            //    else if (symbol.Kind == SymbolKind.Property && symbol is IPropertySymbol propertySymbol)
+            //    {
+            //        if (propertySymbol.IsOverride)
+            //        {
+            //            var baseProperty = propertySymbol.OverriddenProperty;
+            //            while (baseProperty != null)
+            //            {
+            //                global.RegisterDependencyGraph(baseProperty, propertySymbol, WeakDependencyReason.TargetConstructorCalled);
+            //                baseProperty = baseProperty.OverriddenProperty;
+            //            }
+            //        }
+            //        else if (propertySymbol.ExplicitInterfaceImplementations.Length > 0)
+            //        {
+            //            var interfaceProperty = propertySymbol.ExplicitInterfaceImplementations.First();
+            //            global.RegisterDependencyGraph(interfaceProperty, propertySymbol, interfaceProperty.IsStatic ? WeakDependencyReason.TargetTypeUsed : WeakDependencyReason.TargetConstructorCalled);
+            //        }
+            //    }
+            //    else if (symbol.Kind == SymbolKind.Event && symbol is IEventSymbol eventSymbol )
+            //    {
+            //        if (eventSymbol.IsOverride)
+            //        {
+            //            var baseEvent = eventSymbol.OverriddenEvent;
+            //            while (baseEvent != null)
+            //            {
+            //                global.RegisterDependencyGraph(baseEvent, eventSymbol, WeakDependencyReason.TargetConstructorCalled);
+            //                baseEvent = baseEvent.OverriddenEvent;
+            //            }
+            //        }
+            //        else if (eventSymbol.ExplicitInterfaceImplementations.Length > 0)
+            //        {
+            //            var interfaceEvent = eventSymbol.ExplicitInterfaceImplementations.First();
+            //            global.RegisterDependencyGraph(interfaceEvent, eventSymbol, interfaceEvent.IsStatic ? WeakDependencyReason.TargetTypeUsed : WeakDependencyReason.TargetConstructorCalled);
+            //        }
+            //    }
+            //}
             return types.Select(t => (INamedTypeSymbol)t.Symbol);
         }
 
@@ -1635,6 +1696,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     if (a.AttributeClass != null && global.ShouldExportType(a.AttributeClass, null))
                     {
                         attributesList.Add(FromAttribute(param, a, fromVisitor));
+                        global.RegisterDependencyGraph(param.ContainingSymbol, a.AttributeClass);
                     }
                 }
             }

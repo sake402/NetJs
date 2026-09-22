@@ -142,6 +142,7 @@ namespace NetJs.Translator.CSharpToJavascript
             var arrayType = _global.GetTypeSymbol(node, this); //use the typesymbol version of create array, so we can easily detect jagged array
             ITypeSymbol elementType;
             arrayType.IsArray(out elementType);
+            MarkCurrentClosureDependsOn(elementType);
             //var rank = SyntaxFactory.ArrayRankSpecifier(SyntaxFactory.SeparatedList<ExpressionSyntax>(rankLiterals));
             //var rank = SyntaxFactory.CollectionExpression(SyntaxFactory.SeparatedList(rankLiterals.Select(l => (CollectionElementSyntax)SyntaxFactory.ExpressionElement(l))));
             WriteCreateArray(node, elementType, lengths: (Action)(() =>
@@ -229,6 +230,7 @@ namespace NetJs.Translator.CSharpToJavascript
         public override void VisitStackAllocArrayCreationExpression(StackAllocArrayCreationExpressionSyntax node)
         {
             ITypeSymbol elementType = (ITypeSymbol)_global.GetSymbol(((ArrayTypeSyntax)node.Type).ElementType, this);
+            MarkCurrentClosureDependsOn(elementType);
             var type = InferType(node);
             var typeSymbol = type.typeSymbol?.GetOriginalRootDefinition() ??
                 (type.type != null ? _global.TryGetTypeSymbol(type.type, this) : null)?.GetOriginalRootDefinition();

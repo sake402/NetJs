@@ -727,6 +727,8 @@ namespace System.Runtime.CompilerServices
                             for (int i = 0; i < paramContainer!.fieldsAsArray.Length; i++)
                             {
                                 var param = paramContainer!.fieldsAsArray[i];
+                                if (NetJs.Script.IsUndefined(param))
+                                    continue;
                                 if (param.Is(typeof(ByReference)))
                                 {
                                     var byreRefValueName = NetJs.Script.Write<string>("\"{nameof(System.ByReference.Value)}\"");

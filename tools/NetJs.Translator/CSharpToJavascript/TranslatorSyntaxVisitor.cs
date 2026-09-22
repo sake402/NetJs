@@ -189,7 +189,7 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (node != null)
             {
-                if (node.ToString().StartsWith("queryStartPos..(queryEndPos < 0 ? url.Length : queryEndPos)"))
+                if (node.ToString().Equals("var (componentTypeRenderMode, propertyInjector) = GetComponentTypeInfo(componentType)"))
                 {
 
                 }
@@ -515,6 +515,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 var type = GetExpressionReturnSymbol(node);
                 if (type.TypeSyntaxOrSymbol is ITypeSymbol typeSymbol)
                 {
+                    MarkCurrentClosureDependsOn(typeSymbol);
                     var defaultValue = _global.GetDefaultValue(typeSymbol, true);
                     CurrentTypeWriter.Write(node, defaultValue ?? "null");
                     return;
@@ -1627,7 +1628,13 @@ namespace NetJs.Translator.CSharpToJavascript
             var typeSymbol = typePrototype.IsT0 ? _global.TryGetTypeSymbol(typePrototype.AsT0, this) : null;
             if (typeSymbol != null)
             {
-                MarkCurrentClosureDependsOn(typeSymbol);
+                IParameterSymbol? parameter = null;
+                var argument = node.FindClosestParent<ArgumentSyntax>();
+                if (argument != null)
+                {
+                    parameter = GetParameterSymbol(argument);
+                }
+                MarkCurrentClosureDependsOn(typeSymbol.OriginalDefinition, parameter);
                 CurrentTypeWriter.Write(node, typeSymbol.ComputeOutputTypeName(_global));
             }
             else

@@ -97,6 +97,15 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Delegate
                                     }
                                     try
                                     {
+                                        if (delegateCreate.Type != null)
+                                        {
+                                            visitor.MarkCurrentClosureDependsOn(delegateCreate.Type);
+                                            //var ctor = delegateCreate.Type.GetMembers(".ctor").SingleOrDefault();
+                                            //if (ctor != null)
+                                            //{
+                                            //    visitor.MarkCurrentClosureDependsOn(ctor);
+                                            //}
+                                        }
                                         var metadata = visitor.Global.GetRequiredMetadata(delegateCreate.Type!);
                                         visitor.CurrentTypeWriter.Write(node, "new ");
                                         bool isGeneric = false;

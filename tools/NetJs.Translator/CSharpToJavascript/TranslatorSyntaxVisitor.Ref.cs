@@ -200,7 +200,7 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 WriteCreateArrayRefOrPointer(node, mfield.Type, new CodeNode(() =>
                 {
-                    CurrentTypeWriter.Write(node, $"this.{Constants.StructFieldsLayoutName}");
+                    CurrentTypeWriter.Write(node, $"this.{Constants.StructFieldsAsArrayName}");
                 }), [new CodeNode(() =>
                 {
                     CurrentTypeWriter.Write(node, fieldOffset.ToString());

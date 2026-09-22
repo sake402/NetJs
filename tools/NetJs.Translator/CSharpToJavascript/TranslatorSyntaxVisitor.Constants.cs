@@ -113,7 +113,9 @@ namespace NetJs.Translator.CSharpToJavascript
                     if (bits.Length == 4)
                     {
                         var intType = (ITypeSymbol)_global.GetSymbol("int", this/*, out _, out _*/);
-                        var arrayBasedConstructor = decimalType.GetMembers(".ctor").Cast<IMethodSymbol>().SingleOrDefault(e => e.Parameters.Count() == 1 && e.Parameters.Single().Type.IsArray(out var i) && i.Equals(intType, SymbolEqualityComparer.Default));
+                        var arrayBasedConstructor = decimalType.GetMembers(".ctor")
+                            .Cast<IMethodSymbol>()
+                            .Single(e => e.Parameters.Count() == 1 && e.Parameters.Single().Type.IsArray(out var i) && i.Equals(intType, SymbolEqualityComparer.Default));
                         //var parameter = SyntaxFactory.ArrayCreationExpression(
                         //    SyntaxFactory.ArrayType(SyntaxFactory.ParseTypeName("int")),
                         //    SyntaxFactory.InitializerExpression(

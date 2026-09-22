@@ -824,7 +824,7 @@ namespace NetJs.Translator
             packages.Add((yamlFileName, yamlStream));
         }
 
-        void WriteIndexHtml(bool fromTrimming = false)
+        void WriteIndexHtml(bool fromTrimming = false, bool minified = false)
         {
             if (global.MainEntry != null)
             {
@@ -838,7 +838,7 @@ namespace NetJs.Translator
                         var ret = o.Replace(Constants.OutputFolderName + "/", "").Replace(Constants.OutputFolderName + "\\", "");
                         if (fromTrimming && ret.StartsWith("NetJs.") && ret != "NetJs.Boot.js")
                         {
-                            ret = Path.ChangeExtension(ret, ".trim.js");
+                            ret = Path.ChangeExtension(ret, minified ? ".trimmed.min.js" : ".trimmed.js");
                         }
                         return ret;
                     })
@@ -866,7 +866,7 @@ namespace NetJs.Translator
                     text = text.Replace("</head>", insertHead + "\r\n</head>")
                         .Replace("</body>", insertScripts + "\r\n</body>")
                         .Replace("_framework/blazor.webassembly#[.{fingerprint}].js", "_framework/blazor.netjs.js");
-                    var relativePath = Path.GetRelativePath(_project.GetFolder(), fromTrimming ? Path.ChangeExtension(indexFile, ".trim.html") : indexFile);
+                    var relativePath = Path.GetRelativePath(_project.GetFolder(), fromTrimming ? Path.ChangeExtension(indexFile, minified ? ".trimmed.min.html" : ".trimmed.html") : indexFile);
                     pendingTask.Add(_output.Output(global,
                         !relativePath.StartsWith(Constants.OutputFolderName + Path.DirectorySeparatorChar) ? Constants.OutputFolderName + Path.DirectorySeparatorChar + relativePath : relativePath,
                         new MemoryStream(Encoding.UTF8.GetBytes(text))));
@@ -892,18 +892,19 @@ namespace NetJs.Translator
 </body>
 </html>
 ";
-                    pendingTask.Add(_output.Output(global, Constants.OutputFolderName + Path.DirectorySeparatorChar + (fromTrimming ? "index.trim.html" : "index.html"), StringToStream(index)));
+                    pendingTask.Add(_output.Output(global, Constants.OutputFolderName + Path.DirectorySeparatorChar + (fromTrimming ? (minified ? "index.trimmed.min.html" : "index.trimmed.html") : "index.html"), StringToStream(index)));
                 }
             }
         }
 
         async Task TrimAssemblies()
         {
-            if (global.MainEntry != null)
+            if (global.MainEntry != null && global.BuildFlags.HasFlag(NetJsBuildFlags.TrimAssemblies))
             {
                 var trimmer = new StaticAnalysisMarkAndSweepTrimmer(global);
                 await trimmer.RunTrimming(_output, sortedOutputtedJsFiles);
-                WriteIndexHtml(true);
+                WriteIndexHtml(true, false);
+                WriteIndexHtml(true, true);
             }
         }
 

@@ -784,8 +784,8 @@ async Task ProfiledTrimming(ParseResult parseResult)
             {
                 staticAnalyzer.Keep(ih);
             }
-            var jsFiles = Directory.GetFiles(outputProvider.OutputPath, "*.js", SearchOption.AllDirectories).Where(e => !e.EndsWith(".trim.js") && !e.EndsWith(".min.js"));
-            await staticAnalyzer.RunTrimming(outputProvider, jsFiles, runGarbageSymbols: false);
+            var jsFiles = Directory.GetFiles(outputProvider.OutputPath, "*.js", SearchOption.AllDirectories).Where(e => !e.EndsWith(".trimmed.js") && !e.EndsWith(".min.js"));
+            await staticAnalyzer.RunTrimming(outputProvider, jsFiles, runGarbageSymbols: false, trimTraceHooks:false);
             Console.WriteLine("Done!");
         }
         catch (Exception e)

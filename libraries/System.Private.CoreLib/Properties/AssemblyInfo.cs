@@ -114,6 +114,10 @@ using NetJs;
 [assembly: Attached("*^System\\.Reflection\\.Emit\\.+", typeof(NonScriptableAttribute))]
 [assembly: Attached("System.Reflection.SignatureType", typeof(NonScriptableAttribute))]
 [assembly: Attached("System.Reflection.SignatureGenericParameterType", typeof(NonScriptableAttribute))]
+[assembly: Attached("System.Reflection.SignatureConstructedGenericType", typeof(NonScriptableAttribute))]
+[assembly: Attached("System.Reflection.SignatureHasElementType", typeof(NonScriptableAttribute))]
+[assembly: Attached("System.Reflection.SignatureGenericMethodParameterType", typeof(NonScriptableAttribute))]
+[assembly: Attached("System.Reflection.SignatureTypeExtensions", typeof(NonScriptableAttribute))]
 [assembly: Attached(typeof(System.SR), typeof(ReflectableAttribute), false)]
 
 //DOnt rename this methods as they are required in js to maintain their original name to make interop work

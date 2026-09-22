@@ -88,7 +88,7 @@ namespace NetJs.Translator.CSharpToJavascript
                         {
                             continue;
                         }
-                        if (!implementationMember.IsExtern && !_global.HasAttribute(implementationMember, typeof(ExternalAttribute).FullName, this, false, out _) && !_global.HasAttribute(implementationMember.ContainingSymbol, typeof(ExternalAttribute).FullName, this, false, out _))
+                        if (!implementationMember.IsExtern && !_global.HasAttribute(implementationMember, typeof(ExternalAttribute).FullName!, this, false, out _) && !_global.HasAttribute(implementationMember.ContainingSymbol, typeof(ExternalAttribute).FullName, this, false, out _))
                         {
                             //var methodMember = ((IMethodSymbol)interfaceMember);
                             //var methodImplementation = implementation;
@@ -113,7 +113,7 @@ namespace NetJs.Translator.CSharpToJavascript
                             }
                             OpenClosure(node);
 
-                            //_global.RegisterDependency(interfaceMember, implementationMember);
+                            _global.RegisterDependencyGraph(interfaceMember, implementationMember, interfaceMember.IsStatic ? KeepDependencyFlags.TargetTypeUsed : KeepDependencyFlags.TargetConstructorCalled);
 
                             using var trimmer = WriteTrimmableBoundaryStart(node, interfaceMember);
 
@@ -290,7 +290,8 @@ namespace NetJs.Translator.CSharpToJavascript
             //if (useInterfaceMixin == InterfaceMixinMode.None)
             //{
             var interfaces = typeSymbol.AllInterfaces;
-            var _interfaces = interfaces.Concat(typeSymbol.IsAwaitable() ? [_global.AwaitableInterface] : [])
+            bool isAwaitable = typeSymbol.IsAwaitable();
+            var _interfaces = interfaces.Concat(isAwaitable ? [_global.AwaitableInterface] : [])
                 .Where(i => _global.ShouldExportType(i, this));
             var mInterfaces = _interfaces
                 .Select(e =>
@@ -376,6 +377,7 @@ namespace NetJs.Translator.CSharpToJavascript
             var nestedClassAsNestedStaticObject = Constants.NestedClassAsNestedStaticObject;
             if (export)
             {
+                RegisterDynamicDependencies(typeSymbol);
                 if (typeSymbol.BaseType != null)
                     MarkCurrentClosureDependsOn(typeSymbol.BaseType);
                 foreach (var it in typeSymbol.Interfaces)
@@ -461,6 +463,11 @@ namespace NetJs.Translator.CSharpToJavascript
                 string? mixImplementedInterfaces = null;
                 string[]? implementedInterfaces = null;
                 var useInterfaceMixin = Constants.UseInterfaceMixin;
+                bool isAwaitable = typeSymbol.IsAwaitable();
+                if (isAwaitable)
+                {
+                    MarkCurrentClosureDependsOn(_global.AwaitableInterface);
+                }
                 if (useInterfaceMixin == InterfaceMixinMode.ProxyLookup)
                 {
                     var minterfaces = typeSymbol.Interfaces;
@@ -480,7 +487,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     //    }
                     //    return $"{_interface.ComputeOutputTypeName(_global)}{Ts}";
                     //}
-                    implementedInterfaces = minterfaces.Concat(typeSymbol.IsAwaitable() ? [_global.AwaitableInterface] : [])
+                    implementedInterfaces = minterfaces.Concat(isAwaitable ? [_global.AwaitableInterface] : [])
                         .Where(i => _global.ShouldExportType(i, this))
                         .Select(e =>
                     {
@@ -916,6 +923,7 @@ namespace NetJs.Translator.CSharpToJavascript
                         {
                             var defaultCtor = typeSymbol.GetMembers(".ctor").Single(e => e is IMethodSymbol ms && ms.Parameters.Length == 0);
                             var ctorMetadata = _global.GetRequiredMetadata(defaultCtor);
+                            using var ctorTrimmer = WriteTrimmableBoundaryStart(node, defaultCtor);
                             CurrentTypeWriter.WriteLine(node, $"//default value type constructor", true);
                             CurrentTypeWriter.WriteLine(node, $"{ctorMetadata.OverloadName ?? Constants.DefaultConstructorName}()", true);
                             CurrentTypeWriter.WriteLine(node, "{", true);
@@ -930,6 +938,7 @@ namespace NetJs.Translator.CSharpToJavascript
                         {
                             var defaultCtor = typeSymbol.GetMembers(".ctor").Single(e => e is IMethodSymbol ms && ms.Parameters.Length == 0);
                             var ctorMetadata = _global.GetRequiredMetadata(defaultCtor);
+                            using var ctorTrimmer = WriteTrimmableBoundaryStart(node, defaultCtor);
                             CurrentTypeWriter.WriteLine(node, $"//default reference type constructor overload", true);
                             CurrentTypeWriter.WriteLine(node, $"{(constructorCallConvention == ConstructorCallConvention.StaticCall ? "static " : "")}{ctorMetadata.OverloadName ?? Constants.DefaultConstructorName}()", true);
                             CurrentTypeWriter.WriteLine(node, "{", true);
@@ -1112,10 +1121,13 @@ namespace NetJs.Translator.CSharpToJavascript
                     {
                         _global.RegisterDependencyGraph(typeSymbol, staticCtor);
                     }
-                    using var trimmerStaticCtor = WriteTrimmableBoundaryStart(node, staticCtor);
+                    else
+                    {
+
+                    }
+                    using var trimmerStaticCtor = staticCtor != null ? WriteTrimmableBoundaryStart(node, staticCtor) : WriteTrimmableBoundaryStart(node, "SINIT");
                     CurrentTypeWriter.WriteLine(node, "//Static Initializer", true);
                     //We cant use javascript default static initializer because we may need to call into other classes not intitialized yet
-                    //Writer.WriteLine(node, $"static", true);
                     CurrentTypeWriter.WriteLine(node, $"static {Constants.StaticInitializerName}()", true);
                     CurrentTypeWriter.WriteLine(node, $"{{", true);
                     OpenClosure(node, staticCtor);
@@ -1505,6 +1517,12 @@ namespace NetJs.Translator.CSharpToJavascript
                 //CurrentTypeWriter.WriteLine(node, "return this;", true);
                 //CurrentTypeWriter.WriteLine(node, "}", true);
 
+                //Even though we are not calling the base MulticastDelegate constructor,
+                //keep them alive so trimmer knows their override member are kept
+                foreach (var tt in _global.SystemMulticastDelegate.InstanceConstructors)
+                {
+                    MarkCurrentClosureDependsOn(tt);
+                }
                 var symbol = (INamedTypeSymbol)_global.GetSymbol(node, this);
                 var invokeMethod = symbol.GetMembers("Invoke").Single(e => e.Kind == SymbolKind.Method);
                 var invokeMethodMetadata = _global.GetRequiredMetadata(invokeMethod);

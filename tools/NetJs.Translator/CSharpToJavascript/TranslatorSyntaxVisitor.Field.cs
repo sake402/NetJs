@@ -168,6 +168,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     var isPureStruct = _global.IsPureStructType(field.ContainingType);
                     if (isPureStruct || fieldTypeIsInlineArrayStruct)
                     {
+                        _global.RegisterDependencyGraph(field, fieldType);
                         CurrentTypeWriter.WriteLine(member, $"/*{comment}*/ {modifier} get {fieldName}() {{ return this.{(field.IsStatic ? Constants.ObjectGetStaticField : Constants.ObjectGetField)}({fieldOffset}, {fieldType.ComputeOutputTypeName(_global)}); }}", true);
                         CurrentTypeWriter.WriteLine(member, $"/*{comment}*/ {modifier} set {fieldName}(value) {{ this.{(field.IsStatic ? Constants.ObjectSetStaticField : Constants.ObjectSetField)}({fieldOffset}, {fieldType.ComputeOutputTypeName(_global)}, value); }}", true);
                     }
@@ -208,31 +209,31 @@ namespace NetJs.Translator.CSharpToJavascript
                 EnsureImported(node.Declaration.Type);
                 IFieldSymbol? fieldSymbol = null;
                 IEventSymbol? eventSymbol = null;
-                var symbol = _global.GetSymbol(var, this/*, out _, out _*/);
+                var baseFieldSymbol = _global.GetSymbol(var, this/*, out _, out _*/);
 
-                RegisterDynamicDependencies(symbol);
+                RegisterDynamicDependencies(baseFieldSymbol);
 
-                fieldSymbol = symbol as IFieldSymbol;
-                eventSymbol = symbol as IEventSymbol;
+                fieldSymbol = baseFieldSymbol as IFieldSymbol;
+                eventSymbol = baseFieldSymbol as IEventSymbol;
                 if (fieldSymbol == null && eventSymbol == null)
                     throw new InvalidOperationException();
                 ITypeSymbol fieldType = fieldSymbol?.Type ?? eventSymbol?.Type!;
-                if (_global.HasAttribute(symbol, typeof(InlineConstAttribute).FullName!, this, false, out _))
+                if (_global.HasAttribute(baseFieldSymbol, typeof(InlineConstAttribute).FullName!, this, false, out _))
                     continue;
-                if (_global.HasAttribute(symbol, typeof(TemplateAttribute).FullName!, this, false, out _))
+                if (_global.HasAttribute(baseFieldSymbol, typeof(TemplateAttribute).FullName!, this, false, out _))
                     continue;
 
-                using var trimmer = WriteTrimmableBoundaryStart(node, symbol);
+                using var trimmer = WriteTrimmableBoundaryStart(node, baseFieldSymbol);
 
-                var fieldMetadata = _global.GetRequiredMetadata(symbol);
-                var declaringSymbolMeta = _global.GetRequiredMetadata(symbol.ContainingSymbol);
+                var fieldMetadata = _global.GetRequiredMetadata(baseFieldSymbol);
+                var declaringSymbolMeta = _global.GetRequiredMetadata(baseFieldSymbol.ContainingSymbol);
                 var fieldName = fieldMetadata.OverloadName ?? var.Identifier.ResolveIdentifierName();
                 //if (fieldSymbol != null)
-                CurrentClosure.DefineIdentifierType(symbol.Name, CodeSymbol.From(symbol));
+                CurrentClosure.DefineIdentifierType(baseFieldSymbol.Name, CodeSymbol.From(baseFieldSymbol));
                 //else
                 //    CurrentClosure.DefineIdentifierType(fieldName, CodeType.From(node.Declaration.Type, SymbolKind.Field));
 
-                var refKind = symbol.GetRefKind() ?? RefKind.None;
+                var refKind = baseFieldSymbol.GetRefKind() ?? RefKind.None;
                 //if (refKind != RefKind.None)
                 //{
 
@@ -247,10 +248,10 @@ namespace NetJs.Translator.CSharpToJavascript
                 //    Writer.WriteLine(node, $"static $_{fieldMetadata.OverloadName ?? fieldName};", true);
                 //}
                 bool isLiteralInit = MemberIsLiteralInitialization(var.Initializer, fieldType);
-                bool isFieldLayout = _global.HasAttribute(symbol.ContainingType, typeof(StructLayoutAttribute).FullName!, this, false, out _);
+                bool isFieldLayout = _global.HasAttribute(baseFieldSymbol.ContainingType, typeof(StructLayoutAttribute).FullName!, this, false, out _);
                 //bool fieldTypeIsInlineArray = _global.IsInlineArray(fieldType, out var inlineArraySize, out var inlineArrayFieldType);
-                bool fieldContainingTypeIsInlineArray = _global.IsInlineArray(symbol.ContainingType, out var inlineArraySize, out var inlineArrayFieldType);
-                bool isPureStructMember = _global.IsPureStructType(symbol.ContainingType);
+                bool fieldContainingTypeIsInlineArray = _global.IsInlineArray(baseFieldSymbol.ContainingType, out var inlineArraySize, out var inlineArrayFieldType);
+                bool isPureStructMember = _global.IsPureStructType(baseFieldSymbol.ContainingType);
 
                 void RegisterMemberInitializer()
                 {
@@ -274,9 +275,9 @@ namespace NetJs.Translator.CSharpToJavascript
 
                         CurrentClosure.RegisterTypeInitializer(() =>
                         {
-                            using var trimmer = WriteTrimmableBoundaryStart(node, symbol);
-                            if (_global.IsFixedSizeField(symbol, out var fSize, out _))
+                            if (_global.IsFixedSizeField(baseFieldSymbol, out var fSize, out _))
                             {
+                                using var trimmer = WriteTrimmableBoundaryStart(node, baseFieldSymbol);
                                 CurrentTypeWriter.WriteLine(node, $"//FixedSizeArray({fieldType}, {fSize})", true);
                                 var variableName = $"$t{++CurrentTypeWriter.CurrentClosure.NameManglingSeed}";
                                 CurrentTypeWriter.Write(node, "let ", true);
@@ -333,6 +334,7 @@ namespace NetJs.Translator.CSharpToJavascript
                                 }
                                 else
                                 {
+                                    using var trimmer = WriteTrimmableBoundaryStart(node, baseFieldSymbol);
                                     if (initLocation == TypeInitializerLocation.PrimaryConstructor)
                                     {
                                         CurrentTypeWriter.WriteLine(node, $"//depends on primary constructor parameter", true);
@@ -359,7 +361,7 @@ namespace NetJs.Translator.CSharpToJavascript
                                             //    }
                                             //}
                                             //else
-                                            WriteVariableAssignment(node, null, symbol, null, var.Initializer.Value, null);
+                                            WriteVariableAssignment(node, null, baseFieldSymbol, null, var.Initializer.Value, null);
                                         }
                                     }
                                     else
@@ -403,7 +405,7 @@ namespace NetJs.Translator.CSharpToJavascript
                         memberInitialized = true;
                     }
                 }
-                if ((isFieldLayout /*|| isInlineArray*/ || (Constants.StructFieldAlwaysLayout && symbol.ContainingType.IsValueType)) &&
+                if ((isFieldLayout /*|| isInlineArray*/ || (Constants.StructFieldAlwaysLayout && baseFieldSymbol.ContainingType.IsValueType)) &&
                     TryWriteFieldLayout(var, fieldSymbol ?? (ISymbol)eventSymbol!, fieldSymbol?.Type ?? eventSymbol!.Type, fieldMetadata.OverloadName ?? fieldName, modifier, $"{node.Declaration.Type.ToString().Trim()}"))
                 {
                     if (!memberInitialized)
@@ -420,7 +422,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     {
                         CurrentTypeWriter.Write(node, " = ");
                         if (!TryWriteConstant(node, fieldType, var.Initializer!.Value))
-                            WriteVariableAssignment(node, null, symbol, null, var.Initializer!.Value, null);
+                            WriteVariableAssignment(node, null, baseFieldSymbol, null, var.Initializer!.Value, null);
                     }
                     else
                     {
@@ -480,34 +482,34 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             foreach (var variable in node.Declaration.Variables)
             {
-                var symbol = (IEventSymbol)_global.GetSymbol(variable, this/*, out _, out _*/);
+                var eventSymbol = (IEventSymbol)_global.GetSymbol(variable, this/*, out _, out _*/);
 
-                RegisterDynamicDependencies(symbol);
-                using var trimmer = WriteTrimmableBoundaryStart(node, symbol);
+                RegisterDynamicDependencies(eventSymbol);
+                using var trimmer = WriteTrimmableBoundaryStart(node, eventSymbol);
 
-                var metadata = _global.GetRequiredMetadata(symbol);
-                var addMetadata = symbol.AddMethod != null ? _global.GetMetadata(symbol.AddMethod) : null;
-                var removeMetadata = symbol.RemoveMethod != null ? _global.GetMetadata(symbol.RemoveMethod) : null;
+                var metadata = _global.GetRequiredMetadata(eventSymbol);
+                var addMetadata = eventSymbol.AddMethod != null ? _global.GetMetadata(eventSymbol.AddMethod) : null;
+                var removeMetadata = eventSymbol.RemoveMethod != null ? _global.GetMetadata(eventSymbol.RemoveMethod) : null;
 
                 CodeNode left = new CodeNode(() =>
                 {
-                    if (!symbol.IsStatic)
+                    if (!eventSymbol.IsStatic)
                     {
                         CurrentTypeWriter.Write(node, "this.");
                     }
-                    CurrentTypeWriter.Write(node, metadata.InvocationName ?? symbol.Name);
+                    CurrentTypeWriter.Write(node, metadata.InvocationName ?? eventSymbol.Name);
                 });
                 CodeNode right = new CodeNode(() =>
                 {
                     CurrentTypeWriter.Write(node, "value");
                 });
 
-                if (symbol.AddMethod != null)
+                if (eventSymbol.AddMethod != null)
                 {
-                    using var trimmerAdd = WriteTrimmableBoundaryStart(node, symbol.AddMethod);
-                    CurrentTypeWriter.WriteLine(node, $"{modifier}{addMetadata?.OverloadName ?? ("add_" + (metadata?.OverloadName ?? symbol.Name))}(/*{node.Declaration.Type.ToString().Trim()}*/ value)", true);
+                    using var trimmerAdd = WriteTrimmableBoundaryStart(node, eventSymbol.AddMethod);
+                    CurrentTypeWriter.WriteLine(node, $"{modifier}{addMetadata?.OverloadName ?? ("add_" + (metadata?.OverloadName ?? eventSymbol.Name))}(/*{node.Declaration.Type.ToString().Trim()}*/ value)", true);
                     CurrentTypeWriter.WriteLine(node, "{", true);
-                    OpenClosure(node, symbol.AddMethod);
+                    OpenClosure(node, eventSymbol.AddMethod);
                     CurrentTypeWriter.Write(node, "", true);
                     WriteDelegateCombine(node, left, right);
                     CurrentTypeWriter.WriteLine(node, ";");
@@ -515,12 +517,12 @@ namespace NetJs.Translator.CSharpToJavascript
                     CloseClosure(node);
                 }
 
-                if (symbol.RemoveMethod != null)
+                if (eventSymbol.RemoveMethod != null)
                 {
-                    using var trimmerRemove = WriteTrimmableBoundaryStart(node, symbol.RemoveMethod);
-                    CurrentTypeWriter.WriteLine(node, $"{modifier}{removeMetadata?.OverloadName ?? ("remove_" + (metadata?.OverloadName ?? symbol.Name))}(/*{node.Declaration.Type.ToString().Trim()}*/ value)", true);
+                    using var trimmerRemove = WriteTrimmableBoundaryStart(node, eventSymbol.RemoveMethod);
+                    CurrentTypeWriter.WriteLine(node, $"{modifier}{removeMetadata?.OverloadName ?? ("remove_" + (metadata?.OverloadName ?? eventSymbol.Name))}(/*{node.Declaration.Type.ToString().Trim()}*/ value)", true);
                     CurrentTypeWriter.WriteLine(node, "{", true);
-                    OpenClosure(node, symbol.RemoveMethod);
+                    OpenClosure(node, eventSymbol.RemoveMethod);
                     CurrentTypeWriter.Write(node, "", true);
                     WriteDelegateRemove(node, left, right);
                     CurrentTypeWriter.WriteLine(node, ";");

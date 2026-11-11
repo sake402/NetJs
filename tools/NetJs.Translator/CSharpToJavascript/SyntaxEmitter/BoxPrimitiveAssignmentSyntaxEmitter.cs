@@ -16,15 +16,26 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
         static ThreadLocal<List<CSharpSyntaxNode?>> _disabled = new(() => new List<CSharpSyntaxNode?>());
         public static IDisposable Disable(CSharpSyntaxNode? node)
         {
-            _disabled.Value.Add(node);
+            _disabled.Value!.Add(node);
             return new DelegateDispose(() => _disabled.Value.Remove(node));
         }
         public override bool TryEmit(CSharpSyntaxNode node, TranslatorSyntaxVisitor visitor)
         {
-            if (_disabled.Value.Contains(node))
+            if (_disabled.Value!.Contains(node))
                 return false;
-            if (_processing.Value.TryPeek(out var top) && top == node)
+            if (_processing.Value!.TryPeek(out var top) && top == node)
                 return false;
+            //dont box T == null
+            var parent = node.Parent;
+            while (parent.IsKind(SyntaxKind.ParenthesizedExpression))
+                parent = parent.Parent;
+            if ((parent.IsKind(SyntaxKind.EqualsExpression) ||
+                parent.IsKind(SyntaxKind.NotEqualsExpression))/* &&
+                parent is BinaryExpressionSyntax b &&
+                (b.Left.IsKind(SyntaxKind.NullLiteralExpression) || b.Right.IsKind(SyntaxKind.NullLiteralExpression))*/)
+            {
+                return false;
+            }
             foreach (var sm in visitor.SemanticModels)
             {
                 if (node.SyntaxTree == sm.SyntaxTree)
@@ -61,14 +72,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                             _processing.Value.Push(node);
                             try
                             {
-                                visitor.CurrentTypeWriter.Write(node, visitor.Global.GlobalName);
-                                visitor.CurrentTypeWriter.Write(node, ".");
-                                visitor.CurrentTypeWriter.Write(node, Constants.BoxName);
-                                visitor.CurrentTypeWriter.Write(node, "(");
-                                visitor.Visit(node);
-                                visitor.CurrentTypeWriter.Write(node, ", ");
-                                visitor.CurrentTypeWriter.Write(node, fromType.ComputeOutputTypeName(visitor.Global));
-                                visitor.CurrentTypeWriter.Write(node, ")");
+                                visitor.WriteBoxing(node, node, fromType);
                                 return true;
                             }
                             finally

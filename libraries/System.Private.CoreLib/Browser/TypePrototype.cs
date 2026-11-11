@@ -35,23 +35,33 @@ namespace NetJs
         public TypeKindModel Kind { get; }
         [Name(Constants.PrototypeBaseType)]
         public TypePrototype? Base { get; }
-        [Name(Constants.PrototypeInterfaces)]
-        public TypePrototype[]? Interfaces { get; }
+        //[Name(Constants.PrototypeInterfaces)]
+        //public TypePrototype[]? Interfaces { get; }
+        [Name(Constants.PrototypeAllInterfaces)]
+        public TypePrototype[]? AllInterfaces { get; }
+        [Name(Constants.PrototypeNestedTypes)]
+        public TypePrototype[]? NestedTypes { get; }
         //[Name(Constants.PrototypeBaseTypeHandle)]
         //public ulong BaseTypeHandle { get; }
         [Name(Constants.PrototypeTypeFlags)]
         public TypeFlagsModel Flags { get; }
         [Name(Constants.PrototypeKnownType)]
         public KnownTypeHandle KnownType { get; }
+        [Name(Constants.InlineArrayElementType)]
+        public TypePrototype? InlineArrayType { get; set; }
+        [Name(Constants.InlineArrayElementType)]
+        public int InlineArraySize { get; set; }
         [Name(Constants.PrototypeStructSize)]
         public int Size { get; }
         [Name(Constants.PrototypeOpenGenericPrototype)]
         public TypePrototype? OpenGenericPrototype { get; set; }
         [Name(Constants.PrototypeGenericArgumentCount)]
         public int GenericArguments { get; }
+        [Name(Constants.PrototypeOriginalTypeHandle)]
+        public ulong OriginalTypeHandle { get; }
         [Name(Constants.PrototypeTypeHandle)]
         public ulong TypeHandle { get; set; } = default!;
-        [Name(Constants.PrototypeMetadataFullName)]
+        [Name(Constants.PrototypeReferenceFullName)]
         public string MetadataFullName { get; set; } = default!;
         [Name(Constants.IsTypeName)]
         public extern bool Is(object value);
@@ -59,7 +69,9 @@ namespace NetJs
         internal extern bool StaticInitializeMembers();
         [Name(Constants.StaticConstructorName)]
         internal extern bool StaticConstructor();
-        [Name(Constants.ExportMethodName)]
+        //[Name(Constants.ExportMethodName)]
+        //internal extern bool DoExports();
+        [Template("{this}." + Constants.ExportMethodName + "?.call({this})")]
         internal extern bool DoExports();
         //[Template("new {this}()")]
         //public extern object CallDefaultConstructor();
@@ -77,6 +89,8 @@ namespace NetJs
         public extern object NewWithDefaultConstructor(object? arg1, object? arg2);
         [Template("new {this}()." + Constants.DefaultConstructorName + "({arg1}, {arg2}, {arg3})")]
         public extern object NewWithDefaultConstructor(object? arg1, object? arg2, object? arg3);
+        [Name("iim")]
+        public string[]? ImportedInterfaceMembers { get; set; }
     }
 
     [External]

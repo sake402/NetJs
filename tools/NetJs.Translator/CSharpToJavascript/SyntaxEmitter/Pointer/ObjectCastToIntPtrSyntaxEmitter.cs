@@ -19,7 +19,10 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Pointer
                     ((PrefixUnaryExpressionSyntax)((ParenthesizedExpressionSyntax)node.Expression).Expression).Operand;
                 var castFromType = visitor.Global.TryGetTypeSymbol(addressOfTarget, visitor);
                 var castToType = visitor.Global.TryGetTypeSymbol(node.Type, visitor);
-                if (castFromType != null && castToType != null && SymbolEqualityComparer.Default.Equals(castToType, visitor.Global.SystemIntPtr) && !castFromType.IsIntegerNumericType())
+                if (castFromType != null &&
+                    castToType != null &&
+                    SymbolEqualityComparer.Default.Equals(castToType, visitor.Global.SystemIntPtr) &&
+                    !castFromType.IsIntegerNumericType())
                 {
                     visitor.WriteMethodInvocation(node, "InteropUtility.castObject2Address", arguments: [addressOfTarget]);
                     return true;

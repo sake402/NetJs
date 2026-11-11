@@ -23,7 +23,7 @@ public static class SimpleDictionaryExtension
     [Template("s.split({by})")]
     static extern string[] NativeSplit(this string s, string by);
     [IgnoreGeneric]
-    public static void SetNested<T>(this SimpleDictionary<T> dic, string name, T value, bool throwIfExisting = true, NativeFunction<T, bool>? onAccess = null)
+    public static void SetNested<T, TState>(this SimpleDictionary<T> dic, string name, T value, bool throwIfExisting = true, NativeFunction<T, TState, bool>? onAccess = null, TState state = default!)
     {
         unchecked
         {
@@ -50,7 +50,7 @@ public static class SimpleDictionaryExtension
             if (onAccess != null)
             {
                 // this is a bit hacky, but it allows us to call onAccess when the value is accessed, without having to create a wrapper object
-                Script.Write("Object.defineProperty(dic, typeName, {{ configurable:true, get:function(){{ let done = onAccess(value); if (done){{ Object.defineProperty(dic, typeName, {{ value:value }}); }} return value; }} }})");
+                Script.Write("Object.defineProperty(dic, typeName, {{ configurable:true, get:function(){{ let done = onAccess(value, state); if (done){{ Object.defineProperty(dic, typeName, {{ value:value }}); }} return value; }} }})");
                 //dic[typeName] = Script.Write<T>("{{ get {{ onAccess(value); return value; }} }}");
             }
             else

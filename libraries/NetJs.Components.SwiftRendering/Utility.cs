@@ -66,12 +66,12 @@ namespace BlazorJs.Core
 
         public static bool ContainsKey(this object container, string propertyName)
         {
-            return container.HasOwnProperty(propertyName.As<object>());
+            return container.hasOwnProperty(propertyName.As<object>());
         }
 
         public static bool TryGetValue(this object container, string propertyName, out object obj)
         {
-            if (container.HasOwnProperty(propertyName.As<object>()))
+            if (container.hasOwnProperty(propertyName.As<object>()))
             {
                 obj = container[propertyName.As<string>()];
                 return true;
@@ -82,7 +82,7 @@ namespace BlazorJs.Core
 
         public static bool TryGetValue(this object container, int propertyName, out object obj)
         {
-            if (container.HasOwnProperty(propertyName.As<object>()))
+            if (container.hasOwnProperty(propertyName.As<object>()))
             {
                 obj = container[propertyName.As<string>()];
                 return true;

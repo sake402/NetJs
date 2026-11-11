@@ -104,6 +104,13 @@
     <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.FileProviders.Abstractions\NetJs.Microsoft.Extensions.FileProviders.Abstractions.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.FileProviders.Physical\NetJs.Microsoft.Extensions.FileProviders.Physical.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.FileSystemGlobbing\NetJs.Microsoft.Extensions.FileSystemGlobbing.csproj" />
+    <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.Caching.Abstractions\NetJs.Microsoft.Extensions.Caching.Abstractions.csproj" />
+    <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.Caching.Memory\NetJs.Microsoft.Extensions.Caching.Memory.csproj" />
+    <ProjectReference Include="$(NewLibrariesProjectRoot)System.Net.WebSockets\NetJs.System.Net.WebSockets.csproj" />
+    <ProjectReference Include="$(NewLibrariesProjectRoot)System.Net.WebSockets.Client\NetJs.System.Net.WebSockets.Client.csproj" />
+    <ProjectReference Include="$(NewLibrariesProjectRoot)System.Net.WebHeaderCollection\NetJs.System.Net.WebHeaderCollection.csproj" />
+    <ProjectReference Include="$(NewLibrariesProjectRoot)System.Net.Requests\NetJs.System.Net.Requests.csproj" />
+    <ProjectReference Include="$(NewLibrariesProjectRoot)System.Net.WebProxy\NetJs.System.Net.WebProxy.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.Localization.Abstractions\NetJs.Microsoft.Extensions.Localization.Abstractions.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.Extensions.Localization\NetJs.Microsoft.Extensions.Localization.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)Microsoft.AspNetCore.Metadata\NetJs.Microsoft.AspNetCore.Metadata.csproj" />

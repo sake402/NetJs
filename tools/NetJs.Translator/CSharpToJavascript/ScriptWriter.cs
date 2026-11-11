@@ -182,15 +182,15 @@ namespace NetJs.Translator.CSharpToJavascript
             InsertInCurrentClosure(source, () => temporaryWriter.Peek().Write(ProcessReplacement(line)), withTabs);
         }
 
-        public CodeLineWriter Write(SyntaxNode source, char code)
+        public CodeLineWriter Write(SyntaxNode source, char code, bool validate = true)
         {
             if (temporaryWriter.TryPeek(out var tpw))
             {
-                tpw.Write(code);
+                tpw.Write(code, validate: validate);
                 return tpw;
             }
             else
-                currentWriter.Write(code);
+                currentWriter.Write(code, validate: validate);
             return currentWriter;
         }
 
@@ -199,17 +199,16 @@ namespace NetJs.Translator.CSharpToJavascript
             //CodeWriterClosure? pendingClosedEvent = null;
             if (withTabs)
             {
-                if (code.StartsWith("}"))
+                if (code.Length > 0 && code[0] == '}')
                 {
-                    //CurrentClosure.RaiseOnClosing();
-                    //pendingClosedEvent = CurrentClosure;
                     closures.RemoveAt(closures.Count - 1); ;
                     ClosureDepth--;
                 }
                 WriteTabs();
-                if (code == "{")
+                if (code.Length == 1 && code[0] == '{')
                 {
-                    closures.Add(new CodeWriterClosure(source, closures.Count > 0 ? CurrentClosure.NameManglingSeed : 0, lines.Last) { ForbidsInsertion = forbidInsertion });
+                    var parentClosure = closures.Count > 0 ? CurrentClosure : null;
+                    closures.Add(new CodeWriterClosure(source, parentClosure, lines.Last) { ForbidsInsertion = forbidInsertion });
                     ClosureDepth++;
                 }
             }
@@ -247,7 +246,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public void EnsureNewLine()
         {
-            if (currentWriter.ToString().Length > 0)
+            if (currentWriter.Length > 0)
             {
                 var writer = new CodeLineWriter();
                 var node = lines.AddLast(writer);
@@ -270,7 +269,7 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             else
             {
-                while (lines.Last.Value.Lenght == 0)
+                while (lines.Last.Value.Length == 0)
                 {
                     lines.Remove(lines.Last);
                 }
@@ -281,7 +280,14 @@ namespace NetJs.Translator.CSharpToJavascript
         public string Build(int formatTabs)
         {
             string tabs = formatTabs > 0 ? new string(' ', formatTabs * 4) : string.Empty;
-            return string.Join("\r\n", lines.Select(l => tabs + l.ToString()));
+            StringBuilder sb = new StringBuilder(lines.Sum(l => l.Length + 2) + 2 * lines.Count);
+            foreach(var line in lines)
+            {
+                sb.Append(tabs);
+                sb.Append(line.ToString());
+                sb.Append("\r\n");
+            }
+            return sb.ToString();
         }
 
         public override string ToString()

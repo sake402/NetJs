@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace System.Reflection
@@ -16,9 +17,23 @@ namespace System.Reflection
             }
             if (value != null && type != null)
             {
+                var prototype = type.As<RuntimeType>()._prototype;
+                var kt = type.As<RuntimeType>()._prototype.KnownType;
+                if (prototype.Kind == TypeKindModel.Enum)
+                {
+                    kt = prototype.As<EnumPrototype>().UnderlyingType.KnownType;
+                }
+                if (kt.IsLongIntegerNumeric() && NetJs.Script.TypeOf(value).NativeEquals("number")) //TODO: we currently store long as int in attribute model, we should change this in the future
+                {
+                    value = NetJs.Script.BigInt(value.As<int>()).As<object>();
+                }
                 if (type.As<RuntimeType>()._prototype.Flags.TypeHasFlag(TypeFlagsModel.IsValueType))//perform neccessary boxing
                 {
-                    value = NetJs.Script.Box(value, type.As<RuntimeType>()._prototype);
+                    return NetJs.Script.Box(value, type.As<RuntimeType>()._prototype);
+                }
+                if (Array.Is(value, null) && type.IsArray && type.HasElementType)
+                {
+                    return value.As<Array>().AsNetArray(type.GetElementType()!);
                 }
             }
             return value;
@@ -26,10 +41,10 @@ namespace System.Reflection
 
         static Attribute CreateAttribute(NetJs.AttributeModel att, Type attType)
         {
-            var args = NetJs.Script.IsDefined(att.ConstructorArguments) ? att.ConstructorArguments!.Map(a =>
+            var args = NetJs.Script.IsDefined(att.ConstructorArguments) ? att.ConstructorArguments!.map(a =>
             {
                 var type = AppDomain.GetType(a.Type.As<uint>());
-                return ConvertAttributeType(a.Value, type);
+                return ConvertAttributeType(a.Value ?? null, type);
             }) : NetJs.Script.CreateArrayFromValues<object?>();
             var constructor = (ConstructorInfo)AppDomain.GetMember(att.ConstructorHandle.As<uint>())!;
             var attribute = (Attribute)Activator.CreateInstance(attType, args)!;
@@ -55,8 +70,8 @@ namespace System.Reflection
             var constructor = (ConstructorInfo)AppDomain.GetMember(att.ConstructorHandle.As<uint>())!;
             return new NetJs.BrowserCustomAttributeData(
                 constructor,
-                NetJs.Script.IsDefined(att.ConstructorArguments) ? (att.ConstructorArguments!.Map(a => new CustomAttributeTypedArgument(AppDomain.GetType(a.Type.As<uint>()) ?? throw new InvalidOperationException(), a.Value))) : [],
-                NetJs.Script.IsDefined(att.NamedArguments) ? att.NamedArguments!.Map(a =>
+                NetJs.Script.IsDefined(att.ConstructorArguments) ? (att.ConstructorArguments!.map(a => new CustomAttributeTypedArgument(AppDomain.GetType(a.Type.As<uint>()) ?? throw new InvalidOperationException(), a.Value))) : [],
+                NetJs.Script.IsDefined(att.NamedArguments) ? att.NamedArguments!.map(a =>
                 {
                     var member = attributeType.GetMember(a.Name).ArraySingle();
                     return new CustomAttributeNamedArgument(member, new CustomAttributeTypedArgument(AppDomain.GetType(a.Type.As<uint>()) ?? throw new InvalidOperationException(), a.Value));
@@ -78,6 +93,10 @@ namespace System.Reflection
             else if (obj is RuntimeMethodInfo rm)
             {
                 attributesModel = rm._model.Attributes;
+            }
+            else if (obj is RuntimeConstructorInfo rc)
+            {
+                attributesModel = rc._model.Attributes;
             }
             else if (obj is RuntimePropertyInfo rp)
             {
@@ -101,7 +120,7 @@ namespace System.Reflection
         {
             var attHandle = attributeType.As<RuntimeType?>()?._prototype.TypeHandle;
             NetJs.AttributeModel[]? attributesModel = GetAttributeModel(obj);
-            return (attributesModel?.Filter(a => attHandle == null || a.TypeHandle == attHandle).Map(a =>
+            return (attributesModel?.filter(a => attHandle == null || a.TypeHandle == attHandle).map(a =>
             {
                 if (attHandle == null)
                 {
@@ -116,7 +135,7 @@ namespace System.Reflection
         private static CustomAttributeData[] GetCustomAttributesDataInternal(ICustomAttributeProvider obj)
         {
             NetJs.AttributeModel[]? attributesModel = GetAttributeModel(obj);
-            return (attributesModel?.Map(a => CreateAttributeData(a)) ?? []).AsNetArray();
+            return (attributesModel?.map(a => CreateAttributeData(a)) ?? []).AsNetArray();
         }
 
         [NetJs.MemberReplace]
@@ -124,7 +143,7 @@ namespace System.Reflection
         {
             var attHandle = AttributeType.As<RuntimeType>()._prototype.TypeHandle;
             NetJs.AttributeModel[]? attributesModel = GetAttributeModel(obj);
-            return attributesModel?.Some(a => a.TypeHandle == attHandle) ?? false;
+            return attributesModel?.some(a => a.TypeHandle == attHandle) ?? false;
         }
     }
 }

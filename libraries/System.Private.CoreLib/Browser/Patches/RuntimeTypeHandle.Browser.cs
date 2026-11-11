@@ -40,11 +40,11 @@ namespace System
                     return CorElementType.ELEMENT_TYPE_U2;
                 case KnownTypeHandle.SystemInt32:
                     return CorElementType.ELEMENT_TYPE_I4;
-                case KnownTypeHandle.SystemUint32:
+                case KnownTypeHandle.SystemUInt32:
                     return CorElementType.ELEMENT_TYPE_U4;
                 case KnownTypeHandle.SystemInt64:
                     return CorElementType.ELEMENT_TYPE_I8;
-                case KnownTypeHandle.SystemUint64:
+                case KnownTypeHandle.SystemUInt64:
                     return CorElementType.ELEMENT_TYPE_U8;
                 case KnownTypeHandle.SystemChar:
                     return CorElementType.ELEMENT_TYPE_CHAR;
@@ -102,7 +102,9 @@ namespace System
         private static int GetMetadataToken(QCallTypeHandle type)
         {
             var runtimeType = type.QCallTypeHandleToRuntimeType();
-            return runtimeType._prototype.TypeHandle.As<int>();
+            return NetJs.Script.IsDefined(runtimeType._prototype.OriginalTypeHandle) ?
+                runtimeType._prototype.OriginalTypeHandle.As<int>() :
+                runtimeType._prototype.TypeHandle.As<int>();
         }
 
         [NetJs.MemberReplace]
@@ -173,7 +175,7 @@ namespace System
         internal static void GetElementType(QCallTypeHandle type, ObjectHandleOnStack res)
         {
             var runtimeType = type.QCallTypeHandleToRuntimeType();
-            res.GetObjectHandleOnStack<Type?>() = runtimeType._arrayElementType;
+            res.GetObjectHandleOnStack<Type?>() = runtimeType._arrayElementType ?? (runtimeType.IsArray ? typeof(object) : null);
         }
 
         [NetJs.MemberReplace]

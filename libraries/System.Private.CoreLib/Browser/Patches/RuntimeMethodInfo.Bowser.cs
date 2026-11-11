@@ -55,7 +55,7 @@ namespace System.Reflection
         [NetJs.MemberReplace(nameof(get_metadata_token))]
         internal static int get_metadata_tokenImpl(RuntimeMethodInfo method)
         {
-            return method._model.Handle.As<int>();
+            return NetJs.Script.IsDefined(method._model.OriginalHandle) ? method._model.OriginalHandle.As<int>() : method._model.Handle.As<int>();
         }
 
         [NetJs.MemberReplace(nameof(InternalInvoke))]
@@ -84,7 +84,43 @@ namespace System.Reflection
         [NetJs.MemberReplace(nameof(MakeGenericMethod_impl))]
         private MethodInfo MakeGenericMethod_implImpl(Type[] types)
         {
-            //var model = _model.As<MethodModel>();
+            var type = DeclaringType.As<RuntimeType>();
+            var existing = type._genericMethods.ArrayFirstOrDefault(m =>
+            {
+                if (m._typeArguments != null && m._typeArguments.Length == types.Length)
+                {
+                    for (int i = 0; i < types.Length; i++)
+                    {
+                        if (m._typeArguments[i] != types[i])
+                            return false;
+                    }
+                }
+                return false;
+            });
+            if (existing != null)
+                return existing;
+
+            var model = NetJs.Script.JSONParse<MethodModel>(NetJs.Script.JSONStringify(_model));
+            if (NetJs.Script.TypeOf(_model.As<MethodModel>().ReturnType).NativeEquals("function")) //copy the return type that cant serialize
+            {
+                model.ReturnType = _model.As<MethodModel>().ReturnType.ResolveHandle(types);
+            }
+            if (NetJs.Script.IsDefined(_model.As<MethodModel>().Parameters))
+            {
+                for(int i = 0; i < _model.As<MethodModel>().Parameters!.Length; i++)
+                {
+                    unchecked
+                    {
+                        if (NetJs.Script.TypeOf(_model.As<MethodModel>().Parameters![i].ParameterType).NativeEquals("function")) //copy the parameter types that cant serialize
+                        {
+                            model.Parameters![i].ParameterType = _model.As<MethodModel>().Parameters![i].ParameterType.ResolveHandle(types);
+                        }
+                    }
+                }
+            }
+            model.GenericArguments = types.map(t => t.As<RuntimeType>()._prototype.As<string>());
+            uint handle = type._nextGenericMemberHandle++;
+            model.Handle = NetJs.Script.Write<ulong>("Number(BigInt(type._model.{nameof(MemberModel.Handle)}) | BigInt(handle) << 32n)");// (uint)((ulong)type._model.Handle.As<uint>() | (((ulong)handle) << ReflectionHandleExtension.MemberShift)).As<ulong>();
             //var parameters = model.Parameters;
             //bool modelCloned = false;
             //if (NetJs.Script.IsDefined(parameters))
@@ -103,11 +139,13 @@ namespace System.Reflection
             //        //}
             //    }
             //}
-            return new RuntimeMethodInfo(_model.As<MethodModel>())
+            var method = new RuntimeMethodInfo(model)
             {
                 _genericMethod = this,
                 _typeArguments = types
             };
+            type._genericMethods.push(method);
+            return method;
         }
 
         [NetJs.MemberReplace(nameof(GetGenericArguments))]
@@ -118,7 +156,7 @@ namespace System.Reflection
             if (_model.Flags.TypeHasFlag(MemberFlagsModel.IsGeneric))
             {
                 var len = _model.As<MethodModel>().GenericArguments!.Length;
-                var genericTypes = AppDomain.GenericTypeParameters.ArraySlice(0, len).Map(e => e.Type!);
+                var genericTypes = AppDomain.GenericTypeParameters.slice(0, len).map(e => e.Type!);
                 return genericTypes;
             }
             return Type.EmptyTypes;

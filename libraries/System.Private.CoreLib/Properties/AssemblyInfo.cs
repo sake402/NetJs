@@ -1,5 +1,7 @@
 ﻿
 using NetJs;
+using System;
+using System.Diagnostics.CodeAnalysis;
 
 
 [assembly: AssemblyHandle(AssemblyHandleAttribute.SystemPrivateCoreLib)]
@@ -112,12 +114,12 @@ using NetJs;
 [assembly: Attached("*System\\..+Exception", typeof(ReflectableAttribute), false)]
 [assembly: Attached("*.+DebugView", typeof(NonScriptableAttribute))]
 [assembly: Attached("*^System\\.Reflection\\.Emit\\.+", typeof(NonScriptableAttribute))]
-[assembly: Attached("System.Reflection.SignatureType", typeof(NonScriptableAttribute))]
-[assembly: Attached("System.Reflection.SignatureGenericParameterType", typeof(NonScriptableAttribute))]
-[assembly: Attached("System.Reflection.SignatureConstructedGenericType", typeof(NonScriptableAttribute))]
-[assembly: Attached("System.Reflection.SignatureHasElementType", typeof(NonScriptableAttribute))]
-[assembly: Attached("System.Reflection.SignatureGenericMethodParameterType", typeof(NonScriptableAttribute))]
-[assembly: Attached("System.Reflection.SignatureTypeExtensions", typeof(NonScriptableAttribute))]
+//[assembly: Attached("System.Reflection.SignatureType", typeof(NonScriptableAttribute))]
+//[assembly: Attached("System.Reflection.SignatureGenericParameterType", typeof(NonScriptableAttribute))]
+//[assembly: Attached("System.Reflection.SignatureConstructedGenericType", typeof(NonScriptableAttribute))]
+//[assembly: Attached("System.Reflection.SignatureHasElementType", typeof(NonScriptableAttribute))]
+//[assembly: Attached("System.Reflection.SignatureGenericMethodParameterType", typeof(NonScriptableAttribute))]
+//[assembly: Attached("System.Reflection.SignatureTypeExtensions", typeof(NonScriptableAttribute))]
 [assembly: Attached(typeof(System.SR), typeof(ReflectableAttribute), false)]
 
 //DOnt rename this methods as they are required in js to maintain their original name to make interop work
@@ -135,3 +137,5 @@ using NetJs;
 //[assembly: Attached(nameof(System.Runtime.Intrinsics.X86.Avx) + "." + nameof(System.Runtime.Intrinsics.Vector512.IsHardwareAccelerated), typeof(AlwaysAttribute), false)]
 
 
+[assembly: Attached(typeof(Nullable<>), typeof(DynamicDependencyAttribute), "$ctor()")]
+[assembly: Attached(typeof(Nullable<>), typeof(DynamicDependencyAttribute), "$ctor(T)")]

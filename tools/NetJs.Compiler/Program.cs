@@ -1,4 +1,6 @@
-﻿using Microsoft.Build.Evaluation;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Build.Evaluation;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
@@ -16,6 +18,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Net.WebSockets;
 using System.Reflection.Metadata;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -95,7 +98,7 @@ var buildCommand = new Command("build", "Build a project");
 buildCommand.Aliases.Add("--build");
 var projectOption = new Option<FileInfo>("--project") { Description = "Path to the project to build" };
 //projectOption.Aliases.Add("-p");
-var configOption = new Option<FileInfo>("--configuration") { Description = "Build configuration. Debug/Release" };
+var configOption = new Option<string>("--configuration") { Description = "Build configuration. Debug/Release" };
 configOption.Aliases.Add("-c");
 var singleBuildOption = new Option<bool>("--single") { Description = "Build only this project" };
 singleBuildOption.Aliases.Add("-s");
@@ -451,14 +454,20 @@ async Task Build(ParseResult parseResult, CancellationToken cancellationToken)
     //var projectFileInfo = parseResult.GetValue(projectOption);
     var singleBuild = parseResult.GetValue(singleBuildOption);
     var forceBuild = parseResult.GetValue(forceBuildOption);
-    var buildProperties = parseResult.GetValue(propertiesOption);
+    var buildProperties = parseResult.GetValue(propertiesOption) ?? new Dictionary<string, string>();
+    var configuration = parseResult.GetValue(configOption);
+    if (configuration != null)
+        buildProperties["Configuration"] = configuration;
     var noEmit = parseResult.GetValue(noEmitBuildOption);
     //var csProjectFile = projectFile;
-    var workspace = MSBuildWorkspace.Create();
+    var workspace = MSBuildWorkspace.Create(buildProperties);
     var projectCollection = new Microsoft.Build.Evaluation.ProjectCollection();
     Dictionary<string, TaskCompletionSource<Exception?>> building = new();
     SemaphoreSlim slock = new(1);
     SemaphoreSlim maxParallelBuild = new(4);
+    Console.Write("Opening workspace...");
+    await workspace.OpenProjectAsync(csProjectFile!);
+    Console.WriteLine("Done!");
     await "Building".ProfileAsync(async () =>
     {
         var exception = await BuildWithDependencies(csProjectFile!, singleBuild, forceBuild);
@@ -468,16 +477,23 @@ async Task Build(ParseResult parseResult, CancellationToken cancellationToken)
     async Task<Exception?> BuildWithDependencies(string csProjectFile, bool singleBuild, bool forceBuild)
     {
         var projectFolder = Path.GetDirectoryName(csProjectFile)!;
-        await slock.WaitAsync();
+        await slock.WaitAsync().ConfigureAwait(false);
         if (building.TryGetValue(csProjectFile, out var tcs))
         {
             slock.Release();
-            return await tcs.Task;
+            return await tcs.Task.ConfigureAwait(false);
         }
         tcs = new TaskCompletionSource<Exception?>();
         building.Add(csProjectFile, tcs);
-        var codeAnalysisProject = workspace.CurrentSolution.Projects.FirstOrDefault(f => f.FilePath?.Equals(csProjectFile, StringComparison.InvariantCultureIgnoreCase) ?? false) ?? await workspace.OpenProjectAsync(csProjectFile!);
+        //if (codeAnalysisProject == null)
+        //{
+        //    Console.WriteLine("");
+        //    Console.Write("Opening workspace...");
+        //    codeAnalysisProject = await workspace.OpenProjectAsync(csProjectFile!);
+        //    Console.WriteLine("Done!");
+        //}
         slock.Release();
+        var codeAnalysisProject = workspace.CurrentSolution.Projects.First(f => f.FilePath?.Equals(csProjectFile, StringComparison.InvariantCultureIgnoreCase) ?? false);
         Exception? result = null;
         do
         {
@@ -505,24 +521,39 @@ async Task Build(ParseResult parseResult, CancellationToken cancellationToken)
                     //}
                     tasks.Add(task);
                 }
-                await Task.WhenAll(tasks);
-                var analyzerProjectDependencies = msBuildProject.Items.Where(i => i.ItemType == "ProjectReference" && i.GetMetadataValue("OutputItemType").Equals("Analyzer", StringComparison.InvariantCultureIgnoreCase)).Select(e => e.EvaluatedInclude);
+                try
+                {
+                    await Task.WhenAll(tasks).ConfigureAwait(false);
+                }
+                catch { }
+                //var analyzerProjectDependencies = msBuildProject.Items.Where(i => i.ItemType == "ProjectReference" && i.GetMetadataValue("OutputItemType").Equals("Analyzer", StringComparison.InvariantCultureIgnoreCase)).Select(e => e.EvaluatedInclude);
                 //if this project has a source generator, we need to do dotnet build on it first to make sure source generator run and generate their files
                 //We know we are not invoked by dotnet itself as it passes --single through our Directory.Build.props
-                if (analyzerProjectDependencies.Any())
+                //if (analyzerProjectDependencies.Any())
+                //{
+                //    //Console.WriteLine();
+                //    Console.WriteLine($"Doing dotnet build \"{csProjectFile}\" to run source generator");
+                //    var c = await $"cd \"{projectFolder}\" && dotnet build /p:NoNetJs=true /p:EmitCompilerGeneratedFiles=true".CLI();
+                //    Console.WriteLine($"Done dotnet build \"{csProjectFile}\"");
+                //    if (c.ExitCode != 0)
+                //    {
+                //        result = new Exception(c.StdOut);
+                //        break;
+                //    }
+                //}
+
+                var taskExceptions = tasks.Where(e => e.Exception != null).SelectMany(e =>
                 {
-                    //Console.WriteLine();
-                    Console.WriteLine($"Doing dotnet build \"{csProjectFile}\" to run source generator");
-                    var c = await $"cd \"{projectFolder}\" && dotnet build /p:NoNetJs=true /p:EmitCompilerGeneratedFiles=true".CLI();
-                    Console.WriteLine($"Done dotnet build \"{csProjectFile}\"");
-                    if (c.ExitCode != 0)
-                    {
-                        result = new Exception(c.StdOut);
-                        break;
-                    }
-                }
-                var taskExceptions = tasks.Where(e => e.Exception != null).Select(e => e.Exception!);
-                var exceptions = tasks.Where(e => e.Result != null).Select(e => e.Result!);
+                    if (e.Exception is AggregateException age)
+                        return age.InnerException != null ? [age.InnerException] : age.InnerExceptions;
+                    return [e.Exception!];
+                });
+                var exceptions = tasks.Where(e => e.Result != null).SelectMany(e =>
+                {
+                    if (e.Result is AggregateException age)
+                        return age.InnerException != null ? [age.InnerException] : age.InnerExceptions;
+                    return [e.Result!];
+                });
                 if (taskExceptions.Any() || exceptions.Any())
                 {
                     result = new AggregateException(taskExceptions.Concat(exceptions).ToArray());
@@ -547,26 +578,41 @@ async Task Build(ParseResult parseResult, CancellationToken cancellationToken)
             {
                 lastBuildTime = new FileInfo(timeStampFile).LastWriteTime;
             }
-            if (forceBuild /*|| dependencyBuilt*/ || lastBuildTime == null || sources.Any(s => new FileInfo(s).LastWriteTime > lastBuildTime))
+            if (forceBuild /*|| dependencyBuilt*/ ||
+                lastBuildTime == null ||
+                sources.Any(s => new FileInfo(s).LastWriteTime > lastBuildTime) ||
+                MetadataProvider.GetMetadataReference(wProject, out _) == null)
             {
                 Translator translator = default!;
                 try
                 {
-                    await maxParallelBuild.WaitAsync();
+                    await maxParallelBuild.WaitAsync().ConfigureAwait(false);
+                    Console.WriteLine($"");
+                    Console.WriteLine($"--------------------------------------------------");
+                    Console.WriteLine($"");
                     Console.WriteLine($"Building \"{csProjectFile}\"");
                     translator = new Translator(config, dotnetPath, dotnetVersion, sdkPath, sdkVersion, dataFolder, tempFolder, wProject, new ProjectBinOutputProvider(wProject))
                     {
                         DoEmitDll = !noEmit
                     };
                     //translator.LogTo = logWriter;
-                    if (!await translator.Build())
+                    await Task.Run(async () =>
                     {
-                        result = new Exception("Build Failed");
-                        break;
-                    }
+                        if (!await translator.Build())
+                        {
+                            throw new Exception($"Build Failed \"{csProjectFile}\" {translator.Error}");
+                        }
+                    }).ConfigureAwait(false);
+                    //if (!await translator.Build().ConfigureAwait(false))
+                    //{
+                    //    throw new Exception("Build Failed");
+                    //}
                     Console.WriteLine();
                     Console.WriteLine();
                     Console.WriteLine($"BUILD \"{csProjectFile}\" SUCCESS!");
+                    Console.WriteLine($"");
+                    Console.WriteLine($"--------------------------------------------------");
+                    Console.WriteLine($"");
                     if (!File.Exists(timeStampFile))
                     {
                         var dir = Path.GetDirectoryName(timeStampFile)!;
@@ -592,6 +638,9 @@ async Task Build(ParseResult parseResult, CancellationToken cancellationToken)
                         Console.WriteLine(e.StackTrace);
                         e = e.InnerException!;
                     }
+                    Console.WriteLine($"");
+                    Console.WriteLine($"--------------------------------------------------");
+                    Console.WriteLine($"");
                     result = ex;
                 }
                 finally
@@ -609,6 +658,9 @@ async Task Build(ParseResult parseResult, CancellationToken cancellationToken)
             {
                 Console.WriteLine($"Build \"{csProjectFile}\" up to date!");
                 Console.WriteLine($"BUILD \"{csProjectFile}\" SUCCESS!");
+                Console.WriteLine($"");
+                Console.WriteLine($"--------------------------------------------------");
+                Console.WriteLine($"");
             }
         } while (false);
         tcs.SetResult(result);
@@ -714,7 +766,8 @@ async Task<GlobalCompilationVisitor> BuildGlobalContext(ParseResult parseResult)
     var csCompilation = await metadataProvider.CreateCompilation(wProject, [], [], null, sortedReferences, symbolFiles);
     var isSystemPrivateCoreLib = wProject.GetAssemblyName() == "NetJs.System.Private.CoreLib";
     var importedNames = symbolFiles.Select(s => deSerializer.Deserialize<SymbolDescriptor>(File.ReadAllText(s))).ToList();
-    var global = new GlobalCompilationVisitor(csCompilation, wProject, isSystemPrivateCoreLib, importedNames);
+    var outputProvider = new ProjectBinOutputProvider(wProject);
+    var global = new GlobalCompilationVisitor(csCompilation, wProject, outputProvider, isSystemPrivateCoreLib, importedNames, compilationAssemblyIsEmpty: true);
     return global;
 }
 
@@ -733,7 +786,20 @@ async Task PrintPathToRoot(ParseResult parseResult)
             var command = Console.ReadLine();
             if (command == null)
                 continue;
-            if (command.StartsWith("remove") && ulong.TryParse(command.AsSpan()[7..], out var removeHandle))
+            else if (command.Equals("garbage on", StringComparison.InvariantCultureIgnoreCase) || command.Equals("garbage", StringComparison.InvariantCultureIgnoreCase))
+            {
+                staticAnalyzer.Initialize();
+                staticAnalyzer.GarbageSymbols();
+                Console.Write("Garbaged!");
+                continue;
+            }
+            else if (command.Equals("garbage off", StringComparison.InvariantCultureIgnoreCase))
+            {
+                staticAnalyzer.Initialize();
+                Console.Write("Garbage Off!");
+                continue;
+            }
+            else if (command.StartsWith("remove") && ulong.TryParse(command.AsSpan()[7..], out var removeHandle))
             {
                 staticAnalyzer.ForceRemove.Add(removeHandle);
             }
@@ -761,31 +827,76 @@ async Task ProfiledTrimming(ParseResult parseResult)
     {
         try
         {
-            Console.WriteLine("");
-            Console.Write("Paste traced handles >");
-            var paste = Console.ReadLine();
-            IEnumerable<ulong> iHandles;
-            if (paste == "#clipboard")
-            {
-                var handles = (await ClipboardService.GetTextAsync())!.Split([' ', ',']);
-                iHandles = handles.Select(h => ulong.Parse(h)).ToList();
-            }
-            else
-            {
-                var handles = Console.ReadLine()!.Split([' ', ',']);
-                iHandles = handles.Select(h => ulong.Parse(h)).ToList();
-            }
-
             var staticAnalyzer = new StaticAnalysisMarkAndSweepTrimmer(global);
             var outputProvider = new ProjectBinOutputProvider(global.Project);
             outputProvider.NoClean();
 
-            foreach (var ih in iHandles)
+            var builder = WebApplication.CreateBuilder(args);
+            var app = builder.Build();
+            // 1. Enable the WebSocket middleware
+            app.UseWebSockets(new WebSocketOptions
             {
-                staticAnalyzer.Keep(ih);
-            }
+                KeepAliveInterval = TimeSpan.FromSeconds(30) // Prevents connections from dropping idle
+            });
+            int handlesKept = 0;
+            app.Map("/$profile", async context =>
+            {
+                // Check if the incoming request is actually a WebSocket upgrade request
+                if (!context.WebSockets.IsWebSocketRequest)
+                {
+                    context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                    return;
+                }
+
+                using WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
+                var buffer = new byte[1024 * 4]; // 4KB buffer for chunks
+
+                while (webSocket.State == WebSocketState.Open)
+                {
+                    var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+
+                    if (result.MessageType == WebSocketMessageType.Close)
+                    {
+                        await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
+                    }
+                    else if (result.MessageType == WebSocketMessageType.Text)
+                    {
+                        var text = Encoding.UTF8.GetString(new ArraySegment<byte>(buffer, 0, result.Count));
+                        var iHandles = text.Split(',').Select(h => ulong.Parse(h)).ToList();
+                        foreach (var ih in iHandles)
+                        {
+                            staticAnalyzer.Keep(ih);
+                            handlesKept++;
+                        }
+                        Console.Write("\rPress Enter to begin trimming..." + handlesKept + " of " + staticAnalyzer.SymbolsCount);
+                    }
+                }
+            });
+            app.Run("http://127.0.0.1:54321");
+            Console.WriteLine("Press Enter to begin trimming.");
+            Console.ReadLine();
+            //Console.WriteLine("");
+            //Console.Write("Paste traced handles >");
+            //var paste = Console.ReadLine();
+            //IEnumerable<ulong> iHandles;
+            //if (paste == "#clipboard")
+            //{
+            //    var handles = (await ClipboardService.GetTextAsync())!.Split([' ', ',']);
+            //    iHandles = handles.Select(h => ulong.Parse(h)).ToList();
+            //}
+            //else
+            //{
+            //    var handles = Console.ReadLine()!.Split([' ', ',']);
+            //    iHandles = handles.Select(h => ulong.Parse(h)).ToList();
+            //}
+
+            //foreach (var ih in iHandles)
+            //{
+            //    staticAnalyzer.Keep(ih);
+            //}
+
             var jsFiles = Directory.GetFiles(outputProvider.OutputPath, "*.js", SearchOption.AllDirectories).Where(e => !e.EndsWith(".trimmed.js") && !e.EndsWith(".min.js"));
-            await staticAnalyzer.RunTrimming(outputProvider, jsFiles, runGarbageSymbols: false, trimTraceHooks:false);
+            await staticAnalyzer.RunTrimming(outputProvider, jsFiles, runGarbageSymbols: false, trimTraceHooks: true, trimMainAssembly: true);
             Console.WriteLine("Done!");
         }
         catch (Exception e)

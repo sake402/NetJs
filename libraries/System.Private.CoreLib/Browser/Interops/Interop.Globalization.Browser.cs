@@ -1016,7 +1016,7 @@ internal static partial class Interop
                 localeName = "en-US";
             }
             var collator = Script.Write<Collator>("new Intl.Collator(localeName)");
-            sortHandle = InteropUtility.castObject2Address(collator).As<IntPtr>();
+            sortHandle = InteropUtility.castObject2Address(collator, weakReference: false).As<IntPtr>();
             return ResultCode.Success;
         }
 
@@ -1265,12 +1265,19 @@ internal static partial class Interop
 
         internal static unsafe partial int GetSortKey(IntPtr sortHandle, char* str, int strLength, byte* sortKey, int sortKeyLength, CompareOptions options)
         {
-            throw null!;
+            var collator = InteropUtility.castAddress2Object(sortHandle.As<uint>()).As<Collator>();
+            for (int i = 0; i < strLength; i++)
+            {
+                sortKey[i * 2] = (byte)(str[i] & 0xFF);
+                sortKey[i * 2 + 1] = (byte)((str[i] >> 8) & 0xFF);
+            }
+            sortKey[strLength * 2] = 0;
+            return strLength * 2 + 1;
         }
 
         internal static partial int GetSortVersion(IntPtr sortHandle)
         {
-            throw null!;
+            return 1;
         }
 
     }

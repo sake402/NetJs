@@ -1,4 +1,4 @@
 ﻿
 using NetJs;
 
-[assembly: Reflectable(false)]
+//[assembly: Reflectable(false)]

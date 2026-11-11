@@ -415,7 +415,6 @@ The System.Text.Json library is built-in as part of the shared framework in .NET
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Reflection.Primitives\NetJs.System.Reflection.Primitives.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Runtime\NetJs.System.Runtime.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Runtime.InteropServices\NetJs.System.Runtime.InteropServices.csproj" />
-    <ProjectReference Include="$(NewLibrariesProjectRoot)System.Runtime.Intrinsics\NetJs.System.Runtime.Intrinsics.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Runtime.Loader\NetJs.System.Runtime.Loader.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Security.Cryptography\NetJs.System.Security.Cryptography.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Text.Encoding.Extensions\NetJs.System.Text.Encoding.Extensions.csproj" />

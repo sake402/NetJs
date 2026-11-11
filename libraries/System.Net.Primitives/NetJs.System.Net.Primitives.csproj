@@ -121,7 +121,6 @@
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Memory\NetJs.System.Memory.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Runtime\NetJs.System.Runtime.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Runtime.InteropServices\NetJs.System.Runtime.InteropServices.csproj" />
-    <ProjectReference Include="$(NewLibrariesProjectRoot)System.Runtime.Intrinsics\NetJs.System.Runtime.Intrinsics.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Threading\NetJs.System.Threading.csproj" />
   </ItemGroup>
   <ItemGroup>

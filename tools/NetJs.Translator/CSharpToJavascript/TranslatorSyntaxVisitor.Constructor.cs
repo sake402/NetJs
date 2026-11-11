@@ -108,6 +108,7 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             CurrentTypeWriter.WriteLine(node, ")");
             CurrentTypeWriter.WriteLine(node, "{", true);
+
             //We cant be sure if there will be a method/property that accesses this primary constructor parameter
             //So we create is as a field always and intialize it from the passed parameter
             foreach (var parameter in primaryConstructorParameters)
@@ -121,6 +122,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 i++;
             }
 
+            bool baseCtorCalled = false;
             if (node.BaseList != null)
             {
                 foreach (var type in node.BaseList.Types)
@@ -129,8 +131,16 @@ namespace NetJs.Translator.CSharpToJavascript
                     {
                         var calledCtor = (IMethodSymbol)_global.GetSymbol(type, this);
                         WriteCalledConstructor(node, typeSymbol, calledCtor, pcbType.ArgumentList.Arguments.Select(a => new CodeNode(a)));
+                        baseCtorCalled = true;
                     }
                 }
+            }
+
+            if (!baseCtorCalled)
+            {
+                var baseCtor = GetDefaultBaseConstructor(constructorSymbol);
+                if (baseCtor != null)
+                    WriteCalledConstructor(node, constructorSymbol.ContainingType, baseCtor, null);
             }
 
             //Initillize fields/properties that requires the primary constructor parameters, such as fields/properties that are initialized using a primary constructor parameter
@@ -190,24 +200,56 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 CurrentTypeWriter.Write(node, $"super.{calledConstructorMeta.OverloadName ?? Constants.DefaultConstructorName}", true);
             }
-            var parametersCount = calledConstructor.Parameters.Length;
-            var parameters = Enumerable.Range(0, parametersCount).Select(i =>
-            {
-                var argument = arguments?.ElementAtOrDefault(i);
-                if (argument == null)
+            //var parametersCount = calledConstructor.Parameters.Length;
+            //var parameters = Enumerable.Range(0, parametersCount).Select(i =>
+            //{
+            //    var argument = arguments?.ElementAtOrDefault(i);
+            //    if (argument == null)
+            //    {
+            //        var constructorP = calledConstructor.Parameters[i];
+            //        Debug.Assert(constructorP.HasExplicitDefaultValue || constructorP.IsParams);
+            //        if (constructorP.HasExplicitDefaultValue)
+            //        {
+            //            return new CodeNode(() =>
+            //            {
+            //                if (!TryWriteConstant(node, constructorP.Type, null, constructorP.ExplicitDefaultValue))
+            //                    throw new InvalidOperationException();
+            //            });
+            //        }
+            //        else
+            //        {
+            //            return new CodeNode(() =>
+            //            {
+            //                CurrentTypeWriter.Write(node, "[]");
+            //            });
+            //        }
+            //    }
+            //    return argument;
+            //});
+            int parametersWritten = 0;
+            WriteMethodInvocationParameters(
+                node,
+                calledConstructor,
+                null, arguments,
+                ref parametersWritten,
+                prefixArguments: constructorCallConvention != ConstructorCallConvention.InstanceCall ? (ref int parametersWritten) =>
                 {
-                    var constructorP = calledConstructor.Parameters[i];
-                    Debug.Assert(constructorP.HasExplicitDefaultValue);
-                    return new CodeNode(() =>
-                    {
-                        if (!TryWriteConstant(node, constructorP.Type, null, constructorP.ExplicitDefaultValue))
-                            throw new InvalidOperationException();
-                    });
+                    if (parametersWritten > 0)
+                        CurrentTypeWriter.Write(node, ", ");
+                    CurrentTypeWriter.Write(node, "this");
+                    parametersWritten++;
                 }
-                return argument;
-            });
-            WriteMethodInvocationParameters(node, calledConstructor, null, parameters, constructorCallConvention != ConstructorCallConvention.InstanceCall ? (Action)(() => CurrentTypeWriter.Write(node, "this")) : null);
+            : null);
             CurrentTypeWriter.WriteLine(node, $";");
+        }
+
+        IMethodSymbol? GetDefaultBaseConstructor(IMethodSymbol constructorSymbol)
+        {
+            var baseType = ((ITypeSymbol)constructorSymbol.ContainingSymbol).BaseType;
+            var baseMembers = baseType?.GetMembers(".ctor");
+            //if there is a base constructor with all parameter having default, prioritize that
+            return (IMethodSymbol?)baseMembers?.FirstOrDefault(e => e is IMethodSymbol ms && ms.Parameters.Length > 0 && ms.Parameters.All(e => e.HasExplicitDefaultValue)) ??
+                (IMethodSymbol?)baseMembers?.SingleOrDefault(e => e is IMethodSymbol ms && ms.Parameters.Length == 0);
         }
 
         void WriteConstructorDeclaration(BaseMethodDeclarationSyntax node, IMethodSymbol constructorSymbol, IEnumerable<ParameterSyntax> parameters, ConstructorInitializerSyntax? baseInitializer)
@@ -216,7 +258,7 @@ namespace NetJs.Translator.CSharpToJavascript
             //if (node.Modifiers.Any(e => e.ValueText == "async"))
             //{
             //    modifier += "async ";
-            //}
+            //}            
             var typeSymbol = (INamedTypeSymbol)constructorSymbol.ContainingSymbol;
             var constructors = typeSymbol.Constructors;
             //A class may have multiple constructor, use a named ($ctor) method as the constructor
@@ -232,10 +274,7 @@ namespace NetJs.Translator.CSharpToJavascript
             var useNativeConstructor = calledBaseConstructor != null ? _global.IsExternal(calledBaseConstructor.ContainingType, this) : false;
             if (calledBaseConstructor == null && baseType != null && baseInitializer == null) //call default constructor on base type
             {
-                var baseMembers = baseType.GetMembers(".ctor", _global, true);
-                //if there is a base constructor with all parameter having default, prioritize that
-                calledBaseConstructor = (IMethodSymbol?)baseMembers.FirstOrDefault(e => e is IMethodSymbol ms && ms.Parameters.Length > 0 && ms.Parameters.All(e => e.HasExplicitDefaultValue)) ??
-                    (IMethodSymbol?)baseMembers.SingleOrDefault(e => e is IMethodSymbol ms && ms.Parameters.Length == 0);
+                calledBaseConstructor = GetDefaultBaseConstructor(constructorSymbol);
             }
             if (_global.HasAnyAttribute(constructorSymbol, this, false, typeof(NativeConstructorAttribute).FullName!))
             {
@@ -263,7 +302,12 @@ namespace NetJs.Translator.CSharpToJavascript
                 else if (useNativeConstructor)
                 {
                     CurrentTypeWriter.Write(node, $"super", true);
-                    WriteMethodInvocationParameters(node, calledBaseConstructor, null, baseInitializer?.ArgumentList.Arguments.Select(a => new CodeNode(a)), constructorCallConvention != ConstructorCallConvention.InstanceCall ? (Action)(() => CurrentTypeWriter.Write(node, "this")) : null);
+                    int parametersWritten = 0;
+                    WriteMethodInvocationParameters(node, calledBaseConstructor, null, baseInitializer?.ArgumentList.Arguments.Select(a => new CodeNode(a)), ref parametersWritten, prefixArguments: constructorCallConvention != ConstructorCallConvention.InstanceCall ? (ref int parametersWritten) =>
+                    {
+                        CurrentTypeWriter.Write(node, "this");
+                    }
+                    : null);
                     CurrentTypeWriter.WriteLine(node, $";");
                 }
                 else
@@ -301,10 +345,6 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             var constructorSymbol = (IMethodSymbol)_global.GetSymbol(node, this);
 
-            if (constructorSymbol.ContainingType.Name== "DependencyInjectionEventSource")
-            {
-
-            }
             RegisterDynamicDependencies(constructorSymbol);
 
             if (node.Modifiers.IsExtern())
@@ -341,10 +381,19 @@ namespace NetJs.Translator.CSharpToJavascript
             IMethodSymbol targetConstructor,
             TypeArgumentListSyntax? genericArgs = null,
             IEnumerable<CodeNode>? parameterArgs = null,
-            CodeNode? suffixArguments = null,
+            MethodParameterWriter? suffixArguments = null,
             MethodOverloadResult overloadResult = default)
         {
             MarkCurrentClosureDependsOn(targetConstructor);
+            if (typeSymbol.Kind == SymbolKind.TypeParameter)
+            {
+                CurrentTypeWriter.Write(node, "new ");
+                CurrentTypeWriter.Write(node, typeSymbol.Name);
+                CurrentTypeWriter.Write(node, "().");
+                CurrentTypeWriter.Write(node, Constants.GenericNewConstraintConstructorName);
+                CurrentTypeWriter.Write(node, "()");
+                return;
+            }
             var typeMetadata = typeSymbol.Kind != SymbolKind.TypeParameter ? _global.GetRequiredMetadata(typeSymbol) : null;
             void CallDefaultConstructor()
             {
@@ -421,11 +470,61 @@ namespace NetJs.Translator.CSharpToJavascript
                         CurrentTypeWriter.Write(node, $".{constructorMetadata.OverloadName ?? ((targetConstructor == null && parameterArgs?.Count() > 0) ? "$ctor$1" : null) ?? "$ctor"}");
                     }
                 }
-                WriteMethodInvocationParameters(node, targetConstructor, genericArgs, parameterArgs,
-                    prefixArguments: constructorCallConvention == ConstructorCallConvention.PrototypeCall || constructorCallConvention == ConstructorCallConvention.StaticCall ? (Action)(() =>
+                int parametersWritten = 0;
+                WriteMethodInvocationParameters(node, targetConstructor, genericArgs, parameterArgs, ref parametersWritten,
+                    prefixArguments: constructorCallConvention == ConstructorCallConvention.PrototypeCall || constructorCallConvention == ConstructorCallConvention.StaticCall ? (ref int parametersWritten) =>
+                    {
+                        if (parametersWritten > 0)
+                            CurrentTypeWriter.Write(node, ", ");
+                        CallDefaultConstructor();
+                        parametersWritten++;
+                    }
+                : null, suffixArguments: suffixArguments, overloadResult: overloadResult);
+            }
+        }
+
+        INamedTypeSymbol CreateTupleType(ITypeSymbol[] types)
+        {
+            var count = types.Length;
+            var tupleStruct = (INamedTypeSymbol)_global.GetSymbol($"System.ValueTuple<{string.Join(",", Enumerable.Range(1, count).Select(s => ""))}>", this/*, out _, out _*/);
+            tupleStruct = tupleStruct.Construct(types);
+            return tupleStruct;
+        }
+
+        void WriteCreateTupleImpl(CSharpSyntaxNode node, IEnumerable<CodeNode> arguments, ITypeSymbol[]? argTypes)
+        {
+            var count = arguments.Count();
+            argTypes ??= arguments.Select(a => _global.TryGetTypeSymbol(a.AsT0, this) ?? throw new InvalidOperationException("Cannot result tuple generic argument")).ToArray();
+            var tupleStruct = CreateTupleType(argTypes.Take(count).ToArray());
+            var tupleConstructor = (IMethodSymbol)tupleStruct.GetMembers(".ctor").Where(e => ((IMethodSymbol)e).Parameters.Count() == count).Single();
+            WriteConstructorCall(node, tupleStruct, tupleConstructor, null, arguments, default);
+        }
+
+        void WriteCreateTuple(CSharpSyntaxNode node, IEnumerable<CSharpSyntaxNode> arguments)
+        {
+            if (arguments.Count() > 8)
+            {
+                var types = arguments.Select(a => _global.TryGetTypeSymbol(a, this) ?? throw new InvalidOperationException("Cannot result tuple generic argument")).ToArray();
+
+                int where = 0;
+                var firstSeven = arguments.Skip(where).Take(7);
+                var firstSevenType = types.Skip(where).Take(7);
+                var remaining = arguments.Skip(where + 7);
+                var remainingType = types.Skip(where + 7);
+                int remainingCount = remaining.Count();
+                if (remainingCount > 8)
                 {
-                    CallDefaultConstructor();
-                }) : null, suffixArguments: suffixArguments, overloadResult: overloadResult);
+                    throw new InvalidOperationException("Not yet implemented. Keep tuple below 14 items");
+                    remainingCount = 8;
+                }
+                var remainingTupleType = CreateTupleType(remainingType.Take(remainingCount).ToArray());
+                WriteCreateTupleImpl(node, [..firstSeven, new CodeNode(() => {
+                        WriteCreateTupleImpl(node,remaining.Select(e=>new CodeNode(e)), remainingType.ToArray());
+                    })], types.Take(7).Concat([remainingTupleType]).ToArray());
+            }
+            else
+            {
+                WriteCreateTupleImpl(node, arguments.Select(e => new CodeNode(e)), null);
             }
         }
 
@@ -464,8 +563,8 @@ namespace NetJs.Translator.CSharpToJavascript
                     }
                     else
                     {
-                        var addMethod = instanceType.GetMembers("set_Item").SingleOrDefault(e => e is IMethodSymbol ms && ms.Parameters.Count() == 1 + imp.ArgumentList.Arguments.Count) ??
-                            instanceType.GetMembers("Add").Single(e => e is IMethodSymbol ms && ms.Parameters.Count() == 1 + imp.ArgumentList.Arguments.Count);
+                        var addMethod = instanceType.GetMembers("set_Item", _global, true).FirstOrDefault(e => e is IMethodSymbol ms && ms.Parameters.Count() == 1 + imp.ArgumentList.Arguments.Count) ??
+                            instanceType.GetMembers("Add").First(e => e is IMethodSymbol ms && ms.Parameters.Count() == 1 + imp.ArgumentList.Arguments.Count);
                         MarkCurrentClosureDependsOn(addMethod);
                         var metadata = _global.GetRequiredMetadata(addMethod);
                         CurrentTypeWriter.Write(node, $"{instanceName}.{metadata.OverloadName}(", true);
@@ -496,7 +595,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
                 else if (expression is InitializerExpressionSyntax init)
                 {
-                    var addMethod = instanceType.GetMembers("Add").Single(e => e is IMethodSymbol ms && ms.Parameters.Count() == init.Expressions.Count);
+                    var addMethod = instanceType.GetMembers("Add", _global, true).First(e => e is IMethodSymbol ms && ms.Parameters.Count() == init.Expressions.Count);
                     MarkCurrentClosureDependsOn(addMethod);
                     var metadata = _global.GetRequiredMetadata(addMethod);
                     CurrentTypeWriter.Write(node, $"{instanceName}.{metadata.OverloadName}(", true);
@@ -513,7 +612,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
                 else if (expression is ExpressionElementSyntax element)
                 {
-                    var addMethod = instanceType.GetMembers("Add").Single(e => e is IMethodSymbol ms && ms.Parameters.Count() == 1);
+                    var addMethod = instanceType.GetMembers("Add", _global, true).First(e => e is IMethodSymbol ms && ms.Parameters.Count() == 1);
                     MarkCurrentClosureDependsOn(addMethod);
                     var metadata = _global.GetRequiredMetadata(addMethod);
                     CurrentTypeWriter.Write(node, $"{instanceName}.{metadata.OverloadName}(", true);
@@ -523,7 +622,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
                 else if (expression is SpreadElementSyntax spread)
                 {
-                    var addRangeMethod = instanceType.GetMembers("AddRange").SingleOrDefault(e => e is IMethodSymbol ms && ms.Parameters.Count() == 1);
+                    var addRangeMethod = instanceType.GetMembers("AddRange", _global, true).FirstOrDefault(e => e is IMethodSymbol ms && ms.Parameters.Count() == 1);
                     if (addRangeMethod != null)
                     {
                         MarkCurrentClosureDependsOn(addRangeMethod);
@@ -534,7 +633,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     }
                     else
                     {
-                        var addMethod = (IMethodSymbol)instanceType.GetMembers("Add").Single(e => e is IMethodSymbol ms && ms.Parameters.Count() == 1);
+                        var addMethod = (IMethodSymbol)instanceType.GetMembers("Add", _global, true).First(e => e is IMethodSymbol ms && ms.Parameters.Count() == 1);
                         MarkCurrentClosureDependsOn(addMethod);
                         var metadata = _global.GetRequiredMetadata(addMethod);
                         CurrentTypeWriter.Write(node, "", true);
@@ -558,7 +657,7 @@ namespace NetJs.Translator.CSharpToJavascript
                         {
                             //create the property type instance
                         }
-                        var addMethod = (IMethodSymbol)property.Type.GetMembers("Add", _global, true).Single(e => e is IMethodSymbol ms && ms.Parameters.Length == 1);
+                        var addMethod = (IMethodSymbol)property.Type.GetMembers("Add", _global, true).First(e => e is IMethodSymbol ms && ms.Parameters.Length == 1);
                         foreach (var e in collectionInit.Expressions)
                         {
                             CurrentTypeWriter.Write(node, "", true);
@@ -579,7 +678,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
                 else
                 {
-                    var addMethod = (IMethodSymbol)instanceType.GetMembers("Add").Single(e => e is IMethodSymbol ms && ms.Parameters.Length == 1);
+                    var addMethod = (IMethodSymbol)instanceType.GetMembers("Add", _global, true).First(e => e is IMethodSymbol ms && ms.Parameters.Length == 1);
                     CurrentTypeWriter.Write(node, "", true);
                     WriteMethodInvocation(node, addMethod, null, [expression], new CodeNode(() =>
                     {
@@ -590,10 +689,56 @@ namespace NetJs.Translator.CSharpToJavascript
             }
         }
 
+        void WriteAnonymousObject(CSharpSyntaxNode node, IEnumerable<ExpressionSyntax> initializers, ITypeSymbol? typeSymbol)
+        {
+            CurrentTypeWriter.Write(node, "{ ");
+            int ix = 0;
+            foreach (var e in initializers)
+            {
+                if (ix > 0)
+                    CurrentTypeWriter.Write(node, ", ");
+                if (e is AssignmentExpressionSyntax assign)
+                {
+                    if (typeSymbol!= null&&assign.Left is IdentifierNameSyntax id)
+                    {
+                        var member = typeSymbol.GetMembers(id.Identifier.ValueText, _global).First();
+                        //var idType = GetTypeSymbol(id);
+                        var metadata = _global.GetRequiredMetadata(member);
+                        CurrentTypeWriter.Write(node, metadata.InvocationName ?? id.Identifier.ResolveIdentifierName());
+                    }
+                    else
+                    {
+                        Visit(assign.Left);
+                    }
+                    CurrentTypeWriter.Write(node, ": ");
+                    Visit(assign.Right);
+                }
+                else
+                    Visit(e);
+                ix++;
+            }
+
+            //if (ix > 0)
+            //    CurrentTypeWriter.Write(node, ", ");
+            //CurrentTypeWriter.Write(node, Constants.AssemblyRegistryName);
+            //CurrentTypeWriter.Write(node, " : ");
+            //CurrentTypeWriter.Write(node, Constants.AssemblyRegistryName);
+            //ix++;
+
+            //if (ix > 0)
+            //    CurrentTypeWriter.Write(node, ", ");
+            //CurrentTypeWriter.Write(node, Constants.AssemblyDefineClassName);
+            //CurrentTypeWriter.Write(node, " : \"");
+            //CurrentTypeWriter.Write(node, Guid.NewGuid().ToString());
+            //CurrentTypeWriter.Write(node, "\"");
+
+            CurrentTypeWriter.Write(node, " }");
+        }
+
         void WriteObjectCreation(CSharpSyntaxNode node, TypeSyntax? type, ITypeSymbol? typeSymbol, IMethodSymbol? boundConstructor, IEnumerable<CodeNode>? arguments, InitializerExpressionSyntax? initializer)
         {
             if (type == null && typeSymbol == null)
-                throw new InvalidOperationException("ONE of type or typeSymbol is required");
+                throw new InvalidOperationException("One of type or typeSymbol is required");
             typeSymbol ??= _global.GetTypeSymbol(type!, this)!;
             MarkCurrentClosureDependsOn(typeSymbol);
 
@@ -615,11 +760,17 @@ namespace NetJs.Translator.CSharpToJavascript
                 var i = ++CurrentTypeWriter.CurrentClosure.NameManglingSeed;
                 string classTargetName = $"$t{i}";
                 var instanceName = $"$i{i}";
+                var hasAwait = node.FindDescendant<AwaitExpressionSyntax>(continueDescendant: d =>
+                {
+                    if (d.IsKind(SyntaxKind.ParenthesizedLambdaExpression) || d.IsKind(SyntaxKind.SimpleLambdaExpression) || d.IsKind(SyntaxKind.AnonymousMethodExpression))
+                        return false;
+                    return true;
+                }).Any();
                 WrapStatementsInExpression(node, () =>
                 {
                     _continue(classTargetName, instanceName);
                     CurrentTypeWriter.WriteLine(node, $"return {instanceName};", true);
-                });
+                }, hasAwait, forbidInsertion: true/*Do not insert out in this closure*/);
                 //CurrentTypeWriter.WriteLine(node, $"{_global.GlobalName}.{Constants.Expression}(function()");
                 //CurrentTypeWriter.WriteLine(node, $"{{", true);
                 //_continue(classTargetName, instanceName);
@@ -639,7 +790,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
                 MarkCurrentClosureDependsOn(targetConstructor);
 
-                bool isCompilerGeneratedConstructor = targetConstructor.Parameters.Count() == 0 && targetConstructor.IsImplicitlyDeclared;
+                //bool isCompilerGeneratedConstructor = targetConstructor.Parameters.Count() == 0 && targetConstructor.IsImplicitlyDeclared;
                 if (_global.HasAttribute(targetConstructor, typeof(TemplateAttribute).FullName!, this, false, out _))
                 {
                     WriteMethodInvocation(node, targetConstructor, null, arguments, null, null, genericArgs, false);
@@ -659,6 +810,15 @@ namespace NetJs.Translator.CSharpToJavascript
                             CurrentTypeWriter.WriteLine(node, $"//new {meta?.InvocationName ?? typeSymbol.Name}()", true);
                             CurrentTypeWriter.Write(node, $"const {classTargetName} = ", true);
                             CurrentTypeWriter.Write(node, meta?.InvocationName ?? typeSymbol.Name);
+                            if (typeSymbol.Kind == SymbolKind.TypeParameter)
+                            {
+                                CurrentTypeWriter.Write(node, $".{Constants.IsProxy} === true ? ");
+                                CurrentTypeWriter.Write(node, typeSymbol.Name);
+                                CurrentTypeWriter.Write(node, $".");
+                                CurrentTypeWriter.Write(node, Constants.TypeProxyHandlerPrototype);
+                                CurrentTypeWriter.Write(node, $" : ");
+                                CurrentTypeWriter.Write(node, typeSymbol.Name);
+                            }
                             if (meta?.InvocationName == null && genericArgs != null)
                             {
                                 CurrentTypeWriter.Write(node, "(");
@@ -675,6 +835,16 @@ namespace NetJs.Translator.CSharpToJavascript
                             CurrentTypeWriter.WriteLine(node, ";");
 
                             CurrentTypeWriter.WriteLine(node, $"const {instanceName} = new {classTargetName}();", true);
+                            //CurrentTypeWriter.Write(node, $".");
+                            //if (typeSymbol.Kind != SymbolKind.TypeParameter)
+                            //{
+                            //    CurrentTypeWriter.Write(node, constructorMeta.OverloadName ?? throw null!);
+                            //}
+                            //else
+                            //{
+                            //    CurrentTypeWriter.Write(node, Constants.GenericNewConstraintConstructorName);
+                            //}
+                            //CurrentTypeWriter.WriteLine(node, $"();");
                             if (constructorCallConvention == ConstructorCallConvention.PrototypeCall)
                             {
                                 CurrentTypeWriter.Write(node, classTargetName);
@@ -686,7 +856,7 @@ namespace NetJs.Translator.CSharpToJavascript
                             }
                             else
                             {
-                                if (!isCompilerGeneratedConstructor)
+                                //if (!isCompilerGeneratedConstructor)
                                 {
                                     CurrentTypeWriter.Write(node, $"{instanceName}", true);
                                     CurrentTypeWriter.Write(node, $".{(constructorMeta?.OverloadName ?? "$ctor")}");
@@ -700,12 +870,21 @@ namespace NetJs.Translator.CSharpToJavascript
                             {
                                 disposeAnonymousMethodParameter = CurrentClosure.DefineAnonymousMethodParameterTypes(delegateReturnType == null ? delegateParameterTypes : [.. delegateParameterTypes, delegateReturnType]);
                             }
-                            if (!isCompilerGeneratedConstructor)
+                            //if (!isCompilerGeneratedConstructor)
                             {
+                                int parametersWritten = 0;
                                 WriteMethodInvocationParameters(node,
                                     targetConstructor,
                                     genericArgs,
-                                    arguments, prefixArguments: constructorCallConvention == ConstructorCallConvention.InstanceCall ? null : (Action)(() => CurrentTypeWriter.Write(node, $"{instanceName}")),
+                                    arguments,
+                                    ref parametersWritten,
+                                    prefixArguments: constructorCallConvention == ConstructorCallConvention.InstanceCall ? null : (ref int parametersWritten) =>
+                                    {
+                                        if (parametersWritten > 0)
+                                            CurrentTypeWriter.Write(node, ", ");
+                                        CurrentTypeWriter.Write(node, $"{instanceName}");
+                                        parametersWritten++;
+                                    },
                                     overloadResult: overloadResult);
                                 CurrentTypeWriter.WriteLine(node, ";");
                             }
@@ -714,7 +893,7 @@ namespace NetJs.Translator.CSharpToJavascript
                             {
                                 WriteInitializer(node, instanceName, typeSymbol, initializer!.Expressions);
                             }
-                            VisitChildren(node.ChildNodes().Where((e => !e.IsKind(SyntaxKind.ArgumentList)/* is not ArgumentListSyntax*/ && e is not InitializerExpressionSyntax)).Except([type])!);
+                            //VisitChildren(node.ChildNodes().Where((e => !e.IsKind(SyntaxKind.ArgumentList)/* is not ArgumentListSyntax*/ && e is not InitializerExpressionSyntax)).Except([type])!);
                         });
                     }
                 }
@@ -725,33 +904,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     if (initializer!.Expressions.All(e => e is AssignmentExpressionSyntax assignment && assignment.Left is not ImplicitElementAccessSyntax))
                     {
-                        CurrentTypeWriter.Write(node, "{");
-                        int i = 0;
-                        foreach (var e in initializer!.Expressions)
-                        {
-                            if (i > 0)
-                                CurrentTypeWriter.Write(node, ", ");
-                            if (e is AssignmentExpressionSyntax assign)
-                            {
-                                if (assign.Left is IdentifierNameSyntax id)
-                                {
-                                    var member = typeSymbol.GetMembers(id.Identifier.ValueText, _global).First();
-                                    //var idType = GetTypeSymbol(id);
-                                    var metadata = _global.GetRequiredMetadata(member);
-                                    CurrentTypeWriter.Write(node, metadata.InvocationName ?? id.Identifier.ResolveIdentifierName());
-                                }
-                                else
-                                {
-                                    Visit(assign.Left);
-                                }
-                                CurrentTypeWriter.Write(node, ": ");
-                                Visit(assign.Right);
-                            }
-                            else
-                                Visit(e);
-                            i++;
-                        }
-                        CurrentTypeWriter.Write(node, "}");
+                        WriteAnonymousObject(node, initializer.Expressions, typeSymbol);
                     }
                     else
                     {
@@ -770,6 +923,7 @@ namespace NetJs.Translator.CSharpToJavascript
         }
         public override void VisitAnonymousObjectCreationExpression(AnonymousObjectCreationExpressionSyntax node)
         {
+            //WriteAnonymousObject(node, node.Initializers, null);
             CurrentTypeWriter.Write(node, "{ ");
             int ix = 0;
             foreach (var i in node.Initializers)
@@ -784,6 +938,21 @@ namespace NetJs.Translator.CSharpToJavascript
                 Visit(i.Expression);
                 ix++;
             }
+
+            if (ix > 0)
+                CurrentTypeWriter.Write(node, ", ");
+            CurrentTypeWriter.Write(node, Constants.AssemblyRegistryName);
+            CurrentTypeWriter.Write(node, " : ");
+            CurrentTypeWriter.Write(node, Constants.AssemblyRegistryName);
+            ix++;
+
+            if (ix > 0)
+                CurrentTypeWriter.Write(node, ", ");
+            CurrentTypeWriter.Write(node, Constants.AssemblyDefineClassName);
+            CurrentTypeWriter.Write(node, " : \"");
+            CurrentTypeWriter.Write(node, Guid.NewGuid().ToString());
+            CurrentTypeWriter.Write(node, "\"");
+
             CurrentTypeWriter.Write(node, " }");
             //base.VisitAnonymousObjectCreationExpression(node);
         }

@@ -23,6 +23,8 @@
         ProfileTraceEntry = 1 << 15,
         ProfileTraceExit = 1 << 16,
         TrimAssemblies = 1 << 17,
-        Default = Global | InlineConstants | ProfileTraceEntry | TrimAssemblies | SingleFile// | MinifyNamespaces | MinifyTypeNames | MinifyMemberNames //| ShortNamesCreateFromCamelCase
+        TrimAssembliesPartial = 1 << 18,
+        MinifyJS = 1 << 19,
+        Default = Global | InlineConstants | ProfileTraceEntry | SingleFile | MinifyNamespaces// | MinifyTypeNames | MinifyMemberNames //| ShortNamesCreateFromCamelCase
     }
 }

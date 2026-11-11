@@ -113,6 +113,7 @@
 			<NetJsFilesToDelete Include="$(TargetDir)*.js.xml" />
 			<NetJsFilesToDelete Include="$(TargetDir)*.Symbols.yaml" />
 			<NetJsFilesToDelete Include="$(TargetDir)*.package.zip" />
+			<NetJsFilesToDelete Include="$(TargetDir)*.deps.json" />
 		</ItemGroup>
 
 		<Delete Files="@(NetJsFilesToDelete)" Condition="'@(NetJsFilesToDelete)' != ''" />

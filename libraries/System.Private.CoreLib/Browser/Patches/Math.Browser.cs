@@ -94,7 +94,7 @@
         public static extern double FusedMultiplyAddImpl(double x, double y, double z);
 
         [NetJs.MemberReplace(nameof(Log2) + "(double)")]
-        [NetJs.Template("Math.log2")]
+        [NetJs.Template("Math.log2({x})")]
         public static extern double Log2Impl(double x);
 
         [NetJs.MemberReplace(nameof(ModF))]
@@ -105,5 +105,9 @@
             *intptr = dd;
             return dd;
         }
+        [NetJs.Template("Math.clz32({x})")]
+        public static extern int clz32(int x);
+        [NetJs.Template("Math.clz32({x})")]
+        public static extern int clz32(uint x);
     }
 }

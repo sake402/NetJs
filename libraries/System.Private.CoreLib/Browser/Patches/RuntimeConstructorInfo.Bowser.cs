@@ -30,13 +30,16 @@ namespace System.Reflection
         [NetJs.MemberReplace(nameof(get_metadata_token))]
         internal static int get_metadata_tokenImpl(RuntimeConstructorInfo method)
         {
-            return (int)method._model.Handle;
+            return NetJs.Script.IsDefined(method._model.OriginalHandle) ? method._model.OriginalHandle.As<int>() : method._model.Handle.As<int>();
         }
 
         [NetJs.MemberReplace(nameof(InternalInvoke))]
         internal object InternalInvokeImpl(object? obj, IntPtr* args, out Exception? exc)
         {
+            exc = null;
             var prototype = DeclaringType.As<RuntimeType>()._prototype;
+            if (prototype.KnownType == KnownTypeHandle.SystemNullable && args == null)
+                return null!;
             var dobject = prototype.New();
             var ctorName = _model.GetOutputName();
             var ctor = dobject[ctorName];
@@ -44,6 +47,8 @@ namespace System.Reflection
             if (NetJs.Script.IsDefined(ctor))
             {
                 object[]? parameters = RuntimeHelpers.GetParametersFromPointer(args);
+                if (prototype.KnownType == KnownTypeHandle.SystemNullable && (parameters == null || parameters.Length == 0))
+                    return null!;
                 if (parameters == null && NetJs.Script.IsDefined(_model.As<NetJs.ConstructorModel>().Parameters) && _model.As<NetJs.ConstructorModel>().Parameters!.Length > 0)
                 {
                     throw null!;
@@ -58,7 +63,6 @@ namespace System.Reflection
                     throw null!;
                 }
             }
-            exc = null;
             return dobject;
         }
 
@@ -69,7 +73,7 @@ namespace System.Reflection
             var dobject = prototype.New();
             var outputName = _model.GetOutputName();
             var ctor = dobject[outputName];
-            parameters = parameters?.Map(p => NetJs.Script.Unbox(p));
+            parameters = parameters?.map(p => NetJs.Script.Unbox(p));
             //If calling default constructor, it may not be exported, if the type does not explicitly define it
             if (NetJs.Script.IsDefined(ctor))
                 NetJs.Script.Write("ctor.apply(dobject, parameters)");

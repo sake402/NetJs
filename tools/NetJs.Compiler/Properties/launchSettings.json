@@ -20,46 +20,135 @@
     },
     "System.Private.CoreLib": {
       "commandName": "Project",
-      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Private.CoreLib\\NetJs.System.Private.CoreLib.csproj\" -c \"Debug\" -s -f",
-      "workingDirectory": "E:\\Apps\\NetJs"
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Private.CoreLib\\NetJs.System.Private.CoreLib.csproj\" -c \"Debug\" -s -f"
     },
+    "System.Private.Uri": {
+      "commandName": "Project",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Private.Uri\\NetJs.System.Private.Uri.csproj\" -c \"Debug\" -s -f"
+    },
+    //"Microsoft.Win32.Primitives": {
+    //  "commandName": "Project",
+    //  "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\Microsoft.Win32.Primitives\\NetJs.Microsoft.Win32.Primitives.csproj\" -c \"Debug\" -s -f"
+    //},
     "System.Console": {
       "commandName": "Project",
-      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Console\\NetJs.System.Console.csproj\" -c \"Debug\" -s -f",
-      "workingDirectory": "E:\\Apps\\NetJs"
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Console\\NetJs.System.Console.csproj\" -c \"Debug\" -s -f"
     },
+    //"Microsoft.CSharp": {
+    //  "commandName": "Project",
+    //  "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\Microsoft.CSharp\\NetJs.Microsoft.CSharp.csproj\" -c \"Debug\" -s -f"
+    //},
     "System.Collections": {
       "commandName": "Project",
       "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Collections\\NetJs.System.Collections.csproj\" -c \"Debug\" -s -f"
     },
+    //"System.Collections.Concurrent": {
+    //  "commandName": "Project",
+    //  "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Collections.Concurrent\\NetJs.System.Collections.Concurrent.csproj\" -c \"Debug\" -s -f"
+    //},
+    //"System.Collections.Immutables": {
+    //  "commandName": "Project",
+    //  "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Collections.Immutable\\NetJs.System.Collections.Immutable.csproj\" -c \"Debug\" -s -f"
+    //},
+    "System.Diagnostics.StackTrace": {
+      "commandName": "Project",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Diagnostics.StackTrace\\NetJs.System.Diagnostics.StackTrace.csproj\" -c \"Debug\" -s -f"
+    },
+    //"System.Text.Encoding.CodePages": {
+    //  "commandName": "Project",
+    //  "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Text.Encoding.CodePages\\NetJs.System.Text.Encoding.CodePages.csproj\" -c \"Debug\" -s -f"
+    //},
     "System.Linq": {
       "commandName": "Project",
       "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Linq\\NetJs.System.Linq.csproj\" -c \"Debug\" -s -f"
+    },
+    //"System.Threading": {
+    //  "commandName": "Project",
+    //  "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Threading\\NetJs.System.Threading.csproj\" -c \"Debug\" -s -f"
+    //},
+    //"System.Threading.Overlapped": {
+    //  "commandName": "Project",
+    //  "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Threading.Overlapped\\NetJs.System.Threading.Overlapped.csproj\" -c \"Debug\" -s -f"
+    //},
+    //"System.Diagnostics.Tracing": {
+    //  "commandName": "Project",
+    //  "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Diagnostics.Tracing\\NetJs.System.Diagnostics.Tracing.csproj\" -c \"Debug\" -s -f"
+    //},
+    //"System.Private.Uri": {
+    //  "commandName": "Project",
+    //  "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Private.Uri\\NetJs.System.Private.Uri.csproj\" -c \"Debug\" -s -f"
+    //},
+    //"System.Private.Xml": {
+    //  "commandName": "Project",
+    //  "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Private.Xml\\NetJs.System.Private.Xml.csproj\" -c \"Debug\" -s -f"
+    //},
+    //"System.Runtime.InteropServices.JavaScript": {
+    //  "commandName": "Project",
+    //  "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Runtime.InteropServices.JavaScript\\NetJs.System.Runtime.InteropServices.JavaScript.csproj\" -c \"Debug\" -s -f"
+    //},
+    //"System.Runtime.Numerics": {
+    //  "commandName": "Project",
+    //  "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Runtime.Numerics\\NetJs.System.Runtime.Numerics.csproj\" -c \"Debug\" -s -f"
+    //},
+    "System.Linq.Expressions": {
+      "commandName": "Project",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Linq.Expressions\\NetJs.System.Linq.Expressions.csproj\" -c \"Debug\" -s -f"
     },
     "System.Text.Json": {
       "commandName": "Project",
       "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Text.Json\\NetJs.System.Text.Json.csproj\" -c \"Debug\" -s -f"
     },
-    "Microsoft.Extensions.DependencyInjection": {
+    "System.Text.Encodings.Web": {
       "commandName": "Project",
-      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\Microsoft.Extensions.DependencyInjection\\NetJs.Microsoft.Extensions.DependencyInjection.csproj\" -c \"Debug\" -s -f"
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Text.Encodings.Web\\NetJs.System.Text.Encodings.Web.csproj\" -c \"Debug\" -s -f"
     },
+    //"Microsoft.Extensions.Primitives": {
+    //  "commandName": "Project",
+    //  "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\Microsoft.Extensions.Primitives\\NetJs.Microsoft.Extensions.Primitives.csproj\" -c \"Debug\" -s -f"
+    //},
+    //"Microsoft.Extensions.Options": {
+    //  "commandName": "Project",
+    //  "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\Microsoft.Extensions.Options\\NetJs.Microsoft.Extensions.Options.csproj\" -c \"Debug\" -s -f"
+    //},
+    "Microsoft.Extensions.Configuration.Abstractions": {
+      "commandName": "Project",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\Microsoft.Extensions.Configuration.Abstractions\\NetJs.Microsoft.Extensions.Configuration.Abstractions.csproj\" -c \"Debug\" -s -f"
+    },
+    //"Microsoft.Extensions.DependencyInjection": {
+    //  "commandName": "Project",
+    //  "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\Microsoft.Extensions.DependencyInjection\\NetJs.Microsoft.Extensions.DependencyInjection.csproj\" -c \"Debug\" -s -f"
+    //},
     "Microsoft.AspNetCore.Components": {
       "commandName": "Project",
       "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\Microsoft.AspNetCore.Components\\NetJs.Microsoft.AspNetCore.Components.csproj\" -c \"Debug\" -s -f"
+    },
+    "Microsoft.AspNetCore.Components.Forms": {
+      "commandName": "Project",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\Microsoft.AspNetCore.Components.Forms\\NetJs.Microsoft.AspNetCore.Components.Forms.csproj\" -c \"Debug\" -s -f"
+    },
+    "Microsoft.AspNetCore.Components.WebAssembly": {
+      "commandName": "Project",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\Microsoft.AspNetCore.Components.WebAssembly\\NetJs.Microsoft.AspNetCore.Components.WebAssembly.csproj\" -c \"Debug\" -s -f"
     },
     "Microsoft.AspNetCore.Components.Authorization": {
       "commandName": "Project",
       "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\Microsoft.AspNetCore.Components.Authorization\\NetJs.Microsoft.AspNetCore.Components.Authorization.csproj\" -c \"Debug\" -s -f"
     },
-    "Microsoft.JSInterop": {
+    "System.Net.Http.Json": {
       "commandName": "Project",
-      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\Microsoft.JSInterop\\NetJs.Microsoft.JSInterop.csproj\" -c \"Debug\" -s -f"
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\System.Net.Http.Json\\NetJs.System.Net.Http.Json.csproj\" -c \"Debug\" -s -f"
     },
+    //"Microsoft.JSInterop": {
+    //  "commandName": "Project",
+    //  "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\libraries\\Microsoft.JSInterop\\NetJs.Microsoft.JSInterop.csproj\" -c \"Debug\" -s -f"
+    //},
     "NetJs.TestApp": {
       "commandName": "Project",
-      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\tests\\NetJs.Tests.App\\NetJs.Tests.App.csproj\" -c \"Debug\" -s -f",
-      "workingDirectory": "E:\\Apps\\NetJs"
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\tests\\NetJs.Tests.App\\NetJs.Tests.App.csproj\" -c \"Debug\" -s -f"
+    },
+    "NetJs.Tests.RCL": {
+      "commandName": "Project",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\tests\\NetJs.Tests.RCL\\NetJs.Tests.RCL.csproj\" -c \"Debug\" -s -f"
     },
     "NetJs.All": {
       "commandName": "Project",
@@ -67,39 +156,85 @@
     },
     "NetJs.Baremetal": {
       "commandName": "Project",
-      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\tests\\NetJs.Tests.Baremetal\\NetJs.Tests.Baremetal.csproj\" -c \"Debug\" -s -f",
-      "workingDirectory": "E:\\Apps\\NetJs"
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\tests\\NetJs.Tests.Baremetal\\NetJs.Tests.Baremetal.csproj\" -c \"Debug\" -s -f"
     },
     "MudBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\3rdparty\\MudBlazor\\src\\MudBlazor\\MudBlazor.csproj\" -s -f -p TargetFramework=net10.0 -p TreatWarningsAsErrors=false",
-      "workingDirectory": "E:\\Apps\\NetJs"
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\3rdparty\\MudBlazor\\src\\MudBlazor\\MudBlazor.csproj\" -s -f -p TargetFramework=net10.0 -p TreatWarningsAsErrors=false"
     },
     "NetEscapades.EnumGenerators.Attributes": {
       "commandName": "Project",
-      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\3rdparty\\NetEscapades.EnumGenerators\\src\\NetEscapades.EnumGenerators.Attributes\\NetEscapades.EnumGenerators.Attributes.csproj\" -s -f -p TargetFramework=net10.0",
-      "workingDirectory": "E:\\Apps\\NetJs"
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\3rdparty\\NetEscapades.EnumGenerators\\src\\NetEscapades.EnumGenerators.Attributes\\NetEscapades.EnumGenerators.Attributes.csproj\" -s -f -p TargetFramework=net10.0"
     },
-    "miniapp": {
+    //"miniapp": {
+    //  "commandName": "Project",
+    //  "commandLineArgs": "build --project \"C:\\Users\\User\\Desktop\\miniapp\\miniapp.csproj\" -s -f"
+    //},
+    //"Silvaspoon": {
+    //  "commandName": "Project",
+    //  "commandLineArgs": "build --project \"C:\\Users\\User\\Downloads\\SilvaSpoon-main\\SilvaSpoon-main\\silvaspoon.csproj\" -s -f"
+    //},
+    "AngleSharp.Core": {
       "commandName": "Project",
-      "commandLineArgs": "build --project \"C:\\Users\\User\\Desktop\\miniapp\\miniapp.csproj\" -s -f"
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\3rdparty\\AngleSharp\\src\\AngleSharp\\AngleSharp.Core.csproj\" -s -f -p TargetFramework=net10.0"
     },
-    "Silvaspoon": {
+    "DynamicExpresso.Core": {
       "commandName": "Project",
-      "commandLineArgs": "build --project \"C:\\Users\\User\\Downloads\\SilvaSpoon-main\\SilvaSpoon-main\\silvaspoon.csproj\" -s -f"
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\3rdparty\\DynamicExpresso\\src\\DynamicExpresso.Core\\DynamicExpresso.Core.csproj\" -s -f -p TargetFramework=net10.0"
+    },
+    "Markdig": {
+      "commandName": "Project",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\3rdparty\\Markdig\\src\\Markdig\\Markdig.csproj\" -s -f -p TargetFramework=net10.0"
+    },
+    "HtmlAgilityPack.Net8": {
+      "commandName": "Project",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\3rdparty\\HtmlAgilityPack\\src\\HtmlAgilityPack.Net8\\HtmlAgilityPack.Net8.csproj\" -s -f -p TargetFramework=net10.0"
+    },
+    "ReverseMarkdown": {
+      "commandName": "Project",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\3rdparty\\ReverseMarkdown\\src\\ReverseMarkdown\\ReverseMarkdown.csproj\" -s -f -p TargetFramework=net10.0"
+    },
+    "QrCodeGenerator": {
+      "commandName": "Project",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\3rdparty\\QrCodeGenerator\\QrCodeGenerator\\QrCodeGenerator.csproj\" -s -f -p TargetFramework=net10.0"
+    },
+    "TMDbLib": {
+      "commandName": "Project",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\3rdparty\\TMDbLib\\TMDbLib\\TMDbLib.csproj\" -s -f -p TargetFramework=net10.0"
+    },
+    "Newtonsoft.Json": {
+      "commandName": "Project",
+      "commandLineArgs": "build --project \"E:\\Apps\\NetJs\\3rdparty\\Newtonsoft.Json\\Src\\Newtonsoft.Json\\Newtonsoft.Json.csproj\" -s -f -p TargetFramework=net10.0"
     },
     "LivingThing.Core.Frameworks.Common": {
       "commandName": "Project",
       "commandLineArgs": "build --project \"E:\\Apps\\LivingThing\\Libraries\\LivingThing.Frameworks\\LivingThing.Core.Frameworks.Common\\LivingThing.Core.Frameworks.Common.csproj\" -s -f -p TargetFramework=net10.0",
       "workingDirectory": "E:\\Apps\\NetJs"
     },
-    "PathToRoot": {
+    //"PathToRoot": {
+    //  "commandName": "Project",
+    //  "commandLineArgs": "findRoot --project \"E:\\Apps\\NetJs\\tests\\NetJs.Tests.Baremetal\\NetJs.Tests.Baremetal.csproj\""
+    //},
+    //"TraceTrim": {
+    //  "commandName": "Project",
+    //  "commandLineArgs": "trim --project \"E:\\Apps\\NetJs\\tests\\NetJs.Tests.Baremetal\\NetJs.Tests.Baremetal.csproj\""
+    //},
+    "LivingThing.Web.Client.Wasm": {
       "commandName": "Project",
-      "commandLineArgs": "findRoot --project \"E:\\Apps\\NetJs\\tests\\NetJs.Tests.Baremetal\\NetJs.Tests.Baremetal.csproj\""
+      "commandLineArgs": "build --project \"E:\\Apps\\LivingThing\\Presentations\\LivingThing.Web.Client.Wasm\\LivingThing.Web.Client.Wasm.csproj\" -s -f"
     },
-    "Trim": {
+    "LivingThingSingle": {
       "commandName": "Project",
-      "commandLineArgs": "trim --project \"C:\\Users\\User\\Downloads\\SilvaSpoon-main\\SilvaSpoon-main\\silvaspoon.csproj\""
+      //"commandLineArgs": "build --project \"E:\\Apps\\LivingThing\\Libraries\\LivingThing.Frameworks\\LivingThing.Core.Frameworks.Common\\LivingThing.Core.Frameworks.Common.csproj\" -s -f"
+      "commandLineArgs": "build --project \"E:\\Apps\\LivingThing\\Libraries\\LivingThing.Frameworks\\LivingThing.Core.Frameworks.Common.Posts\\LivingThing.Core.Frameworks.Common.Posts.csproj\" -s -f"
+      //"commandLineArgs": "build --project \"E:\\Apps\\LivingThing\\Libraries\\LivingThing.Frameworks\\LivingThing.Core.Frameworks.Common.RPC\\LivingThing.Core.Frameworks.Common.RPC.csproj\" -s -f"
+      //"commandLineArgs": "build --project \"E:\\Apps\\LivingThing\\Libraries\\LivingThing.Frameworks\\LivingThing.Core.Frameworks.Common.Client\\LivingThing.Core.Frameworks.Common.Client.csproj\" -s -f",
+      //"commandLineArgs": "build --project \"E:\\Apps\\LivingThing\\Libraries\\LivingThing.Frameworks\\LivingThing.Core.Frameworks.Common.Models\\LivingThing.Core.Frameworks.Common.Models.csproj\" -s -f"
+      //"commandLineArgs": "build --project \"E:\\Apps\\LivingThing\\Libraries\\LivingThing.Frameworks\\LivingThing.Core.Frameworks.Common.Web\\LivingThing.Core.Frameworks.Common.Web.csproj\" -s -f"
+      //"commandLineArgs": "build --project \"E:\\Apps\\LivingThing\\Libraries\\LivingThing.Frameworks\\LivingThing.Core.Frameworks.Client.Blazor.Library\\LivingThing.Core.Frameworks.Client.Blazor.csproj\" -s -f"
+      //"commandLineArgs": "build --project \"E:\\Apps\\LivingThing\\Libraries\\LivingThing.Frameworks\\LivingThing.Core.Frameworks.Client.SPA.Blazor\\LivingThing.Core.Frameworks.Client.SPA.Blazor.csproj\" -s -f"
+      //"commandLineArgs": "build --project \"E:\\Apps\\LivingThing\\Components\\LivingThing.Community\\LivingThing.Core.Community.Client.Blazor\\LivingThing.Core.Community.Client.Blazor.csproj\" -s -f"
+      //"commandLineArgs": "build --project \"E:\\Apps\\LivingThing\\Components\\LivingThing.Community\\LivingThing.Core.Community.SchoolPortal.Client.Blazor\\LivingThing.Core.Community.SchoolPortal.Client.Blazor.csproj\" -s -f"
     }
   }
 }

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace System
 {
@@ -7,8 +8,54 @@ namespace System
     [NetJs.OutputOrder(int.MinValue + 2)]
     public abstract partial class ValueType_Partial
     {
+        [NetJs.MemberReplace]
+        private static int InternalGetHashCode(object o, out object[]? fields)
+        {
+            fields = null;
+            return RuntimeHelpers.GetHashCode(o);
+        }
+
+        [NetJs.MemberReplace]
+        private static bool InternalEquals(object o1, object o2, out object[] fields)
+        {
+            fields = null;
+            var type1 = o1.GetType();
+            var type2 = o2.GetType();
+            if (type1 != type2)
+                return false;
+            var fieldInfos = type1.GetFields();
+            var propertyInfos = type1.GetProperties();
+            var mfields = NetJs.Script.NewArray<object>();
+            unchecked
+            {
+                for (int i = 0; i < fieldInfos.Length; i++)
+                {
+                    if (fieldInfos[i].Name.NativeStartsWith("$")) //internal object fields
+                        continue;
+                    var f1 = fieldInfos[i].GetValue(o1);
+                    var f2 = fieldInfos[i].GetValue(o2);
+                    mfields.push(f1);
+                    mfields.push(f2);
+                }
+                for (int i = 0; i < propertyInfos.Length; i++)
+                {
+                    if (propertyInfos[i].Name.NativeStartsWith("$")) //internal object fields
+                        continue;
+                    if (propertyInfos[i].CanRead)
+                    {
+                        var f1 = propertyInfos[i].GetValue(o1);
+                        var f2 = propertyInfos[i].GetValue(o2);
+                        mfields.push(f1);
+                        mfields.push(f2);
+                    }
+                }
+            }
+            fields = mfields;
+            return true;
+        }
+
     }
-    
+
     //public static class ValueTupleExtensions
     //{
     //    public static bool Equals<T1>(this ValueTuple<T1> value, ValueTuple<T1> other)

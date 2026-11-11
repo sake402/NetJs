@@ -123,7 +123,8 @@ namespace NetJs.Translator.CSharpToJavascript
                 c.IsKind(SyntaxKind.WhileStatement) ||// is WhileStatementSyntax ||
                 c.IsKind(SyntaxKind.ForEachStatement) ||// is ForEachStatementSyntax || 
                 c.IsKind(SyntaxKind.ForStatement) ||// is ForStatementSyntax;
-                (c.IsKind(SyntaxKind.SwitchStatement) && !IsSimpleSwitchCase((SwitchStatementSyntax)c)); //only if the switch is not a simple switch
+                (c.IsKind(SyntaxKind.SwitchStatement) && !IsSimpleSwitchCase((SwitchStatementSyntax)c)) || //only if the switch is not a simple switch
+                (c.IsKind(SyntaxKind.SwitchStatement) && SwitchStatementHasLabel((SwitchStatementSyntax)c));
             }) : null;
             if (parentControl != null && flowJumpLabels.TryGetValue(parentControl, out var label))
             {
@@ -292,9 +293,15 @@ namespace NetJs.Translator.CSharpToJavascript
         ISymbol? InferReturnType(CSharpSyntaxNode node)
         {
             ISymbol? returnType = null;
+            var lamdaMethod = node.FindClosestParent<CSharpSyntaxNode>(isCandidate: e => e.IsKind(SyntaxKind.SimpleLambdaExpression) || e.IsKind(SyntaxKind.ParenthesizedLambdaExpression) || e.IsKind(SyntaxKind.AnonymousMethodExpression));
             var localMethod = node.FindClosestParent<LocalFunctionStatementSyntax>();
             var method = node.FindClosestParent<MethodDeclarationSyntax>();
-            if (localMethod != null)
+            if (lamdaMethod != null)
+            {
+                var methodSymbol = (IMethodSymbol)_global.GetSymbol(lamdaMethod, this/*, out _, out _*/);
+                returnType = methodSymbol;
+            }
+            else if (localMethod != null)
             {
                 var methodSymbol = (IMethodSymbol)_global.GetSymbol(localMethod, this/*, out _, out _*/);
                 returnType = methodSymbol;

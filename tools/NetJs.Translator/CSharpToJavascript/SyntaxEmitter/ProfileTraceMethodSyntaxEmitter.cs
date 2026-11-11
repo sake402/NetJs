@@ -12,36 +12,15 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
     {
         static bool IsCandidate(TranslatorSyntaxVisitor visitor, SyntaxNode node)
         {
-            var isCandidate = false;
-            if (node.IsKind(SyntaxKind.MethodDeclaration))
-            {
-                isCandidate = true;
-            }
-            else if (node.IsKind(SyntaxKind.ConstructorDeclaration))
-            {
-                isCandidate = true;
-            }
-            else if (node.IsKind(SyntaxKind.PropertyDeclaration))
-            {
-                isCandidate = true;
-            }
-            else if (node.IsKind(SyntaxKind.SetAccessorDeclaration))
-            {
-                isCandidate = true;
-            }
-            else if (node.IsKind(SyntaxKind.GetAccessorDeclaration))
-            {
-                isCandidate = true;
-            }
-            else if (node.IsKind(SyntaxKind.AddAccessorDeclaration))
-            {
-                isCandidate = true;
-            }
-            else if (node.IsKind(SyntaxKind.RemoveAccessorDeclaration))
-            {
-                isCandidate = true;
-            }
-            return isCandidate;
+            return node.IsKind(SyntaxKind.MethodDeclaration) ||
+                node.IsKind(SyntaxKind.ConstructorDeclaration) ||
+                node.IsKind(SyntaxKind.PropertyDeclaration) ||
+                node.IsKind(SyntaxKind.SetAccessorDeclaration) ||
+                node.IsKind(SyntaxKind.GetAccessorDeclaration) ||
+                node.IsKind(SyntaxKind.AddAccessorDeclaration) ||
+                node.IsKind(SyntaxKind.RemoveAccessorDeclaration) ||
+                node.IsKind(SyntaxKind.OperatorDeclaration) ||
+                node.IsKind(SyntaxKind.ConversionOperatorDeclaration);
         }
         public override bool TryEmit(CSharpSyntaxNode node, TranslatorSyntaxVisitor visitor)
         {
@@ -96,9 +75,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                                 visitor.CurrentTypeWriter.WriteLine(node, $"try", true);
                                 visitor.CurrentTypeWriter.WriteLine(node, "{", true);
                             }
-                            visitor.CurrentTypeWriter.WriteLine(node, $"//--TRIMMABLE-BOUNDARY-START(TRACE)", true);
-                            visitor.CurrentTypeWriter.WriteLine(node, $"{visitor.Global.GlobalName}.{Constants.TraceEntryName}({metadata.Export.Handle});", true);
-                            visitor.CurrentTypeWriter.WriteLine(node, $"//--TRIMMABLE-BOUNDARY-END(TRACE)", true);
+                            visitor.WriteTraceEntry(node, metadata.Export.Handle);
                             visitor.MarkBlockBraceWritten(node);
                             visitor.Visit(node);
                             if (visitor.Global.BuildFlags.HasFlag(NetJsBuildFlags.ProfileTraceExit))
@@ -106,9 +83,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                                 visitor.CurrentTypeWriter.WriteLine(node, "}", true);
                                 visitor.CurrentTypeWriter.WriteLine(node, "finally", true);
                                 visitor.CurrentTypeWriter.WriteLine(node, "{", true);
-                                visitor.CurrentTypeWriter.WriteLine(node, $"//--TRIMMABLE-BOUNDARY-START(TRACE)", true);
-                                visitor.CurrentTypeWriter.WriteLine(node, $"{visitor.Global.GlobalName}.{Constants.TraceExitName}({metadata.Export.Handle});", true);
-                                visitor.CurrentTypeWriter.WriteLine(node, $"//--TRIMMABLE-BOUNDARY-END(TRACE)", true);
+                                visitor.WriteTraceExit(node, metadata.Export.Handle);
                                 visitor.CurrentTypeWriter.WriteLine(node, "}", true);
                             }
                         }));

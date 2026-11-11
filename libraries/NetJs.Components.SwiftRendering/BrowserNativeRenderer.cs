@@ -199,7 +199,7 @@ namespace BlazorJs.Core
             }
             else
             {
-                frame.State.Elements.ForEach(el =>
+                frame.State.Elements.forEach(el =>
                 {
                     useElement.appendChild(el);
                 });
@@ -328,7 +328,7 @@ namespace BlazorJs.Core
             var nodes = template.content.childNodes.As<Node.Interface[]>();
             var elements = new Node.Interface[nodes.Length];
             int i = 0;
-            nodes.ForEach((n) => elements[i++] = n);
+            nodes.forEach((n) => elements[i++] = n);
             markup.Elements = elements;
             Insert(markup, markup.State.ParentFrame, insertBefore);
         }
@@ -342,7 +342,7 @@ namespace BlazorJs.Core
         public void RemoveMarkup(UIMarkup markup)
         {
             var parent = GetParentElement(markup);
-            markup.Elements.ForEach(el =>
+            markup.Elements.forEach(el =>
             {
                 parent.removeChild(el);
             });

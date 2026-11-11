@@ -8,11 +8,14 @@ using NuGet.Protocol;
 using System.Buffers;
 using System.Collections;
 using System.Collections.Concurrent;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.SymbolStore;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.JavaScript;
+using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml.Linq;
@@ -98,13 +101,15 @@ namespace NetJs.Translator.CSharpToJavascript
             return (BaseTypeDeclarationSyntax?)member.ChildNodes().FirstOrDefault(c => c is BaseTypeDeclarationSyntax t && t.Identifier.ValueText == typeName);
         }
 
-        public static T? FindClosestParent<T>(this SyntaxNode source, Func<T, bool>? isCandidate = null)
+        public static T? FindClosestParent<T>(this SyntaxNode source, Func<T, bool>? isCandidate = null, Func<SyntaxNode, bool>? continueParent = null)
         {
             var current = source;
             while (current != null)
             {
                 if (current is T t && (isCandidate?.Invoke(t) ?? true))
                     return t;
+                if (current.Parent != null && continueParent != null && continueParent(current.Parent) == false)
+                    return default;
                 current = current.Parent;
             }
             return default;
@@ -271,7 +276,7 @@ namespace NetJs.Translator.CSharpToJavascript
         private static readonly HashSet<string> Keywords = new(StringComparer.Ordinal)
         {
              // --- Original Keywords & Core Logic ---
-            "constructor", "arguments",                           // OOP internals & Function implicitly scoped variables
+            "new", "constructor", "arguments",                           // OOP internals & Function implicitly scoped variables
             "function", "this", "super",                          // Function declarations & Context pointers
             "class", "extends", "static",                         // Object-Oriented programming structures
 
@@ -292,7 +297,7 @@ namespace NetJs.Translator.CSharpToJavascript
             "async", "await", "yield",                            // Promises, concurrency, and iterator yielding
 
             // --- Operators & Evaluation ---
-            "typeof", "instanceof", "delete", "void",             // Unary, type checking, and mutation operators
+            "typeof", "instanceof", "delete", "void", "eval",             // Unary, type checking, and mutation operators
 
             // --- Literals & Primitive Values ---
             "true", "false", "null", "undefined",                 // Fundamental values & Variable default states
@@ -309,17 +314,34 @@ namespace NetJs.Translator.CSharpToJavascript
             if (string.IsNullOrEmpty(text))
                 return text;
 
-            // Handle @ prefix case
             if (text[0] == '@')
             {
-                // Slice out the text after '@'
                 string subText = text.Substring(1);
 
-                // If it was a keyword (like @if), return $if, else return clean text
                 return Keywords.Contains(subText) ? "$" + subText : subText;
             }
 
-            // Handle plain keyword case
+            if (Keywords.Contains(text))
+            {
+                return "$" + text;
+            }
+
+            return text;
+        }
+        public static string ResolveIdentifierName(this string token)
+        {
+            string text = token;
+
+            if (string.IsNullOrEmpty(text))
+                return text;
+
+            if (text[0] == '@')
+            {
+                string subText = text.Substring(1);
+
+                return Keywords.Contains(subText) ? "$" + subText : subText;
+            }
+
             if (Keywords.Contains(text))
             {
                 return "$" + text;
@@ -714,15 +736,14 @@ namespace NetJs.Translator.CSharpToJavascript
         }
         static ThreadLocal<StringBuilder> _discardTypeParameter = new ThreadLocal<StringBuilder>(() => new StringBuilder());
         private static readonly Regex FileScopeRegex = new Regex(@"^<(?<Assembly>[^>]+)>F(?<FileHash>[0-9A-F]+)__(?<TypeName>.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        public static void __CreateSignatures((StringBuilder WithTypeParameter, StringBuilder WithoutTypeParameter) builder, ISymbol current, GlobalCompilationVisitor global, bool withGlobalNamespace = true)
+        public static void __CreateSignatures(
+            (StringBuilder WithTypeParameter, StringBuilder WithoutTypeParameter) builder,
+            ISymbol current,
+            GlobalCompilationVisitor global,
+            bool withAssemblySlug = true,
+            int selfDepth = 0)
         {
             //if (current is ITypeParameterSymbol)
-            if (current.Kind == SymbolKind.TypeParameter/* is ITypeParameterSymbol*/)
-            {
-                builder.WithTypeParameter.Append(current.Name);
-                //builder.WithoutTypeParameter.Append(current.Name);
-                return;
-            }
             bool isArray = false;
             bool isPointer = false;
             //if (current is IArrayTypeSymbol tt)
@@ -737,293 +758,356 @@ namespace NetJs.Translator.CSharpToJavascript
                 isPointer = true;
                 current = ((IPointerTypeSymbol)current).PointedAtType;
             }
-            if (global.FullTypeNameCache.TryGetValue(current, out var nms))
+            if (selfDepth != 0 && current.Kind == SymbolKind.TypeParameter)
             {
-                if (withGlobalNamespace && current.ContainingAssembly != null)
-                {
-                    var slug = global.GetAssemblyGlobalSlug(current.ContainingAssembly);
-                    builder.WithTypeParameter.Append(slug);
-                    builder.WithoutTypeParameter.Append(slug);
-                    builder.WithTypeParameter.Append(".");
-                    builder.WithoutTypeParameter.Append(".");
-                }
-                builder.WithTypeParameter.Append(nms.WithTypeParameter);
-                builder.WithoutTypeParameter.Append(nms.WithoutTypeParameter);
+                builder.WithTypeParameter.Append(current.Name);
+                //builder.WithoutTypeParameter.Append(current.Name);
             }
             else
             {
-                void TryWriteFileScopedNameHash(ISymbol lcurrent)
+                if (global.SignatureCache.TryGetValue(current, out var nms))
                 {
-                    if (lcurrent.Kind == SymbolKind.NamedType && ((INamedTypeSymbol)lcurrent).IsFileLocalCrossPlatform())
+                    if (withAssemblySlug && current.ContainingAssembly != null)
                     {
-                        var match = FileScopeRegex.Match(((INamedTypeSymbol)lcurrent).MetadataName);
-                        if (match.Success)
-                        {
-                            builder.WithTypeParameter.Append("_");
-                            builder.WithoutTypeParameter.Append("_");
-                            builder.WithTypeParameter.Append(match.Groups["FileHash"].Value);
-                            builder.WithoutTypeParameter.Append(match.Groups["FileHash"].Value);
-                        }
-                        else
-                        {
-                            builder.WithTypeParameter.Append(Constants.FileScopedTypeNameMangling);
-                            builder.WithoutTypeParameter.Append(Constants.FileScopedTypeNameMangling);
-                        }
+                        var slug = global.GetAssemblyGlobalSlug(current.ContainingAssembly);
+                        builder.WithTypeParameter.Append(slug);
+                        builder.WithoutTypeParameter.Append(slug);
+                        builder.WithTypeParameter.Append(".");
+                        builder.WithoutTypeParameter.Append(".");
                     }
+                    builder.WithTypeParameter.Append(nms.WithTypeParameter);
+                    builder.WithoutTypeParameter.Append(nms.WithoutTypeParameter);
                 }
-                bool isExtensionType = current.Kind == SymbolKind.NamedType && ((INamedTypeSymbol)current).IsExtension;
-                bool TryWriteExtensionType(ISymbol lcurrent)
+                else
                 {
-                    if (lcurrent.Kind == SymbolKind.NamedType)
+                    //void TryWriteFileScopedNameHash(ISymbol lcurrent)
+                    //{
+                    //    if (lcurrent.Kind == SymbolKind.NamedType && ((INamedTypeSymbol)lcurrent).IsFileLocalCrossPlatform())
+                    //    {
+                    //        var match = FileScopeRegex.Match(((INamedTypeSymbol)lcurrent).MetadataName);
+                    //        if (match.Success)
+                    //        {
+                    //            builder.WithTypeParameter.Append("_");
+                    //            builder.WithoutTypeParameter.Append("_");
+                    //            builder.WithTypeParameter.Append(match.Groups["FileHash"].Value);
+                    //            builder.WithoutTypeParameter.Append(match.Groups["FileHash"].Value);
+                    //        }
+                    //        else
+                    //        {
+                    //            builder.WithTypeParameter.Append(Constants.FileScopedTypeNameMangling);
+                    //            builder.WithoutTypeParameter.Append(Constants.FileScopedTypeNameMangling);
+                    //        }
+                    //    }
+                    //}
+                    void TryWriteFileScopedNameHash(ISymbol lcurrent)
                     {
-                        var ts = (INamedTypeSymbol)lcurrent;
-                        if (ts.IsExtension)
+                        if (lcurrent.Kind == SymbolKind.NamedType && Unsafe.As<INamedTypeSymbol>(lcurrent).IsFileLocalCrossPlatform())
                         {
-                            builder.WithTypeParameter.Append("extension");
-                            builder.WithoutTypeParameter.Append("extension");
-                            if (ts.Arity > 0)
+                            string metadataName = Unsafe.As<INamedTypeSymbol>(lcurrent).MetadataName;
+                            if (!string.IsNullOrEmpty(metadataName))
                             {
-                                builder.WithTypeParameter.Append("<");
-                                builder.WithoutTypeParameter.Append("<");
-                                var tps = ts.TypeParameters;
-                                unchecked
+                                ReadOnlySpan<char> span = metadataName.AsSpan();
+
+                                // Match structural layout step-by-step: Must start with '<'
+                                if (span.Length > 0 && span[0] == '<')
                                 {
-                                    for (int i = 0; i < tps.Length; i++)
+                                    int closingBracketIdx = span.IndexOf('>');
+
+                                    // Must find closing '>' and have room for at least "F" + 1 hex char + "__"
+                                    if (closingBracketIdx > 1 && closingBracketIdx + 4 < span.Length)
                                     {
-                                        if (i > 0)
+                                        // Confirm the 'F' token immediately follows the '>' bracket
+                                        if (span[closingBracketIdx + 1] == 'F' || span[closingBracketIdx + 1] == 'f')
                                         {
-                                            builder.WithTypeParameter.Append(",");
-                                            builder.WithoutTypeParameter.Append(",");
-                                        }
-                                        _discardTypeParameter.Value!.Clear();
-                                        __CreateSignatures(builder with { WithoutTypeParameter = _discardTypeParameter.Value }, tps[i], global);
-                                        //Different extension types with same signature can have discriminating constraint
-                                        //Use the constraint as part of the signature
-                                        if (tps[i].ConstraintTypes.Length > 0)
-                                        {
-                                            builder.WithTypeParameter.Append(":");
-                                            int ix = 0;
-                                            foreach (var t in tps[i].ConstraintTypes)
+                                            ReadOnlySpan<char> remaining = span.Slice(closingBracketIdx + 2);
+                                            int underscoreIdx = remaining.IndexOf("__");
+
+                                            // Ensure we have a valid hash span length before the "__" marker
+                                            if (underscoreIdx > 0)
                                             {
-                                                if (ix > 0)
+                                                ReadOnlySpan<char> fileHashSlice = remaining.Slice(0, underscoreIdx);
+
+                                                // Match the Regex requirement: FileHash must be valid hexadecimal
+                                                bool isValidHex = true;
+                                                foreach (char c in fileHashSlice)
                                                 {
-                                                    builder.WithTypeParameter.Append(",");
+                                                    if (!((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f')))
+                                                    {
+                                                        isValidHex = false;
+                                                        break;
+                                                    }
                                                 }
-                                                _discardTypeParameter.Value.Clear();
-                                                __CreateSignatures(builder with { WithoutTypeParameter = _discardTypeParameter.Value }, t, global);
-                                                ix++;
+
+                                                if (isValidHex)
+                                                {
+                                                    // Directly append the Span window to the string builders with zero heap allocation!
+                                                    builder.WithTypeParameter.Append('_').Append(fileHashSlice);
+                                                    builder.WithoutTypeParameter.Append('_').Append(fileHashSlice);
+                                                    return;
+                                                }
                                             }
                                         }
                                     }
                                 }
-                                builder.WithTypeParameter.Append(">");
-                                builder.WithoutTypeParameter.Append(">");
                             }
-                            builder.WithTypeParameter.Append("(");
-                            builder.WithoutTypeParameter.Append("(");
-                            __CreateSignatures(builder, ts.ExtensionParameter!.Type, global);
-                            builder.WithTypeParameter.Append(")");
-                            builder.WithoutTypeParameter.Append(")");
-                            return true;
-                        }
-                    }
-                    return false;
-                }
-                void TryWriteExplicitMethodReturn(ISymbol lcurrent)
-                {
-                    if (lcurrent.Kind == SymbolKind.Method && (lcurrent.Name == "op_Implicit" || lcurrent.Name == "op_Explicit" || lcurrent.Name == "op_CheckedExplicit"))
-                    {
-                        __CreateSignatures(builder, ((IMethodSymbol)lcurrent).ReturnType, global);
-                        builder.WithTypeParameter.Append(" ");
-                        builder.WithoutTypeParameter.Append(" ");
-                    }
-                }
-                TryWriteExplicitMethodReturn(current);
-                var nName = current.Name.Replace(".", "$");
-                var parent = current.ContainingType ?? (ISymbol)current.ContainingNamespace;
-                if (parent != null /*&& parent.Name.Length > 0 && !ReferenceEquals(parent, global.Compilation.GlobalNamespace)*/)
-                {
-                    //__CreateFullTypeName(builder, parent, global);
-                    //    if (!ReferenceEquals(parent, global.Compilation.GlobalNamespace))
-                    //    {
-                    //        builder.WithTypeParameter.Append(".");
-                    //        builder.WithoutTypeParameter.Append(".");
-                    //    }
-                    var assembly = current.ContainingAssembly;
-                    ISymbol[] pathToRoot = ArrayPool<ISymbol>.Shared.Rent(64);
-                    int i = 0;
-                    while (parent != null)
-                    {
-                        if (parent.Kind == SymbolKind.Assembly)
-                            break;
-                        if (ReferenceEquals(parent, global.Compilation.GlobalNamespace))
-                        {
-                            break;
-                        }
-                        if (ReferenceEquals(parent, assembly))
-                        {
-                            break;
-                        }
-                        if (ReferenceEquals(parent, assembly?.GlobalNamespace))
-                        {
-                            break;
-                        }
-                        pathToRoot[i++] = parent;
-                        parent = parent.ContainingSymbol;
-                    }
-                    if (withGlobalNamespace && assembly != null)
-                        pathToRoot[i++] = assembly;
-                    int done = 0;
-                    while (i > 0)
-                    {
-                        var lcurrent = pathToRoot[i - 1];
-                        var lName = lcurrent.Kind == SymbolKind.Assembly ? global.GetAssemblyGlobalSlug(Unsafe.As<IAssemblySymbol>(lcurrent)) : lcurrent.Name.Replace(".", "$");
-                        builder.WithTypeParameter.Append(lName);
-                        builder.WithoutTypeParameter.Append(lName);
-                        TryWriteFileScopedNameHash(lcurrent);
-                        if (TryWriteExtensionType(lcurrent))
-                        {
 
+                            // Fallback option if the specific local structure isn't matched
+                            builder.WithTypeParameter.Append(Constants.FileScopedTypeNameMangling);
+                            builder.WithoutTypeParameter.Append(Constants.FileScopedTypeNameMangling);
                         }
-                        else if (lcurrent.Kind == SymbolKind.NamedType && lcurrent is INamedTypeSymbol nt && nt.Arity > 0)
+                    }
+
+                    bool isExtensionType = current.Kind == SymbolKind.NamedType && ((INamedTypeSymbol)current).IsExtension;
+                    bool TryWriteExtensionType(ISymbol lcurrent)
+                    {
+                        if (lcurrent.Kind == SymbolKind.NamedType)
+                        {
+                            var ts = (INamedTypeSymbol)lcurrent;
+                            if (ts.IsExtension)
+                            {
+                                builder.WithTypeParameter.Append("extension");
+                                builder.WithoutTypeParameter.Append("extension");
+                                if (ts.Arity > 0)
+                                {
+                                    builder.WithTypeParameter.Append("<");
+                                    builder.WithoutTypeParameter.Append("<");
+                                    var tps = ts.TypeParameters;
+                                    unchecked
+                                    {
+                                        for (int i = 0; i < tps.Length; i++)
+                                        {
+                                            if (i > 0)
+                                            {
+                                                builder.WithTypeParameter.Append(",");
+                                                builder.WithoutTypeParameter.Append(",");
+                                            }
+                                            _discardTypeParameter.Value!.Clear();
+                                            __CreateSignatures(builder with { WithoutTypeParameter = _discardTypeParameter.Value }, tps[i], global, withAssemblySlug: withAssemblySlug, selfDepth: selfDepth + 1);
+                                            //Different extension types with same signature can have discriminating constraint
+                                            //Use the constraint as part of the signature
+                                            if (tps[i].ConstraintTypes.Length > 0)
+                                            {
+                                                builder.WithTypeParameter.Append(":");
+                                                int ix = 0;
+                                                foreach (var t in tps[i].ConstraintTypes)
+                                                {
+                                                    if (ix > 0)
+                                                    {
+                                                        builder.WithTypeParameter.Append(",");
+                                                    }
+                                                    _discardTypeParameter.Value.Clear();
+                                                    __CreateSignatures(builder with { WithoutTypeParameter = _discardTypeParameter.Value }, t, global, withAssemblySlug: withAssemblySlug, selfDepth: selfDepth + 1);
+                                                    ix++;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    builder.WithTypeParameter.Append(">");
+                                    builder.WithoutTypeParameter.Append(">");
+                                }
+                                builder.WithTypeParameter.Append("(");
+                                builder.WithoutTypeParameter.Append("(");
+                                __CreateSignatures(builder, ts.ExtensionParameter!.Type, global, withAssemblySlug: withAssemblySlug, selfDepth: selfDepth + 1);
+                                builder.WithTypeParameter.Append(")");
+                                builder.WithoutTypeParameter.Append(")");
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+                    void TryWriteExplicitMethodReturn(ISymbol lcurrent)
+                    {
+                        if (lcurrent.Kind == SymbolKind.Method && (lcurrent.Name == "op_Implicit" || lcurrent.Name == "op_Explicit" || lcurrent.Name == "op_CheckedExplicit"))
+                        {
+                            var returnType = ((IMethodSymbol)lcurrent).ReturnType;
+                            if (SymbolEqualityComparer.Default.Equals(returnType, lcurrent.ContainingType))
+                            {
+                                builder.WithTypeParameter.Append("this ");
+                                builder.WithoutTypeParameter.Append("this ");
+                            }
+                            else
+                            {
+                                __CreateSignatures(builder, returnType, global, withAssemblySlug: withAssemblySlug, selfDepth: selfDepth + 1);
+                                builder.WithTypeParameter.Append(" ");
+                                builder.WithoutTypeParameter.Append(" ");
+                            }
+                        }
+                    }
+                    bool TryWriteGenericArguments(ISymbol symbol)
+                    {
+                        if ((symbol.Kind == SymbolKind.NamedType && symbol is INamedTypeSymbol nt && nt.Arity > 0) ||
+                            (symbol.Kind == SymbolKind.Method && symbol is IMethodSymbol ms && ms.Arity > 0))
                         {
                             builder.WithTypeParameter.Append("<");
                             builder.WithoutTypeParameter.Append("<");
-                            int ix = 0;
-                            foreach (var t in nt.TypeArguments)
+                            var typeArguments = symbol.Kind == SymbolKind.NamedType ? ((INamedTypeSymbol)symbol).TypeArguments : ((IMethodSymbol)symbol).TypeArguments;
+                            unchecked
                             {
-                                if (ix > 0)
+                                for (int i = 0; i < typeArguments.Length; i++)
                                 {
-                                    builder.WithTypeParameter.Append(",");
-                                    builder.WithoutTypeParameter.Append(",");
+                                    if (i > 0)
+                                    {
+                                        builder.WithTypeParameter.Append(",");
+                                        builder.WithoutTypeParameter.Append(",");
+                                    }
+                                    _discardTypeParameter.Value!.Clear();
+                                    __CreateSignatures(builder with { WithoutTypeParameter = _discardTypeParameter.Value }, typeArguments[i], global, withAssemblySlug: withAssemblySlug, selfDepth: selfDepth + 1);
                                 }
-                                __CreateSignatures(builder, t, global, withGlobalNamespace: withGlobalNamespace);
-                                ix++;
                             }
                             builder.WithTypeParameter.Append(">");
                             builder.WithoutTypeParameter.Append(">");
+                            return true;
                         }
-                        i--;
-                        done++;
-                        if (i > 0 ||
-                            !string.IsNullOrEmpty(nName) ||
-                            isExtensionType)
-                        {
-                            builder.WithTypeParameter.Append(".");
-                            builder.WithoutTypeParameter.Append(".");
-                        }
+                        return false;
                     }
-                    ArrayPool<ISymbol>.Shared.Return(pathToRoot);
-                }
-                //if (ReferenceEquals(current, global.Compilation.GlobalNamespace))
-                //{
-                //    nName = "$";
-                //}
-                builder.WithTypeParameter.Append(nName);
-                builder.WithoutTypeParameter.Append(nName);
-                if (isExtensionType)
-                    TryWriteExtensionType(current);
-                //}
-                //if (current is INamedTypeSymbol ts && ts.Arity > 0)
-                if (current.Kind == SymbolKind.NamedType/* is INamedTypeSymbol ts && ts.Arity > 0*/)
-                {
-                    TryWriteFileScopedNameHash(current);
-                    var ts = Unsafe.As<INamedTypeSymbol>(current);
-                    if (ts.Arity > 0 && !isExtensionType)
+                    void WriteParameters(IEnumerable<IParameterSymbol> parameters)
                     {
-                        builder.WithTypeParameter.Append("<");
-                        builder.WithoutTypeParameter.Append("<");
-                        var tps = ts.TypeArguments;
-                        unchecked
-                        {
-                            for (int i = 0; i < tps.Length; i++)
-                            {
-                                if (i > 0)
-                                {
-                                    builder.WithTypeParameter.Append(",");
-                                    builder.WithoutTypeParameter.Append(",");
-                                }
-                                _discardTypeParameter.Value!.Clear();
-                                __CreateSignatures(builder with { WithoutTypeParameter = _discardTypeParameter.Value }, tps[i], global);
-                            }
-                        }
-                        builder.WithTypeParameter.Append(">");
-                        builder.WithoutTypeParameter.Append(">");
-                    }
-                }
-                else if (current.Kind == SymbolKind.Method/* is IMethodSymbol ms*/)
-                {
-                    var ms = Unsafe.As<IMethodSymbol>(current);
-                    if (ms.Arity > 0)
-                    {
-                        builder.WithTypeParameter.Append("<");
-                        builder.WithoutTypeParameter.Append("<");
-                        var tps = ms.TypeParameters;
-                        unchecked
-                        {
-                            for (int i = 0; i < tps.Length; i++)
-                            {
-                                if (i > 0)
-                                {
-                                    builder.WithTypeParameter.Append(",");
-                                    builder.WithoutTypeParameter.Append(",");
-                                }
-                                _discardTypeParameter.Value!.Clear();
-                                __CreateSignatures(builder with { WithoutTypeParameter = _discardTypeParameter.Value }, tps[i], global);
-                            }
-                        }
-                        builder.WithTypeParameter.Append(">");
-                        builder.WithoutTypeParameter.Append(">");
-                    }
-                    builder.WithTypeParameter.Append("(");
-                    builder.WithoutTypeParameter.Append("(");
-                    var msp = ms.Parameters;
-                    unchecked
-                    {
-                        for (int ix = 0; ix < msp.Length; ix++)
+                        builder.WithTypeParameter.Append("(");
+                        builder.WithoutTypeParameter.Append("(");
+                        int ix = 0;
+                        foreach (var parameter in parameters)
                         {
                             if (ix > 0)
                             {
                                 builder.WithTypeParameter.Append(",");
                                 builder.WithoutTypeParameter.Append(",");
                             }
-                            var p = msp[ix];
-                            if (p.RefKind != RefKind.None)
+                            if (parameter.RefKind != RefKind.None)
                             {
-                                builder.WithTypeParameter.Append(p.RefKind.ToString().ToLower());
-                                builder.WithoutTypeParameter.Append(p.RefKind.ToString().ToLower());
-                                builder.WithTypeParameter.Append(" ");
-                                builder.WithoutTypeParameter.Append(" ");
-                            }
-                            __CreateSignatures(builder, p.Type, global);
-                        }
-                    }
-                    builder.WithTypeParameter.Append(")");
-                    builder.WithoutTypeParameter.Append(")");
-                }
-                else if (current.Kind == SymbolKind.Property/* is IPropertySymbol property && property.IsIndexer*/)
-                {
-                    var property = Unsafe.As<IPropertySymbol>(current);
-                    if (property.IsIndexer)
-                    {
-                        builder.WithTypeParameter.Append("(");
-                        builder.WithoutTypeParameter.Append("(");
-                        var msp = property.Parameters;
-                        unchecked
-                        {
-                            for (int ix = 0; ix < msp.Length; ix++)
-                            {
-                                if (ix > 0)
+                                string refStr = parameter.RefKind switch
                                 {
-                                    builder.WithTypeParameter.Append(",");
-                                    builder.WithoutTypeParameter.Append(",");
-                                }
-                                var p = msp[ix];
-                                __CreateSignatures(builder, p.Type, global);
+                                    RefKind.Ref => "ref ",
+                                    RefKind.Out => "out ",
+                                    RefKind.In => "in ",
+                                    //RefKind.RefReadOnly => "ref readonly ",
+                                    _ => ""
+                                };
+                                builder.WithTypeParameter.Append(refStr);
+                                builder.WithoutTypeParameter.Append(refStr);
+                                //builder.WithTypeParameter.Append(" ");
+                                //builder.WithoutTypeParameter.Append(" ");
                             }
+                            if (SymbolEqualityComparer.Default.Equals(parameter.Type, parameter.ContainingSymbol.ContainingType))
+                            {
+                                builder.WithTypeParameter.Append("this");
+                                builder.WithoutTypeParameter.Append("this");
+                            }
+                            else
+                            {
+                                if (parameter.Type.Kind == SymbolKind.TypeParameter)
+                                {
+                                    builder.WithTypeParameter.Append(parameter.Type.Name);
+                                    builder.WithoutTypeParameter.Append(parameter.Type.Name);
+                                }
+                                else
+                                    __CreateSignatures(builder, parameter.Type, global, withAssemblySlug: false, selfDepth: selfDepth + 1);
+                            }
+                            ix++;
                         }
                         builder.WithTypeParameter.Append(")");
                         builder.WithoutTypeParameter.Append(")");
+                    }
+                    TryWriteExplicitMethodReturn(current);
+                    //var nName = current.Name.Replace(".", "$");
+                    var parent = current.ContainingSymbol ?? (ISymbol)current.ContainingNamespace;
+                    if (parent != null /*&& parent.Name.Length > 0 && !ReferenceEquals(parent, global.Compilation.GlobalNamespace)*/)
+                    {
+                        //__CreateFullTypeName(builder, parent, global);
+                        //    if (!ReferenceEquals(parent, global.Compilation.GlobalNamespace))
+                        //    {
+                        //        builder.WithTypeParameter.Append(".");
+                        //        builder.WithoutTypeParameter.Append(".");
+                        //    }
+                        var assembly = current.ContainingAssembly;
+                        ISymbol[] pathToRoot = ArrayPool<ISymbol>.Shared.Rent(64);
+                        int i = 0;
+                        while (parent != null)
+                        {
+                            if (parent.Kind == SymbolKind.Assembly)
+                                break;
+                            if (ReferenceEquals(parent, global.Compilation.GlobalNamespace))
+                            {
+                                break;
+                            }
+                            if (ReferenceEquals(parent, assembly))
+                            {
+                                break;
+                            }
+                            if (ReferenceEquals(parent, assembly?.GlobalNamespace))
+                            {
+                                break;
+                            }
+                            pathToRoot[i++] = parent;
+                            parent = parent.ContainingSymbol;
+                        }
+                        if (withAssemblySlug && assembly != null)
+                            pathToRoot[i++] = assembly;
+                        int done = 0;
+                        while (i > 0)
+                        {
+                            var lcurrent = pathToRoot[i - 1];
+                            var lName = lcurrent.Kind == SymbolKind.Assembly ? global.GetAssemblyGlobalSlug(Unsafe.As<IAssemblySymbol>(lcurrent)) : lcurrent.Name.Replace(".", "$");
+                            builder.WithTypeParameter.Append(lName);
+                            builder.WithoutTypeParameter.Append(lName);
+                            TryWriteFileScopedNameHash(lcurrent);
+                            TryWriteExtensionType(lcurrent);
+                            TryWriteGenericArguments(lcurrent);
+                            if (lcurrent.Kind == SymbolKind.Method && lcurrent is IMethodSymbol ms)
+                                WriteParameters(ms.Parameters);
+                            i--;
+                            done++;
+                            if (i > 0 ||
+                                !string.IsNullOrEmpty(current.Name) ||
+                                isExtensionType)
+                            {
+                                builder.WithTypeParameter.Append(".");
+                                builder.WithoutTypeParameter.Append(".");
+                            }
+                        }
+                        ArrayPool<ISymbol>.Shared.Return(pathToRoot);
+                    }
+                    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                    void AppendSanitizedName(StringBuilder sb, string name)
+                    {
+                        if (string.IsNullOrEmpty(name)) return;
+                        if (name.Contains('.'))
+                        {
+                            foreach (char c in name)
+                            {
+                                sb.Append(c == '.' ? '$' : c);
+                            }
+                        }
+                        else
+                        {
+                            sb.Append(name);
+                        }
+                    }
+                    AppendSanitizedName(builder.WithTypeParameter, current.Name);
+                    AppendSanitizedName(builder.WithoutTypeParameter, current.Name);
+                    //builder.WithTypeParameter.Append(nName);
+                    //builder.WithoutTypeParameter.Append(nName);
+                    if (isExtensionType)
+                        TryWriteExtensionType(current);
+                    if (current.Kind == SymbolKind.NamedType)
+                    {
+                        TryWriteFileScopedNameHash(current);
+                        if (!isExtensionType)
+                        {
+                            TryWriteGenericArguments(current);
+                        }
+                    }
+                    else if (current.Kind == SymbolKind.Method)
+                    {
+                        TryWriteGenericArguments(current);
+                        WriteParameters(((IMethodSymbol)current).Parameters);
+                    }
+                    else if (current.Kind == SymbolKind.Property)
+                    {
+                        var property = Unsafe.As<IPropertySymbol>(current);
+                        if (property.IsIndexer)
+                        {
+                            WriteParameters(((IPropertySymbol)current).Parameters);
+                        }
                     }
                 }
             }
@@ -1039,7 +1123,100 @@ namespace NetJs.Translator.CSharpToJavascript
             }
         }
 
-        //static Dictionary<ISymbol, (string WithTypeParameter, string WithoutTypeParameter)> cacheFullName = new Dictionary<ISymbol, (string, string)>(SymbolEqualityComparer.Default);
+        static Dictionary<ISymbol, (string WithTypeParameter, string WithoutTypeParameter)> cacheFullName = new Dictionary<ISymbol, (string, string)>(SymbolEqualityComparer.Default);
+        // Reusable, thread-safe buffers to eliminate StringBuilder allocation spikes
+        private static readonly ThreadLocal<StringBuilder> _withTypeParamPool = new(() => new StringBuilder(512));
+        private static readonly ThreadLocal<StringBuilder> _withoutTypeParamPool = new(() => new StringBuilder(512));
+
+        public static string CreateSignature(this ISymbol symbol,
+            GlobalCompilationVisitor global,
+            bool withTypeParameterNames = false,
+            bool withGlobalNamespace = true,
+            bool withAssemblySlugNamespace = false)
+        {
+            if (symbol == null) throw new ArgumentNullException(nameof(symbol));
+
+            if (symbol.Kind == SymbolKind.Assembly)
+            {
+                var asm = Unsafe.As<IAssemblySymbol>(symbol);
+                var slug = global.GetAssemblyGlobalSlug(asm);
+
+                return withGlobalNamespace
+                    ? $"{global.GlobalName}.{slug}"
+                    : slug;
+            }
+
+            string? prefix = null;
+            if (symbol.Kind == SymbolKind.Namespace || symbol.Kind == SymbolKind.NamedType)
+            {
+                var containingAssembly = symbol.ContainingAssembly;
+                if (containingAssembly != null)
+                {
+                    if (withGlobalNamespace)
+                    {
+                        prefix = $"{global.GlobalName}.{global.GetAssemblyGlobalSlug(containingAssembly)}";
+                    }
+                    else if (withAssemblySlugNamespace)
+                    {
+                        prefix = global.GetAssemblyGlobalSlug(containingAssembly);
+                    }
+                }
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            string CombinePrefixAndValue(string? pfx, string val)
+            {
+                if (string.IsNullOrEmpty(pfx)) return val;
+                if (string.IsNullOrEmpty(val)) return pfx;
+                return $"{pfx}.{val}";
+            }
+
+            if (global.SignatureCache.TryGetValue(symbol, out var s))
+            {
+                return withTypeParameterNames
+                    ? CombinePrefixAndValue(prefix, s.WithTypeParameter)
+                    : CombinePrefixAndValue(prefix, s.WithoutTypeParameter);
+            }
+
+            if (symbol.Kind == SymbolKind.NamedType)
+            {
+                var tt = Unsafe.As<INamedTypeSymbol>(symbol);
+                if (tt.IsNullable(out var nt) && !nt!.IsValueType)
+                {
+                    symbol = nt;
+
+                    if (global.SignatureCache.TryGetValue(symbol, out s))
+                    {
+                        return withTypeParameterNames
+                            ? CombinePrefixAndValue(prefix, s.WithTypeParameter)
+                            : CombinePrefixAndValue(prefix, s.WithoutTypeParameter);
+                    }
+                }
+            }
+
+            var withTypeParameterBuilder = _withTypeParamPool.Value!;
+            var withoutTypeParameterBuilder = _withoutTypeParamPool.Value!;
+
+            withTypeParameterBuilder.Clear();
+            withoutTypeParameterBuilder.Clear();
+
+            try
+            {
+                __CreateSignatures((withTypeParameterBuilder, withoutTypeParameterBuilder), symbol, global, withAssemblySlug: false);
+
+                var values = (withTypeParameterBuilder.ToString(), withoutTypeParameterBuilder.ToString());
+                global.SignatureCache[symbol] = values;
+
+                return withTypeParameterNames
+                    ? CombinePrefixAndValue(prefix, values.Item1)
+                    : CombinePrefixAndValue(prefix, values.Item2);
+            }
+            finally
+            {
+                withTypeParameterBuilder.Clear();
+                withoutTypeParameterBuilder.Clear();
+            }
+        }
         //public static (string WithTypeParameter, string WithoutTypeParameter) CreateSignatures(this ISymbol type, GlobalCompilationVisitor global)
         //{
         //    if (type.Kind == SymbolKind.NamedType)
@@ -1060,54 +1237,61 @@ namespace NetJs.Translator.CSharpToJavascript
         //    return values;
         //}
 
-        public static string CreateSignature(this ISymbol symbol, GlobalCompilationVisitor global, bool withTypeParameterNames = false, bool withGlobalNamespace = true, bool withAssemblySlugNamespace = false)
-        {
-            if (symbol.Kind == SymbolKind.Assembly && symbol is IAssemblySymbol asm)
-            {
-                if (withGlobalNamespace)
-                {
-                    return global.GlobalName + "." + global.GetAssemblyGlobalSlug(asm);
-                }
-                else
-                {
-                    return global.GetAssemblyGlobalSlug(asm);
-                }
-            }
-            //if (global.HasAttribute(symbol, typeof(SignatureAttribute).FullName, null, false, out var pa))
-            //{
-            //    return (string)pa[0]!;
-            //}
-            string? prefix = null;
-            if (withGlobalNamespace && symbol.ContainingAssembly != null)
-            {
-                prefix = global.GlobalName + "." + global.GetAssemblyGlobalSlug(symbol.ContainingAssembly);
-            }
-            else if (withAssemblySlugNamespace && symbol.ContainingAssembly != null)
-            {
-                prefix = global.GetAssemblyGlobalSlug(symbol.ContainingAssembly);
-            }
-            if (global.FullTypeNameCache.TryGetValue(symbol, out var s))
-            {
-                if (withTypeParameterNames)
-                    return prefix + (prefix?.Length > 0 && s.WithTypeParameter.Length > 0 ? "." : "") + s.WithTypeParameter;
-                return prefix + (prefix?.Length > 0 && s.WithoutTypeParameter.Length > 0 ? "." : "") + s.WithoutTypeParameter;
-            }
-            if (symbol.Kind == SymbolKind.NamedType && symbol is INamedTypeSymbol tt && tt.IsNullable(out var nt))
-            {
-                if (!nt!.IsValueType)
-                {
-                    symbol = nt;
-                }
-            }
-            StringBuilder withTypeParameterBuilder = new StringBuilder(256);
-            StringBuilder withoutTypeParameterBuilder = new StringBuilder(256);
-            __CreateSignatures((withTypeParameterBuilder, withoutTypeParameterBuilder), symbol, global, /*withGlobalNamespace*/false);
-            (string WithTypeParameter, string WithoutTypeParameter) values = (withTypeParameterBuilder.ToString(), withoutTypeParameterBuilder.ToString());
-            global.FullTypeNameCache[symbol] = values;
-            if (withTypeParameterNames)
-                return prefix + (prefix?.Length > 0 && values.WithTypeParameter.Length > 0 ? "." : "") + values.WithTypeParameter;
-            return prefix + (prefix?.Length > 0 && values.WithoutTypeParameter.Length > 0 ? "." : "") + values.WithoutTypeParameter;
-        }
+        //public static string CreateSignature(this ISymbol symbol,
+        //    GlobalCompilationVisitor global,
+        //    bool withTypeParameterNames = false,
+        //    bool withGlobalNamespace = true,
+        //    bool withAssemblySlugNamespace = false)
+        //{
+        //    if (symbol.Kind == SymbolKind.Assembly && symbol is IAssemblySymbol asm)
+        //    {
+        //        if (withGlobalNamespace)
+        //        {
+        //            return global.GlobalName + "." + global.GetAssemblyGlobalSlug(asm);
+        //        }
+        //        else
+        //        {
+        //            return global.GetAssemblyGlobalSlug(asm);
+        //        }
+        //    }
+        //    //if (global.HasAttribute(symbol, typeof(SignatureAttribute).FullName, null, false, out var pa))
+        //    //{
+        //    //    return (string)pa[0]!;
+        //    //}
+        //    string? prefix = null;
+        //    if (symbol.Kind == SymbolKind.Namespace || symbol.Kind == SymbolKind.NamedType)
+        //    {
+        //        if (withGlobalNamespace && symbol.ContainingAssembly != null)
+        //        {
+        //            prefix = global.GlobalName + "." + global.GetAssemblyGlobalSlug(symbol.ContainingAssembly);
+        //        }
+        //        else if (withAssemblySlugNamespace && symbol.ContainingAssembly != null)
+        //        {
+        //            prefix = global.GetAssemblyGlobalSlug(symbol.ContainingAssembly);
+        //        }
+        //    }
+        //    if (global.SignatureCache.TryGetValue(symbol, out var s))
+        //    {
+        //        if (withTypeParameterNames)
+        //            return prefix + (prefix?.Length > 0 && s.WithTypeParameter.Length > 0 ? "." : "") + s.WithTypeParameter;
+        //        return prefix + (prefix?.Length > 0 && s.WithoutTypeParameter.Length > 0 ? "." : "") + s.WithoutTypeParameter;
+        //    }
+        //    if (symbol.Kind == SymbolKind.NamedType && symbol is INamedTypeSymbol tt && tt.IsNullable(out var nt))
+        //    {
+        //        if (!nt!.IsValueType)
+        //        {
+        //            symbol = nt;
+        //        }
+        //    }
+        //    StringBuilder withTypeParameterBuilder = new StringBuilder(256);
+        //    StringBuilder withoutTypeParameterBuilder = new StringBuilder(256);
+        //    __CreateSignatures((withTypeParameterBuilder, withoutTypeParameterBuilder), symbol, global, withAssemblySlug: false);
+        //    (string WithTypeParameter, string WithoutTypeParameter) values = (withTypeParameterBuilder.ToString(), withoutTypeParameterBuilder.ToString());
+        //    global.SignatureCache[symbol] = values;
+        //    if (withTypeParameterNames)
+        //        return prefix + (prefix?.Length > 0 && values.WithTypeParameter.Length > 0 ? "." : "") + values.WithTypeParameter;
+        //    return prefix + (prefix?.Length > 0 && values.WithoutTypeParameter.Length > 0 ? "." : "") + values.WithoutTypeParameter;
+        //}
 
         //public static string _CreateFullTypeName(this ISymbol type, GlobalCompilationVisitor global, bool withTypeParameterNames = false)
         //{
@@ -1246,6 +1430,10 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public static bool IsReadOnlyOperation(this CSharpSyntaxNode node)
         {
+            if (node.IsKind(SyntaxKind.SuppressNullableWarningExpression))
+            {
+                node = ((PostfixUnaryExpressionSyntax)node).Operand;
+            }
             if (node.IsKind(SyntaxKind.IdentifierName))
             {
                 if (node.Parent.IsKind(SyntaxKind.SimpleAssignmentExpression))
@@ -1285,6 +1473,7 @@ namespace NetJs.Translator.CSharpToJavascript
             //    }
             //}
             else if (node.Parent.IsKind(SyntaxKind.ReturnStatement) ||
+                node.Parent.IsKind(SyntaxKind.ConditionalExpression) ||
                 node.Parent.IsKind(SyntaxKind.ConditionalAccessExpression) ||
                 node.Parent.IsKind(SyntaxKind.PointerMemberAccessExpression) ||
                 node.Parent.IsKind(SyntaxKind.PointerIndirectionExpression) ||
@@ -1309,7 +1498,9 @@ namespace NetJs.Translator.CSharpToJavascript
                 node.Parent.IsKind(SyntaxKind.LessThanOrEqualExpression) ||
                 node.Parent.IsKind(SyntaxKind.GreaterThanOrEqualExpression) ||
                 node.Parent.IsKind(SyntaxKind.UnaryMinusExpression) ||
-                node.Parent.IsKind(SyntaxKind.SwitchExpressionArm))
+                node.Parent.IsKind(SyntaxKind.SwitchExpressionArm) ||
+                node.Parent.IsKind(SyntaxKind.SwitchStatement) ||
+                node.Parent.IsKind(SyntaxKind.Interpolation))
             {
                 return true;
             }
@@ -1424,6 +1615,96 @@ namespace NetJs.Translator.CSharpToJavascript
             return ret;
         }
 
+        public static string GetRuntimeReferenceName(this INamedTypeSymbol type, GlobalCompilationVisitor _global, int depth = 0, bool lastSegmentOpenGeneric = false)
+        {
+            string? parent = null;
+            if (type.ContainingType != null)
+            {
+                parent = GetRuntimeReferenceName(type.ContainingType, _global, depth + 1) + ".";
+            }
+            else if (type.ContainingNamespace != null)
+            {
+                var nsMetadata = _global.GetRequiredMetadata(type.ContainingNamespace);
+                parent = nsMetadata.OverloadName + ".";
+            }
+            var typeMetadata = _global.GetRequiredMetadata(type);
+            var ret = parent + (typeMetadata.OverloadName?.Split('.').Last().TrimEnd('$') ?? type.Name);
+            string? nameGArgs = null;
+            var nameArg = type.TypeParameters.Length > 0 ? type.TypeParameters.Select(p => $"${{{p.Name}?.{Constants.PrototypeFullName}}}") : null;
+            if (nameArg != null)
+            {
+                //last segment should still be open generic
+                if (lastSegmentOpenGeneric && depth == 0)
+                    nameGArgs = $"<{string.Join(",", Enumerable.Range(1, type.Arity).Select(s => ""))}>";
+                else
+                    nameGArgs = $"<{string.Join(",", nameArg)}>";
+            }
+            return ret + nameGArgs;
+        }
+
+        //These two methods must be in sync
+        public static string GetFullName(this MemberDeclarationSyntax type, GlobalCompilationVisitor _global, int depth = 0, bool lastSegmentOpenGeneric = false, string namespaceSeparator = ".", bool separatorIsLocalVariable = false)
+        {
+            string? parent = null;
+            if (type.Parent is BaseTypeDeclarationSyntax ts)
+            {
+                parent = GetFullName(ts, _global, depth + 1, lastSegmentOpenGeneric, namespaceSeparator, separatorIsLocalVariable) + (namespaceSeparator != "." ? (separatorIsLocalVariable ? $"${{{namespaceSeparator}}}" : namespaceSeparator) : "+");
+            }
+            else if (type.Parent is NamespaceDeclarationSyntax ns)
+            {
+                parent = _global.ResolveFullNamespace(ns, separatorIsLocalVariable ? $"${{{namespaceSeparator}}}" : namespaceSeparator) + (separatorIsLocalVariable ? $"${{{namespaceSeparator}}}" : namespaceSeparator);
+            }
+            else if (type.Parent is FileScopedNamespaceDeclarationSyntax fns)
+            {
+                parent = _global.ResolveFullNamespace(fns, separatorIsLocalVariable ? $"${{{namespaceSeparator}}}" : namespaceSeparator) + (separatorIsLocalVariable ? $"${{{namespaceSeparator}}}" : namespaceSeparator);
+            }
+            var ret = parent +
+                (type is BaseTypeDeclarationSyntax bt ?
+                bt.Identifier.ValueText.Trim().TrimEnd('?') :
+                type is DelegateDeclarationSyntax dt ? dt.Identifier.ValueText :
+                throw new InvalidOperationException());
+            string? nameGArgs = null;
+            var arity = type is TypeDeclarationSyntax btt0 ? btt0.Arity :
+                type is DelegateDeclarationSyntax dtt0 ? dtt0.Arity :
+                0;
+            var nameArg =
+                type is TypeDeclarationSyntax btt ? btt.TypeParameterList?.Parameters.Select(p => $"${{{p.Identifier.ValueText}?.{(separatorIsLocalVariable || namespaceSeparator != "." ? Constants.PrototypeFullNameWithSpecialSeperator + $"({namespaceSeparator})" : Constants.PrototypeFullName)}}}") :
+                type is DelegateDeclarationSyntax dtt ? dtt.TypeParameterList?.Parameters.Select(p => $"${{{p.Identifier.ValueText}?.{(separatorIsLocalVariable || namespaceSeparator != "." ? Constants.PrototypeFullNameWithSpecialSeperator + $"({namespaceSeparator})" : Constants.PrototypeFullName)}}}") :
+                null;
+            if (nameArg != null)
+            {
+                if (lastSegmentOpenGeneric && depth == 0)
+                    nameGArgs = $"<{string.Join(",", Enumerable.Range(1, arity).Select(s => ""))}>";
+                else
+                    nameGArgs = $"<{string.Join(",", nameArg)}>";
+            }
+            return ret + nameGArgs;
+        }
+        public static string GetFullName(this INamedTypeSymbol type, GlobalCompilationVisitor _global, int depth = 0, bool lastSegmentOpenGeneric = false, string namespaceSeparator = ".")
+        {
+            string? parent = null;
+            if (type.ContainingType != null)
+            {
+                parent = GetFullName(type.ContainingType, _global, depth + 1, lastSegmentOpenGeneric, namespaceSeparator) + (namespaceSeparator != "." ? namespaceSeparator : "+");
+            }
+            else if (type.ContainingNamespace != null)
+            {
+                var nsMetadata = _global.GetRequiredMetadata(type.ContainingNamespace);
+                parent = nsMetadata.OverloadName + namespaceSeparator;
+            }
+            var typeMetadata = _global.GetRequiredMetadata(type);
+            var ret = parent + (typeMetadata.OverloadName?.Split('.').Last().TrimEnd('$') ?? type.Name);
+            string? nameGArgs = null;
+            var nameArg = type.TypeParameters.Length > 0 ? type.TypeParameters.Select(p => $"${{{p.Name}?.{Constants.PrototypeFullName}}}") : null;
+            if (nameArg != null)
+            {
+                if (lastSegmentOpenGeneric && depth == 0)
+                    nameGArgs = $"<{string.Join(",", Enumerable.Range(1, type.Arity).Select(s => ""))}>";
+                else
+                    nameGArgs = $"<{string.Join(",", nameArg)}>";
+            }
+            return ret + nameGArgs;
+        }
         public static string ComputeOutputTypeName(this ITypeSymbol type, GlobalCompilationVisitor global)
         {
             if (global.IsAnonymousType(type))
@@ -1444,12 +1725,12 @@ namespace NetJs.Translator.CSharpToJavascript
                 return $"{global.GlobalName}.{Constants.TypePointerName}({ComputeOutputTypeName(pointedType, global)})";
             if (type.IsNullable(out var nt) && nt!.IsValueType)
                 return $"{global.GlobalName}.{Constants.TypeNullableName}({ComputeOutputTypeName(nt, global)})";
-            var sym = global.GetMetadata(type);
-            if (sym != null)
+            var metadata = global.GetMetadata(type);
+            if (metadata != null)
             {
                 if (type is INamedTypeSymbol)
-                    return sym.InvocationName ?? type.Name;
-                return sym.OverloadName ?? type.Name;
+                    return metadata.InvocationName ?? type.Name;
+                return metadata.OverloadName ?? type.Name;
             }
             //if (type is INamedTypeSymbol nt && nt.Arity > 0)
             //{
@@ -1572,6 +1853,33 @@ namespace NetJs.Translator.CSharpToJavascript
             return namedType.TypeArguments.Length > 0 && !(namedType.TypeArguments[0] is ITypeParameterSymbol);
         }
 
+        static void RecursiveOutputRank(INamedTypeSymbol symbol, int depth, Dictionary<INamedTypeSymbol, (int Weight, int Depth)> found)
+        {
+            if (found.ContainsKey(symbol))
+                return;
+            if (depth > 50)
+                return;
+            found[symbol] = (0, 0);
+            if (symbol.ContainingType != null)
+            {
+                RecursiveOutputRank(symbol.ContainingType, depth + 1, found);
+            }
+            if (symbol.BaseType != null)
+            {
+                RecursiveOutputRank(symbol.BaseType, depth + 1, found);
+            }
+            found[symbol] = (symbol.TypeKind == TypeKind.Interface ? 100 : symbol.IsAbstract ? 10000 : 1000000, depth);
+            foreach (var a in symbol.TypeArguments)
+            {
+                if (a.Kind == SymbolKind.NamedType)
+                    RecursiveOutputRank((INamedTypeSymbol)a, depth + 1, found);
+            }
+            foreach (var a in symbol.Interfaces)
+            {
+                RecursiveOutputRank(a, depth + 1, found);
+            }
+        }
+
         static long RecursiveOutputRank(INamedTypeSymbol symbol, int depth, HashSet<INamedTypeSymbol> found)
         {
             if (!found.Add(symbol))
@@ -1581,20 +1889,28 @@ namespace NetJs.Translator.CSharpToJavascript
             var parentRank = symbol.ContainingType != null ? RecursiveOutputRank(symbol.ContainingType, depth + 1, found) : 0;
             var baseRank = symbol.BaseType != null ? RecursiveOutputRank(symbol.BaseType, depth + 1, found) : 0;
             return
-                (symbol.TypeKind == TypeKind.Interface ? 100 : symbol.IsAbstract ? 10000 : 1000000) + //self rank
-                                                                                                      //symbol.Arity +
-                 symbol.TypeArguments.Where(t => t is INamedTypeSymbol).Sum(t => RecursiveOutputRank((INamedTypeSymbol)t, depth + 1, found)) / 10 +
+                (symbol.TypeKind == TypeKind.Interface ? 100L : symbol.IsAbstract ? 10000L : 1000000L) + //self rank
+                                                                                                         //symbol.Arity +
+                 symbol.TypeArguments.Where(t => t is INamedTypeSymbol).Sum(t => RecursiveOutputRank((INamedTypeSymbol)t, depth + 1, found))/* / 10*/ +
                  parentRank +
                  baseRank +
                  symbol.Interfaces.Sum(i => RecursiveOutputRank(i, depth + 1, found)); //interfaces rank
         }
 
-        public static long OutputRank(this INamedTypeSymbol symbol, int depth)
+        public static long OutputRank(this INamedTypeSymbol symbol/*, int depth*/)
         {
             //return GetDependencyScore(symbol);
             var found = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
-            return RecursiveOutputRank(symbol, depth, found);
+            //var found = new Dictionary<INamedTypeSymbol, (int Weight, int Depth)>(SymbolEqualityComparer.Default);
+            return RecursiveOutputRank(symbol, 1, found);
+            // var r = found.Sum(s => s.Value.Weight);
+            // var rr = found.Sum(s => s.Value.Weight / s.Value.Depth);
+            // if (symbol.Name== "IOTDeviceProtocolCommand"|| symbol.Name == "IOTDeviceProtocolCommand")
+            // {
+            // }
+            // return rr;
         }
+
         public static IEnumerable<INamedTypeSymbol> SortByDependencies(this IEnumerable<INamedTypeSymbol> types)
         {
             var typeSet = new HashSet<INamedTypeSymbol>(types, SymbolEqualityComparer.Default);
@@ -3063,7 +3379,7 @@ namespace NetJs.Translator.CSharpToJavascript
         //    return false;
         //}
 
-        public static AttributeData? GetTemplateAttribute(this ISymbol symbol, GlobalCompilationVisitor _global, TranslatorSyntaxVisitor? visitor, bool checkPropertyAccessors = false)
+        public static AttributeData? GetTemplateAttribute(this ISymbol symbol, GlobalCompilationVisitor _global, TranslatorSyntaxVisitor? visitor, bool checkPropertyAccessors = false, string? matchCondition = null)
         {
             var templateAttributeSymbol = _global.GetSymbol(typeof(TemplateAttribute).FullName!, null/*, out _, out _*/);
             var attributes = symbol.OriginalDefinition.GetAttributes().Where(a => a.AttributeClass?.Equals(templateAttributeSymbol, SymbolEqualityComparer.Default) ?? false).ToList();
@@ -3078,7 +3394,7 @@ namespace NetJs.Translator.CSharpToJavascript
                         var condition = att.ConstructorArguments[1].Value?.ToString();
                         if (condition != null)
                         {
-                            if (_global.Evaluate(condition, visitor) != null)
+                            if (condition == matchCondition || _global.Evaluate(condition, visitor) != null)
                             {
                                 attribute = att;
                             }
@@ -3101,7 +3417,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public static AttributeData? GetJsImportAttribute(this ISymbol symbol, GlobalCompilationVisitor _global, TranslatorSyntaxVisitor? visitor, bool checkPropertyAccessors = false)
         {
-            var importAttributeSymbol = _global.TryGetSymbol("System.Runtime.InteropServices.JavaScript.JSImportAttribute", null/*, out _, out _*/);
+            var importAttributeSymbol = _global.TryGetSymbol(typeof(JSImportAttribute).FullName!, null/*, out _, out _*/);
             if (importAttributeSymbol == null)
                 return null;
             var allAttributes = symbol.OriginalDefinition.GetAttributes();
@@ -3109,7 +3425,7 @@ namespace NetJs.Translator.CSharpToJavascript
             AttributeData? attribute = attributes?.FirstOrDefault();
             if (attribute != null)
             {
-                var noImportAttributeSymbol = _global.TryGetSymbol("NetJs.NoJSImportAttribute", null/*, out _, out _*/);
+                var noImportAttributeSymbol = _global.TryGetSymbol(typeof(NoJSImportAttribute).FullName!, null/*, out _, out _*/);
                 if (noImportAttributeSymbol != null)
                 {
                     var mattributes = allAttributes.Where(a => a.AttributeClass?.Equals(noImportAttributeSymbol, SymbolEqualityComparer.Default) ?? false);
@@ -3247,6 +3563,24 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             return false;
         }
+        public static bool IsStaticCallConvention(this ISymbol symbol, bool? inherits = null)
+        {
+            if (symbol.IsStatic)
+                return false;
+            //field access cannot use static convention
+            if (symbol.Kind == SymbolKind.Field)
+                return false;
+            //An explicit implementation cannot use static convention
+            if (symbol is IMethodSymbol method && method.ExplicitInterfaceImplementations.Any())
+                return false;
+            if (symbol.GetAttributes().Any(a => a.AttributeClass?.Name == "StaticCallConventionAttribute"))
+                return true;
+            if (symbol.ContainingType != null && symbol.ContainingType.GetAttributes().Any(a => a.AttributeClass?.Name == "StaticCallConventionAttribute"))
+            {
+                return true;
+            }
+            return false;
+        }
 
         public static bool IsStaticCallConvention(this ISymbol symbol, GlobalCompilationVisitor _global, bool? inherits = null)
         {
@@ -3263,19 +3597,19 @@ namespace NetJs.Translator.CSharpToJavascript
             //{
             //    return method2.OverriddenMethod!.IsStaticCallConvention(_global);
             //}
-            if (_global.HasAttribute(symbol, typeof(StaticCallConventionAttribute).FullName!, null, inherits ?? true, out var args))
+            if (_global.HasAttribute(symbol, typeof(StaticCallConventionAttribute).FullName!, null, inherits ?? false, out var args))
             {
                 if (args != null && args.Count > 0)
                 {
-                    return (bool)args[0];
+                    return (bool)args![0]!;
                 }
                 return true;
             }
-            if (symbol.ContainingType != null && _global.HasAttribute(symbol.ContainingType, typeof(StaticCallConventionAttribute).FullName!, null, inherits ?? true, out args))
+            if (symbol.ContainingType != null && _global.HasAttribute(symbol.ContainingType, typeof(StaticCallConventionAttribute).FullName!, null, inherits ?? false, out args))
             {
                 if (args != null && args.Count > 0)
                 {
-                    return (bool)args[0];
+                    return (bool)args![0]!;
                 }
                 return true;
             }
@@ -3602,7 +3936,88 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             throw new InvalidOperationException($"Cannot evaluate type from {symbol}");
         }
-        public static MemberFlagsModel GetSymbolFlags(this ISymbol symbol)
+
+        static bool IsHidingBaseMember(ISymbol symbol)
+        {
+            static bool HaveSameSignature(IMethodSymbol method1, IMethodSymbol method2)
+            {
+                if (method1.Parameters.Length != method2.Parameters.Length)
+                    return false;
+
+                for (int i = 0; i < method1.Parameters.Length; i++)
+                {
+                    var p1 = method1.Parameters[i];
+                    var p2 = method2.Parameters[i];
+
+                    // Check types strictly
+                    if (!SymbolEqualityComparer.Default.Equals(p1.Type, p2.Type))
+                        return false;
+
+                    // Check ref modifiers (ref, out, in)
+                    if (p1.RefKind != p2.RefKind)
+                        return false;
+                }
+
+                return true;
+            }
+
+            // Ensure we only process properties and ordinary methods
+            if (symbol.Kind != SymbolKind.Property && symbol.Kind != SymbolKind.Method)
+                return false;
+
+            // Guard against constructors, destructors, operators, and property accessors
+            if (symbol is IMethodSymbol method && method.MethodKind != MethodKind.Ordinary)
+                return false;
+
+            // If it's an explicit override, it's not hiding with 'new'
+            if (symbol.IsOverride)
+                return false;
+
+            // 1. Always trust the source code syntax first if it's available
+            foreach (var syntaxRef in symbol.DeclaringSyntaxReferences)
+            {
+                if (syntaxRef.GetSyntax() is MemberDeclarationSyntax memberDecl)
+                {
+                    if (memberDecl.Modifiers.Any(SyntaxKind.NewKeyword))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            // 2. Fallback for metadata/compiled symbols: Evaluate signature conflicts
+            var baseType = symbol.ContainingType?.BaseType;
+            if (baseType == null)
+                return false;
+
+            // Get all base members with the exact same name
+            var baseMembers = baseType.GetMembers(symbol.Name);
+
+            foreach (var baseMember in baseMembers)
+            {
+                // Properties hide other properties/fields by name alone
+                if (symbol is IPropertySymbol)
+                {
+                    if (baseMember is IPropertySymbol || baseMember is IFieldSymbol)
+                    {
+                        return true;
+                    }
+                }
+                // Ordinary methods only hide if they have the exact same signature
+                else if (symbol is IMethodSymbol derivedMethod && baseMember is IMethodSymbol baseMethod)
+                {
+                    // Ensure the base member is also an ordinary method before comparing signatures
+                    if (baseMethod.MethodKind == MethodKind.Ordinary && HaveSameSignature(derivedMethod, baseMethod))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        public static MemberFlagsModel GetMemberFlags(this ISymbol symbol)
         {
             var flags = MemberFlagsModel.None;
 
@@ -3647,6 +4062,7 @@ namespace NetJs.Translator.CSharpToJavascript
             if (symbol.IsAbstract) flags |= MemberFlagsModel.IsAbstract;
             if (symbol.IsVirtual) flags |= MemberFlagsModel.IsVirtual;
             if (symbol.IsOverride) flags |= MemberFlagsModel.IsOverride;
+            if (IsHidingBaseMember(symbol)) flags |= MemberFlagsModel.IsNew;
             if (symbol is IMethodSymbol method)
             {
                 if (method.MethodKind == MethodKind.AnonymousFunction) flags |= MemberFlagsModel.IsAnonymous;
@@ -3659,8 +4075,10 @@ namespace NetJs.Translator.CSharpToJavascript
 
             return flags;
         }
-        public static bool IsAwaitable(this ITypeSymbol type)
+        public static bool IsAwaitable(this ITypeSymbol type, out IMethodSymbol getAwaiter, out IMethodSymbol getResult)
         {
+            getAwaiter = null!;
+            getResult = null!;
             bool IsINotifyCompletionOrICriticalNotifyCompletion(ITypeSymbol type)
             {
                 if (type.IsType("System.Runtime.CompilerServices.INotifyCompletion"))
@@ -3673,18 +4091,20 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
                 return false;
             }
+            IMethodSymbol? _getResult = null;
             bool HasIsCompleted(ITypeSymbol type)
             {
                 var isCompleted = type.GetMembers("IsCompleted").Where(e => e is IPropertySymbol ps && ps.GetMethod != null && ps.Type.IsType("System.Boolean"));
-                var getResult = type.GetMembers("GetResult").Where(e => e is IMethodSymbol ms && ms.Parameters.Length == 0);
-                return isCompleted.Any() && getResult.Any();
+                _getResult = (IMethodSymbol?)type.GetMembers("GetResult").FirstOrDefault(e => e is IMethodSymbol ms && ms.Parameters.Length == 0);
+                return isCompleted.Any() && _getResult != null;
             }
-            var getAwaiter = type.GetMembers("GetAwaiter")
-                .Where(e => e is IMethodSymbol ms &&
+            getAwaiter = (IMethodSymbol)type.GetMembers("GetAwaiter")
+                .FirstOrDefault(e => e is IMethodSymbol ms &&
                         ms.DeclaredAccessibility == Accessibility.Public &&
                         ms.ReturnType.AllInterfaces.Any(i => IsINotifyCompletionOrICriticalNotifyCompletion(i)) &&
-                        HasIsCompleted(ms.ReturnType));
-            var ret = getAwaiter.Any();
+                        HasIsCompleted(ms.ReturnType))!;
+            getResult = _getResult!;
+            var ret = getAwaiter != null;
             return ret;
         }
 
@@ -4026,5 +4446,142 @@ namespace NetJs.Translator.CSharpToJavascript
             end = $"//--TRIMMABLE-BOUNDARY-END({marker})";
             return (start, end);
         }
+        private const string Alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+        public static string GenerateShortId(this string inputString, int len = 4)
+        {
+            if (inputString == null) throw new ArgumentNullException(nameof(inputString));
+
+            byte[] hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(inputString));
+
+            uint hashInt = ((uint)hashBytes[0] << 24) |
+                           ((uint)hashBytes[1] << 16) |
+                           ((uint)hashBytes[2] << 8) |
+                           hashBytes[3];
+
+            char[] result = new char[len];
+            for (int i = 0; i < len; i++)
+            {
+                result[i] = Alphabet[(int)(hashInt % Alphabet.Length)];
+                hashInt /= (uint)Alphabet.Length;
+            }
+
+            return new string(result);
+        }
+
+        /// <summary>
+        /// Checks if the specified open generic interface definition can be implemented 
+        /// multiple times on the same class with different type parameters.
+        /// </summary>
+        public static bool CanBeImplementedMultipleTimes(this INamedTypeSymbol interfaceSymbol)
+        {
+            // 1. Must be a generic interface definition (e.g., IEnumerable<T>, not IEnumerable)
+            if (interfaceSymbol == null || interfaceSymbol.TypeKind != TypeKind.Interface || !interfaceSymbol.IsGenericType)
+            {
+                return false;
+            }
+
+            // Get the original open generic definition (e.g., IEnumerable<>)
+            var openInterface = interfaceSymbol.OriginalDefinition;
+
+            // 2. Check for Non-Generic Base Interface Unification
+            // If the generic interface inherits a non-generic interface (like IEnumerable<T> -> IEnumerable),
+            // implementing it twice forces duplicate definitions of the non-generic members.
+            var hasNonGenericBaseWithMembers = openInterface.AllInterfaces
+                .Any(i => !i.IsGenericType && i.GetMembers().Any());
+
+            if (hasNonGenericBaseWithMembers)
+            {
+                return false; // Cannot be implemented twice (e.g., IEnumerable<T>)
+            }
+
+            // 3. Check for Member Signature Collisions
+            // If the interface defines methods that do not depend on the generic type parameters,
+            // those methods will have identical signatures across different constructed versions.
+            var hasParameterlessOrStaticMembers = openInterface.GetMembers()
+                .Any(m => m is IMethodSymbol method && !MethodDependsOnTypeParameters(method, openInterface));
+
+            if (hasParameterlessOrStaticMembers)
+            {
+                return false; // Cannot be implemented twice
+            }
+
+            // If it passes these checks, it's legal to implement multiple times
+            return true;
+
+            static bool MethodDependsOnTypeParameters(IMethodSymbol method, INamedTypeSymbol interfaceSymbol)
+            {
+                // Check if the return type or any parameter uses the interface's generic type parameters
+                var typeParameters = interfaceSymbol.TypeParameters;
+
+                if (ReferencesTypeParameter(method.ReturnType, typeParameters))
+                    return true;
+
+                foreach (var param in method.Parameters)
+                {
+                    if (ReferencesTypeParameter(param.Type, typeParameters))
+                        return true;
+                }
+
+                return false;
+            }
+
+            static bool ReferencesTypeParameter(ITypeSymbol type, System.Collections.Immutable.ImmutableArray<ITypeParameterSymbol> typeParameters)
+            {
+                if (type is ITypeParameterSymbol typeParam)
+                {
+                    return typeParameters.Contains(typeParam, SymbolEqualityComparer.Default);
+                }
+
+                if (type is INamedTypeSymbol namedType && namedType.IsGenericType)
+                {
+                    return namedType.TypeArguments.Any(arg => ReferencesTypeParameter(arg, typeParameters));
+                }
+
+                return false;
+            }
+        }
+
+        public static bool UseIndirectInterfaceMemberDispatch(this ISymbol symbol, GlobalCompilationVisitor global, out bool needRuntimeNameLookup, out ImmutableArray<ITypeSymbol> typeArguments)
+        {
+            needRuntimeNameLookup = false;
+            typeArguments = default;
+            if (global.IsExtern(symbol))
+                return false;
+
+            static bool IsTrueExplicitInterfaceImplementation(ISymbol symbol)
+            {
+                return !symbol.IsStatic || symbol.DeclaredAccessibility == Accessibility.Private;
+            }
+
+            if (symbol.Kind == SymbolKind.Method && ((IMethodSymbol)symbol).ExplicitInterfaceImplementations.Length > 0)
+            {
+                if (IsTrueExplicitInterfaceImplementation(symbol))
+                    symbol = ((IMethodSymbol)symbol).ExplicitInterfaceImplementations[0];
+            }
+            else if (symbol.Kind == SymbolKind.Property && ((IPropertySymbol)symbol).ExplicitInterfaceImplementations.Length > 0)
+            {
+                if (IsTrueExplicitInterfaceImplementation(symbol))
+                    symbol = ((IPropertySymbol)symbol).ExplicitInterfaceImplementations[0];
+            }
+            else if (symbol.Kind == SymbolKind.Event && ((IEventSymbol)symbol).ExplicitInterfaceImplementations.Length > 0)
+            {
+                if (IsTrueExplicitInterfaceImplementation(symbol))
+                    symbol = ((IEventSymbol)symbol).ExplicitInterfaceImplementations[0];
+            }
+
+            if (symbol.ContainingType == null)
+            {
+                return false;
+            }
+            if (symbol.ContainingType.TypeKind != TypeKind.Interface)
+                return false;
+            if (!symbol.ContainingType.IsGenericType)
+                return false;
+            typeArguments = symbol.ContainingType.TypeArguments;
+            needRuntimeNameLookup = symbol.ContainingType.TypeArguments.Any(a => a.Kind != SymbolKind.NamedType || ((INamedTypeSymbol)a).IsGenericType);
+            return symbol.ContainingType.TypeKind == TypeKind.Interface && symbol.ContainingType.IsGenericType && symbol.ContainingType.CanBeImplementedMultipleTimes();
+        }
+
     }
 }

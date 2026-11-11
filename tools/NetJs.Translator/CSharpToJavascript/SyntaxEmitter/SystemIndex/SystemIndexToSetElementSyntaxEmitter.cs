@@ -93,7 +93,15 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.SystemIndex
                                             {
                                                 visitor.Visit(identifierIndex);
                                             }
-                                        })], expressionNode, targetType, null, false, suffixArguments: node.Right);
+                                        })], expressionNode, targetType, null, false, suffixArguments: (ref int parametersWritten) =>
+                                        {
+                                            if (parametersWritten > 0)
+                                            {
+                                                visitor.CurrentTypeWriter.Write(node, ", ");
+                                            }
+                                            visitor.Visit(node.Right);
+                                            parametersWritten++;
+                                        });
                                         //}
                                         //else
                                         //{

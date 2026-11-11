@@ -11,9 +11,11 @@ namespace System.Runtime.InteropServices
         {
             //Handle should be aligned by 4
             var handle = Marshal.MarshalObject(value);
-            var n = handle & (int)~InteropUtility.virtualObjectAddressOffset;
-            n <<=2;
-            handle = (n.As<uint>() | InteropUtility.virtualObjectAddressOffset).As<IntPtr>();
+            //if ((handle & 3) == 0)
+            //    return handle;
+            //var n = handle & unchecked((int)~InteropUtility.virtualAddressOffset);
+            //n <<= 2;
+            //handle = (n.As<uint>() | InteropUtility.virtualAddressOffset).As<IntPtr>();
             return handle;
         }
 
@@ -21,19 +23,22 @@ namespace System.Runtime.InteropServices
         internal static void InternalSetImpl(IntPtr handle, object? value)
         {
             //we ensured it was aligned above
-            var n = handle & (int)~InteropUtility.virtualObjectAddressOffset;
-            n >>= 2;
-            handle = (n.As<uint>() | InteropUtility.virtualObjectAddressOffset).As<IntPtr>();
-            Marshal.MarshalObject(value, handle);
+            //if ((handle & 3) != 0)
+            //{
+            //    var n = handle & unchecked((int)~InteropUtility.virtualAddressOffset);
+            //    n >>= 2;
+            //    handle = (n.As<uint>() | InteropUtility.virtualAddressOffset).As<IntPtr>();
+            //}
+            Marshal.MarshalObject(value, handle, overwriteExisting: true);
         }
 
         [NetJs.MemberReplace(nameof(InternalFree))]
         internal static void InternalFreeImpl(IntPtr handle)
         {
             //we ensured it was aligned above
-            var n = handle & (int)~InteropUtility.virtualObjectAddressOffset;
-            n >>= 2;
-            handle = (n.As<uint>() | InteropUtility.virtualObjectAddressOffset).As<IntPtr>();
+            //var n = handle & unchecked((int)~InteropUtility.virtualAddressOffset);
+            //n >>= 2;
+            //handle = (n.As<uint>() | InteropUtility.virtualAddressOffset).As<IntPtr>();
             Marshal.Remove(handle);
         }
 
@@ -41,9 +46,9 @@ namespace System.Runtime.InteropServices
         internal static object? InternalGetImpl(IntPtr handle)
         {
             //we ensured it was aligned above
-            var n = handle & (int)~InteropUtility.virtualObjectAddressOffset;
-            n >>= 2;
-            handle = (n.As<uint>() | InteropUtility.virtualObjectAddressOffset).As<IntPtr>();
+            //var n = handle & unchecked((int)~InteropUtility.virtualAddressOffset);
+            //n >>= 2;
+            //handle = (n.As<uint>() | InteropUtility.virtualAddressOffset).As<IntPtr>();
             return Marshal.MarshalObject(handle);
         }
 

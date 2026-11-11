@@ -1,5 +1,11 @@
 ﻿namespace NetJs.Translator.CSharpToJavascript
 {
+    public struct WeakDependency
+    {
+        public ulong Handle { get; set; }
+        public KeepDependencyFlags Condition { get; set; }
+    }
+
     public class SymbolExport
     {
         bool _isDynamic;
@@ -25,12 +31,13 @@
             }
         }
         public List<ulong>? Dependencies { get; set; }
-        public List<(ulong Handle, KeepDependencyFlags Condition)>? WeakDependencies { get; set; }
+        public List<WeakDependency>? WeakDependencies { get; set; }
         public override string ToString()
         {
             return OverloadName;
         }
     }
+
 
     public struct SymbolDescriptor
     {

@@ -71,6 +71,11 @@ namespace NetJs.Translator.CSharpToJavascript
             }
         }
 
+        List<VariableDeclarationSyntax> switchCaseDefinedVariable = new List<VariableDeclarationSyntax>();
+        bool SwitchCaseHasDefinedVariable(VariableDeclarationSyntax variable) => switchCaseDefinedVariable.Contains(variable);
+        void MarkSwitchCaseHasDefinedVariable(VariableDeclarationSyntax variable) => switchCaseDefinedVariable.Add(variable);
+
+
         public override void VisitVariableDeclaration(VariableDeclarationSyntax node)
         {
             EnsureImported(node.Type);
@@ -90,16 +95,20 @@ namespace NetJs.Translator.CSharpToJavascript
                     disposeDelegateType = CurrentClosure.DefineAnonymousMethodParameterTypes(delegateReturnType == null ? delegateParameterTypes! : [.. delegateParameterTypes!, delegateReturnType]);
                 }
             }
+            if (node.Variables.ToString().Contains("scalarValue"))
+            {
+
+            }
             //In a goto state machine, we already define this variable in the initializer phase
             if (gotoVariableDeclarationActive)
             {
                 CurrentTypeWriter.Write(node, $"/*{node.Type.ToString().Trim()}*/ ", true);
-                CurrentTypeWriter.Write(node, $"let ", true);
+                CurrentTypeWriter.Write(node, gotoGeneratorActive > 0 ? "var " : "let ", true);
             }
-            else if (!GotoHasDefinedVariable(node))
+            else if (!GotoHasDefinedVariable(node) && !SwitchCaseHasDefinedVariable(node))
             {
                 CurrentTypeWriter.Write(node, $"/*{node.Type.ToString().Trim()}*/ ");
-                CurrentTypeWriter.Write(node, $"let ");
+                CurrentTypeWriter.Write(node, gotoGeneratorActive > 0 ? "var " : "let ");
             }
             VisitChildren(node.Variables, ", ");
             disposeDelegateType?.Dispose();
@@ -110,7 +119,7 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (gotoVariableDeclarationActive)
             {
-                CurrentTypeWriter.Write(node, node.Identifier.Text);
+                CurrentTypeWriter.Write(node, node.Identifier.ResolveIdentifierName());
                 return;
             }
             var parent = (VariableDeclarationSyntax)node.Parent!;
@@ -151,6 +160,21 @@ namespace NetJs.Translator.CSharpToJavascript
                 Visit(node.Designation);
             }
             //base.VisitDeclarationExpression(node);
+        }
+
+        public override void VisitParenthesizedVariableDesignation(ParenthesizedVariableDesignationSyntax node)
+        {
+            CurrentTypeWriter.Write(node, " [ ");
+            int i = 0;
+            foreach (var v in node.Variables)
+            {
+                if (i > 0)
+                    CurrentTypeWriter.Write(node, ", ");
+                Visit(v);
+                i++;
+            }
+            CurrentTypeWriter.Write(node, " ]");
+            //base.VisitParenthesizedVariableDesignation(node);
         }
 
         public override void VisitSingleVariableDesignation(SingleVariableDesignationSyntax node)

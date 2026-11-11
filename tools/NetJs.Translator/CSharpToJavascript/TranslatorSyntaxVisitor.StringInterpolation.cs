@@ -1,7 +1,9 @@
-﻿using NetJs.Translator.CSharpToJavascript;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using NetJs.Translator.CSharpToJavascript;
+using NetJs.Translator.CSharpToJavascript.SyntaxEmitter;
+using NUglify.JavaScript.Visitors;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,14 +30,18 @@ namespace NetJs.Translator.CSharpToJavascript
             var expressionType = _global.GetTypeSymbol(node.Expression, this);
             if (!SymbolEqualityComparer.Default.Equals(expressionType, _global.SystemObject))
             {
-                CurrentTypeWriter.Write(node, _global.GlobalName);
-                CurrentTypeWriter.Write(node, ".");
-                CurrentTypeWriter.Write(node, Constants.BoxName);
-                CurrentTypeWriter.Write(node, "(");
-                Visit(node.Expression);
-                CurrentTypeWriter.Write(node, ", ");
-                CurrentTypeWriter.Write(node, expressionType.ComputeOutputTypeName(_global));
-                CurrentTypeWriter.Write(node, ")");
+                WriteBoxing(node, node.Expression, expressionType);
+                //CurrentTypeWriter.Write(node, _global.GlobalName);
+                //CurrentTypeWriter.Write(node, ".");
+                //CurrentTypeWriter.Write(node, Constants.BoxName);
+                //CurrentTypeWriter.Write(node, "(");
+                //Visit(node.Expression);
+                //CurrentTypeWriter.Write(node, ", ");
+                //if (expressionType.IsNullable(out var itemType))
+                //    CurrentTypeWriter.Write(node, itemType!.ComputeOutputTypeName(_global));
+                //else
+                //    CurrentTypeWriter.Write(node, expressionType.ComputeOutputTypeName(_global));
+                //CurrentTypeWriter.Write(node, ")");
             }
             else
             {
@@ -90,9 +96,13 @@ namespace NetJs.Translator.CSharpToJavascript
                     else if (token is InterpolationSyntax format)
                     {
                         CurrentTypeWriter.Write(node, "${");
+                        CurrentTypeWriter.Write(node, Global.GlobalName);
+                        CurrentTypeWriter.Write(node, ".");
+                        CurrentTypeWriter.Write(node, Constants.StringNotNull);
+                        CurrentTypeWriter.Write(node, "(");
                         var type = _global.TryGetTypeSymbol(format.Expression, this);
                         string? formatSpecifier = null;
-                        //Cant handle char like a regular primitive. THough char is a numeric type, its conversion to string is not numeric
+                        //Cant handle char like a regular primitive. Though char is a numeric type, its conversion to string is not numeric
                         if (type != null &&
                             !SymbolEqualityComparer.Default.Equals(type, _global.SystemString) &&
                             (!type.IsJsPrimitive() || SymbolEqualityComparer.Default.Equals(type, _global.SystemChar)))
@@ -104,14 +114,14 @@ namespace NetJs.Translator.CSharpToJavascript
                                 {
                                     CurrentTypeWriter.Write(node, _global.GlobalName);
                                     CurrentTypeWriter.Write(node, ".");
-                                    CurrentTypeWriter.Write(node, Constants.Dispatch);
+                                    CurrentTypeWriter.Write(node, Constants.DispatchCall);
                                     CurrentTypeWriter.Write(node, "(");
                                     VisitNode(format.Expression);
                                     CurrentTypeWriter.Write(node, ", ");
                                     CurrentTypeWriter.Write(node, type.Name);
                                     CurrentTypeWriter.Write(node, ", ");
                                     CurrentTypeWriter.Write(node, "($t) => ");
-                                    CurrentTypeWriter.Write(node, "$t");
+                                    CurrentTypeWriter.Write(node, "$t.");
                                     WriteMemberName(node, type, toString);
                                     //WriteMethodInvocation(node, toString, null, null, new CodeNode(() => CurrentTypeWriter.Write(node, "$t")), null, null, false);
                                     CurrentTypeWriter.Write(node, ")");
@@ -128,6 +138,15 @@ namespace NetJs.Translator.CSharpToJavascript
                                 CurrentTypeWriter.Write(node, $", \"\"");
                                 CurrentTypeWriter.Write(node, $")");
                             }
+                        }
+                        //Cant handle enum like a regular primitive. Though enum is a numeric type, its conversion to string is not numeric
+                        else if (type?.TypeKind == TypeKind.Enum)
+                        {
+                            EnumMethodSyntaxEmitter.WriteEnumToString(node, this, format.Expression);
+                            //var toString = _global.SystemEnum.GetMembers("ToStringT", _global).Cast<IMethodSymbol>().First();
+                            //var underlyingType = ((INamedTypeSymbol)type).EnumUnderlyingType!;
+                            //toString = toString.Construct([type, ((INamedTypeSymbol)type).EnumUnderlyingType!]);
+                            //WriteMethodInvocation(node, toString, null, [format.Expression], null, null, null, false);
                         }
                         else
                         {
@@ -147,7 +166,7 @@ namespace NetJs.Translator.CSharpToJavascript
                                 CurrentTypeWriter.Write(node, $")");
                             }
                         }
-                        CurrentTypeWriter.Write(node, "}");
+                        CurrentTypeWriter.Write(node, ")}");
                     }
                 }
                 CurrentTypeWriter.Write(node, "`");

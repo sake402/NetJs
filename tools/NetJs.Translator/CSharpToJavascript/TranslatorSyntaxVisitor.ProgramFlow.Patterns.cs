@@ -122,6 +122,10 @@ namespace NetJs.Translator.CSharpToJavascript
         public override void VisitConstantPattern(ConstantPatternSyntax node)
         {
             var containingIsPatternExpression = node.FindClosestParent<IsPatternExpressionSyntax>();
+            if (containingIsPatternExpression?.ToString()== "obj is 42")
+            {
+
+            }
             bool isNotAlreadyApplied = containingIsPatternExpression?.Pattern.IsKind(SyntaxKind.NotPattern) ?? true;
             var leftPatternType = containingIsPatternExpression != null ? _global.GetTypeSymbol(containingIsPatternExpression.Expression, this) : null;
             ISymbol? rightPatternSymbol = null;
@@ -141,13 +145,18 @@ namespace NetJs.Translator.CSharpToJavascript
                         rightPatternSymbol = _global.GetSymbol(node.Expression, this);
                     }
                 }
+                if (rightPatternSymbol == null && node.Parent.IsKind(SyntaxKind.CasePatternSwitchLabel))
+                {
+                    rightPatternSymbol = _global.GetSymbol(node.Expression, this);
+                }
             }
             var rightPatternType = rightPatternSymbol != null ? _global.GetTypeSymbol(rightPatternSymbol) : null;
             if (leftPatternType != null &&
                 leftPatternType.Kind == SymbolKind.NamedType &&
                 SymbolEqualityComparer.Default.Equals(leftPatternType, _global.SystemObject) &&
                 rightPatternSymbol != null &&
-                rightPatternType != null)
+                rightPatternType != null &&
+                node.Expression is LiteralExpressionSyntax)
             {
                 var var_i = ++CurrentTypeWriter.CurrentClosure.NameManglingSeed;
                 CurrentTypeWriter.InsertAbove(node, $"let $t{var_i};", true);
@@ -155,7 +164,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 WritePatternExpressionFilter(node);
                 CurrentTypeWriter.Write(node, $", ");
                 CurrentTypeWriter.Write(node, rightPatternType.ComputeOutputTypeName(_global));
-                CurrentTypeWriter.Write(node, $", {{ set {Constants.RefValueName}(v){{ $t{var_i} = v }} }}");
+                CurrentTypeWriter.Write(node, $", {{ set {Constants.RefValueName}($v){{ $t{var_i} = $v }} }}");
                 CurrentTypeWriter.Write(node, $") && $t{var_i} === ");
                 Visit(node.Expression);
                 CurrentTypeWriter.Write(node, $")");
@@ -450,7 +459,9 @@ namespace NetJs.Translator.CSharpToJavascript
                                 CurrentTypeWriter.Write(node, "(");
                                 WritePatternExpressionFilter(node);
                                 CurrentTypeWriter.Write(node, ", ");
-                                CurrentTypeWriter.Write(node, string.Join(", ", variableNames.Select(v => $"{{ set $v(v) {{ {v.Value} = v }} }}")));
+                                CurrentTypeWriter.Write(node, variableNames.Count.ToString());
+                                CurrentTypeWriter.Write(node, ", ");
+                                CurrentTypeWriter.Write(node, string.Join(", ", variableNames.Select(v => $"{{ set $v($v) {{ {v.Value} = $v }} }}")));
                                 CurrentTypeWriter.WriteLine(node, ");");
                             });
                             CurrentTypeWriter.Write(node, ", ");
@@ -463,7 +474,7 @@ namespace NetJs.Translator.CSharpToJavascript
                         //    CurrentTypeWriter.Write(node, "(");
                         //    WritePatternExpressionFilter(node);
                         //    CurrentTypeWriter.Write(node, ", ");
-                        //    CurrentTypeWriter.Write(node, string.Join(", ", variableNames.Select(v => $"{{ set $v(v) {{ {v.Value} = v }} }}")));
+                        //    CurrentTypeWriter.Write(node, string.Join(", ", variableNames.Select(v => $"{{ set $v($v) {{ {v.Value} = $v }} }}")));
                         //    CurrentTypeWriter.Write(node, ");");
                         //}, true);
                     }
@@ -731,7 +742,7 @@ namespace NetJs.Translator.CSharpToJavascript
             //WritePatternExpressionFilter(node);
             //CurrentTypeWriter.Write(node, $", ");
             //CurrentTypeWriter.Write(node, "null");
-            //CurrentTypeWriter.Write(node, $", {{ set {Constants.RefValueName}(v){{ {varName} = v }} }}");
+            //CurrentTypeWriter.Write(node, $", {{ set {Constants.RefValueName}($v){{ {varName} = $v }} }}");
             //CurrentTypeWriter.Write(node, $")");
             //base.VisitVarPattern(node);
         }
@@ -790,7 +801,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 if (svd != null)
                 {
                     CurrentTypeWriter.Write(node, $", ");
-                    CurrentTypeWriter.Write(node, $"{{ set {Constants.RefValueName}(v){{ {svd.Identifier.ResolveIdentifierName()} = v; }} }}");
+                    CurrentTypeWriter.Write(node, $"{{ set {Constants.RefValueName}($v){{ {svd.Identifier.ResolveIdentifierName()} = $v; }} }}");
                 }
                 CurrentTypeWriter.Write(node, $")");
                 if (svd != null)

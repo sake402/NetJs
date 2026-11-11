@@ -165,7 +165,7 @@ namespace NetJs.Translator
             }
         }
 
-        public async Task PullPackageCache(IProject project, LockFile? projectAssetJson = null, List<MetadataReference>? refs = null, List<string>? symbols = null)
+        public async Task PullPackageCache(IProject project, LockFile? projectAssetJson = null, LockFileTarget? target = null, List<MetadataReference>? refs = null, List<string>? symbols = null)
         {
             addedReference.Clear();
             projectAssetJson ??= GetLockFile(project, out _);
@@ -178,11 +178,11 @@ namespace NetJs.Translator
             await AddReference(project, "System.Private.Uri", refs, symbols);
             await AddReference(project, "System.Private.Xml", refs, symbols);
             await AddReference(project, "System.Private.Xml.Linq", refs, symbols);
-            if (projectAssetJson.Targets != null)
+            async Task DoTarget(LockFileTarget target)
             {
-                foreach (var target in projectAssetJson.Targets)
+                foreach (var lib in target.Libraries)
                 {
-                    foreach (var lib in target.Libraries)
+                    if (lib.Type == "package")
                     {
                         if (lib.Name != null)
                         {
@@ -212,6 +212,17 @@ namespace NetJs.Translator
                             }
                         }
                     }
+                }
+            }
+            if (target != null)
+            {
+                await DoTarget(target);
+            }
+            else if (projectAssetJson.Targets != null)
+            {
+                foreach (var mtarget in projectAssetJson.Targets)
+                {
+                    await DoTarget(mtarget);
                 }
             }
             foreach (var frm in projectAssetJson.PackageSpec.TargetFrameworks)
@@ -270,6 +281,16 @@ namespace NetJs.Translator
                     }
                 }
             }
+        }
+
+        public static MetadataReference? GetMetadataReference(IProject project, /*out string binPath,*/ out string binPathJs)
+        {
+            var libName = project.GetAssemblyName();
+            binPathJs = Path.Combine(project.GetOutputPath(), libName + ".js.dll");
+            //binPath = Path.Combine(project.GetOutputPath(), libName + ".dll");
+            if (/*!File.Exists(binPath) && */!File.Exists(binPathJs))
+                return null;
+            return MetadataReference.CreateFromFile(/*File.Exists(binPathJs) ? */binPathJs /*: binPath*/);
         }
 
         IList<LockFileTargetLibrary> Sort(IList<LockFileTargetLibrary> libraries)
@@ -336,10 +357,6 @@ namespace NetJs.Translator
             {
                 enableImplicitImport = false;
             }
-            if (enableImplicitImport)
-            {
-                await PullPackageCache(project, lockFile, refs, symbols);
-            }
             var tfm = project.GetTargetFramework();
             var otfm = tfm;
             if (tfm.EndsWith("-browser"))
@@ -349,144 +366,28 @@ namespace NetJs.Translator
                 lockFile.Targets.SingleOrDefault(f => f.Name == otfm) ??
                 lockFile.Targets.SingleOrDefault(f => f.Name == tfm) ??
                 lockFile.Targets.SingleOrDefault(f => f.Name == "netstandard2.0"))!;
+            if (enableImplicitImport)
+            {
+                await PullPackageCache(project, lockFile, target, refs, symbols);
+            }
             var sortLibraries = Sort(target.Libraries);
-            //var sortLibraries = lockFile.Libraries.Where(e =>
-            //{
-            //    if (e.Type == "package" && e.HasTools)//TODO: Need better way of doing this. We targets filtering Microsoft.NET.ILLink.Tasks from Microsoft.AspNetCore.Components
-            //    {
-            //        return false;
-            //    }
-            //    return true;
-            //}).ToArray();
-
-            //var model = JsonSerializer.Deserialize<ProjectAssetModel>(content);
-            //model!.Targets = model.Targets.ToDictionary(e => e.Key, e => e.Value.ToDictionary(ee => ee.Key.Split('/')[0], ee => ee.Value));
-            //var dic = model.Targets.Count == 1 ? model.Targets.Values.Single() :
-            //    (model.Targets.SingleOrDefault(e => e.Key.Contains("-browser")).Value ?? model.Targets.SingleOrDefault(e => e.Key == project.GetTargetFramework()).Value);
-            //var dic = target.Libraries.Select()
-            //var adjacencyList = sortLibraries.ToDictionary(l => l.Name, _ => new List<string>());
-            //var inDegree = sortLibraries.ToDictionary(l => l.Name, _ => 0);
-
-            //foreach (var lib in sortLibraries)
-            //{
-            //    var graph = dic[lib.Name];
-            //    if (graph.Dependencies != null)
-            //    {
-            //        foreach (var dep in graph.Dependencies.Keys)
-            //        {
-            //            // Only map dependencies that exist in our target library list
-            //            if (adjacencyList.ContainsKey(dep))
-            //            {
-            //                adjacencyList[dep].Add(lib.Name); // 'dep' must be loaded before 'lib.Name'
-            //                inDegree[lib.Name]++;
-            //            }
-            //        }
-            //    }
-            //}
-
-            //var queue = new Queue<string>(inDegree.Where(x => x.Value == 0).Select(x => x.Key));
-            //var sortedNames = new List<string>();
-
-            //while (queue.Count > 0)
-            //{
-            //    var current = queue.Dequeue();
-            //    sortedNames.Add(current);
-
-            //    foreach (var neighbor in adjacencyList[current])
-            //    {
-            //        inDegree[neighbor]--;
-            //        if (inDegree[neighbor] == 0)
-            //        {
-            //            queue.Enqueue(neighbor);
-            //        }
-            //    }
-            //}
-
-            //if (sortedNames.Count != sortLibraries.Length)
-            //{
-            //    throw new InvalidOperationException("Circular dependency detected in assets file!");
-            //}
-
-            //var libraryMap = sortLibraries.ToDictionary(l => l.Name);
-            //sortLibraries = sortedNames.Select(name => libraryMap[name]).ToArray();
-
-            ////make sure all dependecies are complete
-            //IEnumerable<string> GetDependecies(string libName)
-            //{
-            //    var graph = dic[libName];
-            //    if (graph.Dependencies == null)
-            //        yield break;
-            //    foreach (var d in graph.Dependencies)
-            //        yield return d.Key;
-            //    foreach (var d in graph.Dependencies)
-            //        foreach (var deps in GetDependecies(d.Key))
-            //            yield return deps;
-            //}
-            //Array.Sort(sortLibraries, (a, b) =>
-            //{
-            //    if (a.Name == b.Name)
-            //        return 0;
-            //    var aGraph = dic[a.Name];
-            //    var bGraph = dic[b.Name];
-            //    if (aGraph.Dependencies == null || aGraph.Dependencies.Count == 0)
-            //        return -1;
-            //    if (bGraph.Dependencies == null || bGraph.Dependencies.Count == 0)
-            //        return 1;
-            //    if (GetDependecies(a.Name).Contains(b.Name))
-            //    {
-            //        return 1;
-            //    }
-            //    if (GetDependecies(b.Name).Contains(a.Name))
-            //    {
-            //        return -1;
-            //    }
-            //    return 0;
-            //});
-
             foreach (var lib in sortLibraries)
             {
                 var llib = lockFile.Libraries.First(e => e.Name == lib.Name);
                 if (lib.Type == "package")
                 {
                     await AddReference(project, lib.Name, refs, symbols);
-                    //var nugetPath = $"{nugetPackageFolder}/{lib.Path}/{lib.Files.FirstOrDefault(e => e.EndsWith(".dll"))}";
-                    //if (!File.Exists(nugetPath))
-                    //    throw new InvalidOperationException($"Expected nuget file not found at {nugetPath}");
-                    //refs.Add(MetadataReference.CreateFromFile(nugetPath));
-                    //var symbolFile = $"{nugetPackageFolder}/{lib.Path}/{lib.Files.FirstOrDefault(e => e.EndsWith(".Symbols.yaml"))}";
-                    //if (File.Exists(symbolFile))
-                    //{
-                    //    symbols.Add(symbolFile);
-                    //}
                 }
                 else if (lib.Type == "project")
                 {
                     var libName = Path.GetFileName(lib.Name)!;
                     var depProject = await project.LoadDependecy(libName);
-                    //var libProjectPath = Path.GetFullPath(Path.GetDirectoryName(project.FullPath) + "/" + llib.Path);
-                    //var libProjectPath = Path.GetFullPath(Path.GetDirectoryName(project.FullPath) + "/" + lib.Path);
-                    //var libProjectFolder = Path.GetDirectoryName(libProjectPath);
-                    //We may have override assembly name back to default for some libraries, beacuase of vs intelissense
                     if (!libName.StartsWith($"{Constants.ProjectName}."))
                         libName = Constants.ProjectName + "." + libName;
-                    //var config="wasm";//project.Evaluate("Configuration");
-                    //var platform = project.GetPlatform();
-                    //if (platform.Equals("AnyCPU", StringComparison.InvariantCultureIgnoreCase))
-                    //{
-                    //    platform = "";
-                    //}
-                    //else
-                    //{
-                    //    platform = "/" + platform;
-                    //}
-                    var binPathJs = Path.Combine(depProject.GetOutputPath(), libName + ".js.dll");
-                    var binPath = Path.Combine(depProject.GetOutputPath(), libName + ".dll");
+                    var pref = GetMetadataReference(depProject,/* out string binPath,*/ out string binPathJs) ??
+                        throw new InvalidOperationException($"Expected dll file not found at {binPathJs}. Ensure that project has built successfully.");
+                    refs.Add(pref);
                     var symbolFile = Path.Combine(depProject.GetOutputPath(), libName + ".Symbols.yaml");
-                    //var binPathJs = libProjectFolder + $"/bin/wasm/{project.Evaluate("Configuration").LastOrDefault()}/{project.Evaluate("TargetFramework").LastOrDefault()}/" + libName + ".js.dll";
-                    //var binPath = libProjectFolder + $"/bin/wasm/{project.Evaluate("Configuration").LastOrDefault()}/{project.Evaluate("TargetFramework").LastOrDefault()}/" + libName + ".dll";
-                    if (!File.Exists(binPath) && !File.Exists(binPathJs))
-                        throw new InvalidOperationException($"Expected dll file not found at {binPath} or {binPathJs}. Ensure that project has built successfully.");
-                    refs.Add(MetadataReference.CreateFromFile(File.Exists(binPathJs) ? binPathJs : binPath));
                     //var symbolFile = libProjectFolder + $"/bin/wasm/{project.Evaluate("Configuration").LastOrDefault()}/{project.Evaluate("TargetFramework").LastOrDefault()}/" + libName + ".Symbols.yaml";
                     if (File.Exists(symbolFile))
                     {
@@ -500,6 +401,7 @@ namespace NetJs.Translator
 
         public IEnumerable<SyntaxTree> GetSyntaxTrees(IProject project, string[] sourceCodePath, string[]? sourceCodes, IEnumerable<string>? globalUsings)
         {
+            //project.GetName();
             List<SyntaxTree> syntaxTrees = new List<SyntaxTree>();
 
             if (globalUsings != null)
@@ -518,17 +420,37 @@ namespace NetJs.Translator
                 syntaxTrees.Add(globalUsingsTree);
             }
 
-            int index = 0;
             var constants = project.Evaluate("DefineConstants").LastOrDefault()?.Split([';'], StringSplitOptions.RemoveEmptyEntries);
-            foreach (var path in sourceCodePath)
-            {
-                //var codeString =/* SourceText.From*/(sourceCode);
-                var options = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest).WithPreprocessorSymbols(constants.Concat(["NET", "NET9_0_OR_GREATER"]));
+            var options = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest).WithPreprocessorSymbols((constants ?? Enumerable.Empty<string>()).Concat([
+                "NETJS",
+                "NET",
+                "NET10_0_OR_GREATER",
+                "NET9_0_OR_GREATER",
+                "NET8_0_OR_GREATER",
+                "NET7_0_OR_GREATER",
+                "NET6_0_OR_GREATER",
+                "NET5_0_OR_GREATER",
+                "NET4_0_OR_GREATER",
+                "NET3_0_OR_GREATER",
+                "NETCOREAPP3_0_OR_GREATER"]));
 
-                var parsedSyntaxTree = SyntaxFactory.ParseSyntaxTree(sourceCodes != null ? sourceCodes[index] : File.ReadAllText(path), options, path: path, encoding: Encoding.UTF8);
-                syntaxTrees.Add(parsedSyntaxTree);
-                index++;
-            }
+            sourceCodePath.Select((s, i) => (s, i))
+                .AsParallel()
+                //.WithDegreeOfParallelism(4)
+                .ForAll((path) =>
+            {
+                var parsedSyntaxTree = SyntaxFactory.ParseSyntaxTree(sourceCodes != null ? sourceCodes[path.i] : File.ReadAllText(path.s), options, path: path.s, encoding: Encoding.UTF8);
+                lock (syntaxTrees)
+                    syntaxTrees.Add(parsedSyntaxTree);
+            });
+            //int index = 0;
+            //foreach (var path in sourceCodePath)
+            //{
+            //    //var codeString =/* SourceText.From*/(sourceCode);
+            //    var parsedSyntaxTree = SyntaxFactory.ParseSyntaxTree(sourceCodes != null ? sourceCodes[index] : File.ReadAllText(path), options, path: path, encoding: Encoding.UTF8);
+            //    syntaxTrees.Add(parsedSyntaxTree);
+            //    index++;
+            //}
             return syntaxTrees;
         }
         (MetadataReference[], string[])? referenceAndSymbols;

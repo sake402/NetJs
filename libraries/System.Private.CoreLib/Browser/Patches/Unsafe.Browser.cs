@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.Versioning;
 using Window;
 
 namespace System.Runtime.CompilerServices
@@ -45,21 +46,30 @@ namespace System.Runtime.CompilerServices
         [NetJs.MemberReplace(nameof(As) + "<>")]
         [NetJs.Template("{o}")]
         public static extern T? AsImpl<T>(object? o) where T : class?;
-        //{
-        //    return o.As<T>();
-        //}
+        [NetJs.MemberReplace(nameof(Unbox) + "<>")]
+        public static ref T UnboxImpl<T>(object box)
+            where T : struct
+        {
+            return ref NetJs.Script.Ref<T>(NetJs.Script.CreateReference<T>(() => (T)box, (v) => { box = v; }));
+        }
+        [NetJs.Name("T")]
+        [NetJs.External]
+        class TT
+        {
+
+        }
         static RefOrPointer<object> EnsureIsRefOrPointer<T>(ref T source)
             where T : allows ref struct
         {
-            RefOrPointer<object> reff = NetJs.Script.Write<RefOrPointer<object>>("source");
+            RefOrPointer<TT> reff = NetJs.Script.Write<RefOrPointer<TT>>("source");
             var isPointer = reff.IsPointer;
             if (NetJs.Script.IsUndefined(isPointer)) //reff we have is a simple ref, make a new ref out of it
             {
                 if (NetJs.Script.IsDiscardRef(ref source)) //a discard ref shoulf not be wrapped, returns discard
-                    return reff;
+                    return reff.As<RefOrPointer<object>>();
                 var descriptor = Object.GetOwnPropertyDescriptor(reff, Constants.RefValueName);
                 //reff = RuntimeHelpers.CreateObjectReferenceT<T>(descriptor.Get.As<NativeFunction<int?, T>>(), descriptor.Set.As<NativeAction<T, int?>>());
-                reff = RuntimeHelpers.CreateObjectReferenceT<object>(descriptor.Get.As<NativeFunction<int?, object>>(), descriptor.Set.As<NativeAction<object, int?>>());
+                reff = RuntimeHelpers.CreateObjectReferenceT<TT>((descriptor?.Get ?? reff["_g"]).As<NativeFunction<int?, TT>>(), (descriptor?.Set ?? reff["_s"])?.As<NativeAction<TT, int?>>());
                 var type = reff["$type"].As<TypePrototype>();
                 if (NetJs.Script.IsDefined(type))
                 {
@@ -232,7 +242,7 @@ namespace System.Runtime.CompilerServices
             RefOrPointer<object> mright = NetJs.Script.Write<RefOrPointer<object>>("right");
             var rootLeft = mleft.GetRefWithBackingArrayOrObject(out var leftOffset, out _);
             var rootRight = mright.GetRefWithBackingArrayOrObject(out var rightOffset, out _);
-            return rootLeft == rootRight && leftOffset == rightOffset;
+            return (rootLeft == rootRight || rootLeft._dataSource == rootRight._dataSource) && leftOffset == rightOffset;
             //return ReferenceEquals(mleft, mright) || (mleft._array == mright._array && mleft._parentRef == mright._parentRef && mleft.As<RefOrPointer<object>>()._byteOffset == mright.As<RefOrPointer<object>>()._byteOffset);
         }
 
@@ -276,14 +286,44 @@ namespace System.Runtime.CompilerServices
         public static T ReadUnalignedImpl<T>(void* source)
             where T : allows ref struct
         {
-            return As<byte, T>(ref Unsafe.AsRef<byte>(source));
+            return NetJs.Script.Ref<object>(source)
+                .GetRefWithBackingArrayOrObject(out var byteOffset, out var arrayOffset)
+                .As<RefOrPointer<object>>()
+                .GetInRootWithBitCast<T>(arrayOffset, byteOffset); 
+            //return As<byte, T>(ref Unsafe.AsRef<byte>(source));
+        }
+
+        [NetJs.MemberReplace(nameof(ReadUnaligned) + "<>(scoped ref readonly byte)")]
+        public static T ReadUnalignedImpl2<T>(scoped ref readonly byte source)
+            where T : allows ref struct
+        {
+            return NetJs.Script.Ref<object>(source)
+                .GetRefWithBackingArrayOrObject(out var byteOffset, out var arrayOffset)
+                .As<RefOrPointer<object>>()
+                .GetInRootWithBitCast<T>(arrayOffset, byteOffset);
+            //return As<byte, T>(ref Unsafe.AsRef<byte>(source));
         }
 
         [NetJs.MemberReplace(nameof(WriteUnaligned) + "<>(void*, T)")]
         public static void WriteUnalignedImpl<T>(void* destination, T value)
             where T : allows ref struct
         {
-            As<byte, T>(ref Unsafe.AsRef<byte>(destination)) = value;
+            NetJs.Script.Ref<object>(destination)
+                .GetRefWithBackingArrayOrObject(out var byteOffset, out var arrayOffset)
+                .As<RefOrPointer<object>>()
+                .SetInRootWithBitCast<T>(value, arrayOffset, byteOffset);
+            //As<byte, T>(ref Unsafe.AsRef<byte>(destination)) = value;
+        }
+
+        [NetJs.MemberReplace(nameof(WriteUnaligned) + "<>(ref byte, T)")]
+        public static void WriteUnalignedImpl2<T>(ref byte destination, T value)
+            where T : allows ref struct
+        {
+            NetJs.Script.Ref<object>(destination)
+                .GetRefWithBackingArrayOrObject(out var byteOffset, out var arrayOffset)
+                .As<RefOrPointer<object>>()
+                .SetInRootWithBitCast<T>(value, arrayOffset, byteOffset);
+            //As<byte, T>(ref Unsafe.AsRef<byte>(destination)) = value;
         }
 
         public static unsafe void CopyBlockFinal(void* dest, void* src, nuint lenBytes)
@@ -294,7 +334,7 @@ namespace System.Runtime.CompilerServices
             RefOrPointer<object> destination = NetJs.Script.Write<RefOrPointer<object>>("dest");
             var sourceSize = src != null ? source!.SizeOfItem : 0;
             var destinationSize = destination.SizeOfItem;
-            if (src != null && sourceSize != destinationSize)
+            if (src != null && sourceSize != destinationSize && sourceSize != 0 && destinationSize != 0)
             {
                 nuint byteRemaining = lenBytes;
                 if (destinationSize > sourceSize)
@@ -328,7 +368,7 @@ namespace System.Runtime.CompilerServices
                     while (byteRemaining > 0)
                     {
                         if (destination.Type.As<RuntimeType>()._prototype.KnownType == KnownTypeHandle.SystemInt64 ||
-                            destination.Type.As<RuntimeType>()._prototype.KnownType == KnownTypeHandle.SystemUint64)
+                            destination.Type.As<RuntimeType>()._prototype.KnownType == KnownTypeHandle.SystemUInt64)
                         {
                             destination.SetAt(ReadOneLong().As<object>(), d_i);
                         }
@@ -354,13 +394,31 @@ namespace System.Runtime.CompilerServices
                     };
                     while (byteRemaining > 0)
                     {
-                        var s = source!.GetAt(s_i.As<int>()).As<ulong>();
+                        var v = source!.GetAt(s_i.As<int>());
+                        var slong = (ulong)v;
+                        var sint = (uint)v;
                         s_i++;
                         int ix = 0;
                         while (ix < sourceSize)
                         {
-                            s >>= (ix * 8 * destinationSize);
-                            destination.SetAt((s & mask).As<object>(), d_i);
+                            if (sourceSize == 8)
+                            {
+                                slong >>= (ix * 8 * destinationSize);
+                            }
+                            else
+                            {
+                                sint >>= (ix * 8 * destinationSize);
+                            }
+                            if (destinationSize == 8)
+                            {
+                                ulong set = sourceSize == 8 ? slong & mask : sint & mask;
+                                destination.SetAt(set.As<object>(), d_i);
+                            }
+                            else
+                            {
+                                uint set = (uint)(sourceSize == 8 ? (slong & mask) : sint & mask);
+                                destination.SetAt(set.As<object>(), d_i);
+                            }
                             d_i++;
                         }
                         byteRemaining -= sourceSize.As<nuint>();
@@ -370,7 +428,7 @@ namespace System.Runtime.CompilerServices
             else
             {
                 //Fast path, both are same data type
-                nuint sourceOffset = src != null ? (source!._arrayOffset.As<nuint?>() ?? 0) : 0;
+                nuint sourceOffset = src != null ? source!._arrayOffset.As<nuint?>() ?? 0 : 0;
                 nuint destOffset = destination._arrayOffset.As<nuint?>() ?? 0;
                 nuint lenItems = lenBytes;
                 if (sourceSize != 0)
@@ -470,11 +528,11 @@ namespace System.Runtime.CompilerServices
             var toType = typeof(TTo).As<RuntimeType>()._prototype;
             if (fromType.KnownType == KnownTypeHandle.SystemEnum)
             {
-                fromType = fromType.As<EnumPrototype>().UnderlyingType.Prototype;
+                fromType = fromType.As<EnumPrototype>().UnderlyingType;
             }
             if (toType.KnownType == KnownTypeHandle.SystemEnum)
             {
-                toType = toType.As<EnumPrototype>().UnderlyingType.Prototype;
+                toType = toType.As<EnumPrototype>().UnderlyingType;
             }
             if (fromType != null &&
                 toType != null &&

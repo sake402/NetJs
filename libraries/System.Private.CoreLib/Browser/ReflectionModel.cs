@@ -39,8 +39,41 @@ class HandleSerializer : JsonConverter<Handle>
         writer.WriteRawValue(value.Expression ?? "null", skipInputValidation: true);
     }
 }
+
+[JsonConverter(typeof(OutputNameStringSerializer))]
+public struct OutputNameString
+{
+    public string? String { get; set; }
+    public static implicit operator string?(OutputNameString str) => str.String;
+    public static implicit operator OutputNameString(string? str) => new OutputNameString() { String = str };
+    public override string ToString()
+    {
+        return String;
+    }
+}
+
+class OutputNameStringSerializer : JsonConverter<OutputNameString>
+{
+    public override OutputNameString Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        throw new NotImplementedException();
+    }
+
+    public override void Write(Utf8JsonWriter writer, OutputNameString value, JsonSerializerOptions options)
+    {
+        if (value.String?.StartsWith("[`") ?? false)
+        {
+            var str = value.String.Substring(1, value.String.Length - 2);
+            writer.WriteRawValue(str, skipInputValidation: true);
+        }
+        else
+            writer.WriteStringValue(value.String ?? "");
+    }
+}
+
 #else
 using Handle = ulong;
+using OutputNameString = string;
 #endif
 
 namespace NetJs
@@ -62,11 +95,11 @@ namespace NetJs
         SystemInt16,
         SystemUInt16,
         SystemInt32,
-        SystemUint32,
+        SystemUInt32,
         SystemIntPtr,
         SystemUIntPtr,
         SystemInt64,
-        SystemUint64,
+        SystemUInt64,
         SystemEnum,
         SystemSingle,
         SystemDouble,
@@ -74,6 +107,7 @@ namespace NetJs
         SystemString,
         SystemPointer,
         SystemReference,
+        SystemNullable,
 
         GenericType1Placeholder,
         GenericType2Placeholder,
@@ -108,7 +142,7 @@ namespace NetJs
         GenericType31Placeholder,
         GenericType32Placeholder,
         GenericTypeMaxPlaceholder = GenericType32Placeholder,
-
+        AnonymousType,
         GenericMethodType1Placeholder,
         GenericMethodType2Placeholder,
         GenericMethodType3Placeholder,
@@ -199,6 +233,7 @@ namespace NetJs
         IsStructLayout = 1 << 20,
         IsInlineArray = 1 << 21,
         IsPureStruct = 1 << 22, //A struct whose all members are primitive numeric, safe to use with js DataView
+        HasDefaultConstructor = 1 << 23,
     }
 
     [Flags]
@@ -236,7 +271,8 @@ namespace NetJs
         IsMethodPropertyGet = 1 << 25,
         IsMethodPropertySet = 1 << 26,
         IsMethodEventAdd = 1 << 27,
-        IsMethodEventRemove = 1 << 28
+        IsMethodEventRemove = 1 << 28,
+        IsNew = 1 << 29,
     }
 
     [Flags]
@@ -309,11 +345,11 @@ namespace NetJs
         //[JsonPropertyName("n")][Name("n")] public string Name { get; set; } = default!;
         //[JsonPropertyName("h")][Name("h")] public ReflectionHandleModel Handle { get; set; }
         //[JsonPropertyName("aqn")][Name("aqn")] public string AssemblyQualifiedName { get; set; } = default!;
-        [JsonPropertyName("b")][Name("b")] public Handle? BaseType { get; set; }
+        //[JsonPropertyName("b")][Name("b")] public Handle? BaseType { get; set; }
         //[JsonPropertyName("d")][Name("d")] public ulong? DeclaringType { get; set; }
         [JsonPropertyName("u")][Name("u")] public Handle UnderlyingType { get; set; }
         //[JsonPropertyName("k")][Name("k")] public TypeKindModel Kind { get; set; }
-        [JsonPropertyName("kt")][Name("kt")] public KnownTypeHandle KnownType { get; set; }
+        //[JsonPropertyName("kt")][Name("kt")] public KnownTypeHandle KnownType { get; set; }
         //[JsonPropertyName("fg")][Name("fg")] public new TypeFlagsModel Flags { get; set; }
         //[JsonPropertyName("y")][Name("y")] public TypeAttributes TypeAttributes { get; set; }
         [JsonPropertyName("p")][Name("p")] public PropertyModel[]? Properties { get; set; }
@@ -321,11 +357,10 @@ namespace NetJs
         [JsonPropertyName("l")][Name("l")] public FieldModel[]? Fields { get; set; }
         [JsonPropertyName("c")][Name("c")] public ConstructorModel[]? Constructors { get; set; }
         [JsonPropertyName("e")][Name("e")] public EventModel[]? Events { get; set; }
-        [JsonPropertyName("i")][Name("i")] public Handle[]? Interfaces { get; set; }
+        //[JsonPropertyName("i")][Name("i")] public Handle[]? Interfaces { get; set; }
         //[JsonPropertyName("a")][Name("a")] public AttributeModel[]? Attributes { get; set; }
-        [JsonPropertyName("g")][Name("g")] public Handle[]? GenericArguments { get; set; }
-        [JsonPropertyName("s")][Name("s")] public GenericParameterConstraintModel[]? GenericConstraints { get; set; }
-        [JsonPropertyName("j")][Name("j")] public Handle[]? NestedTypes { get; set; }
+        [JsonPropertyName("s")][Name("s")] public GenericParameterModel[]? GenericParameters { get; set; }
+        //[JsonPropertyName("j")][Name("j")] public Handle[]? NestedTypes { get; set; }
         [JsonPropertyName("r")][Name("r")] public int GenericParameterCount { get; set; }
         //[JsonPropertyName("sz")][Name("sz")] public int? Size { get; set; }
 
@@ -356,8 +391,9 @@ namespace NetJs
     public abstract class MemberModel //: IHasAssemblyModel
     {
         [JsonPropertyName("n")][Name("n")] public string Name { get; set; } = default!;
-        [JsonPropertyName("o")][Name("o")] public string? OutputName { get; set; }
+        [JsonPropertyName("o")][Name("o")] public OutputNameString OutputName { get; set; }
         [JsonPropertyName("d")][Name("d")] public Handle DeclaringType { get; set; } = default!;
+        [JsonPropertyName("H")][Name("H")] public Handle OriginalHandle { get; set; } = default!;
         [JsonPropertyName("h")][Name("h")] public Handle Handle { get; set; } = default!;
         [JsonPropertyName("f")][Name("f")] public MemberFlagsModel Flags { get; set; }
         [JsonPropertyName("a")][Name("a")] public AttributeModel[]? Attributes { get; set; }
@@ -368,6 +404,7 @@ namespace NetJs
         //[JsonIgnore][Name("(f & 32) != 0")] public extern bool IsStatic { get; }
         //[JsonIgnore][Name("(f & 256) != 0")] public extern bool IsAbstract { get; }
         //[JsonIgnore][Name("(f & 128) != 0")] public extern bool IsVirtual { get; }
+        [JsonPropertyName("x")][Name("x")] public bool Adhoc { get; set; }
     }
 
     [External]
@@ -436,7 +473,7 @@ namespace NetJs
         [JsonPropertyName("t")][Name("t")] public AttributeModel[]? ReturnAttributes { get; set; }
         [JsonPropertyName("p")][Name("p")] public ParameterModel[]? Parameters { get; set; }
         [JsonPropertyName("g")][Name("g")] public string[]? GenericArguments { get; set; }
-        [JsonPropertyName("c")][Name("c")] public GenericParameterConstraintModel[]? GenericConstraints { get; set; }
+        [JsonPropertyName("c")][Name("c")] public GenericParameterModel[]? GenericConstraints { get; set; }
 
         //[JsonIgnore][Name("(f & 2048) != 0")] public extern bool IsExtensionMethod { get; }
         //[JsonIgnore][Name("(f & 4096) != 0")] public extern bool IsAsync { get; }
@@ -558,11 +595,13 @@ namespace NetJs
     }
 
     [ObjectLiteral]
-    public class GenericParameterConstraintModel
+    public class GenericParameterModel
     {
+        [JsonPropertyName("h")][Name("h")] public Handle Handle { get; set; }
         [JsonPropertyName("n")][Name("n")] public string ParameterName { get; set; } = default!;
         [JsonPropertyName("f")][Name("f")] public GenericConstraintFlagsModel Flags { get; set; }
         [JsonPropertyName("c")][Name("c")] public Handle[]? TypeConstraints { get; set; }
+
     }
 
 }

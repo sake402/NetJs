@@ -1,5 +1,6 @@
 namespace Window
 {
+    [NetJs.External]
     public class HTMLSelectElement : HTMLElement
     {
         public extern string type { get; }

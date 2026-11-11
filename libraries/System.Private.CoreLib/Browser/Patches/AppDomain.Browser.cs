@@ -14,7 +14,7 @@ namespace System
         internal static SimpleDictionary<Union<TypePrototype, TypePrototypeProvider>> GlobalPrototypeRegistry;
 
 
-        internal static SimpleDictionary<AssemblyModel> GlobalMetadataRegistry;
+        internal static SimpleDictionary<AssemblyModel> GlobalAssemblyMetadataRegistry;
         internal static SimpleDictionary<RuntimeAssembly> GlobalAssemblyRegistry;
         internal static SimpleDictionary<RuntimeType> GlobalTypeRegistry;
         internal static TypePrototype[] GenericTypeParameters;
@@ -23,57 +23,21 @@ namespace System
         [Name("$initd")]
         static void EnsureInitDataStructure()
         {
-            if (NetJs.Script.IsUndefinedOrNull(GlobalMetadataRegistry))
+            if (NetJs.Script.IsUndefinedOrNull(GlobalAssemblyMetadataRegistry))
             {
-                GlobalMetadataRegistry = new SimpleDictionary<AssemblyModel>();
-                GlobalAssemblyRegistry = new SimpleDictionary<RuntimeAssembly>();
-                GlobalTypeRegistry = new SimpleDictionary<RuntimeType>();
+                //GlobalAssemblyRegistry = new SimpleDictionary<RuntimeAssembly>();
+                //GlobalTypeRegistry = new SimpleDictionary<RuntimeType>();
                 //GlobalPrototypeRegistry = Script.Write<SimpleDictionary<TypePrototypeRegistrar>>("window.dotnetJs");
                 GlobalPrototypeRegistry = Script.Write<SimpleDictionary<Union<TypePrototype, TypePrototypeProvider>>>($"window.{Constants.ProjectName}");
+                GlobalAssemblyRegistry = Script.Write<SimpleDictionary<RuntimeAssembly>>($"window.{Constants.ProjectName}.$assemblies");
+                GlobalTypeRegistry = Script.Write<SimpleDictionary<RuntimeType>>($"window.{Constants.ProjectName}.$types");
+                GlobalAssemblyMetadataRegistry = new SimpleDictionary<AssemblyModel>();
             }
         }
         [Name(Constants.AppDomainInitialize)]
         static void Initialize(RuntimeAssembly coreAssembly)
         {
             EnsureInitDataStructure();
-            //Create the runtime type for all boot types found in GlobalPrototypeRegistry
-            TypePrototype[] bootTypes = GlobalPrototypeRegistry["$bts"].As<TypePrototype[]>();
-            RuntimeType[] retryBootTypes = [];
-            for (int i = 0; i < bootTypes.Length; i++)
-            {
-                unchecked
-                {
-                    var prototype = bootTypes[i];
-                    //var metadata = prototype.Metadata ?? new TypeModel() { Handle = 0.As<ulong>() };
-                    var runtimeType = RuntimeType.Create(coreAssembly, prototype, prototype.MetadataFullName, null);
-                    //these are boot types, some of the required dependency may not be available yet when initializing the type
-                    //We will retry the failed ones when the coreAssembly build is complete
-                    try
-                    {
-                        runtimeType.Complete();
-                    }
-                    catch
-                    {
-                        retryBootTypes.Push(runtimeType);
-                    }
-                }
-            }
-            if (retryBootTypes.Length > 0)
-            {
-                coreAssembly.As<RuntimeAssembly_Partial>().onCompleted.Push(() =>
-                {
-                    for (int i = 0; i < retryBootTypes.Length; i++)
-                    {
-                        unchecked
-                        {
-                            var runtimeType = retryBootTypes[i];
-                            runtimeType.Complete();
-                        }
-                    }
-                });
-            }
-            NetJs.Script.Delete(GlobalPrototypeRegistry, "$bts");
-            //Script.Write($"{Constants.GlobalName}.typesReady = true");
             GenericTypeParameters = Script.CreateArrayFromValues(
                 Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLibSlug}.$T1"),
                 Script.Write<TypePrototype>($"{Constants.GlobalName}.{Constants.SystemPrivateCoreLibSlug}.$T2"),
@@ -138,7 +102,47 @@ namespace System
             Script.Write($"{Constants.GlobalName}.{Constants.TypeNullableName} = {Constants.GlobalName}.{Constants.SystemPrivateCoreLibSlug}.{Constants.InteropUtilityName}.{Constants.TypeNullableName}");
             Script.Write($"{Constants.GlobalName}.{Constants.GetCoreAssemblyName} = {Constants.GlobalName}.{Constants.SystemPrivateCoreLibSlug}.{Constants.InteropUtilityName}.{Constants.GetCoreAssemblyName}");
             Script.Write($"{Constants.GlobalName}.{Constants.DestructureName} = {Constants.GlobalName}.{Constants.SystemPrivateCoreLibSlug}.{Constants.InteropUtilityName}.{Constants.DestructureName}");
+            Script.Write($"{Constants.GlobalName}.{Constants.PrototypeImplementsInterface} = {Constants.GlobalName}.{Constants.SystemPrivateCoreLibSlug}.{Constants.InteropUtilityName}.{Constants.PrototypeImplementsInterface}");
             //Script.Write($"$.{Constants.AssemblyStubName} = $.System.AppDomain.{Constants.AssemblyStubName}");
+
+            //Create the runtime type for all boot types found in GlobalPrototypeRegistry
+            TypePrototype[] bootTypes = GlobalPrototypeRegistry["$bts"].As<TypePrototype[]>();
+            RuntimeType[] retryBootTypes = [];
+            for (int i = 0; i < bootTypes.Length; i++)
+            {
+                unchecked
+                {
+                    var prototype = bootTypes[i];
+                    //var metadata = prototype.Metadata ?? new TypeModel() { Handle = 0.As<ulong>() };
+                    var runtimeType = RuntimeType.Create(coreAssembly, prototype, prototype.MetadataFullName, null);
+                    //these are boot types, some of the required dependency may not be available yet when initializing the type
+                    //We will retry the failed ones when the coreAssembly build is complete
+                    try
+                    {
+                        runtimeType.Complete();
+                    }
+                    catch
+                    {
+                        retryBootTypes.push(runtimeType);
+                    }
+                }
+            }
+            if (retryBootTypes.Length > 0)
+            {
+                coreAssembly.As<RuntimeAssembly_Partial>().onCompleted.push(() =>
+                {
+                    for (int i = 0; i < retryBootTypes.Length; i++)
+                    {
+                        unchecked
+                        {
+                            var runtimeType = retryBootTypes[i];
+                            runtimeType.Complete();
+                        }
+                    }
+                });
+            }
+            NetJs.Script.Delete(GlobalPrototypeRegistry, "$bts");
+            //Script.Write($"{Constants.GlobalName}.typesReady = true");
         }
 
         //[Name(Constants.AssemblyMetadataRegistryName)]
@@ -149,48 +153,72 @@ namespace System
         //}
 
         [Name(Constants.AssemblyRegistryName)]
-        internal static void CreateAssembly(string assemblyName, AssemblyModel assemblyMetadata, NativeAction<RuntimeAssembly> action)
+        internal static void CreateAssembly(string assemblyName, /*string assemblySlug,*/ AssemblyModel assemblyMetadata, NativeAction<RuntimeAssembly> action)
         {
             EnsureInitDataStructure();
-            GlobalMetadataRegistry[assemblyMetadata.Handle.As<uint>().GetAssemblyHandle()] = assemblyMetadata;
-            GlobalMetadataRegistry[assemblyName] = assemblyMetadata;
+            var existing = GlobalAssemblyMetadataRegistry[assemblyName];
+            if (NetJs.Script.IsDefined(existing))
+            {
+                throw null!;
+            }
+            //existing = GlobalMetadataRegistry[assemblySlug];
+            //if (NetJs.Script.IsDefined(existing))
+            //{
+            //    throw null!;
+            //}
+            existing = GlobalAssemblyMetadataRegistry[assemblyMetadata.Handle.As<uint>().GetAssemblyHandle()];
+            if (NetJs.Script.IsDefined(existing))
+            {
+                throw null!;
+            }
+            GlobalAssemblyMetadataRegistry[assemblyMetadata.Handle.As<uint>().GetAssemblyHandle()] = assemblyMetadata;
+            GlobalAssemblyMetadataRegistry[assemblyName] = assemblyMetadata;
+            //GlobalMetadataRegistry[assemblySlug] = assemblyMetadata;
+
+            var existingA = GlobalAssemblyRegistry[assemblyName];
+            if (NetJs.Script.IsDefined(existingA))
+            {
+                throw null!;
+            }
+            //existingA = GlobalAssemblyRegistry[assemblySlug];
+            //if (NetJs.Script.IsDefined(existingA))
+            //{
+            //    throw null!;
+            //}
+            existingA = GlobalAssemblyRegistry[assemblyMetadata.Handle.As<uint>().GetAssemblyHandle()];
+            if (NetJs.Script.IsDefined(existingA))
+            {
+                throw null!;
+            }
+
             var assembly = GlobalAssemblyRegistry[assemblyName];
             if (Script.IsUndefinedOrNull(assembly))
             {
                 assembly = new RuntimeAssembly_Partial(assemblyMetadata, assemblyName).As<RuntimeAssembly>();
                 GlobalAssemblyRegistry[assemblyMetadata.Handle.As<uint>().GetAssemblyHandle()] = assembly;
                 GlobalAssemblyRegistry[assemblyName] = assembly;
-                //precreate all types in this assembly as a stub
-                //if (Script.IsDefined(metadata.Types))
-                //{
-                //    for (int i = 0; i < metadata.TypeNames.Length;i++)
-                //    {
-                //        var name = metadata.TypeNames[i];
-                //        var adjustedName = name.NativeReplace("<", "$").NativeReplace(",", "$").NativeReplace(">", "$");
-                //        assembly.DefineStub(name);
-                //    }
-                //}
+                //GlobalAssemblyRegistry[assemblySlug] = assembly;
             }
             action(assembly);
             assembly.As<RuntimeAssembly_Partial>().Complete();
         }
 
-        internal static void SetupDefaults(Type type)
-        {
-            //if (Script.TypeOf(type.Prototype) != "function")
-            //{
-            //    if (!Script.Write<bool>($"type._prototype.{Constants.IsTypeName}"))
-            //    {
-            //        bool Is(object value)
-            //        {
-            //            if (Script.InstanceOf(value, type))
-            //                return true;
-            //            return false;
-            //        }
-            //        type.Prototype[Constants.IsTypeName] = Is;
-            //    }
-            //}
-        }
+        //internal static void SetupDefaults(Type type)
+        //{
+        //    //if (Script.TypeOf(type.Prototype) != "function")
+        //    //{
+        //    //    if (!Script.Write<bool>($"type._prototype.{Constants.IsTypeName}"))
+        //    //    {
+        //    //        bool Is(object value)
+        //    //        {
+        //    //            if (Script.InstanceOf(value, type))
+        //    //                return true;
+        //    //            return false;
+        //    //        }
+        //    //        type.Prototype[Constants.IsTypeName] = Is;
+        //    //    }
+        //    //}
+        //}
 
         //public Assembly[] GetAssemblies()
         //{
@@ -208,13 +236,13 @@ namespace System
 
         public static string? GetAssemblyName(uint assemblyHandle)
         {
-            var metadata = GlobalMetadataRegistry[assemblyHandle.GetAssemblyHandle()];
+            var metadata = GlobalAssemblyMetadataRegistry[assemblyHandle.GetAssemblyHandle()];
             return metadata?.FullName;
         }
 
         public static AssemblyModel? GetAssemblyMetadata(uint assemblyHandle)
         {
-            var metadata = GlobalMetadataRegistry[assemblyHandle.GetAssemblyHandle()];
+            var metadata = GlobalAssemblyMetadataRegistry[assemblyHandle.GetAssemblyHandle()];
             return metadata;
         }
 
@@ -246,13 +274,39 @@ namespace System
                     throw new ArgumentNullException(nameof(typeName));
                 return null;
             }
-            var assemblies = GlobalAssemblyRegistry.Values;
-            for (int i = 0; i < assemblies.Length; i++)
+            string? assemblyName = null;
+            var firstComma = typeName.NativeIndexOf(",");
+            if (firstComma >= 0)
             {
-                var assembly = assemblies[i];
-                var type = assembly.As<RuntimeAssembly_Partial>().GetTypeInternal(typeName);
-                if (type != null)
-                    return type;
+                var secondComma = typeName.NativeIndexOf(",", firstComma + 1);
+                if (secondComma >= 0)
+                {
+                    //ignore the version, culture and token
+                    assemblyName = typeName.NativeSubstring(firstComma + 1, secondComma - firstComma - 1).NativeTrim();
+                }
+                else
+                {
+                    assemblyName = typeName.NativeSubstring(firstComma + 1).NativeTrim();
+                }
+                typeName = typeName.NativeSubstring(0, firstComma);
+            }
+            if (assemblyName!.NativeEquals("mscorlib"))
+            {
+                assemblyName = "System.Private.CoreLib";
+            }
+            var assemblies = GlobalAssemblyRegistry.Values;
+            unchecked
+            {
+                for (int i = 0; i < assemblies.Length; i++)
+                {
+                    var assembly = assemblies[i];
+                    if (assemblyName is null || assembly.As<RuntimeAssembly_Partial>()._model.FullName!.NativeEquals(assemblyName))
+                    {
+                        var type = assembly.As<RuntimeAssembly_Partial>().GetTypeInternal(typeName);
+                        if (type is not null)
+                            return type;
+                    }
+                }
             }
             if (throwOnError)
                 throw new InvalidOperationException($"Cannot find {typeName}");

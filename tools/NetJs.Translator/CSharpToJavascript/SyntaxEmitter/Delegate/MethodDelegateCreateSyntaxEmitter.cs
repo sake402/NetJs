@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Operations;
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices.JavaScript;
 using System.Text;
 using System.Text.Json;
 
@@ -13,10 +14,11 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Delegate
     {
         public override bool TryEmit(CSharpSyntaxNode node, TranslatorSyntaxVisitor visitor)
         {
-            if (_processing.Value.TryPeek(out var top) && top == node)
+            if (_processing.Value!.TryPeek(out var top) && top == node)
                 return false;
             if (node.IsKind(SyntaxKind.SimpleMemberAccessExpression) ||
                 node.IsKind(SyntaxKind.IdentifierName) ||
+                node.IsKind(SyntaxKind.GenericName) ||
                 node.IsKind(SyntaxKind.SimpleLambdaExpression) ||
                 node.IsKind(SyntaxKind.AnonymousMethodExpression) ||
                 node.IsKind(SyntaxKind.ParenthesizedLambdaExpression) ||
@@ -56,25 +58,36 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Delegate
                             {
                                 if (!visitor.Global.IsNativeFunction(delegateCreate.Type!))
                                 {
-                                    var expression = (node as MemberAccessExpressionSyntax)?.Expression;
+                                    var dnode = node;
+                                    if (node.IsKind(SyntaxKind.CastExpression))
+                                    {
+                                        dnode = ((CastExpressionSyntax)node).Expression;
+                                    }
+                                    var thisExpression = (dnode as MemberAccessExpressionSyntax)?.Expression;
                                     CodeNode? _this;
-                                    if (expression.IsKind(SyntaxKind.BaseExpression)) //base.Method should target this, not super
+                                    bool thisIsActuallyThis = false;
+                                    bool thisIsActuallyBase = false;
+                                    if (thisExpression.IsKind(SyntaxKind.BaseExpression)) //base.Method should target this, not super
                                     {
                                         _this = new CodeNode(() => visitor.CurrentTypeWriter.Write(node, "this"));
+                                        thisIsActuallyBase = true;
                                     }
                                     else
                                     {
-                                        _this = expression;
+                                        _this = thisExpression;
                                     }
                                     var methodGroup = node;// as MemberAccessExpressionSyntax ?? node as IdentifierNameSyntax; 
                                     if (methodGroup.IsKind(SyntaxKind.CastExpression) && methodGroup is CastExpressionSyntax cast)
                                         methodGroup = cast.Expression;
+                                    if (methodGroup.IsKind(SyntaxKind.SimpleMemberAccessExpression) && methodGroup is MemberAccessExpressionSyntax mem)
+                                        methodGroup = mem.Name;
                                     var methodSymbol = (IMethodSymbol)visitor.Global.GetSymbol(methodGroup, visitor);
                                     if (_this == null)
                                     {
                                         if (!methodSymbol.IsStatic)
                                         {
                                             _this = new CodeNode(() => visitor.CurrentTypeWriter.Write(node, "this"));
+                                            thisIsActuallyThis = true;
                                         }
                                         else
                                         {
@@ -109,7 +122,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Delegate
                                         var metadata = visitor.Global.GetRequiredMetadata(delegateCreate.Type!);
                                         visitor.CurrentTypeWriter.Write(node, "new ");
                                         bool isGeneric = false;
-                                        if (delegateCreate.Type is INamedTypeSymbol nt && nt.Arity > 0)
+                                        if (delegateCreate.Type is INamedTypeSymbol nt && (nt.Arity > 0 || nt.ContainingType?.Arity > 0))
                                         {
                                             visitor.CurrentTypeWriter.Write(node, "(");
                                             isGeneric = true;
@@ -119,14 +132,61 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Delegate
                                         {
                                             visitor.CurrentTypeWriter.Write(node, ")");
                                         }
+                                        var thisVariable = methodSymbol.IsStatic ? null : thisIsActuallyThis || thisIsActuallyBase ? "this" : thisExpression.IsKind(SyntaxKind.IdentifierName) ? null : $"$t{++visitor.CurrentTypeWriter.CurrentClosure.NameManglingSeed}";
+                                        if (!methodSymbol.IsStatic && !thisIsActuallyThis && !thisIsActuallyBase && thisVariable != null)
+                                        {
+                                            visitor.CurrentTypeWriter.InsertInCurrentClosure(node, () =>
+                                            {
+                                                visitor.CurrentTypeWriter.Write(node, "let ");
+                                                visitor.CurrentTypeWriter.Write(node, thisVariable!);
+                                                visitor.CurrentTypeWriter.Write(node, " = ");
+                                                visitor.VisitNode(_this);
+                                                visitor.CurrentTypeWriter.Write(node, ";");
+                                            }, true);
+                                        }
                                         visitor.CurrentTypeWriter.Write(node, "().$ctor(");
-                                        visitor.VisitNode(_this);
+                                        if (thisVariable != null)
+                                            visitor.CurrentTypeWriter.Write(node, thisVariable);
+                                        else
+                                            visitor.VisitNode(_this);
                                         visitor.CurrentTypeWriter.Write(node, ", ");
                                         if (methodGroup.IsKind(SyntaxKind.GenericName)) //a method like FormatEnumValueCore<T>
                                         {
                                             visitor.CurrentTypeWriter.Write(node, $"(...args) => ");
+                                            //if (!methodSymbol.IsStatic)
+                                            //{
+                                            //    if (thisIsActuallyBase)
+                                            //    {
+                                            //        visitor.CurrentTypeWriter.Write(node, "super.");
+                                            //    }
+                                            //    else if (thisIsActuallyThis)
+                                            //    {
+                                            //        visitor.CurrentTypeWriter.Write(node, "this.");
+                                            //    }
+                                            //}
                                         }
-                                        visitor.Visit(methodGroup);
+                                        AttributeData? jsImport = null;
+                                        if ((jsImport = methodSymbol.GetJsImportAttribute(visitor.Global, visitor)) != null)
+                                        {
+                                            visitor.CurrentTypeWriter.Write(node, jsImport.ConstructorArguments[0]!.Value!.ToString()!);
+                                        }
+                                        else
+                                        {
+                                            if (thisIsActuallyBase)
+                                            {
+                                                visitor.CurrentTypeWriter.Write(node, "super.");
+                                            }
+                                            else if (!methodSymbol.IsStatic && !thisIsActuallyThis)
+                                            {
+                                                if (thisVariable != null)
+                                                    visitor.CurrentTypeWriter.Write(node, thisVariable);
+                                                else
+                                                    visitor.VisitNode(_this);
+                                                if (!methodSymbol.UseIndirectInterfaceMemberDispatch(visitor.Global, out _, out _))
+                                                    visitor.CurrentTypeWriter.Write(node, ".");
+                                            }
+                                            visitor.Visit(methodGroup);
+                                        }
                                         if (methodGroup.IsKind(SyntaxKind.GenericName)) //a method like FormatEnumValueCore<T>
                                         {
                                             visitor.CurrentTypeWriter.Write(node, "(");
@@ -145,12 +205,14 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Delegate
                                         //A parameter that is a lamda block could have written newLine
                                         visitor.CurrentTypeWriter.TrimEnd();
                                         //An anonumous function should have its method metadata passed to the delegate it is converted to
-                                        if (node.IsKind(SyntaxKind.SimpleLambdaExpression) ||
-                                            node.IsKind(SyntaxKind.AnonymousMethodExpression) ||
-                                            node.IsKind(SyntaxKind.ParenthesizedLambdaExpression))
+                                        if (methodSymbol.MethodKind == MethodKind.AnonymousFunction || methodSymbol.MethodKind == MethodKind.LocalFunction)
                                         {
                                             var methodModel = visitor.Global.Reflection.FromMethodSymbolAsJson(methodSymbol, visitor);
                                             visitor.CurrentTypeWriter.Write(node, ", ");
+                                            var cacheId = "$" + Guid.NewGuid().ToString().GenerateShortId(6);
+                                            visitor.DefineGlobalVariables.Add(cacheId);
+                                            visitor.CurrentTypeWriter.Write(node, cacheId);
+                                            visitor.CurrentTypeWriter.Write(node, " ??= ");
                                             visitor.CurrentTypeWriter.Write(node, methodModel);
                                         }
                                         visitor.CurrentTypeWriter.Write(node, ")");

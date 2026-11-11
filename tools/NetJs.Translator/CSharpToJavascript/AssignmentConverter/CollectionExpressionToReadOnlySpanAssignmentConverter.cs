@@ -21,12 +21,11 @@ namespace NetJs.Translator.CSharpToJavascript.AssignmentConverter
 
         public void WriteAssignment(TranslatorSyntaxVisitor visitor, INamedTypeSymbol readOnlySpanType, CSharpSyntaxNode rhsExpression)
         {
-            var arrayConstructor = readOnlySpanType.GetMembers(".ctor").Cast<IMethodSymbol>().Single(t => t.Parameters.Count() == 1 && t.Parameters[0].Type.IsArray(out _));
-            visitor.WriteConstructorCall(rhsExpression, readOnlySpanType, arrayConstructor, null, null, suffixArguments: (Action)(() =>
-            {
+            var ctor = readOnlySpanType.GetMembers(".ctor").Cast<IMethodSymbol>().Single(t => t.Parameters.Count() == 1 && t.Parameters[0].Type.IsArray(out _));
+            visitor.WriteConstructorCall(rhsExpression, readOnlySpanType, ctor, null, [new CodeNode(() => {
                 visitor.WriteCollectionElementsAsArray((CollectionExpressionSyntax)rhsExpression);
                 //visitor.Visit(rhsExpression);
-            }));
+            })]);
         }
     }
 

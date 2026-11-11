@@ -4,11 +4,13 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NetJs.Translator.CSharpToJavascript;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using static NuGet.Client.ManagedCodeConventions;
 
 namespace NetJs.Translator.CSharpToJavascript
 {
@@ -52,7 +54,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     var declaringMetadata = _global.GetRequiredMetadata(propertySymbol.ContainingType);
                     var propertyMetadata = _global.GetRequiredMetadata(propertySymbol);
-                    CurrentTypeWriter.WriteLine(node, $"return {(propertySymbol.IsStatic ? "" : "this.")}{propertyMetadata.InvocationName ?? propertyName}$;", true);
+                    CurrentTypeWriter.WriteLine(node, $"return {(propertySymbol.IsStatic ? "" : "this.")}${propertyMetadata.InvocationName ?? propertyName};", true);
                 }));
             }
             CloseClosure(node);
@@ -164,7 +166,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     {
                         var declaringMetadata = _global.GetRequiredMetadata(propertySymbol.ContainingType);
                         var propertyMetadata = _global.GetRequiredMetadata(propertySymbol);
-                        CurrentTypeWriter.WriteLine(node, $"{(propertySymbol.IsStatic ? "" : "this.")}{propertyMetadata.InvocationName ?? propertyName}$ = value;", true);
+                        CurrentTypeWriter.WriteLine(node, $"{(propertySymbol.IsStatic ? "" : "this.")}${propertyMetadata.InvocationName ?? propertyName} = value;", true);
                     }
                 }));
             }
@@ -233,6 +235,15 @@ namespace NetJs.Translator.CSharpToJavascript
             //base.VisitFieldExpression(node);
         }
 
+        bool IsSimplyWrittenProperty(IPropertySymbol propertySymbol)
+        {
+            if (!propertySymbol.IsVirtual && propertySymbol.IsAutoProperty())
+            {
+                return true;
+            }
+            return false;
+        }
+
         public override void VisitPropertyDeclaration(PropertyDeclarationSyntax node)
         {
             var propertySymbol = (IPropertySymbol)_global.GetSymbol(node, this);
@@ -285,6 +296,23 @@ namespace NetJs.Translator.CSharpToJavascript
                 //node.Initializer != null &&
                 //(_global.EvaluateConstant(node.Initializer.Value, this).HasValue || (node.Initializer.Value is LiteralExpressionSyntax || (node.Initializer.Value is PrefixUnaryExpressionSyntax pu && pu.Operand is LiteralExpressionSyntax))) &&
                 //propertySymbol.Type.IsJsPrimitive();
+                bool backingFieldWritten = false;
+                void EnsureWriteBackingField()
+                {
+                    if (!backingFieldWritten)
+                    {
+                        if (isFieldLayout && TryWriteFieldLayout(node, propertySymbol, propertySymbol.Type, propertyName, $"{(node.Modifiers.IsStatic() ? "static " : "")}", node.Type.ToString().Trim()))
+                        {
+                        }
+                        else
+                        {
+                            CurrentTypeWriter.WriteLine(node, $"/*{node.Type.ToString().Trim()}*/ {(node.Modifiers.IsStatic() ? "static " : "")}${propertyName}{(defaultValue != null ? $" = {defaultValue}" : "")};", true);
+                        }
+                        WriteInitializer();
+                    }
+                    backingFieldWritten = true;
+                }
+
                 void WriteInitializer()
                 {
                     if (node.Initializer != null ||
@@ -314,6 +342,8 @@ namespace NetJs.Translator.CSharpToJavascript
 
                             CurrentClosure.RegisterTypeInitializer(() =>
                             {
+                                using var trimmer = WriteTrimmableBoundaryStart(node, propertySymbol);
+
                                 if (initLocation == TypeInitializerLocation.PrimaryConstructor)
                                 {
                                     CurrentTypeWriter.WriteLine(node, $"//depends on primary constructor parameter", true);
@@ -321,6 +351,10 @@ namespace NetJs.Translator.CSharpToJavascript
                                 //If we are in a static initilizer, it is safe to use this as it reference the class prototype itself
                                 CurrentTypeWriter.Write(node, $"{(isStaticInit ? "this" /*declaringMetadata.InvocationName + "."*/ : "this")}", true);
                                 CurrentTypeWriter.Write(node, ".");
+                                if (backingFieldWritten)
+                                {
+                                    CurrentTypeWriter.Write(node, "$");
+                                }
                                 CurrentTypeWriter.Write(node, propertyName);
                                 CurrentTypeWriter.Write(node, " = ");
                                 //Visit(node.Initializer);
@@ -353,31 +387,17 @@ namespace NetJs.Translator.CSharpToJavascript
                         }
                     }
                 }
-                bool backingFieldWritten = false;
-                void EnsureWriteBackingField()
-                {
-                    if (!backingFieldWritten)
-                    {
-                        if (isFieldLayout && TryWriteFieldLayout(node, propertySymbol, propertySymbol.Type, propertyName, $"{(node.Modifiers.IsStatic() ? "static " : "")}", node.Type.ToString().Trim()))
-                        {
-                        }
-                        else
-                        {
-                            CurrentTypeWriter.WriteLine(node, $"/*{node.Type.ToString().Trim()}*/ {(node.Modifiers.IsStatic() ? "static " : "")}{propertyName}${(defaultValue != null ? $" = {defaultValue}" : "")};", true);
-                        }
-                        WriteInitializer();
-                    }
-                    backingFieldWritten = true;
-                }
                 if (node.AccessorList != null)
                 {
-                    if (node.AccessorList.Accessors.All(a => a.ExpressionBody == null && a.Body == null)) //is an auto property, simply write as a field to save space
+                    //is an auto property, simply write as a field to save space. Unless it is virtual
+                    if (!propertySymbol.IsVirtual && node.AccessorList.Accessors.All(a => a.ExpressionBody == null && a.Body == null)) 
                     {
                         if (isFieldLayout && TryWriteFieldLayout(node, propertySymbol, propertySymbol.Type, propertyName, $"{(node.Modifiers.IsStatic() ? "static " : "")}", node.Type.ToString().Trim()))
                         {
                         }
                         else
                         {
+                            Debug.Assert(IsSimplyWrittenProperty(propertySymbol));
                             CurrentTypeWriter.WriteLine(node, $"/*{node.Type.ToString().Trim()}*/ {(node.Modifiers.IsStatic() ? "static " : "")}{propertyName}{(defaultValue != null ? $" = {defaultValue}" : "")};", true);
                         }
                         WriteInitializer();
@@ -546,7 +566,8 @@ namespace NetJs.Translator.CSharpToJavascript
                                 {
                                     if (accessor.ExpressionBody != null)
                                     {
-                                        CurrentTypeWriter.Write(node, $"return ", true);
+                                        if (!accessor.ExpressionBody.Expression.IsKind(SyntaxKind.ThrowExpression))
+                                            CurrentTypeWriter.Write(node, $"return ", true);
                                         Visit(accessor.ExpressionBody.Expression);
                                         CurrentTypeWriter.WriteLine(node, $";");
                                     }

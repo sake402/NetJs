@@ -13,8 +13,16 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Pointer
                 var declaration = node.FindClosestParent<VariableDeclarationSyntax>();
                 if (declaration != null && declaration.Parent.IsKind(SyntaxKind.FixedStatement))
                 {
+                    var rhs = visitor.Global.TryGetSymbol(node.Initializer.Value, visitor);
                     var rhsType = visitor.Global.TryGetTypeSymbol(node.Initializer.Value, visitor);
-                    if (rhsType != null && !rhsType.IsPointer(out _))
+                    if (rhs?.Kind == SymbolKind.Field && rhs is IFieldSymbol fs && fs.IsFixedSizeBuffer && fs.Type.IsPointer(out var felementType))
+                    {
+                        visitor.CurrentTypeWriter.Write(node, node.Identifier.Text);
+                        visitor.CurrentTypeWriter.Write(node, " = ");
+                        visitor.WriteCreateArrayRefOrPointer(node, felementType, node.Initializer.Value, null);
+                        return true;
+                    }
+                    else if (rhsType != null && !rhsType.IsPointer(out _))
                     {
                         //check if the rhsType has GetPinnableReference method
                         var getPinnableMethod = rhsType.GetMembers("GetPinnableReference")

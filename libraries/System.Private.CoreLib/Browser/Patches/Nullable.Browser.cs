@@ -24,6 +24,11 @@ namespace System
             }
         }
 
+        [NetJs.MemberReplace(nameof(value))]
+        [NetJs.Template("{this}", "get")]
+        [NetJs.Template("{this}.{nameof(value)}", "set")]
+        public T valueImpl;
+
         [NetJs.MemberReplace(nameof(Value))]
         [NetJs.StaticCallConvention]
         public readonly T ValueOverride
@@ -33,14 +38,14 @@ namespace System
                 var isNull = NetJs.Script.IsUndefinedOrNull(this);
                 if (isNull)
                     ThrowHelper.ThrowInvalidOperationException_InvalidOperation_NoValue();
-                var isNullable = Object.HasOwnProperty(this, nameof(hasValue));
+                var isNullable = NetJs.Script.TypeOf(this).NativeEquals("object") && Object.PropertyIn(this, nameof(hasValue));
                 if (isNullable)
                 {
                     if (!hasValue)
                     {
                         ThrowHelper.ThrowInvalidOperationException_InvalidOperation_NoValue();
                     }
-                    return value;
+                    return NetJs.Script.Write<T>("this.{nameof(value)}");
                 }
                 return this.As<T>();
             }
@@ -56,7 +61,7 @@ namespace System
             return Value;
         }
 
-        [NetJs.MemberReplace(nameof(GetValueOrDefault)+"(T)")]
+        [NetJs.MemberReplace(nameof(GetValueOrDefault) + "(T)")]
         [NetJs.StaticCallConvention]
         public readonly T GetValueOrDefaultImpl(T defaultValue)
         {
@@ -74,6 +79,12 @@ namespace System
             if (value is T t)
                 return true;
             return false;
+        }
+
+        [NetJs.Name(Constants.DefaultTypeName)]
+        public static object? Default()
+        {
+            return null;
         }
 
         //[NonVersionable]

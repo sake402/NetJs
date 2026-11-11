@@ -10,6 +10,8 @@
     let bootTypes = [];
     NetJs.$bts = bootTypes;
     NetJs.$exports = {};
+    NetJs.$assemblies = {};
+    NetJs.$types = {};
     //expose some js methods directly
     NetJs.floor = window.Math.floor;
     NetJs.trunc = window.Math.trunc;
@@ -41,8 +43,55 @@
     }
 
     let handles = new Set();
+    let seenHandles = new Set();
+    let traceSocket;
+    let traceOpened;
+    let lastFlush;
+    let traceEnabled = window.location.search.includes("trace=1");
     NetJs.$trace = function (handle) {
+        if (!traceEnabled)
+            return;
+        function tryFlush() {
+            if (traceOpened && handle.length > 1 && new Date() - lastFlush > 1000) {
+                traceSocket.send(Array.from(handles).join(","));
+                handles.clear();
+                lastFlush = new Date();
+            }
+        }
+        if (seenHandles.has(handle)) {
+            tryFlush();
+            return;
+        }
+        seenHandles.add(handle);
         handles.add(handle);
+        if (!traceSocket) {
+            function openWebSocket() {
+                traceSocket = new WebSocket('ws://localhost:54321/$profile');
+
+                traceSocket.addEventListener('open', (event) => {
+                    traceOpened = true;
+                    console.log('✨ Connected to the Trace WebSocket server!');
+                    // Send a plain text message
+                    socket.send('Hello from JavaScript!');
+                });
+
+                traceSocket.addEventListener('message', (event) => {
+                    console.log('📩 Message from server:', event.data);
+                });
+
+                traceSocket.addEventListener('error', (error) => {
+                    console.error('❌ WebSocket Error:', error);
+                });
+
+                traceSocket.addEventListener('close', (event) => {
+                    console.log(`🔌 Connection closed. Code: ${event.code}, Reason: ${event.reason}`);
+                    traceOpened = false;
+                    openWebSocket();
+                });
+            }
+            openWebSocket();
+        }
+        tryFlush();
     }
 
     NetJs.$tracex = function (handle) {
@@ -53,6 +102,11 @@
         //finalizer.register(myObject, "_");
     }
 
+    NetJs.$iface = function (baseName, ...types) {
+        if (types.length == 0 || types.every(t => t.$fullName.length == 0))
+            return baseName;
+        return `${baseName}_${types.map(t => t.$fullName.replaceAll('.', '$')).join('_')}`;
+    }
     NetJs.getCallerName = function getCallerName() {
         const error = new Error();
         const stack = error.stack;
@@ -164,9 +218,12 @@
     NetJs.$dsp = function (lhs, T, getMethod, ...args) {
         var method = (lhs != null ? getMethod(lhs) : null) ?? getMethod(T);
         return method.apply(lhs, args);
-        //return function () {
-        //    return method.apply(lhs, arguments);
-        //}
+    }
+    NetJs.$dspc = function (lhs, T, getMethod, ...args) {
+        if (lhs == null)
+            return null;
+        var method = (lhs != null ? getMethod(lhs) : null) ?? getMethod(T);
+        return method.apply(lhs, args);
     }
     NetJs.$exp = function (fn) {
         return fn();
@@ -179,7 +236,7 @@
             return prototype.$default();
         if (prototype.Zero !== undefined) //test long and decimal type
             return prototype.Zero;
-        if (prototype.$is && prototype.$is(0, NetJs._)) {
+        if (prototype.$is && prototype.$is(0, null)) {
             if (typeIsLong(prototype))
                 return 0n;
             return 0;
@@ -213,7 +270,7 @@
     NetJs.$box = function (value, prototype) {
         if (value == null)
             return null;
-        if (value.$boxed)
+        if (value.$boxed || value instanceof prototype)
             return value;
         let valueType = isValueType(prototype);
         let primitive = isPrimitive(prototype);
@@ -228,9 +285,15 @@
                 }
             }
         }
+        if (prototype.$t == 23/*System.Nullable*/) {
+            prototype = prototype.$args[0];
+        }
+        if (prototype.$is && !prototype.$is(value)) {
+            throw new Error();
+        }
         var instance = new prototype();
         if (prototype.name === "Nullable$$") { //boxing a value into its nullable type, allow
-            instance.$ctor$2(value);
+            instance.$ctor$3(value);
         } else {
             instance.m_value = value;
             instance.$boxed = true;
@@ -257,18 +320,16 @@
         return null;
     }
 
-    NetJs.$discardRef = function () {
-        let value;
-        return {
-            _: true,
-            get $v() { return value; },
-            set $v(v) { value = v; }
+    NetJs.$ifnna = async function (value, whenNotNull) {
+        var v = typeof value == "function" ? value() : value;
+        if (v instanceof Promise)
+            v = await v;
+        if (v) {
+            return whenNotNull(v);
         }
+        return null;
     }
-    NetJs._ = {
-        get $v() { },
-        set $v(v) { }
-    }
+
     NetJs.$typeOf = function (prototype) {
         // let isClass = typeof prototype === 'function' && prototype.hasOwnProperty('prototype') && !prototype.hasOwnProperty('arguments');
         // let isProviderFunction = typeof prototype === 'function' && prototype.hasOwnProperty('arguments');
@@ -296,18 +357,36 @@
         if (prototype.$type)
             return prototype.$type;
     }
+    NetJs.$strNN = function (str) {
+        if (str == null)
+            return "";
+        return str;
+    }
+    NetJs.$clone = function (value) {
+        if (value != null && value.$clone) {
+            return value.$clone();
+        }
+        return value;
+    }
     NetJs.$with = function (original, cloneFn) {
-        var clone = original.Clone();
+        var clone = original.$clone();
         cloneFn(clone);
+        return clone;
+    }
+    NetJs.$witha = async function (original, cloneFn) {
+        var clone = original.$clone();
+        var promise = cloneFn(clone);
+        if (promise instanceof Promise)
+            await promise;
         return clone;
     }
     NetJs.$is = function (value, type, outValue) {
         if (value === null || value === undefined)
             return false;
-        if (type.$isProxy && type.$prototype) {
-            type = type.$prototype;
-        }
-        let valueType = isValueType(type);
+        // if (type.$isProxy && type.$prototype) {
+        // type = type.$prototype;
+        // }
+        let valueType = outValue ? isValueType(type) : false;
         let unboxedValue = value;
         if (value.$boxed && valueType) { //dont unbox if we are testing against ref type, needs to remain boxed as object
             unboxedValue = value.m_value;
@@ -323,7 +402,7 @@
                     outValue.$v = value;
             }
         }
-        const iOut = function (v) {
+        const iOut = outValue ? function (v) {
             if (v !== undefined) {
                 if (outValue) {
                     if (value.$boxed) outValue.$v = value.m_value;
@@ -331,6 +410,11 @@
                 }
                 assigned = true;
             }
+        } : null;
+
+        if (type.$t == 56/*Anonymous Type*/ && value.constructor==Object) {
+            assignOut();
+            return true;
         }
         if (type.$is && type.$is(value, iOut)) {
             assignOut();
@@ -348,15 +432,21 @@
             assignOut();
             return true;
         }
-        var interfaces = value.constructor?.$i;
-        if (interfaces) {
-            for (let i = 0; i < interfaces.length; i++) {
-                if (interfaces[i] == type) {
-                    assignOut();
-                    return true;
-                }
+        if (value.constructor) {
+            if (NetJs.$implements(value.constructor, type)) {
+                assignOut();
+                return true;
             }
         }
+        // var interfaces = value.constructor?.$i;
+        // if (interfaces) {
+        //     for (let i = 0; i < interfaces.length; i++) {
+        //         if (interfaces[i] == type) {
+        //             assignOut();
+        //             return true;
+        //         }
+        //     }
+        // }
         //var prototype = Object.getPrototypeOf(value)?.$prototype
         //var typePrototype = type.$prototype;
         //if (prototype && typePrototype) {
@@ -440,13 +530,21 @@
                 // var max = T.MaxValue;
                 if (toLong) {
                     if (tvalue == "bigint") { //already bigint
-                        return value;
+                        if (T.$fullName == "System.Int64")
+                            return BigInt.asIntN(64, value);
+                        return BigInt.asUintN(64, value);
                     }
                     return BigInt(Math.trunc(value));
                 }
                 else {
+                    let upper = 0;
                     if (tvalue == "bigint") {
-                        value = Number(value);
+                        if (toFloat) {
+                            value = Number(value);
+                        } else {
+                            upper = value >> 32n;
+                            value = Number(value & 0xFFFFFFFFn);
+                        }
                     }
                     if (toInteger) {
                         var bitSize = NetJs.$sizeOf(T) * 8;
@@ -464,11 +562,14 @@
                             case 32:
                                 allBitsSet = 0xFFFFFFFF;
                                 break;
+                            case 64:
+                                allBitsSet = 0xFFFFFFFFFFFFFFFFn;
+                                break;
                         }
                         if (allBitsSet) {
                             value = value & allBitsSet;
                         } else {
-                            value = value & max;
+                            // value = value & max;
                         }
                         if (typeIsSignedIntegerNumber(T)) //cast to signed
                             value = (value << (32 - bitSize)) >> (32 - bitSize);
@@ -492,7 +593,39 @@
         }
         return value;
     }
-
+    class RefWrapper {
+        constructor(getter, setter, type, _) {
+            this._g = getter;
+            this._s = setter;
+            this.$type = type;
+            this._ = _;
+        }
+        get $v() { return this._g(); }
+        set $v(v) { this._s(v); }
+        GetAt(i) {
+            if (i !== null && i !== 0)
+                throw new Error();
+            return this._g();
+        }
+        SetAt(v, i) {
+            if (i !== null && i !== 0)
+                throw new Error();
+            this._s(v);
+        }
+    }
+    NetJs.$discardRef = function () {
+        let value;
+        return new RefWrapper(() => value, (v) => value = v, undefined, true);
+        // return {
+        //     _: true,
+        //     get $v() { return value; },
+        //     set $v(v) { value = v; }
+        // }
+    }
+    NetJs._ = {
+        get $v() { },
+        set $v(v) { }
+    }
     NetJs.$ref = function (getter, setter, type) {
         //It is a common pattern to create a variable on the stack uninitialized and then pass the ref of such(via out or ref) to a method to provide the value
         //By default in js the variable are undefined.
@@ -506,15 +639,19 @@
                 setter(value);
             }
         }
-        return {
-            get $v() { return getter(); },
-            set $v(v) { setter(v); },
-            $type: type
-        }
+        return new RefWrapper(getter, setter, type, false);
+        // return {
+        //     get $v() { return getter(); },
+        //     set $v(v) { setter(v); },
+        //     $type: type
+        // }
     }
     NetJs.$cast = function (value, toType, originalType) {
         if (value === null)
             return null;
+        if (toType.$isProxy === true) {
+            toType = toType.$p;
+        }
         var mvalue = value;
         var out = {
             $v: mvalue
@@ -535,7 +672,9 @@
             // }
         }
         var tvalue = typeof (value);
-        if ((tvalue == "number" || tvalue == "bigint") && value >= NetJs.$$.$interop.$vAddrOff && (toType.$fullName.startsWith("NetJs.Pointer<") || toType.$fullName.startsWith("NetJs.Ref<"))/*Object.getPrototypeListOf(type).contains(NetJs.$spc.System.IRefOrPointer)*/) { //casting number to pointer
+        if ((tvalue == "number" || value instanceof Number || tvalue == "bigint") &&
+            (Number(value) >>> 0) >= NetJs.$$.$interop.$vAddrOff &&
+            (toType.$fullName.startsWith("NetJs.Pointer<") || toType.$fullName.startsWith("NetJs.Ref<"))/*Object.getPrototypeListOf(type).contains(NetJs.$spc.System.IRefOrPointer)*/) { //casting number to pointer
             var ivalue = tvalue == "bigint" ? Number(value) : value;
             var pointer = NetJs.castAddress2Ptr(ivalue, toType);
             if (pointer)
@@ -680,8 +819,110 @@
     //     }
     //     return o;
     // }
-    NetJs.$require = function () {
-        //TODO:
-        return [];
+    NetJs.$lazyLoading = 0;
+    NetJs.$require = async function () {
+        var assemblyNames = Array.from(arguments);
+        let fromlazyLoad = false;
+        if (typeof (assemblyNames[0]) == "boolean") {
+            fromlazyLoad = assemblyNames.shift();
+        }
+        if (!fromlazyLoad && NetJs.$lazyLoading == 0)
+            return [];
+        var assemblies = [];
+        var promises = [];
+        for (let i = 0; i < assemblyNames.length; i++) {
+            let assemblyName = assemblyNames[i];
+            if (assemblyName.endsWith(".wasm"))
+                assemblyName = assemblyName.substr(0, assemblyName.length - 5);
+            let asm = NetJs.$assemblies[assemblyName];
+            if (asm) {
+                assemblies.push(asm);
+            } else {
+                if (!assemblyName.startsWith("NetJs."))
+                    assemblyName = "NetJs." + assemblyName;
+                let fileToLoad = assemblyName;
+                if (!fileToLoad.endsWith(".js"))
+                    fileToLoad = fileToLoad + ".js";
+                let existing = null;
+
+                async function waitForLoad() {
+                    let asm = NetJs.$assemblies[assemblyName];
+                    while (asm == undefined) { //wait for it to register
+                        let promise = new Promise((resolve, reject) => {
+                            setTimeout(() => resolve(), 50);
+                        });
+                        await promise;
+                        asm = NetJs.$assemblies[assemblyName];
+                    }
+                    existing.dataset.loaded = "done";
+                    assemblies.push(asm);
+                    return asm;
+                }
+
+                document.head.childNodes.forEach((item) => {
+                    if (item.nodeType === 1/*NodeType.ElementNode*/ && item.nodeName === "SCRIPT") {
+                        let script = item;
+                        if (script.src.endsWith(fileToLoad)) {
+                            existing = script;
+                        }
+                    }
+                });
+                if (existing) {
+                    let lazyLoad = existing.dataset.loaded;
+                    if (lazyLoad == "false" || lazyLoad == "inprogress") //still loading
+                    {
+                        let promise = new Promise((resolve, reject) => {
+                            existing.addEventListener("load", () => {
+                                resolve();
+                            });
+                            existing.addEventListener("error", () => {
+                                reject(new Error(`Failed to load assembly '${assemblyToLoad}'`));
+                            });
+                        });
+                        promises.push(promise);
+                        promises.push(waitForLoad());
+                    } else if (lazyLoad == "fail") {
+                        throw new Error(`Failed to load assembly '${assemblyToLoad}'`);
+                    }
+                    // else if (lazyLoad == "downloaded") {
+                    //     asm = NetJs.$assemblies[assemblyName];
+                    //     assemblies.push(asm);
+                    // }
+                    else {
+                        promises.push(waitForLoad());
+                    }
+                } else {
+                    if (!fromlazyLoad && NetJs.$lazyLoading > 0) // A lazy loaded assembly called require! Dont load anything new, not in head already
+                        continue;
+                    let script = document.createElement("script");
+                    existing = script;
+                    script.src = fileToLoad;
+                    script.type = "text/javascript";
+                    script.async = true;
+                    script.dataset.loaded = "inprogress";
+                    document.head.appendChild(script);
+                    let promise = new Promise((resolve, reject) => {
+                        script.addEventListener("load", () => {
+                            script.dataset.loaded = "downloaded";
+                            resolve();
+                        });
+                        script.addEventListener("error", () => {
+                            script.dataset.loaded = "fail";
+                            reject(`Failed to load assembly '${assemblyName}'`);
+                        });
+                    });
+                    promises.push(promise);
+                    promises.push(waitForLoad());
+                }
+            }
+        }
+        await Promise.all(promises);
+        return assemblies;
+    }
+    NetJs.$lazyLoad = async function () {
+        NetJs.$lazyLoading++;
+        var res = await NetJs.$require(true, ...arguments);
+        NetJs.$lazyLoading--;
+        return res;
     }
 })(window)

@@ -22,3 +22,5 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: Attached(typeof(RenderTreeEdit), typeof(DynamicDependencyAttribute), "*")]
 [assembly: Attached(typeof(ArrayBuilder<>), typeof(DynamicDependencyAttribute), "*")]
 [assembly: Attached(typeof(NamedEventChange), typeof(DynamicDependencyAttribute), "*")]
+
+[assembly: LinkerSubstitution("Microsoft.AspNetCore.Components.Routing.RegexConstraintSupport.IsEnabled", "true")]

@@ -10,7 +10,7 @@ namespace NetJs.Translator.CSharpToJavascript
             internalWriter = new StringWriter(sb);
         }
 #if DEBUG
-        string line = "";
+        //string line = "";
 #endif
         private readonly StringBuilder sb = new StringBuilder(512);
         private readonly StringWriter internalWriter;
@@ -18,9 +18,18 @@ namespace NetJs.Translator.CSharpToJavascript
         string? lastWord;
         public LinkedListNode<CodeLineWriter> Node { get; set; } = default!;
         public CodeLineWriter? RedirectInsertBefore { get; set; }
+
         void ValidateChar(char firstChar, string? fromString)
         {
+            //if (lastChar == '.' && firstChar == '[')
+                //throw new InvalidOperationException("Syntax would not be valid");
             if (lastChar == '(' && firstChar == ',')
+                throw new InvalidOperationException("Syntax would not be valid");
+            if (lastChar == ',' && firstChar == ',')
+                throw new InvalidOperationException("Syntax would not be valid");
+            if (lastChar == ')' && firstChar == 'n')
+                throw new InvalidOperationException("Syntax would not be valid");
+            if (lastChar == '.' && firstChar == '.')
                 throw new InvalidOperationException("Syntax would not be valid");
             if (lastChar == '(' && firstChar == '=')
                 throw new InvalidOperationException("Syntax would not be valid");
@@ -37,8 +46,8 @@ namespace NetJs.Translator.CSharpToJavascript
             if (lastWord == "throw" && word == ";")
                 throw new InvalidOperationException("Syntax would not be valid");
 #if DEBUG
-            if (line.EndsWith(Constants.RefValueName + ".") && word .SequenceEqual( Constants.RefValueName))
-                throw new InvalidOperationException("Double dereference would fail");
+            //if (line.EndsWith(Constants.RefValueName + ".") && word.SequenceEqual(Constants.RefValueName))
+                //throw new InvalidOperationException("Double dereference would fail");
 #endif
             //if (lastWord == Constants.RefValueName && lastChar == '.' && word == Constants.RefValueName)
             //throw new InvalidOperationException("Double dereference would fail");
@@ -46,20 +55,16 @@ namespace NetJs.Translator.CSharpToJavascript
             //throw new InvalidOperationException("Syntax would not be valid");
         }
 
-        public void Write(char value)
+        public void Write(char value, bool validate = true)
         {
-            ValidateChar(value, null);
+            if (validate)
+                ValidateChar(value, null);
 #if DEBUG
-            line += value;
-            //if (line.Contains("$.$mac.$."))
-            //{
-            
-            //}
+            //line += value;
 #endif
             internalWriter.Write(value);
             lastChar = value;
 
-            // Incrementally capture the last word if it's alphanumeric
             if (char.IsLetterOrDigit(value) || value == '_')
             {
                 lastWord = (lastWord == null) ? value.ToString() : lastWord + value;
@@ -69,7 +74,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 lastWord = null;
             }
         }
-        public void Write(string value)
+        public void Write(string value, bool validate = true)
         {
             if (value.Length == 0)
                 return;
@@ -78,23 +83,19 @@ namespace NetJs.Translator.CSharpToJavascript
                 Write(value[0]);
                 return;
             }
-            ValidateChar(value[0], value);
-            //ValidateWord(value.Trim().Split([' '], StringSplitOptions.RemoveEmptyEntries).FirstOrDefault());
-            // Zero-allocation word identification via ReadOnlySpan
+            if (validate)
+                ValidateChar(value[0], value);
             ReadOnlySpan<char> span = value.AsSpan().Trim();
             if (span.Length > 0)
             {
                 int firstSpace = span.IndexOf(' ');
                 ReadOnlySpan<char> firstWord = firstSpace == -1 ? span : span.Slice(0, firstSpace);
-                ValidateWord(firstWord);
+                if (validate)
+                    ValidateWord(firstWord);
             }
             internalWriter.Write(value);
 #if DEBUG
-            line += value;
-            //if (line.Contains("$.$mac.$."))
-            //{
-
-            //}
+            //line += value;
 #endif
             if (span.Length > 0)
             {
@@ -102,17 +103,10 @@ namespace NetJs.Translator.CSharpToJavascript
                 int lastSpace = span.LastIndexOf(' ');
                 lastWord = lastSpace == -1 ? span.ToString() : span.Slice(lastSpace + 1).ToString();
             }
-            //var trimmedValue = value.Trim();
-            //if (trimmedValue.Length > 0)
-            //{
-            //    lastChar = trimmedValue[trimmedValue.Length - 1];
-            //    lastWord = trimmedValue.Split([' '], StringSplitOptions.RemoveEmptyEntries).LastOrDefault();
-            //}
         }
 
         public bool StartsWith(string value)
         {
-            //return ToString().TrimStart().StartsWith(value);
             if (string.IsNullOrEmpty(value) || sb.Length < value.Length) return false;
 
             int startIdx = 0;
@@ -132,7 +126,6 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public bool EndsWith(string value)
         {
-            //return ToString().TrimEnd().EndsWith(value);
             if (string.IsNullOrEmpty(value) || sb.Length < value.Length) return false;
 
             int endIdx = sb.Length - 1;
@@ -153,12 +146,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public void Remove(string token)
         {
-            //var newContents = internalWriter.ToString().Replace(token, "");
-            //internalWriter = new();
-            //internalWriter.Write(newContents);
             if (string.IsNullOrEmpty(token)) return;
-
-            // Modifies the original buffer text in place without garbage generation
             sb.Replace(token, string.Empty);
         }
 
@@ -169,7 +157,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 sb.Length--;
             }
         }
-        public int Lenght => sb.Length;
+        public int Length => sb.Length;
         public override string ToString()
         {
             return internalWriter.ToString();

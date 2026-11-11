@@ -170,8 +170,11 @@ namespace NetJs.Translator.CSharpToJavascript
                 int ix = 0;
                 foreach (var i in node.Initializer.Expressions)
                 {
-                    if (ix > 0)
-                        CurrentTypeWriter.Write(node, ", ");
+                    if (!i.IsKind(SyntaxKind.ArrayInitializerExpression)) //generating multidimension array initializer, we dont need commas between as it is inserted automatically by the array flatening system
+                    {
+                        if (ix > 0)
+                            CurrentTypeWriter.Write(node, ", ");
+                    }
                     Visit(i);
                     ix++;
                 }
@@ -304,6 +307,10 @@ namespace NetJs.Translator.CSharpToJavascript
                 var variableType = GetIdentifierTypeInScope(eqLeft);
                 return _global.ResolveSymbol(variableType, this/*, out _, out _*/)?.GetTypeSymbol();
             }
+            else if (node.Parent.IsKind(SyntaxKind.SimpleAssignmentExpression) && node.Parent is AssignmentExpressionSyntax ass)
+            {
+                return _global.TryGetTypeSymbol(ass.Left, this);
+            }
             else if (node.Parent.IsKind(SyntaxKind.ArrowExpressionClause) && node.Parent is ArrowExpressionClauseSyntax ar && ar.Parent is MemberDeclarationSyntax member)
             {
                 if (member is PropertyDeclarationSyntax p)
@@ -357,7 +364,7 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             //var @class = node.FindClosestParent<BaseTypeDeclarationSyntax>();
             //var symbol = _global.GetSymbol(@class!, this/*, out _, out _*/);
-            bool isBootCode = _global.HasAttribute(CurrentTypeSymbol, typeof(BootAttribute).FullName, this, false, out _);
+            bool isBootCode = _global.HasAttribute(CurrentTypeSymbol, typeof(BootAttribute).FullName!, this, false, out _);
 
             //Disable collection expression in boot code as other classes are not available
             var lhsType = isBootCode ? null : (InferLeftHandSideType(node) ?? _global.TryGetTypeSymbol(node, this));
@@ -461,8 +468,11 @@ namespace NetJs.Translator.CSharpToJavascript
                 int ix = 0;
                 foreach (var i in node.Initializer.Expressions)
                 {
-                    if (ix > 0)
-                        CurrentTypeWriter.Write(node, ", ");
+                    if (!i.IsKind(SyntaxKind.ArrayInitializerExpression))
+                    {
+                        if (ix > 0)
+                            CurrentTypeWriter.Write(node, ", ");
+                    }
                     Visit(i);
                     ix++;
                 }

@@ -15,6 +15,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
     public class ReflectionMetadataBuilder
     {
+        static List<int> usedAssemblyHandle = new();
         public static readonly JsonSerializerOptions SerializationOption = new JsonSerializerOptions
         {
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
@@ -59,7 +60,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
         uint assemblyHandle;
         Dictionary<ITypeSymbol, int> types = default!;
-        public Handle NumericTypeHandle(INamedTypeSymbol type, bool useCachedHandle = true)
+        public Handle NumericTypeHandle(ITypeSymbol type, bool useCachedHandle = true)
         {
             //if (global.IsDefinedTypeParameter(type))
             //{
@@ -98,10 +99,10 @@ namespace NetJs.Translator.CSharpToJavascript
             return 0;
         }
 
-        Handle MemberHandle(ISymbol member, TranslatorSyntaxVisitor? fromVisitor, bool useCachedHandle = true)
+        Handle MemberHandle(ISymbol member, TranslatorSyntaxVisitor? fromVisitor, bool useCachedHandle = true, bool numericHandle = false)
         {
             var containingType = member.ContainingType;
-            var typeHandle = TypeHandle(containingType, fromVisitor);
+            var typeHandle = numericHandle ? NumericTypeHandle(containingType, useCachedHandle) : TypeHandle(containingType, fromVisitor);
 
             if (useCachedHandle)
             {
@@ -109,7 +110,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 if (metadata?.Export.Handle != null/* && metadata.OverloadName != null*/)
                 {
                     var lmemberHandle = metadata.Export.Handle.Value;
-                    if (containingType.IsGenericType)
+                    if (!numericHandle && containingType.IsGenericType)
                     {
                         return typeHandle.Or($"0x{lmemberHandle & ~(ReflectionHandleExtension.AssemblyMask | ReflectionHandleExtension.TypeMask):X}");
                     }
@@ -147,7 +148,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
             ulong memberHandle = (ulong)index << ReflectionHandleExtension.MemberShift;
 
-            if (containingType.IsGenericType)
+            if (!numericHandle && containingType.IsGenericType)
             {
                 typeHandle = typeHandle.Or($"0x{memberHandle:X}");
             }
@@ -158,6 +159,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
             return typeHandle;
         }
+
         public Handle TypeHandle(ITypeSymbol type, TranslatorSyntaxVisitor? fromVisitor)
         {
             if (type == null)
@@ -299,7 +301,9 @@ namespace NetJs.Translator.CSharpToJavascript
                         return $"({string.Join(", ", paramNames)}) => {nt.ComputeOutputTypeName(global)}.{Constants.PrototypeTypeHandle}";
                     }
 
-                    if (nt.ContainingType != null && nt.TypeParameters.Length > 0 && fromVisitor != null && !SymbolEqualityComparer.Default.Equals(nt, fromVisitor.CurrentTypeSymbol))
+                    if (nt.ContainingType != null &&
+                        fromVisitor != null &&
+                        !SymbolEqualityComparer.Default.Equals(nt, fromVisitor.CurrentTypeSymbol))
                     {
                         var scopeArgs = new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default);
                         var currentScope = fromVisitor.CurrentTypeSymbol;
@@ -329,7 +333,9 @@ namespace NetJs.Translator.CSharpToJavascript
                             return NumericTypeHandle(nt);
                         }
                     }
-                    return $"{nt.ComputeOutputTypeName(global)}.{Constants.PrototypeTypeHandle}";
+                    var isOpenGeneric = nt.TypeArguments.All(e => e.Kind == SymbolKind.ErrorType);
+                    if (!isOpenGeneric && !SymbolEqualityComparer.Default.Equals(nt, nt.OriginalDefinition))
+                        return $"{nt.ComputeOutputTypeName(global)}.{Constants.PrototypeTypeHandle}";
                 }
 
                 return NumericTypeHandle(nt);
@@ -555,7 +561,40 @@ namespace NetJs.Translator.CSharpToJavascript
                 //throw new InvalidOperationException("An AssemblyHandleAttribute must be defined on all assembly");
             }
             //TODO: Wont the handle clash between multiple assemblies, we can use a random number for now, but we should have a better way to generate unique assembly handles
-            assemblyHandle = (uint)(args?.ElementAtOrDefault(0).Value ?? (isSystemPrivateCoreLib ? 1 : (uint)new Random().Next(32768, 65536)));
+            assemblyHandle = (uint)(args?.ElementAtOrDefault(0).Value ?? (isSystemPrivateCoreLib ? 1u : 0u));
+
+            //Tru use handle generated in the last compilation
+            if (assemblyHandle == 0)
+            {
+                var existingYaml = $"{global.Output.OutputPath}{Path.DirectorySeparatorChar}{global.Project.GetAssemblyName()}.Symbols.yaml";
+                if (File.Exists(existingYaml))
+                {
+                    using var reader = new StreamReader(existingYaml);
+                    int i = 0;
+                    while (i < 20)
+                    {
+                        var line = reader.ReadLine();
+                        if (line.StartsWith("    handle: "))
+                        {
+                            var h = line.Substring(12);
+                            assemblyHandle = uint.Parse(h);
+                            if (assemblyHandle > 0xFFFF)
+                                assemblyHandle = 0;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (assemblyHandle == 0)
+            {
+                var handle = Random.Shared.Next(8192, 65536);
+                while (usedAssemblyHandle.Contains(handle))
+                {
+                    handle = Random.Shared.Next(8192, 65536);
+                }
+                usedAssemblyHandle.Add(handle);
+                assemblyHandle = (uint)handle;
+            }
             //uint assemblyHandle = (uint)args[0];
             var assemblies = global.AllSymbols.Values.Where(e => e.Symbol.Kind == SymbolKind.Assembly);
             var types = global.AllSymbols.Values.Where(e => SymbolEqualityComparer.Default.Equals(e.Symbol.ContainingAssembly, assembly) && e.Symbol.Kind == SymbolKind.NamedType);
@@ -583,11 +622,11 @@ namespace NetJs.Translator.CSharpToJavascript
             SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemInt16) ? (int)KnownTypeHandle.SystemInt16 :
             SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemUInt16) ? (int)KnownTypeHandle.SystemUInt16 :
             SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemInt32) ? (int)KnownTypeHandle.SystemInt32 :
-            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemUInt32) ? (int)KnownTypeHandle.SystemUint32 :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemUInt32) ? (int)KnownTypeHandle.SystemUInt32 :
             SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemIntPtr) ? (int)KnownTypeHandle.SystemIntPtr :
             SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemUIntPtr) ? (int)KnownTypeHandle.SystemUIntPtr :
             SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemInt64) ? (int)KnownTypeHandle.SystemInt64 :
-            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemUInt64) ? (int)KnownTypeHandle.SystemUint64 :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemUInt64) ? (int)KnownTypeHandle.SystemUInt64 :
             SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemEnum) ? (int)KnownTypeHandle.SystemEnum :
             SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemSingle) ? (int)KnownTypeHandle.SystemSingle :
             SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemDouble) ? (int)KnownTypeHandle.SystemDouble :
@@ -595,6 +634,7 @@ namespace NetJs.Translator.CSharpToJavascript
             SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemString) ? (int)KnownTypeHandle.SystemString :
             SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemPointer) ? (int)KnownTypeHandle.SystemPointer :
             SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemReference) ? (int)KnownTypeHandle.SystemReference :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemNullable) ? (int)KnownTypeHandle.SystemNullable :
             SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT1) ? (int)KnownTypeHandle.GenericType1Placeholder :
             SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT2) ? (int)KnownTypeHandle.GenericType2Placeholder :
             SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT3) ? (int)KnownTypeHandle.GenericType3Placeholder :
@@ -627,6 +667,7 @@ namespace NetJs.Translator.CSharpToJavascript
             SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT30) ? (int)KnownTypeHandle.GenericType30Placeholder :
             SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT31) ? (int)KnownTypeHandle.GenericType31Placeholder :
             SymbolEqualityComparer.Default.Equals(t.Symbol, global.SystemT32) ? (int)KnownTypeHandle.GenericType32Placeholder :
+            SymbolEqualityComparer.Default.Equals(t.Symbol, global.AnonymousType) ? (int)KnownTypeHandle.AnonymousType :
             int.MaxValue).ThenBy(type => type.Symbol.CreateSignature(global, withTypeParameterNames: false, withGlobalNamespace: false)) : types.OrderBy(type => type.Symbol.CreateSignature(global, withTypeParameterNames: false, withGlobalNamespace: false)))
             .Select((o, i) => (o, i))
             .ToDictionary(x => (ITypeSymbol)x.o.Symbol, x => x.i + (isSystemPrivateCoreLib ? 0/*only dynamic can have handle 0*/ : 1), (IEqualityComparer<ITypeSymbol>)SymbolEqualityComparer.Default);
@@ -648,7 +689,7 @@ namespace NetJs.Translator.CSharpToJavascript
                         typeExport.IsDynamic();
                     typeExport.Handle = typeHandle;
                 }
-                var members = ttype.GetMembers().SelectMany(e =>
+                var members = ttype.GetMembers().Where(e => e.Kind != SymbolKind.NamedType).SelectMany(e =>
                 {
                     if (e.Kind == SymbolKind.Property && e is IPropertySymbol ps)
                     {
@@ -802,18 +843,22 @@ namespace NetJs.Translator.CSharpToJavascript
             //{
             foreach (var file in embeddedFiles.Where(e => !e.EndsWith(".resx")))
             {
-                var manifest = new AssemblyManifestModel();
-                manifest.Name = Path.GetFileNameWithoutExtension(file);
-                var data = File.ReadAllBytes(file);
-                var dataLen = data.Length;
-                var finalData = new byte[4 + data.Length];
-                finalData[0] = (byte)((dataLen >> 0) & 0xFF);
-                finalData[1] = (byte)((dataLen >> 8) & 0xFF);
-                finalData[2] = (byte)((dataLen >> 16) & 0xFF);
-                finalData[3] = (byte)((dataLen >> 24) & 0xFF);
-                Array.Copy(data, 0, finalData, 4, dataLen);
-                manifest.Data = Convert.ToBase64String(finalData);
-                manifests.Add(manifest);
+                if (File.Exists(file))
+                {
+                    var manifest = new AssemblyManifestModel();
+                    manifest.Name = Path.GetFileName(file);
+                    var data = File.ReadAllBytes(file);
+                    //var dataLen = data.Length;
+                    //var finalData = new byte[4 + data.Length];
+                    //finalData[0] = (byte)((dataLen >> 0) & 0xFF);
+                    //finalData[1] = (byte)((dataLen >> 8) & 0xFF);
+                    //finalData[2] = (byte)((dataLen >> 16) & 0xFF);
+                    //finalData[3] = (byte)((dataLen >> 24) & 0xFF);
+                    //Array.Copy(data, 0, finalData, 4, dataLen);
+                    //manifest.Data = Convert.ToBase64String(finalData);
+                    manifest.Data = Convert.ToBase64String(data);
+                    manifests.Add(manifest);
+                }
             }
             //}
             model.Manifests = manifests.ToArray();
@@ -903,8 +948,8 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
             }
 
-            Handle[]? genericArguments = null;
-            GenericParameterConstraintModel[]? genericConstraints = null;
+            //Handle[]? genericArguments = null;
+            GenericParameterModel[]? genericParameters = null;
             int genericParameterCount = 0;
 
             if (symbol is INamedTypeSymbol namedSymbol)
@@ -914,45 +959,46 @@ namespace NetJs.Translator.CSharpToJavascript
 
                 if (!minimal && genericParameterCount > 0)
                 {
-                    genericArguments = new Handle[genericParameterCount];
+                    //genericArguments = new Handle[genericParameterCount];
                     for (int i = 0; i < genericParameterCount; i++)
                     {
-                        genericArguments[i] = GenericTypeHandle(typeParams[i]);
-                        if (typeParams[i].Variance != VarianceKind.None ||
-                            typeParams[i].HasNotNullConstraint ||
-                            typeParams[i].HasReferenceTypeConstraint ||
-                            typeParams[i].HasValueTypeConstraint ||
-                            typeParams[i].HasUnmanagedTypeConstraint ||
-                            typeParams[i].HasConstructorConstraint)
+                        //genericArguments[i] = GenericTypeHandle(typeParams[i]);
+                        //if (typeParams[i].Variance != VarianceKind.None ||
+                        //    typeParams[i].HasNotNullConstraint ||
+                        //    typeParams[i].HasReferenceTypeConstraint ||
+                        //    typeParams[i].HasValueTypeConstraint ||
+                        //    typeParams[i].HasUnmanagedTypeConstraint ||
+                        //    typeParams[i].HasConstructorConstraint)
+                        //{
+                        genericParameters ??= new GenericParameterModel[genericParameterCount];
+                        Handle[]? typeConstraints = null;
+                        if (typeParams[i].ConstraintTypes.Length > 0)
                         {
-                            genericConstraints ??= new GenericParameterConstraintModel[genericParameterCount];
-                            Handle[]? typeConstraints = null;
-                            if (typeParams[i].ConstraintTypes.Length > 0)
+                            for (int j = 0; j < typeParams[i].ConstraintTypes.Length; j++)
                             {
-                                for (int j = 0; j < typeParams[i].ConstraintTypes.Length; j++)
+                                var constraint = typeParams[i].ConstraintTypes[j];
+                                if (global.ShouldExportType(constraint, null))
                                 {
-                                    var constraint = typeParams[i].ConstraintTypes[j];
-                                    if (global.ShouldExportType(constraint, null))
-                                    {
-                                        typeConstraints ??= new Handle[typeParams[i].ConstraintTypes.Length];
-                                        typeConstraints[j] = TypeHandle(constraint, fromVisitor: fromVisitor);
-                                    }
+                                    typeConstraints ??= new Handle[typeParams[i].ConstraintTypes.Length];
+                                    typeConstraints[j] = TypeHandle(constraint, fromVisitor: fromVisitor);
                                 }
                             }
-                            genericConstraints[i] = new GenericParameterConstraintModel
-                            {
-                                ParameterName = typeParams[i].Name,
-                                Flags =
-                                    (typeParams[i].Variance == VarianceKind.In ? GenericConstraintFlagsModel.HasInConstraint : GenericConstraintFlagsModel.None) |
-                                    (typeParams[i].Variance == VarianceKind.Out ? GenericConstraintFlagsModel.HasOutConstraint : GenericConstraintFlagsModel.None) |
-                                    (typeParams[i].HasNotNullConstraint ? GenericConstraintFlagsModel.HasNotNullConstraint : GenericConstraintFlagsModel.None) |
-                                    (typeParams[i].HasReferenceTypeConstraint ? GenericConstraintFlagsModel.HasClassConstraint : GenericConstraintFlagsModel.None) |
-                                    (typeParams[i].HasValueTypeConstraint ? GenericConstraintFlagsModel.HasStructConstraint : GenericConstraintFlagsModel.None) |
-                                    (typeParams[i].HasUnmanagedTypeConstraint ? GenericConstraintFlagsModel.HasUnmanagedConstraint : GenericConstraintFlagsModel.None) |
-                                    (typeParams[i].HasConstructorConstraint ? GenericConstraintFlagsModel.HasNewConstraint : GenericConstraintFlagsModel.None),
-                                TypeConstraints = typeConstraints
-                            };
                         }
+                        genericParameters[i] = new GenericParameterModel
+                        {
+                            Handle = GenericTypeHandle(typeParams[i]),
+                            ParameterName = typeParams[i].Name,
+                            Flags =
+                                (typeParams[i].Variance == VarianceKind.In ? GenericConstraintFlagsModel.HasInConstraint : GenericConstraintFlagsModel.None) |
+                                (typeParams[i].Variance == VarianceKind.Out ? GenericConstraintFlagsModel.HasOutConstraint : GenericConstraintFlagsModel.None) |
+                                (typeParams[i].HasNotNullConstraint ? GenericConstraintFlagsModel.HasNotNullConstraint : GenericConstraintFlagsModel.None) |
+                                (typeParams[i].HasReferenceTypeConstraint ? GenericConstraintFlagsModel.HasClassConstraint : GenericConstraintFlagsModel.None) |
+                                (typeParams[i].HasValueTypeConstraint ? GenericConstraintFlagsModel.HasStructConstraint : GenericConstraintFlagsModel.None) |
+                                (typeParams[i].HasUnmanagedTypeConstraint ? GenericConstraintFlagsModel.HasUnmanagedConstraint : GenericConstraintFlagsModel.None) |
+                                (typeParams[i].HasConstructorConstraint ? GenericConstraintFlagsModel.HasNewConstraint : GenericConstraintFlagsModel.None),
+                            TypeConstraints = typeConstraints
+                        };
+                        //}
                     }
                 }
             }
@@ -1019,13 +1065,14 @@ namespace NetJs.Translator.CSharpToJavascript
 
             var model = new TypeModel
             {
+                OriginalHandle = symbol is INamedTypeSymbol ts && ts.IsGenericType ? NumericTypeHandle(symbol) : default,
                 Handle = TypeHandle(symbol, fromVisitor: fromVisitor),
-                BaseType = symbol.BaseType != null ? NullIfZero(TypeHandle(symbol.BaseType, fromVisitor: fromVisitor)) : null,
+                //BaseType = symbol.BaseType != null ? NullIfZero(TypeHandle(symbol.BaseType, fromVisitor: fromVisitor)) : null,
                 DeclaringType = symbol.ContainingType != null ? TypeHandle(symbol.ContainingType, fromVisitor: fromVisitor) : default,
                 UnderlyingType = (symbol is INamedTypeSymbol nt && nt.EnumUnderlyingType != null)
                     ? TypeHandle(nt.EnumUnderlyingType, fromVisitor: fromVisitor)
                     : default,
-                KnownType = global.KnownTypeFromName(signature),
+                //KnownType = global.KnownTypeFromName(signature),
 
                 Properties = minimal ? null : NullIfEmpty(propertiesList!.ToArray()),
                 Methods = minimal ? null : NullIfEmpty(methodsList!.ToArray()),
@@ -1033,11 +1080,11 @@ namespace NetJs.Translator.CSharpToJavascript
                 Fields = minimal ? null : NullIfEmpty(fieldsList!.ToArray()),
                 Events = minimal ? null : NullIfEmpty(eventsList!.ToArray()),
 
-                Interfaces = minimal ? null : NullIfEmpty(interfacesArray),
+                //Interfaces = minimal ? null : NullIfEmpty(interfacesArray),
                 Attributes = minimal ? null : NullIfEmpty(attributesArray),
-                GenericArguments = minimal ? null : NullIfEmpty(genericArguments),
-                GenericConstraints = minimal ? null : NullIfEmpty(genericConstraints),
-                NestedTypes = minimal ? null : NullIfEmpty(nestedTypesArray),
+                //GenericArguments = minimal ? null : NullIfEmpty(genericArguments),
+                GenericParameters = minimal ? null : NullIfEmpty(genericParameters),
+                //NestedTypes = minimal ? null : NullIfEmpty(nestedTypesArray),
                 GenericParameterCount = genericParameterCount
             };
 
@@ -1270,7 +1317,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 Name = name,
                 OutputName = finalizedOutputName,
                 DeclaringType = TypeHandle(prop.ContainingType, fromVisitor),
-                Flags = prop.GetSymbolFlags(),
+                Flags = prop.GetMemberFlags(),
                 PropertyType = TypeHandle(prop.Type, fromVisitor),
 
                 IndexParameters = NullIfEmpty(indexParamsList?.ToArray()),
@@ -1278,7 +1325,8 @@ namespace NetJs.Translator.CSharpToJavascript
 
                 GetMethod = prop.GetMethod != null ? FromMethodSymbol(prop.GetMethod, fromVisitor, prop) : null,
                 SetMethod = prop.SetMethod != null ? FromMethodSymbol(prop.SetMethod, fromVisitor, prop) : null,
-                Handle = MemberHandle(prop, fromVisitor)
+                Handle = MemberHandle(prop, fromVisitor),
+                OriginalHandle = prop.ContainingType.IsGenericType ? MemberHandle(prop, fromVisitor, numericHandle: true) : default,
             };
             ////if (propertyTypeHandle == 0 && prop.ContainingType.Arity > 0)
             ////{
@@ -1386,19 +1434,20 @@ namespace NetJs.Translator.CSharpToJavascript
                 Name = fromProperty == null ? name : null!,
                 OutputName = finalizedOutputName,
                 DeclaringType = fromProperty == null ? TypeHandle(method.ContainingType, fromVisitor) : 0,
-                Flags = method.GetSymbolFlags(),
+                Flags = method.GetMemberFlags(),
                 ReturnType = fromProperty == null ? TypeHandle(method.ReturnType, fromVisitor) : 0,
                 Parameters = NullIfEmpty(paramsList?.ToArray()),
                 GenericArguments = NullIfEmpty(genericArgsList?.ToArray()),
                 Attributes = NullIfEmpty(attributesList?.ToArray()),
-                Handle = MemberHandle(method, fromVisitor)
+                Handle = MemberHandle(method, fromVisitor),
+                OriginalHandle = method.ContainingType.IsGenericType ? MemberHandle(method, fromVisitor, numericHandle: true) : default,
             };
         }
 
         public string FromMethodSymbolAsJson(IMethodSymbol method, TranslatorSyntaxVisitor? fromVisitor, IPropertySymbol? fromProperty = null)
         {
             var model = FromMethodSymbol(method, fromVisitor, fromProperty);
-            return JsonSerializer.Serialize(model, SerializationOption);
+            return JsonSerializer.Serialize(model, new JsonSerializerOptions(SerializationOption) { WriteIndented = false });
         }
         //MethodModel FromMethodSymbol(IMethodSymbol method, TranslatorSyntaxVisitor? fromVisitor, IPropertySymbol? fromProperty = null)
         //{
@@ -1487,8 +1536,9 @@ namespace NetJs.Translator.CSharpToJavascript
                 Name = name,
                 OutputName = finalizedOutputName,
                 DeclaringType = TypeHandle(ctor.ContainingType, fromVisitor),
-                Flags = ctor.GetSymbolFlags(),
+                Flags = ctor.GetMemberFlags(),
                 Handle = MemberHandle(ctor, fromVisitor),
+                OriginalHandle = ctor.ContainingType.IsGenericType ? MemberHandle(ctor, fromVisitor, numericHandle: true) : default,
                 Parameters = NullIfEmpty(paramsList?.ToArray()),
                 Attributes = NullIfEmpty(attributesList?.ToArray())
             };
@@ -1552,9 +1602,10 @@ namespace NetJs.Translator.CSharpToJavascript
                 Name = name,
                 OutputName = finalizedOutputName,
                 DeclaringType = TypeHandle(field.ContainingType, fromVisitor),
-                Flags = field.GetSymbolFlags(),
+                Flags = field.GetMemberFlags(),
                 FieldType = TypeHandle(field.Type, fromVisitor),
                 Handle = MemberHandle(field, fromVisitor),
+                OriginalHandle = field.ContainingType.IsGenericType ? MemberHandle(field, fromVisitor, numericHandle: true) : default,
                 Attributes = NullIfEmpty(attributesList?.ToArray())
             };
         }
@@ -1624,13 +1675,14 @@ namespace NetJs.Translator.CSharpToJavascript
                 Name = name,
                 OutputName = finalizedOutputName,
                 DeclaringType = TypeHandle(ev.ContainingType, fromVisitor),
-                Flags = ev.GetSymbolFlags(),
+                Flags = ev.GetMemberFlags(),
                 EventHandlerType = TypeHandle(ev.Type, fromVisitor),
 
                 AddMethod = ev.AddMethod != null ? FromMethodSymbol(ev.AddMethod, fromVisitor) : null,
                 RemoveMethod = ev.RemoveMethod != null ? FromMethodSymbol(ev.RemoveMethod, fromVisitor) : null,
                 RaiseMethod = ev.RaiseMethod != null ? FromMethodSymbol(ev.RaiseMethod, fromVisitor) : null,
                 Handle = MemberHandle(ev, fromVisitor),
+                OriginalHandle = ev.ContainingType.IsGenericType ? MemberHandle(ev, fromVisitor, numericHandle: true) : default,
 
                 Attributes = NullIfEmpty(attributesList?.ToArray())
             };
@@ -1745,6 +1797,45 @@ namespace NetJs.Translator.CSharpToJavascript
                 return null;
             }
 
+            object? BuildIt(object? value)
+            {
+                if (value is ITypeSymbol t)
+                {
+                    global.RegisterDependencyGraph(symbol, t);
+                    return TypeHandle(t, fromVisitor);
+                }
+                if (value is TypedConstant tc)
+                {
+                    if (tc.Kind == TypedConstantKind.Array)
+                    {
+                        return tc.Values.Select(v => BuildIt(v));
+                    }
+                    else
+                    {
+                        return BuildIt(tc.Value);
+                    }
+                }
+                if (value is System.Collections.Immutable.ImmutableArray<TypedConstant> tcArray)
+                {
+                    return tcArray.Select(v => BuildIt(v));
+                }
+                if (value is System.Collections.Immutable.ImmutableArray<ITypeSymbol> ttArray)
+                {
+                    return ttArray.Select(v => BuildIt(v));
+                }
+                if (value is IEnumerable<TypedConstant> tcArray2)
+                {
+                    return tcArray2.Select(v => BuildIt(v));
+                }
+                if (value is IEnumerable<ITypeSymbol> ttArray2)
+                {
+                    return ttArray2.Select(v => BuildIt(v));
+                }
+                return value;
+            }
+
+            return BuildIt(a);
+
             if (a is ITypeSymbol t)
             {
                 global.RegisterDependencyGraph(symbol, t);
@@ -1753,7 +1844,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
             if (a is TypedConstant tc)
             {
-                return tc.Type != null ? TypeHandle(tc.Type, fromVisitor) : default;
+                return tc.Value is ITypeSymbol ts ? TypeHandle(ts, fromVisitor) : tc.Value;// tc.Type != null ? TypeHandle(tc.Type, fromVisitor) : default;
             }
 
             if (a is System.Collections.Immutable.ImmutableArray<TypedConstant> tcArray)
@@ -1841,6 +1932,10 @@ namespace NetJs.Translator.CSharpToJavascript
             if (attributeConstructor != null)
                 global.RegisterDependencyGraph(symbol, attributeConstructor);
 
+            if (attributeClass?.Name == "MarkdownReaderAttribute")
+            {
+
+            }
             List<AttributeConstructorArgumentModel>? constructorArgsList = null;
             var constructorArgs = att.ConstructorArguments;
             if (constructorArgs.Length > 0)

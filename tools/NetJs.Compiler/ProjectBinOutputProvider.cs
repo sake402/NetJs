@@ -38,52 +38,52 @@ namespace NetJs.Compiler
         public async Task Output(GlobalCompilationVisitor global, string destinationRelativePath, OneOf<string, Stream> content)
         {
             bool debugLog = false;
-            List<Task> pendingTasks = new();
-            if (!cleaned)
-            {
-                var files = Directory.GetFiles(OutputPath, "*.*", SearchOption.AllDirectories);
-                foreach (var f in files)
-                {
-                    if (f.EndsWith(".SymbolNames.yaml") ||
-                        f.EndsWith(".js") ||
-                        f.EndsWith(".js.dll") ||
-                        f.EndsWith(".js.pdb") ||
-                        f.EndsWith(".js.xml")) //clean only the ones we created, to avoid deleting files created by other tools (e.g. .NET build)
-                    {
-                        if (debugLog)
-                            Console.WriteLine($"Clean \"{f}\"");
-                        File.Delete(f);
-                    }
-                }
-                var directories = Directory.GetDirectories(OutputPath);
-                foreach (var d in directories)
-                {
-                    try
-                    {
-                        if (debugLog)
-                            Console.WriteLine($"Clean \"{d}\"!");
-                        Directory.Delete(d, true);
-                    }
-                    catch
-                    {
-                        var mfiles = Directory.GetFiles(d, "*.*", SearchOption.AllDirectories);
-                        foreach (var f in mfiles)
-                        {
-                            if (debugLog)
-                                Console.WriteLine($"Clean \"{f}\"!");
-                            File.Delete(f);
-                        }
-                        var mdirectories = Directory.GetDirectories(d);
-                        foreach (var dd in mdirectories)
-                        {
-                            if (debugLog)
-                                Console.WriteLine($"Clean \"{dd}\"!");
-                            Directory.Delete(dd, true);
-                        }
-                    }
-                }
-                cleaned = true;
-            }
+            //List<Task> pendingTasks = new();
+            //if (!cleaned)
+            //{
+            //    var files = Directory.GetFiles(OutputPath, "*.*", SearchOption.AllDirectories);
+            //    foreach (var f in files)
+            //    {
+            //        if (f.EndsWith(".Symbols.yaml") ||
+            //            f.EndsWith(".js") ||
+            //            f.EndsWith(".js.dll") ||
+            //            f.EndsWith(".js.pdb") ||
+            //            f.EndsWith(".js.xml")) //clean only the ones we created, to avoid deleting files created by other tools (e.g. .NET build)
+            //        {
+            //            if (debugLog)
+            //                Console.WriteLine($"Clean \"{f}\"");
+            //            File.Delete(f);
+            //        }
+            //    }
+            //    var directories = Directory.GetDirectories(OutputPath);
+            //    foreach (var d in directories)
+            //    {
+            //        try
+            //        {
+            //            if (debugLog)
+            //                Console.WriteLine($"Clean \"{d}\"!");
+            //            Directory.Delete(d, true);
+            //        }
+            //        catch
+            //        {
+            //            var mfiles = Directory.GetFiles(d, "*.*", SearchOption.AllDirectories);
+            //            foreach (var f in mfiles)
+            //            {
+            //                if (debugLog)
+            //                    Console.WriteLine($"Clean \"{f}\"!");
+            //                File.Delete(f);
+            //            }
+            //            var mdirectories = Directory.GetDirectories(d);
+            //            foreach (var dd in mdirectories)
+            //            {
+            //                if (debugLog)
+            //                    Console.WriteLine($"Clean \"{dd}\"!");
+            //                Directory.Delete(dd, true);
+            //            }
+            //        }
+            //    }
+            //    cleaned = true;
+            //}
             var outputFile = Path.Combine(OutputPath, /*Constants.OutputFolderName,*/ destinationRelativePath);
             if (content.IsT0 && content.AsT0 == outputFile)
                 return;
@@ -94,7 +94,7 @@ namespace NetJs.Compiler
                 var fileInfo = new FileInfo(content.AsT0);
                 sourceCreateTime = fileInfo.LastWriteTime;
                 existingInfo = new FileInfo(outputFile);
-                if (existingInfo.LastWriteTime > fileInfo.LastWriteTime)
+                if (existingInfo.LastWriteTime >= fileInfo.LastWriteTime)
                 {
                     if (debugLog)
                         Console.WriteLine($"Skip copy to \"{outputFile}\" as {existingInfo.LastWriteTime} > {fileInfo.LastWriteTime}!");
@@ -105,7 +105,7 @@ namespace NetJs.Compiler
             bool ownStream = false;
             if (content.IsT0)
             {
-                stream = new FileStream(content.AsT0, FileMode.Open, FileAccess.Read);
+                stream = new FileStream(content.AsT0, FileMode.Open, FileAccess.Read, FileShare.Read);
                 ownStream = true;
                 if (debugLog)
                     Console.WriteLine($"Open stream from \"{content.AsT0}\"!");

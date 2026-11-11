@@ -25,8 +25,8 @@ namespace NetJs.Compiler
         public string DirectoryPath => msProject.DirectoryPath;
         public string FullPath => msProject.FullPath;
         public string SDK => msProject.Xml.Sdk;
-        public string BaseIntermediateOutputPath => Evaluate("BaseIntermediateOutputPath").First().Replace("\\", "/");
-        public string IntermediateOutputPath => Evaluate("IntermediateOutputPath").First().Replace("\\", "/");
+        public string BaseIntermediateOutputPath => Evaluate("BaseIntermediateOutputPath").First();//.Replace("\\", "/");
+        public string IntermediateOutputPath => Evaluate("IntermediateOutputPath").First();//.Replace("\\", "/");
         public CompilationOptions? CompilationOptions => caProject.CompilationOptions;
         public ProjectWrapper(MSBuildWorkspace msWorkspace, ProjectCollection projectCollection, CodeAnalysisProject caProject, MsBuildProject project, IDictionary<string, string>? buildProperties)
         {
@@ -64,7 +64,7 @@ namespace NetJs.Compiler
             }
             return aName;
         }
-        public string GetNamespace()
+        public string GetRootNamespace()
         {
             return msProject.AllEvaluatedProperties.Last(e => e.Name == "RootNamespace").EvaluatedValue;
         }
@@ -88,7 +88,8 @@ namespace NetJs.Compiler
             var framework = msProject.AllEvaluatedProperties.LastOrDefault(e => e.Name == "TargetFramework")?.EvaluatedValue;
             if (framework == null)
             {
-                framework = msProject.AllEvaluatedProperties.LastOrDefault(e => e.Name == "TargetFrameworks")?.EvaluatedValue?.Split(';').LastOrDefault();
+                var wks = msProject.AllEvaluatedProperties.LastOrDefault(e => e.Name == "TargetFrameworks")?.EvaluatedValue?.Split(';');
+                framework = wks?.Where(e => e.Contains("net10")).LastOrDefault() ?? wks?.LastOrDefault();
             }
             if (framework == null)
             {
@@ -100,9 +101,11 @@ namespace NetJs.Compiler
         {
             var v = msProject.AllEvaluatedProperties.LastOrDefault(e => e.Name == nameof(NetJsBuildFlags))?.EvaluatedValue;
             Enum.TryParse<NetJsBuildFlags>(v, out var value);
+            bool valueIsDefault = false;
             if (value == NetJsBuildFlags.None)
             {
                 value = NetJsBuildFlags.Default;
+                valueIsDefault = true;
             }
             if (value.HasFlag(NetJsBuildFlags.Module) && value.HasFlag(NetJsBuildFlags.Global))
             {
@@ -111,6 +114,14 @@ namespace NetJs.Compiler
             //if (!value.HasFlag(NetJsBuildFlags.Module) && !value.HasFlag(NetJsBuildFlags.Global))
             //{
             value |= NetJsBuildFlags.Global;//Module not yet supported, we must use global for now
+            //}
+            if (valueIsDefault && GetConfiguration().Equals("Release", StringComparison.InvariantCultureIgnoreCase))
+            {
+                value |= NetJsBuildFlags.TrimAssemblies | NetJsBuildFlags.TrimAssembliesPartial;
+            }
+            //if (valueIsDefault && GetConfiguration().Equals("Debug", StringComparison.InvariantCultureIgnoreCase))
+            //{
+            //    value |= NetJsBuildFlags.ProfileTraceEntry;
             //}
             return value;
         }
@@ -142,6 +153,18 @@ namespace NetJs.Compiler
                     sourceFiles.Add(Path.Join(msProject.DirectoryPath, projectItem.EvaluatedInclude));
             }
 
+            //foreach (var projectItem in caProject.Documents)
+            //{
+            //    if (projectItem.FilePath == null)
+            //        continue;
+            //    if (sourceFiles.Contains(projectItem.FilePath))
+            //        continue;
+            //    if (Path.IsPathRooted(projectItem.FilePath)) //check if it has volume label already
+            //        sourceFiles.Add(projectItem.FilePath);
+            //    else
+            //        sourceFiles.Add(Path.Join(msProject.DirectoryPath, projectItem.FilePath));
+            //}
+
             //var platform = GetPlatform();
             //if (platform.Equals("AnyCPU", StringComparison.InvariantCultureIgnoreCase))
             //{
@@ -158,7 +181,9 @@ namespace NetJs.Compiler
             if (Directory.Exists(objectFolder))
             {
                 var csFiles = Directory.EnumerateFiles(objectFolder, "*.cs", SearchOption.TopDirectoryOnly);
-                sourceFiles.AddRange(csFiles);
+                foreach (var c in csFiles)
+                    if (!sourceFiles.Contains(c))
+                        sourceFiles.Add(c);
             }
 
             //Check for source generated files
@@ -166,7 +191,9 @@ namespace NetJs.Compiler
             if (Directory.Exists(sourceGenOutputPath))
             {
                 var csFiles = Directory.EnumerateFiles(sourceGenOutputPath, "*.cs", SearchOption.AllDirectories);
-                sourceFiles.AddRange(csFiles);
+                foreach (var c in csFiles)
+                    if (!sourceFiles.Contains(c))
+                        sourceFiles.Add(c);
             }
             return sourceFiles;
         }

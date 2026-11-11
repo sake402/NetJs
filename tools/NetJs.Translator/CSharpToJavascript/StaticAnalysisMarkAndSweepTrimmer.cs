@@ -13,20 +13,34 @@ namespace NetJs.Translator.CSharpToJavascript
     public class StaticAnalysisMarkAndSweepTrimmer
     {
         GlobalCompilationVisitor _global;
-        Dictionary<string, (HashSet<ulong> Sweep, HashSet<ulong> Keep)> states;
+        Dictionary<string, (HashSet<ulong> Sweep, HashSet<ulong> Keep)> states = default!;
         HashSet<ISymbol> kept = new HashSet<ISymbol>(SymbolEqualityComparer.Default);
         public List<ISymbol> RootSymbols { get; } = new List<ISymbol>();
-        Dictionary<ulong, SymbolMetadata> metadataByHandle;
+        Dictionary<ulong, SymbolMetadata> metadataByHandle = default!;
         public List<ulong> ForceRemove { get; } = new List<ulong>();
+
+
+        HashSet<SymbolMetadata> processed = new HashSet<SymbolMetadata>();
+        Queue<SymbolMetadata> toProcess = new Queue<SymbolMetadata>();
+        HashSet<SymbolMetadata> symbolsWithWeakDependencies = new HashSet<SymbolMetadata>();
+        Dictionary<INamedTypeSymbol, List<INamedTypeSymbol>> inheritanceCache = default!;
+        bool garbaged;
+
+        public int SymbolsCount => _global.AllSymbols.Count;
         public StaticAnalysisMarkAndSweepTrimmer(GlobalCompilationVisitor global)
         {
             if (global.MainEntry != null)
                 RootSymbols.Add(global.MainEntry);
-            //RootSymbols.Add(global.Compilation.Assembly);
             _global = global;
+            Initialize();
+        }
+
+        public void Initialize()
+        {
+            garbaged = false;
             var blazorIComponent = _global.TryGetSymbol("Microsoft.AspNetCore.Components.IComponent", null);
             var layoutComponentBase = _global.TryGetSymbol("Microsoft.AspNetCore.Components.LayoutComponentBase", null);
-            states = global.AllSymbols
+            states = _global.AllSymbols
                 .Where(e =>
                 {
                     return e.Value.Symbol.Kind == SymbolKind.NamedType ||
@@ -46,7 +60,7 @@ namespace NetJs.Translator.CSharpToJavascript
                         {
                             bool InheritsFromLayoutComponentBase(INamedTypeSymbol? nt)
                             {
-                                while(nt != null)
+                                while (nt != null)
                                 {
                                     if (SymbolEqualityComparer.Default.Equals(nt, layoutComponentBase))
                                         return true;
@@ -54,12 +68,12 @@ namespace NetJs.Translator.CSharpToJavascript
                                 }
                                 return false;
                             }
-                            var isImportedType = !SymbolEqualityComparer.Default.Equals(_global.Compilation.Assembly, eee.Value.Symbol.ContainingAssembly);
+                            //var isImportedType = !SymbolEqualityComparer.Default.Equals(_global.Compilation.Assembly, eee.Value.Symbol.ContainingAssembly);
                             if (eee.Value.Symbol.Kind == SymbolKind.Method &&
                                 ((IMethodSymbol)eee.Value.Symbol).MethodKind == MethodKind.Constructor &&
                                 eee.Value.Symbol.ContainingType.AllInterfaces.Contains(blazorIComponent, SymbolEqualityComparer.Default))
                             {
-                                if (_global.HasAttribute(eee.Value.Symbol.ContainingType, "Microsoft.AspNetCore.Components.RouteAttribute", null, false, out _)||
+                                if (_global.HasAttribute(eee.Value.Symbol.ContainingType, "Microsoft.AspNetCore.Components.RouteAttribute", null, false, out _) ||
                                     InheritsFromLayoutComponentBase(eee.Value.Symbol.ContainingType))
                                 {
                                     RootSymbols.Add(eee.Value.Symbol);
@@ -68,7 +82,7 @@ namespace NetJs.Translator.CSharpToJavascript
                                 }
                             }
                         }
-                        if (global.HasAttribute(eee.Value.Symbol, typeof(NameAttribute).FullName!, null, false, out var args))
+                        if (_global.HasAttribute(eee.Value.Symbol, typeof(NameAttribute).FullName!, null, false, out var args))
                         {
                             var name = args[0]!.ToString()!;
                             if (name.StartsWith('$'))
@@ -78,7 +92,7 @@ namespace NetJs.Translator.CSharpToJavascript
                                 return true;
                             }
                         }
-                        if (global.HasAttribute(eee.Value.Symbol, typeof(TrimmerKeepAttribute).FullName!, null, false, out var argss))
+                        if (_global.HasAttribute(eee.Value.Symbol, typeof(TrimmerKeepAttribute).FullName!, null, false, out var argss))
                         {
                             //if (eee.Value.Symbol.Kind == SymbolKind.NamedType &&
                             //    argss.Count == 2 &&
@@ -106,221 +120,33 @@ namespace NetJs.Translator.CSharpToJavascript
                     return (sweep, keep);
                 });
             //Dynamic type has a handle of 1(AssemblyHandle|TypeHandle) too because its typehandle is zero
-            metadataByHandle = global.AllSymbols.Where(e => !SymbolEqualityComparer.Default.Equals(e.Value.Symbol, global.SystemDynamic) && e.Value.Export.Handle != null && e.Value.Export.Handle != 0).ToDictionary(e => e.Value.Export.Handle!.Value, e => e.Value);
+            var tt = _global.AllSymbols.Where(e => e.Value.Export.Handle == 4296685457).ToList();
+            metadataByHandle = _global.AllSymbols.Where(e => !SymbolEqualityComparer.Default.Equals(e.Value.Symbol, _global.SystemDynamic) && e.Value.Export.Handle != null && e.Value.Export.Handle != 0).ToDictionary(e => e.Value.Export.Handle!.Value, e => e.Value);
+            static IEnumerable<INamedTypeSymbol> WalkBaseTypes(INamedTypeSymbol t)
+            {
+                var curr = t.BaseType;
+                while (curr != null) { yield return curr; curr = curr.BaseType; }
+            }
+
+            inheritanceCache = _global.AllSymbols
+                .Where(e => e.Value.Symbol is INamedTypeSymbol)
+                .Select(e => (INamedTypeSymbol)e.Value.Symbol)
+                .SelectMany(t => t.AllInterfaces.Concat(WalkBaseTypes(t)).Select(baseType => new { Base = baseType.OriginalDefinition, Derived = t }))
+                .GroupBy(x => x.Base, (IEqualityComparer<INamedTypeSymbol>)SymbolEqualityComparer.Default)
+                .ToDictionary(g => g.Key!, g => g.Select(x => x.Derived).ToList(), (IEqualityComparer<INamedTypeSymbol>)SymbolEqualityComparer.Default);
         }
-
-        void Log(SymbolMetadata metadata)
+        IEnumerable<ISymbol> GetImplementations(ISymbol symbol)
         {
-            var handle = metadata.Export.Handle ?? 0;
-            var signature = metadata.Signature;
-            if (metadata.Symbol.Kind != SymbolKind.NamedType)
-            {
-                var type = metadata.Symbol.ContainingType;
-                if (type != null)
-                {
-                    var tmetadata = _global.GetMetadata(type);
-                    if (tmetadata != null)
-                    {
-                        signature = tmetadata.Signature + "." + signature;
-                    }
-                }
-            }
-            var inReferences = metadataByHandle.Count(s => s.Value.Export.Dependencies?.Contains(handle) ?? false);
-            Console.WriteLine($"{metadata.Export.Handle,-16}: {signature}, in:{inReferences}, out:{metadata.Export.Dependencies?.Count ?? 0}");
-        }
+            if (symbol.ContainingType == null)
+                yield break;
 
-        bool PrintPathToRoot(ulong handle, SymbolMetadata metadata, HashSet<SymbolMetadata> seen)
-        {
-            if (metadata.Export.Handle != null && ForceRemove.Contains(metadata.Export.Handle!.Value))
-                return false;
-            if (!seen.Add(metadata))
-                return false;
-            if (metadata.Export.Handle == handle)
-            {
-                Log(metadata);
-                return true;
-            }
-            var dependencies = metadata.Export.Dependencies;
-            if (dependencies != null)
-            {
-                foreach (var dep in dependencies)
-                {
-                    if (metadataByHandle.TryGetValue(dep, out var depMetadata))
-                    {
-                        if (PrintPathToRoot(handle, depMetadata, seen))
-                        {
-                            Log(metadata);
-                            return true;
-                        }
-                    }
-                }
-            }
-            return false;
-        }
-
-        public void PrintPathToRoot(ulong handle)
-        {
-            Console.WriteLine("");
-            Console.WriteLine("");
-            int found = 0;
-            foreach (var root in RootSymbols)
-            {
-                var metadata = _global.GetMetadata(root);
-                if (metadata != null)
-                {
-                    //Console.WriteLine("");
-                    //Console.Write("Path from ");
-                    //Log(metadata);
-                    var seen = new HashSet<SymbolMetadata>();
-                    if (PrintPathToRoot(handle, metadata, seen))
-                    {
-                        found++;
-                        break;
-                    }
-                }
-            }
-        }
-
-        public void Keep(ulong handle)
-        {
-            if (metadataByHandle.TryGetValue(handle, out var metadata))
-            {
-                Keep(metadata);
-                //Keeping a member must keep its containing type
-                var contanier = metadata.Symbol.ContainingSymbol;
-                int depth = 0;
-                while (contanier != null)
-                {
-                    if (contanier.Kind == SymbolKind.Namespace)
-                        break;
-                    var cmetadata = _global.GetMetadata(contanier);
-                    if (cmetadata?.Export.Handle != null)
-                    {
-                        Keep(cmetadata);
-                    }
-
-                    //Keeping a type must keep its base type and interfaces
-                    if (cmetadata != null && cmetadata.Symbol.Kind == SymbolKind.NamedType && cmetadata.Symbol is INamedTypeSymbol nt)
-                    {
-                        var baseType = nt.BaseType;
-                        while (baseType != null)
-                        {
-                            var bmetadata = _global.GetMetadata(baseType);
-                            if (bmetadata?.Export.Handle != null)
-                            {
-                                Keep(bmetadata);
-                            }
-                            baseType = baseType.BaseType;
-                        }
-                        var its = nt.AllInterfaces;
-                        foreach (var it in its)
-                        {
-                            var imetadata = _global.GetMetadata(it);
-                            if (imetadata?.Export.Handle != null)
-                            {
-                                Keep(imetadata);
-                            }
-                        }
-                        //We currently have no way of tracking field reference during profiling. So we keep all fields in the member containing type
-                        if (depth == 0)
-                        {
-                            var fields = nt.GetMembers().Where(e => e.Kind == SymbolKind.Field || e.Kind == SymbolKind.Event);
-                            foreach (var f in fields)
-                            {
-                                var fmetadata = _global.GetMetadata(f);
-                                if (fmetadata?.Export.Handle != null)
-                                {
-                                    Keep(fmetadata);
-                                }
-                            }
-                        }
-                    }
-
-                    contanier = contanier.ContainingSymbol;
-                    depth++;
-                }
-            }
-        }
-
-        bool IsKept(ulong handle)
-        {
-            if (metadataByHandle.TryGetValue(handle, out var metadata))
-            {
-                var asm = metadata.Symbol.ContainingAssembly ?? metadata.Symbol as IAssemblySymbol;
-                return states[asm.Name].Keep.Contains(handle);
-            }
-            return false;
-        }
-
-        void Keep(SymbolMetadata metadata)
-        {
-            var asm = metadata.Symbol.ContainingAssembly ?? metadata.Symbol as IAssemblySymbol;
-            if (asm == null)
-                return;
-            if (!kept.Add(metadata.Symbol)) //already processed symbol, avoid recursion
-                return;
-            states[asm.Name].Sweep.Remove(metadata.Export.Handle!.Value);
-            states[asm.Name].Keep.Add(metadata.Export.Handle.Value);
-            if (metadata.Symbol is IAssemblySymbol iasm)
-            {
-                //dependencies of an assembly are its attribute type, keep them
-                var assemblyMetadata = _global.GetRequiredMetadata(iasm).Export;
-                if (assemblyMetadata.Dependencies != null)
-                {
-                    foreach (var a in assemblyMetadata.Dependencies)
-                    {
-                        Keep(a);
-                    }
-                }
-            }
-            //TryKeepOverrideMembers(metadata);
-        }
-
-        bool ConstructorKept(INamedTypeSymbol typeSymbol)
-        {
-            if (typeSymbol.IsValueType && kept.Contains(typeSymbol)) //keep default constructor in primitive type like byte, char as long as the type is kept
-                return true;
-            if (typeSymbol.IsArray(out _))
-                return true;
-            var constructors = typeSymbol.InstanceConstructors;
-            for (int i = 0; i < constructors.Length; i++)
-            {
-                if (kept.Contains(constructors[i]))
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        void TryKeepOverrideMembers(SymbolMetadata virtualMember)
-        {
-            var symbol = virtualMember.Symbol;
-            if (symbol == null) return;
-
-            var containingType = symbol.ContainingType;
-            if (containingType == null) return;
-
-            if (symbol.Name.EndsWith("MoveNext") && containingType.Name == "IEnumerator")
-            {
-
-            }
-            // Fast-path short circuit
             bool isPolymorphic = symbol.IsVirtual || symbol.IsAbstract || symbol.IsOverride || symbol.ContainingType.TypeKind == TypeKind.Interface;
-            //bool isInterfaceMember = containingType.TypeKind == TypeKind.Interface;
-            //bool implicitlyImplementsInterfaceMember = symbol.ContainingType
-            //    .AllInterfaces
-            //    .Any(i => i.GetMembers().Any(m => SymbolEqualityComparer.Default.Equals(symbol.ContainingType.FindImplementationForInterfaceMember(m)?.OriginalDefinition, symbol.OriginalDefinition)));
 
-            if (!isPolymorphic) return;
-
-            // Get only the types that actually implement/inherit the containing type
-            if (!inheritanceCache.TryGetValue(containingType.OriginalDefinition, out var inheritors))
+            if (!isPolymorphic || !inheritanceCache.TryGetValue(symbol.ContainingType.OriginalDefinition, out var inheritors))
             {
-                return; // No one inherits or implements this type in the entire codebase
+                yield break;  // No one inherits or implements this type in the entire codebase
             }
 
-            // Scan ONLY the valid inheritors instead of thousands of unrelated global types
             foreach (var inheritor in inheritors)
             {
                 ISymbol? implementationSymbol = null;
@@ -391,10 +217,297 @@ namespace NetJs.Translator.CSharpToJavascript
 
                 if (implementationSymbol == null) continue;
 
-                // Verify if constructor is kept before queuing up dependency markings
-                if (ConstructorKept(inheritor))
+                yield return implementationSymbol;
+            }
+        }
+
+        void Log(SymbolMetadata metadata, bool virtualDispatch = false)
+        {
+            var handle = metadata.Export.Handle ?? 0;
+            var signature = metadata.Signature;
+            if (metadata.Symbol.Kind != SymbolKind.NamedType)
+            {
+                var type = metadata.Symbol.ContainingType;
+                if (type != null)
                 {
-                    if (_global.SymbolMetadatas.TryGetValue(implementationSymbol, out var overrideMetadata))
+                    var tmetadata = _global.GetMetadata(type);
+                    if (tmetadata != null)
+                    {
+                        signature = tmetadata.Signature + "." + signature;
+                    }
+                }
+            }
+            var inReferences = metadataByHandle.Count(s => s.Value.Export.Dependencies?.Contains(handle) ?? false);
+            Console.WriteLine($"{metadata.Export.Handle,-16}: {signature}, in:{inReferences}, out:{metadata.Export.Dependencies?.Count ?? 0}{(virtualDispatch ? ", icall" : "")}");
+        }
+
+        bool PrintPathToRoot(ulong handle, SymbolMetadata current, HashSet<SymbolMetadata> seen, bool followVirtualPaths, bool isVirtualDispatch = false)
+        {
+            if (current.Export.Handle != null && ForceRemove.Contains(current.Export.Handle!.Value))
+                return false;
+            if (!seen.Add(current))
+                return false;
+            if (current.Export.Handle == handle)
+            {
+                Log(current, isVirtualDispatch);
+                return true;
+            }
+            IEnumerable<ulong>? dependencies = current.Export.Dependencies;
+            if (dependencies != null)
+            {
+                foreach (var dep in dependencies)
+                {
+                    if (metadataByHandle.TryGetValue(dep, out var depMetadata))
+                    {
+                        if (PrintPathToRoot(handle, depMetadata, seen, followVirtualPaths: followVirtualPaths))
+                        {
+                            Log(current);
+                            return true;
+                        }
+                    }
+                }
+            }
+            dependencies = current.Export.WeakDependencies?.Select(e => e.Handle);
+            if (dependencies != null)
+            {
+                foreach (var dep in dependencies)
+                {
+                    if (metadataByHandle.TryGetValue(dep, out var depMetadata))
+                    {
+                        if (PrintPathToRoot(handle, depMetadata, seen, followVirtualPaths: followVirtualPaths))
+                        {
+                            Log(current);
+                            return true;
+                        }
+                    }
+                }
+            }
+            if (followVirtualPaths)
+            {
+                var implementations = GetImplementations(current.Symbol);
+                foreach (var implementation in implementations)
+                {
+                    if (garbaged && implementation.ContainingType != null)
+                    {
+                        if (!ConstructorKept(implementation.ContainingType))
+                            continue;
+                    }
+                    var metadata = _global.GetRequiredMetadata(implementation);
+                    if (PrintPathToRoot(handle, metadata, seen, followVirtualPaths: followVirtualPaths, isVirtualDispatch: true))
+                    {
+                        Log(current);
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public void PrintPathToRoot(ulong handle)
+        {
+            Console.WriteLine("");
+            Console.WriteLine("");
+            int found = 0;
+            foreach (var root in RootSymbols)
+            {
+                var metadata = _global.GetMetadata(root);
+                if (metadata != null)
+                {
+                    //Console.WriteLine("");
+                    //Console.Write("Path from ");
+                    //Log(metadata);
+                    var seen = new HashSet<SymbolMetadata>();
+                    if (PrintPathToRoot(handle, metadata, seen, followVirtualPaths: false))
+                    {
+                        found++;
+                        break;
+                    }
+                }
+            }
+            if (found == 0)
+            {
+                foreach (var root in RootSymbols)
+                {
+                    var metadata = _global.GetMetadata(root);
+                    if (metadata != null)
+                    {
+                        //Console.WriteLine("");
+                        //Console.Write("Path from ");
+                        //Log(metadata);
+                        var seen = new HashSet<SymbolMetadata>();
+                        if (PrintPathToRoot(handle, metadata, seen, followVirtualPaths: true))
+                        {
+                            found++;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        public void Keep(ulong handle)
+        {
+            void KeepBases(INamedTypeSymbol nt, int depth)
+            {
+                var baseType = nt.BaseType;
+                while (baseType != null)
+                {
+                    var bmetadata = _global.GetMetadata(baseType);
+                    if (bmetadata?.Export.Handle != null)
+                    {
+                        Keep(bmetadata);
+                    }
+                    baseType = baseType.BaseType;
+                }
+                var its = nt.AllInterfaces;
+                foreach (var it in its)
+                {
+                    var imetadata = _global.GetMetadata(it);
+                    if (imetadata?.Export.Handle != null)
+                    {
+                        Keep(imetadata);
+                    }
+                }
+                if (depth == 0)
+                {
+                    KeepFields(nt);
+                }
+            }
+            //We currently have no way of tracking field reference during profiling. So we keep all fields in the member containing type
+            void KeepFields(INamedTypeSymbol nt)
+            {
+                var fields = nt.GetMembers().Where(e => e.Kind == SymbolKind.Field || e.Kind == SymbolKind.Event || e.Kind == SymbolKind.Property);
+                foreach (var f in fields)
+                {
+                    var fmetadata = _global.GetMetadata(f);
+                    if (fmetadata?.Export.Handle != null)
+                    {
+                        Keep(fmetadata);
+                    }
+                }
+            }
+            if (metadataByHandle.TryGetValue(handle, out var metadata))
+            {
+                Keep(metadata);
+                //Keeping a type must keep its base type and interfaces
+                if (metadata.Symbol.Kind == SymbolKind.NamedType && metadata.Symbol is INamedTypeSymbol nt1)
+                {
+                    KeepBases(nt1, 0);
+                }
+                //Keeping a member must keep its containing type
+                var contanier = metadata.Symbol.ContainingSymbol;
+                int depth = 0;
+                while (contanier != null)
+                {
+                    if (contanier.Kind == SymbolKind.Namespace)
+                        break;
+                    var cmetadata = _global.GetMetadata(contanier);
+                    if (cmetadata?.Export.Handle != null)
+                    {
+                        Keep(cmetadata);
+                    }
+
+                    //Keeping a type must keep its base type and interfaces
+                    if (cmetadata != null && cmetadata.Symbol.Kind == SymbolKind.NamedType && cmetadata.Symbol is INamedTypeSymbol nt)
+                    {
+                        KeepBases(nt, depth);
+                    }
+
+                    contanier = contanier.ContainingSymbol;
+                    depth++;
+                }
+            }
+        }
+
+        bool IsKept(ulong handle)
+        {
+            if (metadataByHandle.TryGetValue(handle, out var metadata))
+            {
+                var asm = metadata.Symbol.ContainingAssembly ?? metadata.Symbol as IAssemblySymbol;
+                return states[asm.Name].Keep.Contains(handle);
+            }
+            return false;
+        }
+
+        void Keep(SymbolMetadata metadata)
+        {
+            if (metadata.Symbol.Name == "Console")
+            {
+
+            }
+            var asm = metadata.Symbol.ContainingAssembly ?? metadata.Symbol as IAssemblySymbol;
+            if (asm == null)
+                return;
+            if (!kept.Add(metadata.Symbol)) //already processed symbol, avoid recursion
+                return;
+            states[asm.Name].Sweep.Remove(metadata.Export.Handle!.Value);
+            states[asm.Name].Keep.Add(metadata.Export.Handle.Value);
+            if (metadata.Symbol is IAssemblySymbol iasm)
+            {
+                //dependencies of an assembly are its attribute type, keep them
+                var assemblyMetadata = _global.GetRequiredMetadata(iasm).Export;
+                if (assemblyMetadata.Dependencies != null)
+                {
+                    foreach (var a in assemblyMetadata.Dependencies)
+                    {
+                        Keep(a);
+                    }
+                }
+            }
+            //IAwaitable.then uses reflection to access getawaiter and getresult when doing async/await, keep those alive
+            if (metadata.Symbol.Kind == SymbolKind.NamedType &&
+                metadata.Symbol is INamedTypeSymbol nt &&
+                nt.IsAwaitable(out var getAwaiter, out var getResult))
+            {
+                var getAwaiterMetadata = _global.GetRequiredMetadata(getAwaiter);
+                var getResultMetadata = _global.GetRequiredMetadata(getResult);
+                toProcess.Enqueue(getAwaiterMetadata);
+                toProcess.Enqueue(getResultMetadata);
+            }
+
+            //TryKeepOverrideMembers(metadata);
+        }
+
+        bool ConstructorKept(INamedTypeSymbol typeSymbol)
+        {
+            if (!garbaged)
+                throw new InvalidOperationException();
+            if (typeSymbol.SpecialType == SpecialType.System_Array || typeSymbol.IsArray(out _))
+                return true;
+            if (typeSymbol.SpecialType == SpecialType.System_Enum)
+                return true;
+            if (typeSymbol.IsValueType && kept.Contains(typeSymbol)) //keep default constructor in primitive type like byte, char as long as the type is kept
+                return true;
+            var constructors = typeSymbol.InstanceConstructors;
+            for (int i = 0; i < constructors.Length; i++)
+            {
+                if (kept.Contains(constructors[i]))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        void TryKeepOverrideMembers(SymbolMetadata virtualMember)
+        {
+            var symbol = virtualMember.Symbol;
+            if (symbol == null) return;
+
+            var containingType = symbol.ContainingType;
+            if (containingType == null) return;
+
+            if (symbol.Name.EndsWith("MoveNext") && containingType.Name == "IEnumerator")
+            {
+
+            }
+
+            var implementations = GetImplementations(symbol);
+            foreach (var implementation in implementations)
+            {
+                if (ConstructorKept(implementation.ContainingType))
+                {
+                    if (_global.SymbolMetadatas.TryGetValue(implementation, out var overrideMetadata))
                     {
                         if (processed.Add(overrideMetadata))
                         {
@@ -405,25 +518,10 @@ namespace NetJs.Translator.CSharpToJavascript
             }
         }
 
-        HashSet<SymbolMetadata> processed = new HashSet<SymbolMetadata>();
-        Queue<SymbolMetadata> toProcess = new Queue<SymbolMetadata>();
-        HashSet<SymbolMetadata> symbolsWithWeakDependencies = new HashSet<SymbolMetadata>();
-        Dictionary<ISymbol, List<INamedTypeSymbol>> inheritanceCache = default!;
-
-        void GarbageSymbols()
+        public void GarbageSymbols()
         {
-            static IEnumerable<INamedTypeSymbol> WalkBaseTypes(INamedTypeSymbol t)
-            {
-                var curr = t.BaseType;
-                while (curr != null) { yield return curr; curr = curr.BaseType; }
-            }
+            garbaged = true;
 
-            inheritanceCache ??= _global.AllSymbols
-                .Where(e => e.Value.Symbol is INamedTypeSymbol)
-                .Select(e => (INamedTypeSymbol)e.Value.Symbol)
-                .SelectMany(t => t.AllInterfaces.Concat(WalkBaseTypes(t)).Select(baseType => new { Base = baseType.OriginalDefinition, Derived = t }))
-                .GroupBy(x => x.Base, SymbolEqualityComparer.Default)
-                .ToDictionary(g => g.Key!, g => g.Select(x => x.Derived).ToList(), SymbolEqualityComparer.Default);
             processed.Clear();
             toProcess.Clear();
             symbolsWithWeakDependencies.Clear();
@@ -806,7 +904,7 @@ namespace NetJs.Translator.CSharpToJavascript
             }
         }
 
-        public Task RunTrimming(IProjectOutputProvider outputProvider, IEnumerable<string> jsAssemblyFiles, bool runGarbageSymbols = true, bool trimTraceHooks = true)
+        public Task RunTrimming(IProjectOutputProvider outputProvider, IEnumerable<string> jsAssemblyFiles, bool runGarbageSymbols = true, bool trimTraceHooks = true, bool trimMainAssembly = false)
         {
             if (runGarbageSymbols)
                 GarbageSymbols();
@@ -819,178 +917,192 @@ namespace NetJs.Translator.CSharpToJavascript
 
             foreach (var assembly in jsAssemblyFiles)
             {
+                if (assembly.Contains("CoreLib"))
+                {
+
+                }
                 var assemblyName = Path.GetFileNameWithoutExtension(assembly);
                 if (!states.TryGetValue(assemblyName, out var state))
                     continue;
                 var filePath = Path.Combine(outputProvider.OutputPath, assembly);
                 var fileContent = File.ReadAllText(filePath);
-                var originalLen = fileContent.Length;
-
-                ReadOnlySpan<char> fileSpan = fileContent.AsSpan();
-
-                var intervalsToRemove = new List<(int Start, int End)>();
-                var typesSwept = new HashSet<ulong>();
-
-                // Tracks hierarchy. For TRACE elements, we flag IsTrace = true and leave PrimaryHandle as 0UL.
-                var nestingStack = new Stack<(ulong PrimaryHandle, int LineStartIndex, bool IsBeingTrimmed, bool IsTrace)>();
-
-                int position = 0;
-                while (position < fileSpan.Length)
+                bool isMainAssembly = assemblyName == _global.Project.GetAssemblyName();
+                if (_global.BuildFlags.HasFlag(NetJsBuildFlags.TrimAssembliesPartial) && isMainAssembly && !trimMainAssembly)
                 {
-                    ReadOnlySpan<char> remainder = fileSpan.Slice(position);
+                }
+                else
+                {
+                    var originalLen = fileContent.Length;
 
-                    int nextStart = remainder.IndexOf(startMarkerText, StringComparison.Ordinal);
-                    int nextEnd = remainder.IndexOf(endMarkerText, StringComparison.Ordinal);
+                    ReadOnlySpan<char> fileSpan = fileContent.AsSpan();
 
-                    if (nextStart == -1 && nextEnd == -1) break;
+                    var intervalsToRemove = new List<(int Start, int End)>();
+                    var typesSwept = new HashSet<ulong>();
 
-                    if (nextStart != -1 && (nextEnd == -1 || nextStart < nextEnd))
+                    // Tracks hierarchy. For TRACE elements, we flag IsTrace = true and leave PrimaryHandle as 0UL.
+                    var nestingStack = new Stack<(ulong PrimaryHandle, int LineStartIndex, bool IsBeingTrimmed, bool IsTrace)>();
+
+                    int position = 0;
+                    while (position < fileSpan.Length)
                     {
-                        // --- PROCESS START MARKER ---
-                        int markerIndexInFile = position + nextStart;
-                        int handleStartIndex = markerIndexInFile + startMarkerText.Length;
+                        ReadOnlySpan<char> remainder = fileSpan.Slice(position);
 
-                        int trueClosingParen = fileContent.IndexOf(')', handleStartIndex);
-                        if (trueClosingParen != -1)
+                        int nextStart = remainder.IndexOf(startMarkerText, StringComparison.Ordinal);
+                        int nextEnd = remainder.IndexOf(endMarkerText, StringComparison.Ordinal);
+
+                        if (nextStart == -1 && nextEnd == -1) break;
+
+                        if (nextStart != -1 && (nextEnd == -1 || nextStart < nextEnd))
                         {
-                            var paramContent = fileContent.AsSpan(handleStartIndex, trueClosingParen - handleStartIndex).Trim();
+                            // --- PROCESS START MARKER ---
+                            int markerIndexInFile = position + nextStart;
+                            int handleStartIndex = markerIndexInFile + startMarkerText.Length;
 
-                            // Check if this is a trace boundary spec
-                            if (paramContent.Equals("TRACE", StringComparison.OrdinalIgnoreCase))
+                            int trueClosingParen = fileContent.IndexOf(')', handleStartIndex);
+                            if (trueClosingParen != -1)
                             {
-                                bool shouldTrimThisNode = trimTraceHooks || (nestingStack.Count > 0 && nestingStack.Peek().IsBeingTrimmed);
+                                var paramContent = fileContent.AsSpan(handleStartIndex, trueClosingParen - handleStartIndex).Trim();
 
-                                int lineStartIndex = markerIndexInFile;
-                                while (lineStartIndex > 0 && fileContent[lineStartIndex - 1] != '\n' && fileContent[lineStartIndex - 1] != '\r')
+                                // Check if this is a trace boundary spec
+                                if (paramContent.Equals("TRACE", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    lineStartIndex--;
-                                }
+                                    bool shouldTrimThisNode = trimTraceHooks || (nestingStack.Count > 0 && nestingStack.Peek().IsBeingTrimmed);
 
-                                nestingStack.Push((0UL, lineStartIndex, shouldTrimThisNode, true));
-                            }
-                            else if (TryParseMarkerPayload(paramContent, state.Sweep, out var handles, out bool sweep, out bool primaryHandleSweep, out bool virtualHandleSweep))
-                            {
-                                var primaryHandle = handles[0];
-                                bool shouldTrimThisNode = false;
-
-                                if (nestingStack.Count > 0 && nestingStack.Peek().IsBeingTrimmed)
-                                {
-                                    shouldTrimThisNode = true;
-                                }
-                                else if (sweep)
-                                {
-                                    var typeHandle = primaryHandle & ReflectionHandleExtension.TypeMask;
-                                    shouldTrimThisNode = true;
-
-                                    if ((primaryHandle & ReflectionHandleExtension.MemberMask) != 0UL && typesSwept.Contains(typeHandle))
+                                    int lineStartIndex = markerIndexInFile;
+                                    while (lineStartIndex > 0 && fileContent[lineStartIndex - 1] != '\n' && fileContent[lineStartIndex - 1] != '\r')
                                     {
-                                        shouldTrimThisNode = false;
+                                        lineStartIndex--;
                                     }
+
+                                    nestingStack.Push((0UL, lineStartIndex, shouldTrimThisNode, true));
                                 }
-                                else if (primaryHandleSweep && !virtualHandleSweep && handles.Length > 1) //member is not referenced directly, so swept. But its overriden memeber is referenced
+                                else if (TryParseMarkerPayload(paramContent, state.Sweep, out var handles, out bool sweep, out bool primaryHandleSweep, out bool virtualHandleSweep))
                                 {
-                                    if (metadataByHandle.TryGetValue(primaryHandle, out var metadata) && metadata.Symbol.ContainingType != null)
+                                    var primaryHandle = handles[0];
+                                    bool shouldTrimThisNode = false;
+
+                                    if (nestingStack.Count > 0 && nestingStack.Peek().IsBeingTrimmed)
                                     {
-                                        if (!ConstructorKept(metadata.Symbol.ContainingType))
+                                        shouldTrimThisNode = true;
+                                    }
+                                    else if (sweep)
+                                    {
+                                        if ((primaryHandle & ~ReflectionHandleExtension.AssemblyMask) != 0) //do not sweep assembly root
                                         {
+                                            var typeHandle = primaryHandle & ReflectionHandleExtension.TypeMask;
                                             shouldTrimThisNode = true;
+
+                                            if ((primaryHandle & ReflectionHandleExtension.MemberMask) != 0UL && typesSwept.Contains(typeHandle))
+                                            {
+                                                shouldTrimThisNode = false;
+                                            }
                                         }
                                     }
-                                }
-
-                                int lineStartIndex = markerIndexInFile;
-                                while (lineStartIndex > 0 && fileContent[lineStartIndex - 1] != '\n' && fileContent[lineStartIndex - 1] != '\r')
-                                {
-                                    lineStartIndex--;
-                                }
-
-                                nestingStack.Push((primaryHandle, lineStartIndex, shouldTrimThisNode, false));
-                            }
-
-                            position = trueClosingParen + 1;
-                        }
-                        else
-                        {
-                            position = handleStartIndex;
-                        }
-                    }
-                    else
-                    {
-                        // --- PROCESS END MARKER ---
-                        int markerIndexInFile = position + nextEnd;
-                        int handleStartIndex = markerIndexInFile + endMarkerText.Length;
-
-                        int trueClosingParen = fileContent.IndexOf(')', handleStartIndex);
-                        if (trueClosingParen != -1)
-                        {
-                            int fullEndIndex = trueClosingParen + 1;
-                            while (fullEndIndex < originalLen && fileContent[fullEndIndex] != '\n' && fileContent[fullEndIndex] != '\r')
-                            {
-                                fullEndIndex++;
-                            }
-                            if (fullEndIndex < originalLen && fileContent[fullEndIndex] == '\r') fullEndIndex++;
-                            if (fullEndIndex < originalLen && fileContent[fullEndIndex] == '\n') fullEndIndex++;
-
-                            var paramContent = fileContent.AsSpan(handleStartIndex, trueClosingParen - handleStartIndex).Trim();
-                            bool isEndTrace = paramContent.Equals("TRACE", StringComparison.OrdinalIgnoreCase);
-
-                            if (nestingStack.Count > 0)
-                            {
-                                var peekNode = nestingStack.Peek();
-                                bool matches = isEndTrace
-                                    ? peekNode.IsTrace
-                                    : (!peekNode.IsTrace && TryParseMarkerPayload(paramContent, null, out var handles, out _, out _, out _) && peekNode.PrimaryHandle == handles[0]);
-
-                                if (matches)
-                                {
-                                    var popped = nestingStack.Pop();
-
-                                    if (popped.IsBeingTrimmed)
+                                    else if (primaryHandleSweep && !virtualHandleSweep && handles.Length > 1) //member is not referenced directly, so swept. But its overriden memeber is referenced
                                     {
-                                        if (nestingStack.Count == 0 || !nestingStack.Peek().IsBeingTrimmed)
+                                        if (metadataByHandle.TryGetValue(primaryHandle, out var metadata) && metadata.Symbol.ContainingType != null)
                                         {
-                                            intervalsToRemove.Add((popped.LineStartIndex, fullEndIndex));
-                                        }
-
-                                        if (!popped.IsTrace && (popped.PrimaryHandle & ReflectionHandleExtension.MemberMask) == 0UL)
-                                        {
-                                            var typeHandle = popped.PrimaryHandle & ReflectionHandleExtension.TypeMask;
-                                            typesSwept.Add(typeHandle);
+                                            if (!ConstructorKept(metadata.Symbol.ContainingType))
+                                            {
+                                                shouldTrimThisNode = true;
+                                            }
                                         }
                                     }
+
+                                    int lineStartIndex = markerIndexInFile;
+                                    while (lineStartIndex > 0 && fileContent[lineStartIndex - 1] != '\n' && fileContent[lineStartIndex - 1] != '\r')
+                                    {
+                                        lineStartIndex--;
+                                    }
+
+                                    nestingStack.Push((primaryHandle, lineStartIndex, shouldTrimThisNode, false));
                                 }
+
+                                position = trueClosingParen + 1;
                             }
-                            position = trueClosingParen + 1;
+                            else
+                            {
+                                position = handleStartIndex;
+                            }
                         }
                         else
                         {
-                            position = handleStartIndex;
+                            // --- PROCESS END MARKER ---
+                            int markerIndexInFile = position + nextEnd;
+                            int handleStartIndex = markerIndexInFile + endMarkerText.Length;
+
+                            int trueClosingParen = fileContent.IndexOf(')', handleStartIndex);
+                            if (trueClosingParen != -1)
+                            {
+                                int fullEndIndex = trueClosingParen + 1;
+                                while (fullEndIndex < originalLen && fileContent[fullEndIndex] != '\n' && fileContent[fullEndIndex] != '\r')
+                                {
+                                    fullEndIndex++;
+                                }
+                                if (fullEndIndex < originalLen && fileContent[fullEndIndex] == '\r') fullEndIndex++;
+                                if (fullEndIndex < originalLen && fileContent[fullEndIndex] == '\n') fullEndIndex++;
+
+                                var paramContent = fileContent.AsSpan(handleStartIndex, trueClosingParen - handleStartIndex).Trim();
+                                bool isEndTrace = paramContent.Equals("TRACE", StringComparison.OrdinalIgnoreCase);
+
+                                if (nestingStack.Count > 0)
+                                {
+                                    var peekNode = nestingStack.Peek();
+                                    bool matches = isEndTrace
+                                        ? peekNode.IsTrace
+                                        : (!peekNode.IsTrace && TryParseMarkerPayload(paramContent, null, out var handles, out _, out _, out _) && peekNode.PrimaryHandle == handles[0]);
+
+                                    if (matches)
+                                    {
+                                        var popped = nestingStack.Pop();
+
+                                        if (popped.IsBeingTrimmed)
+                                        {
+                                            if (nestingStack.Count == 0 || !nestingStack.Peek().IsBeingTrimmed)
+                                            {
+                                                intervalsToRemove.Add((popped.LineStartIndex, fullEndIndex));
+                                            }
+
+                                            if (!popped.IsTrace && (popped.PrimaryHandle & ReflectionHandleExtension.MemberMask) == 0UL)
+                                            {
+                                                var typeHandle = popped.PrimaryHandle & ReflectionHandleExtension.TypeMask;
+                                                typesSwept.Add(typeHandle);
+                                            }
+                                        }
+                                    }
+                                }
+                                position = trueClosingParen + 1;
+                            }
+                            else
+                            {
+                                position = handleStartIndex;
+                            }
                         }
                     }
-                }
 
-                if (state.Keep.Count <= 1) //keeping only the assembly handle, we can remove the entire file if no other handles are kept
-                {
-                    fileContent = "";
-                }
-                // Reconstruct file if items need to be removed
-                else if (intervalsToRemove.Count > 0)
-                {
-                    var optimizedBuilder = new StringBuilder(originalLen);
-                    int currentPointer = 0;
-
-                    foreach (var interval in intervalsToRemove)
+                    if (state.Keep.Count <= 1) //keeping only the assembly handle, we can remove the entire file if no other handles are kept
                     {
-                        optimizedBuilder.Append(fileContent, currentPointer, interval.Start - currentPointer);
-                        currentPointer = interval.End;
+                        fileContent = "";
                     }
-
-                    if (currentPointer < originalLen)
+                    // Reconstruct file if items need to be removed
+                    else if (intervalsToRemove.Count > 0)
                     {
-                        optimizedBuilder.Append(fileContent, currentPointer, originalLen - currentPointer);
-                    }
+                        var optimizedBuilder = new StringBuilder(originalLen);
+                        int currentPointer = 0;
 
-                    fileContent = optimizedBuilder.ToString();
+                        foreach (var interval in intervalsToRemove)
+                        {
+                            optimizedBuilder.Append(fileContent, currentPointer, interval.Start - currentPointer);
+                            currentPointer = interval.End;
+                        }
+
+                        if (currentPointer < originalLen)
+                        {
+                            optimizedBuilder.Append(fileContent, currentPointer, originalLen - currentPointer);
+                        }
+
+                        fileContent = optimizedBuilder.ToString();
+                    }
                 }
 
                 var outFilePath = Path.ChangeExtension(assembly, ".trimmed.js");

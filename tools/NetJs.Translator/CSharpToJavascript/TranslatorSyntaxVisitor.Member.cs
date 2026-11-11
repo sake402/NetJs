@@ -22,7 +22,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public void WriteMemberName(CSharpSyntaxNode node, ITypeSymbol symbol, string memberName/*, CodeNode? _this = null*/)
         {
-            var member = symbol.GetMembers(memberName, _global).Single();
+            var member = symbol.GetMembers(memberName, _global).First();
             WriteMemberName(node, symbol, member/*, _this*/);
         }
 
@@ -60,7 +60,7 @@ namespace NetJs.Translator.CSharpToJavascript
             //    return;
             //}
             var metadata = _global.GetRequiredMetadata(member);
-            var isStaticConvention = member.IsStaticCallConvention(_global);
+            //var isStaticConvention = member.IsStaticCallConvention(_global);
             CurrentTypeWriter.Write(node, metadata.InvocationName ?? member.Name);
             //if (isStaticConvention)
             //{
@@ -117,8 +117,8 @@ namespace NetJs.Translator.CSharpToJavascript
                     throw new InvalidOperationException($"Cannot resolve expreession type of {thisExpression}");
                 }
             }
-            var lhsType = _global.GetTypeSymbol(thisSymbol);
-            member ??= lhsType.GetMembers(memberName, _global).FirstOrDefault();
+            var lhsType = _global.TryGetTypeSymbol(thisSymbol);
+            member ??= lhsType?.GetMembers(memberName, _global).FirstOrDefault();
             memberName ??= member.Name;
             bool isStaticConvention = member?.IsStaticCallConvention(_global) ?? false;
             bool isExtensionMember = member?.IsExtensionPropertyMember(_global) ?? false;
@@ -150,7 +150,8 @@ namespace NetJs.Translator.CSharpToJavascript
                     isAssignment = true;
                     assignmentRhs = eq.Value;
                 }
-            }else if (node.Parent is AssignmentExpressionSyntax ass)
+            }
+            else if (node.Parent is AssignmentExpressionSyntax ass)
             {
                 if (ass.Left == node)
                 {
@@ -165,12 +166,23 @@ namespace NetJs.Translator.CSharpToJavascript
                 if (isAssignment)
                 {
                     method = property.SetMethod;
-                    attribute ??= property.SetMethod?.GetTemplateAttribute(_global, this);
+                    attribute ??= property.SetMethod?.GetTemplateAttribute(_global, this, matchCondition: "set");
                 }
                 else
                 {
                     method = property.GetMethod;
-                    attribute ??= property.GetMethod?.GetTemplateAttribute(_global, this);
+                    attribute ??= property.GetMethod?.GetTemplateAttribute(_global, this, matchCondition: "get");
+                }
+            }
+            else if (member is IFieldSymbol ffield)
+            {
+                if (isAssignment)
+                {
+                    attribute = ffield.GetTemplateAttribute(_global, this, matchCondition: "set");
+                }
+                else
+                {
+                    attribute = ffield.GetTemplateAttribute(_global, this, matchCondition: "get");
                 }
             }
             else if (member is IEventSymbol eevent)
@@ -178,12 +190,10 @@ namespace NetJs.Translator.CSharpToJavascript
                 if (isAssignment)
                 {
                     method = eevent.AddMethod;
-                    //attribute ??= property.SetMethod?.GetTemplateAttribute(_global, this);
                 }
                 else
                 {
                     method = eevent.RemoveMethod;
-                    //attribute ??= property.GetMethod?.GetTemplateAttribute(_global, this);
                 }
             }
 
@@ -192,9 +202,16 @@ namespace NetJs.Translator.CSharpToJavascript
 
             if (attribute != null)
             {
-                WriteMethodTemplate(node, thisExpression, thisSymbol, false, method, null, attribute, default, assignmentRhs);
+                WriteMethodTemplate(node, thisExpression, thisSymbol, false, method, null, attribute, default, suffixArguments: (ref int parametersWritten) =>
+                {
+                    if (parametersWritten > 0)
+                        CurrentTypeWriter.Write(node, ", ");
+                    Visit(assignmentRhs);
+                    parametersWritten++;
+                });
                 return;
             }
+            bool isIndirectInterfaceCall = member != null && member.UseIndirectInterfaceMemberDispatch(_global, out var needRuntimeNameLookup, out _) && needRuntimeNameLookup;
             if (member != null)
             {
                 if (member.IsStatic || isStaticConvention || isExtensionMember)
@@ -228,7 +245,8 @@ namespace NetJs.Translator.CSharpToJavascript
                         if (thisSymbol is ITypeParameterSymbol tp)
                         {
                             CurrentTypeWriter.Write(node, tp.Name);
-                            CurrentTypeWriter.Write(node, ".");
+                            if (!isIndirectInterfaceCall)
+                                CurrentTypeWriter.Write(node, ".");
                             CurrentTypeWriter.Write(node, memberMetadata?.OverloadName ?? member.Name);
                         }
                         else
@@ -299,50 +317,54 @@ namespace NetJs.Translator.CSharpToJavascript
             bool lhsWritten = false;
             if (thisExpression == null &&
                 member != null &&
-                !(member.IsStatic || isStaticConvention) &&
-                !node.Parent.IsKind(SyntaxKind.NameColon) &&
-                !node.Parent.IsKind(SyntaxKind.MemberBindingExpression))
+                !(member.IsStatic || isStaticConvention))
             {
-                if (node.Parent is AssignmentExpressionSyntax assign && assign.Left == node && node.Parent?.Parent is InitializerExpressionSyntax)
+                bool writeThis = SymbolIsThisTypeMember(member, out _);
+                if (writeThis)
                 {
-                }
-                else
-                {
-                    if (SymbolIsThisTypeMember(member, out _))
+                    if (node.Parent.IsKind(SyntaxKind.NameColon) ||
+                        node.Parent.IsKind(SyntaxKind.MemberBindingExpression) ||
+                        (node.Parent.IsKind(SyntaxKind.SimpleMemberAccessExpression) && node.Parent is MemberAccessExpressionSyntax ass && ass.Name == node))
+                        writeThis = false;
+                    else if (node.Parent is AssignmentExpressionSyntax assign && assign.Left == node && node.Parent?.Parent is InitializerExpressionSyntax)
+                    {
+                        writeThis = false;
+                    }
+                    if (writeThis)
                     {
                         ConditionalAccessExpressionSyntax? ce = null;
                         if ((ce = node.FindClosestParent<ConditionalAccessExpressionSyntax>(isCandidate: (e) => e.Expression == node || e.WhenNotNull == node)) == null)
-                            CurrentTypeWriter.Write(node, "this.");
+                            CurrentTypeWriter.Write(node, isIndirectInterfaceCall ? "this" : "this.");
                         else if (ce.Expression == node)
-                            CurrentTypeWriter.Write(node, "this.");
+                            CurrentTypeWriter.Write(node, isIndirectInterfaceCall ? "this" : "this.");
                         else if (ce.WhenNotNull == node)
                             CurrentTypeWriter.Write(node, ".");
                         //lhsWritten = true;
                     }
-                    //else
-                    //{
-                    //    ConditionalAccessExpressionSyntax? ce = null;
-                    //    if (node.Parent.IsKind(SyntaxKind.SimpleMemberAccessExpression))
-                    //    {
-                    //        if (((MemberAccessExpressionSyntax)node.Parent).Expression == node)
-                    //        {
-                    //            CurrentTypeWriter.Write(node, "this");
-                    //            lhsWritten = true;
-                    //        }
-                    //        else if (((MemberAccessExpressionSyntax)node.Parent).Name == node)
-                    //        {
-                    //        }
-                    //    }
-                    //    else if ((ce = node.FindClosestParent<ConditionalAccessExpressionSyntax>()) != null && ce.WhenNotNull == node)
-                    //    {
-                    //    }
-                    //    else
-                    //    {
-                    //        CurrentTypeWriter.Write(node, "this");
-                    //        lhsWritten = true;
-                    //    }
-                    //}
                 }
+                //else
+                //{
+                //    ConditionalAccessExpressionSyntax? ce = null;
+                //    if (node.Parent.IsKind(SyntaxKind.SimpleMemberAccessExpression))
+                //    {
+                //        if (((MemberAccessExpressionSyntax)node.Parent).Expression == node)
+                //        {
+                //            CurrentTypeWriter.Write(node, "this");
+                //            lhsWritten = true;
+                //        }
+                //        else if (((MemberAccessExpressionSyntax)node.Parent).Name == node)
+                //        {
+                //        }
+                //    }
+                //    else if ((ce = node.FindClosestParent<ConditionalAccessExpressionSyntax>()) != null && ce.WhenNotNull == node)
+                //    {
+                //    }
+                //    else
+                //    {
+                //        CurrentTypeWriter.Write(node, "this");
+                //        lhsWritten = true;
+                //    }
+                //}
             }
             else
             {
@@ -359,12 +381,13 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 if (lhsWritten)
                 {
-                    var lhsIsThis = thisExpression != null && thisExpression.IsT0 && thisExpression.AsT0.IsKind(SyntaxKind.ThisExpression);
-                    if (!lhsIsThis && thisSymbol.GetRefKind() != RefKind.None)
-                    {
-                        TryDereference(node);
-                    }
-                    CurrentTypeWriter.Write(node, ".");
+                    //var lhsIsThis = thisExpression != null && thisExpression.IsT0 && thisExpression.AsT0.IsKind(SyntaxKind.ThisExpression);
+                    //if (!lhsIsThis && thisSymbol.GetRefKind() != RefKind.None)
+                    //{
+                    //    TryDereference(node);
+                    //}
+                    if (!isIndirectInterfaceCall)
+                        CurrentTypeWriter.Write(node, ".");
                 }
                 CurrentTypeWriter.Write(node, memberName);
             }

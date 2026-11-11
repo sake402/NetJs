@@ -25,5 +25,144 @@
                 NetJs.Script.Write("this._m_value = value");
             }
         }
+        public static UInt16_Partial? operator +(UInt16_Partial a, UInt16_Partial? b)
+        {
+            if (b.As<short?>() == null)
+                return null;
+            return (a.As<short>() + b.As<short>()).As<UInt16_Partial>();
+        }
+
+        public static UInt16_Partial? operator +(UInt16_Partial? a, UInt16_Partial? b)
+        {
+            if (a.As<short?>() == null || b.As<short?>() == null)
+                return null;
+            return (a.As<short>() + b.As<short>()).As<UInt16_Partial>();
+        }
+
+        public static UInt16_Partial? operator -(UInt16_Partial a, UInt16_Partial? b)
+        {
+            if (b.As<short?>() == null)
+                return null;
+            return (a.As<short>() - b.As<short>()).As<UInt16_Partial>();
+        }
+
+        public static UInt16_Partial? operator -(UInt16_Partial? a, UInt16_Partial? b)
+        {
+            if (a.As<short?>() == null || b.As<short?>() == null)
+                return null;
+            return (a.As<short>() - b.As<short>()).As<UInt16_Partial>();
+        }
+
+        public static UInt16_Partial? operator *(UInt16_Partial a, UInt16_Partial? b)
+        {
+            if (b.As<short?>() == null)
+                return null;
+            return (a.As<short>() * b.As<short>()).As<UInt16_Partial>();
+        }
+
+        public static UInt16_Partial? operator *(UInt16_Partial? a, UInt16_Partial? b)
+        {
+            if (a.As<short?>() == null || b.As<short?>() == null)
+                return null;
+            return (a.As<short>() * b.As<short>()).As<UInt16_Partial>();
+        }
+
+        public static UInt16_Partial? operator /(UInt16_Partial a, UInt16_Partial? b)
+        {
+            if (b.As<short?>() == null)
+                return null;
+            return (a.As<short>() / b.As<short>()).As<UInt16_Partial>();
+        }
+
+        public static UInt16_Partial? operator /(UInt16_Partial? a, UInt16_Partial? b)
+        {
+            if (a.As<short?>() == null || b.As<short?>() == null)
+                return null;
+            return (a.As<short>() / b.As<short>()).As<UInt16_Partial>();
+        }
+
+        public static bool operator >(UInt16_Partial a, UInt16_Partial? b)
+        {
+            if (b.As<short?>() == null)
+                return false;
+            return a.As<short>() > b.As<short>();
+        }
+
+        public static bool operator >(UInt16_Partial? a, UInt16_Partial? b)
+        {
+            if (a.As<short?>() == null || b.As<short?>() == null)
+                return false;
+            return a.As<short>() > b.As<short>();
+        }
+
+        public static bool operator <(UInt16_Partial a, UInt16_Partial? b)
+        {
+            if (b.As<short?>() == null)
+                return false;
+            return a.As<short>() < b.As<short>();
+        }
+
+        public static bool operator <(UInt16_Partial? a, UInt16_Partial? b)
+        {
+            if (a.As<short?>() == null || b.As<short?>() == null)
+                return false;
+            return a.As<short>() < b.As<short>();
+        }
+
+        public static bool operator >=(UInt16_Partial a, UInt16_Partial? b)
+        {
+            if (b.As<short?>() == null)
+                return false;
+            return a.As<short>() >= b.As<short>();
+        }
+
+        public static bool operator >=(UInt16_Partial? a, UInt16_Partial? b)
+        {
+            if (a.As<short?>() == null || b.As<short?>() == null)
+                return false;
+            return a.As<short>() >= b.As<short>();
+        }
+
+        public static bool operator <=(UInt16_Partial a, UInt16_Partial? b)
+        {
+            if (b.As<short?>() == null)
+                return false;
+            return a.As<short>() <= b.As<short>();
+        }
+
+        public static bool operator <=(UInt16_Partial? a, UInt16_Partial? b)
+        {
+            if (a.As<short?>() == null || b.As<short?>() == null)
+                return false;
+            return a.As<short>() <= b.As<short>();
+        }
+
+        public static UInt16_Partial? operator &(UInt16_Partial a, UInt16_Partial? b)
+        {
+            if (b.As<short?>() == null)
+                return null;
+            return (a.As<short>() & b.As<short>()).As<UInt16_Partial>();
+        }
+
+        public static UInt16_Partial? operator &(UInt16_Partial? a, UInt16_Partial? b)
+        {
+            if (a.As<short?>() == null || b.As<short?>() == null)
+                return null;
+            return (a.As<short>() & b.As<short>()).As<UInt16_Partial>();
+        }
+
+        public static UInt16_Partial? operator |(UInt16_Partial a, UInt16_Partial? b)
+        {
+            if (b.As<short?>() == null)
+                return null;
+            return (a.As<short>() | b.As<short>()).As<UInt16_Partial>();
+        }
+
+        public static UInt16_Partial? operator |(UInt16_Partial? a, UInt16_Partial? b)
+        {
+            if (a.As<short?>() == null || b.As<short?>() == null)
+                return null;
+            return (a.As<short>() | b.As<short>()).As<UInt16_Partial>();
+        }
     }
 }

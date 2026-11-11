@@ -57,9 +57,22 @@ namespace System.Runtime.CompilerServices
         /// <returns></returns>
         public static T[] EnsureIsNetArray<T>(T[] jsArray)
         {
-            if (NetJs.Script.InstanceOf(jsArray, typeof(Array)))
+            if (NetJs.Script.InstanceOf<Array>(jsArray))
                 return jsArray;
             return CreateArray(typeof(T), jsArray.As<object[]>(), null, null).As<T[]>();
+        }
+
+        /// <summary>
+        /// Ensure the array is constructed from NetJS array type, not js array
+        /// </summary>
+        /// <param name="jsArray"></param>
+        /// <param name="elementType"></param>
+        /// <returns></returns>
+        public static Array EnsureIsNetArray(Array jsArray, Type elementType)
+        {
+            if (NetJs.Script.InstanceOf<Array>(jsArray))
+                return jsArray;
+            return CreateArray(elementType, jsArray.As<object[]>(), null, null);
         }
 
         //TODO: remove this method and use the one in IAwaitable.cs
@@ -154,20 +167,31 @@ namespace System.Runtime.CompilerServices
             throw null!;
         }
 
-        public static Ref<T> CreateObjectReferenceT<T>(NativeFunction<int?, T> getValue, NativeAction<T, int?>? setValue, int? _byteOffset = null)
+        public static RefOrPointer<T> CreateObjectReferenceT<T>(NativeFunction<int?, T> getValue, NativeAction<T, int?>? setValue, int? _byteOffset = null, bool createRef = true)
         //where T:allows ref struct
         {
-            Ref<T> rref = default!;
-            rref = new Ref<T>((i) =>
+            if (NetJs.Script.IsUndefined(createRef))
+            {
+                createRef = true;
+            }
+            RefOrPointer<T> rref = default!;
+            rref = createRef ? new Ref<T>((i) =>
             {
                 var val = getValue(i);
                 rref!._dataSource = val.As<object>();
+                rref._dataSourceType = RefOrPointer.DataSourceType._object;
                 return val;
-            }, (v, i) =>
+            }, setValue ?? ((v, i) =>
             {
-                if (setValue != null)
-                    setValue(v, i);
-            });
+            })) : new Pointer<T>((i) =>
+            {
+                var val = getValue(i);
+                rref!._dataSource = val.As<object>();
+                rref._dataSourceType = RefOrPointer.DataSourceType._object;
+                return val;
+            }, setValue ?? ((v, i) =>
+            {
+            }));
             rref._byteOffset = _byteOffset;
             //It is a common pattern to create a variable on the stack uninitialized and then pass the ref of such(via out or ref) to a method to provide the value
             //By default in js the variable are undefined.
@@ -182,6 +206,7 @@ namespace System.Runtime.CompilerServices
                     setValue(varValue!, null); //make sure it is initialized
             }
             rref._dataSource = varValue.As<object>(); //dont box the dataSource
+            rref._dataSourceType = RefOrPointer.DataSourceType._object;
             return rref;
         }
 
@@ -201,38 +226,47 @@ namespace System.Runtime.CompilerServices
                             return RuntimeHelpers.ReadDataView<T>(array.As<DataView>(), knownType, (index ?? 0) + (i ?? 0));
                     }, (v, i) =>
                     {
-                        if (isArray)
+                        unchecked
                         {
-                            var lindex = (index ?? 0) + (i ?? 0);
-                            array.As<T[]>()[lindex] = v;
-                            if (refs!._dataView != null)
-                                UpdateDataViewFromArray(array, refs.Type, refs._dataView, refs.SizeOfItem * lindex, 1);
-                            ////changing array invalidates dataview
-                            //refs!._dataView = null;
+                            if (isArray)
+                            {
+                                var lindex = (index ?? 0) + (i ?? 0);
+                                array.As<T[]>()[lindex] = v;
+                                //if (refs!._dataView != null)
+                                //UpdateDataViewFromArray(array, refs.Type, refs._dataView, refs.SizeOfItem * lindex, 1);
+                                ////changing array invalidates dataview
+                                //refs!._dataView = null;
+                            }
+                            else
+                                RuntimeHelpers.WriteDataView<T>(array.As<DataView>(), knownType, v, (index ?? 0) + (i ?? 0));
                         }
-                        else
-                            RuntimeHelpers.WriteDataView<T>(array.As<DataView>(), knownType, v, (index ?? 0) + (i ?? 0));
                     });
                 else
                     refs = new Pointer<T>((i) =>
                     {
-                        if (isArray)
-                            return array.As<T[]>()[(index ?? 0) + (i ?? 0)];
-                        else
-                            return RuntimeHelpers.ReadDataView<T>(array.As<DataView>(), knownType, (index ?? 0) + (i ?? 0));
+                        unchecked
+                        {
+                            if (isArray)
+                                return array.As<T[]>()[(index ?? 0) + (i ?? 0)];
+                            else
+                                return RuntimeHelpers.ReadDataView<T>(array.As<DataView>(), knownType, (index ?? 0) + (i ?? 0));
+                        }
                     }, (v, i) =>
                     {
-                        if (isArray)
+                        unchecked
                         {
-                            var lindex = (index ?? 0) + (i ?? 0);
-                            array.As<T[]>()[lindex] = v;
-                            if (refs!._dataView != null)
-                                UpdateDataViewFromArray(array, refs.Type, refs._dataView, refs.SizeOfItem * lindex, 1);
-                            ////changing array invalidates dataview
-                            //refs!._dataView = null;
+                            if (isArray)
+                            {
+                                var lindex = (index ?? 0) + (i ?? 0);
+                                array.As<T[]>()[lindex] = v;
+                                //if (refs!._dataView != null)
+                                //UpdateDataViewFromArray(array, refs.Type, refs._dataView, refs.SizeOfItem * lindex, 1);
+                                ////changing array invalidates dataview
+                                //refs!._dataView = null;
+                            }
+                            else
+                                RuntimeHelpers.WriteDataView<T>(array.As<DataView>(), knownType, v, (index ?? 0) + (i ?? 0));
                         }
-                        else
-                            RuntimeHelpers.WriteDataView<T>(array.As<DataView>(), knownType, v, (index ?? 0) + (i ?? 0));
                     });
             }
             else
@@ -255,8 +289,8 @@ namespace System.Runtime.CompilerServices
                             {
                                 var lindex = (index ?? 0) + (i ?? 0);
                                 array.As<T[]>()[lindex] = v;
-                                if (refs!._dataView != null)
-                                    UpdateDataViewFromArray(array, refs.Type, refs._dataView, refs.SizeOfItem * lindex, 1);
+                                //if (refs!._dataView != null)
+                                //UpdateDataViewFromArray(array, refs.Type, refs._dataView, refs.SizeOfItem * lindex, 1);
                                 ////changing array invalidates dataview
                                 //refs!._dataView = null;
                             }
@@ -282,8 +316,8 @@ namespace System.Runtime.CompilerServices
                             {
                                 var lindex = (index ?? 0) + (i ?? 0);
                                 array.As<T[]>()[lindex] = v;
-                                if (refs!._dataView != null)
-                                    UpdateDataViewFromArray(array, refs.Type, refs._dataView, refs.SizeOfItem * lindex, 1);
+                                //if (refs!._dataView != null)
+                                //UpdateDataViewFromArray(array, refs.Type, refs._dataView, refs.SizeOfItem * lindex, 1);
                                 ////changing array invalidates dataview
                                 //refs!._dataView = null;
                             }
@@ -293,6 +327,12 @@ namespace System.Runtime.CompilerServices
                     });
             }
             refs._dataSource = array.As<object[]>();
+            refs._dataSourceType = RefOrPointer.DataSourceType._array;
+            if (index > 0 && typeof(T).As<RuntimeType>()._prototype.KnownType.IsNumeric())
+            {
+                refs._byteOffset = index.Value * refs.SizeOfItem;
+                index = null;
+            }
             return refs;
         }
 
@@ -307,44 +347,56 @@ namespace System.Runtime.CompilerServices
                 if (createRef)
                     refs = new Ref<T>((i) =>
                     {
-                        if (isArray)
-                            return array.As<Array>()[(index ?? 0) + (i ?? 0)].As<T>();
-                        else
-                            return RuntimeHelpers.ReadDataView<T>(array.As<DataView>(), knownType, (index ?? 0) + (i ?? 0));
+                        unchecked
+                        {
+                            if (isArray)
+                                return array.As<Array>()[(index ?? 0) + (i ?? 0)].As<T>();
+                            else
+                                return RuntimeHelpers.ReadDataView<T>(array.As<DataView>(), knownType, (index ?? 0) + (i ?? 0));
+                        }
                     }, (v, i) =>
                     {
-                        if (isArray)
+                        unchecked
                         {
-                            var lindex = (index ?? 0) + (i ?? 0);
-                            array.As<Array>()[lindex] = v;
-                            if (refs!._dataView != null)
-                                UpdateDataViewFromArray(array.As<Array>(), refs.Type, refs._dataView, refs.SizeOfItem * lindex, 1);
-                            ////changing array invalidates dataview
-                            //refs!._dataView = null;
+                            if (isArray)
+                            {
+                                var lindex = (index ?? 0) + (i ?? 0);
+                                array.As<Array>()[lindex] = v;
+                                //if (refs!._dataView != null)
+                                //UpdateDataViewFromArray(array.As<Array>(), refs.Type, refs._dataView, refs.SizeOfItem * lindex, 1);
+                                ////changing array invalidates dataview
+                                //refs!._dataView = null;
+                            }
+                            else
+                                RuntimeHelpers.WriteDataView<T>(array.As<DataView>(), knownType, v, (index ?? 0) + (i ?? 0));
                         }
-                        else
-                            RuntimeHelpers.WriteDataView<T>(array.As<DataView>(), knownType, v, (index ?? 0) + (i ?? 0));
                     });
                 else
                     refs = new Pointer<T>((i) =>
                     {
-                        if (isArray)
-                            return array.As<Array>()[(index ?? 0) + (i ?? 0)].As<T>();
-                        else
-                            return RuntimeHelpers.ReadDataView<T>(array.As<DataView>(), knownType, (index ?? 0) + (i ?? 0));
+                        unchecked
+                        {
+                            if (isArray)
+                                return array.As<Array>()[(index ?? 0) + (i ?? 0)].As<T>();
+                            else
+                                return RuntimeHelpers.ReadDataView<T>(array.As<DataView>(), knownType, (index ?? 0) + (i ?? 0));
+                        }
                     }, (v, i) =>
                     {
-                        if (isArray)
+                        unchecked
                         {
-                            var lindex = (index ?? 0) + (i ?? 0);
-                            array.As<Array>()[lindex] = v;
-                            if (refs!._dataView != null)
-                                UpdateDataViewFromArray(array.As<Array>(), refs.Type, refs._dataView, refs.SizeOfItem * lindex, 1);
-                            ////changing array invalidates dataview
-                            //refs!._dataView = null;
+                            if (isArray)
+                            {
+                                var lindex = (index ?? 0) + (i ?? 0);
+                                array.As<Array>()[lindex] = v;
+                                //if (refs!._dataView != null)
+                                //UpdateDataViewFromArray(array.As<Array>(), refs.Type, refs._dataView, refs.SizeOfItem * lindex, 1);
+                                ////changing array invalidates dataview
+                                //refs!._dataView = null;
+                            }
+                            else
+                                RuntimeHelpers.WriteDataView<T>(array.As<DataView>(), knownType, v, (index ?? 0) + (i ?? 0));
                         }
-                        else
-                            RuntimeHelpers.WriteDataView<T>(array.As<DataView>(), knownType, v, (index ?? 0) + (i ?? 0));
                     });
             }
             else
@@ -367,8 +419,8 @@ namespace System.Runtime.CompilerServices
                             {
                                 var lindex = (index ?? 0) + (i ?? 0);
                                 array.As<Array>()[lindex] = v;
-                                if (refs!._dataView != null)
-                                    UpdateDataViewFromArray(array.As<Array>(), refs.Type, refs._dataView, refs.SizeOfItem * lindex, 1);
+                                //if (refs!._dataView != null)
+                                //UpdateDataViewFromArray(array.As<Array>(), refs.Type, refs._dataView, refs.SizeOfItem * lindex, 1);
                                 ////changing array invalidates dataview
                                 //refs!._dataView = null;
                             }
@@ -394,8 +446,8 @@ namespace System.Runtime.CompilerServices
                             {
                                 var lindex = (index ?? 0) + (i ?? 0);
                                 array.As<Array>()[lindex] = v;
-                                if (refs!._dataView != null)
-                                    UpdateDataViewFromArray(array.As<Array>(), refs.Type, refs._dataView, refs.SizeOfItem * lindex, 1);
+                                //if (refs!._dataView != null)
+                                //UpdateDataViewFromArray(array.As<Array>(), refs.Type, refs._dataView, refs.SizeOfItem * lindex, 1);
                                 ////changing array invalidates dataview
                                 //refs!._dataView = null;
                             }
@@ -405,7 +457,13 @@ namespace System.Runtime.CompilerServices
                     });
             }
             refs._dataSource = array.As<object[]>();
+            refs._dataSourceType = Ref<T>.DataSourceType._array;
             refs._type = arrayType;
+            if (index > 0 && arrayType.As<RuntimeType>()._prototype.KnownType.IsNumeric())
+            {
+                refs._byteOffset = index.Value * refs.SizeOfItem;
+                index = null;
+            }
             return refs;
         }
 
@@ -426,7 +484,7 @@ namespace System.Runtime.CompilerServices
         public static unsafe T* StackAllocPointer<T>(int? length = null, T[]? initialValues = null)
         {
             var ts = CreateArrayT<T>(initialValues, length != null ? NetJs.Script.CreateArrayFromValues(length.Value) : null);
-            return NetJs.Script.RefP(CreateArrayReferenceT(ts, null))!;
+            return NetJs.Script.RefP(CreateArrayReferenceT(ts))!;
         }
 
         static int StringToHashCode(string str)
@@ -471,12 +529,12 @@ namespace System.Runtime.CompilerServices
                     case KnownTypeHandle.SystemUInt16:
                         return ref Unsafe.As<ushort, byte>(ref NetJs.Script.Ref<ushort>(CreateObjectReferenceT<ushort>((_) => evalue.As<ushort>(), (v, i) => { throw null!; })));
                     case KnownTypeHandle.SystemInt32:
-                    case KnownTypeHandle.SystemUint32:
+                    case KnownTypeHandle.SystemUInt32:
                     case KnownTypeHandle.SystemIntPtr:
                     case KnownTypeHandle.SystemUIntPtr:
                         return ref Unsafe.As<uint, byte>(ref NetJs.Script.Ref<uint>(CreateObjectReferenceT<uint>((_) => evalue.As<uint>(), (v, i) => { throw null!; })));
                     case KnownTypeHandle.SystemInt64:
-                    case KnownTypeHandle.SystemUint64:
+                    case KnownTypeHandle.SystemUInt64:
                         return ref Unsafe.As<ulong, byte>(ref NetJs.Script.Ref<ulong>(CreateObjectReferenceT<ulong>((_) => evalue.As<ulong>(), (v, i) => { throw null!; })));
                     case KnownTypeHandle.SystemSingle:
                         return ref Unsafe.As<float, byte>(ref NetJs.Script.Ref<float>(CreateObjectReferenceT<float>((_) => evalue.As<float>(), (v, i) => { throw null!; })));
@@ -484,7 +542,7 @@ namespace System.Runtime.CompilerServices
                         return ref Unsafe.As<double, byte>(ref NetJs.Script.Ref<double>(CreateObjectReferenceT<double>((_) => evalue.As<double>(), (v, i) => { throw null!; })));
                 }
             }
-            ref byte result = ref NetJs.Script.Ref<byte>(CreateObjectReferenceT<byte>((_) => obj.As<byte>(), (v, i) => { }));
+            ref byte result = ref NetJs.Script.Ref<byte>(CreateObjectReferenceT<object>((_) => obj, (v, i) => { }).As<Ref<byte>>());
             return ref result;
         }
 
@@ -544,13 +602,16 @@ namespace System.Runtime.CompilerServices
         [NetJs.MemberReplace(nameof(InternalBox))]
         private static object InternalBoxImpl(QCallTypeHandle type, ref byte target)
         {
-            throw new NotImplementedException();
+            var ttype = type.QCallTypeHandleToRuntimeType();
+            var rref = NetJs.Script.Ref<object>(target);
+            return NetJs.Script.Box(rref.Value, ttype._prototype);
         }
 
         [NetJs.MemberReplace(nameof(SizeOf))]
         private static int SizeOfImpl(QCallTypeHandle handle)
         {
-            throw new NotImplementedException();
+            var ttype = handle.QCallTypeHandleToRuntimeType();
+            return Marshal.CalculateSizeOf(ttype);
         }
 
         [NetJs.IgnoreGeneric]
@@ -729,17 +790,54 @@ namespace System.Runtime.CompilerServices
                                 var param = paramContainer!.fieldsAsArray[i];
                                 if (NetJs.Script.IsUndefined(param))
                                     continue;
-                                if (param.Is(typeof(ByReference)))
+                                if (param.Is<RefOrPointer>())
+                                {
+                                    var refValue = param.As<Ref<object>>();
+                                    ref byte b = ref NetJs.Script.Ref<byte>(param.As<Ref<byte>>());
+                                    if (Unsafe.IsNullRef(ref b))
+                                        param = null;
+                                    else
+                                    {
+                                        if (refValue.Type.As<RuntimeType>()._prototype.KnownType == KnownTypeHandle.SystemByte)
+                                        {
+                                            param = refValue._dataSource;
+                                            if (NetJs.Script.InstanceOf<RefOrPointer>(param))
+                                            {
+                                                param = param.As<RefOrPointer<object>>()._dataSource;
+                                            }
+                                        }
+                                        else
+                                            param = refValue.Value;
+                                    }
+                                }
+                                else if (param.Is(typeof(ByReference)))
                                 {
                                     var byreRefValueName = NetJs.Script.Write<string>("\"{nameof(System.ByReference.Value)}\"");
                                     ref byte b = ref NetJs.Script.Ref<byte>(param[byreRefValueName].As<Ref<byte>>());
                                     if (Unsafe.IsNullRef(ref b))
                                         param = null;
                                     else
-                                        param = param[byreRefValueName]![NetJs.Constants.RefValueName];
+                                    {
+                                        var byRefValue = param[byreRefValueName].As<RefOrPointer<object>>();
+                                        if (byRefValue.Type.As<RuntimeType>()._prototype.KnownType == KnownTypeHandle.SystemByte)
+                                        {
+                                            param = byRefValue._dataSource;
+                                            if (NetJs.Script.InstanceOf<RefOrPointer>(param))
+                                            {
+                                                param = param.As<RefOrPointer<object>>()._dataSource;
+                                            }
+                                        }
+                                        else
+                                            param = byRefValue.Value;
+                                    }
                                 }
-                                param = NetJs.Script.Unbox(param);
-                                parameters.Push(param);
+                                if (param != null && GetClassPrototypeOf(param).KnownType == KnownTypeHandle.SystemNullable)
+                                {
+                                    param = param.As<Nullable<int>>()!.Value.As<object>();
+                                }
+                                else
+                                    param = NetJs.Script.Unbox(param);
+                                parameters.push(param);
                             }
                         }
                     }
@@ -798,7 +896,7 @@ namespace System.Runtime.CompilerServices
             }
         }
 
-        internal static object? NativeFunctionDispatch(object? targetOrPrototype, MemberModel member, params object?[]? parameters)
+        internal static object? NativeFunctionDispatch(object? targetOrPrototype, MemberModel member, object?[]? parameters)
         {
             var methodName = member.GetOutputName();
             TypePrototype? returns = null;
@@ -820,6 +918,13 @@ namespace System.Runtime.CompilerServices
                 var tp = AppDomain.GetType(rt);
                 returns = tp!._prototype;
             }
+            if (member.Flags.TypeHasFlag(MemberFlagsModel.IsMethod) && member.Flags.TypeHasFlag(MemberFlagsModel.IsGeneric)) //a generic method expects the generic arguments to be passed as the first parameters
+            {
+                if (parameters == null)
+                    parameters = NetJs.Script.NewArray<object>();
+                var genericArgs = member.As<MethodModel>().GenericArguments.As<TypePrototype[]>();
+                genericArgs.forEach((a) => parameters.unshift(a));
+            }
             return NativeFunctionDispatch(targetOrPrototype, methodName, returns, parameters);
         }
 
@@ -832,161 +937,227 @@ namespace System.Runtime.CompilerServices
                     return null;
                 knownType = arrayType._prototype.KnownType;
             }
-            switch (knownType)
+
+            var nativeArr = arr;
+            int len = nativeArr.Length;
+
+            unchecked
             {
-                case KnownTypeHandle.SystemBool: return new Window.Uint8Array(arr).buffer;
-                case KnownTypeHandle.SystemSByte: return new Window.Int8Array(arr).buffer;
-                case KnownTypeHandle.SystemByte: return new Window.Uint8Array(arr).buffer;
-                case KnownTypeHandle.SystemInt16: return new Window.Int16Array(arr).buffer;
-                case KnownTypeHandle.SystemUInt16: case KnownTypeHandle.SystemChar: return new Window.Uint16Array(arr).buffer;
-                case KnownTypeHandle.SystemInt32: case KnownTypeHandle.SystemIntPtr: return new Window.Int32Array(arr).buffer;
-                case KnownTypeHandle.SystemUint32: case KnownTypeHandle.SystemUIntPtr: return new Window.Uint32Array(arr).buffer;
-                case KnownTypeHandle.SystemInt64: return new Window.BigInt64Array(arr).buffer;
-                case KnownTypeHandle.SystemUint64: return new Window.BigUint64Array(arr).buffer;
-                case KnownTypeHandle.SystemSingle: return new Window.Float32Array(arr).buffer;
-                case KnownTypeHandle.SystemDouble: return new Window.Float64Array(arr).buffer;
+                switch (knownType)
+                {
+                    case KnownTypeHandle.SystemBool:
+                    case KnownTypeHandle.SystemByte:
+                        {
+                            var typed = new Window.Uint8Array(len);
+                            for (int i = 0; i < len; i++) { typed[i] = nativeArr[i].As<byte>(); }
+                            return typed.buffer;
+                        }
+                    case KnownTypeHandle.SystemSByte:
+                        {
+                            var typed = new Window.Int8Array(len);
+                            for (int i = 0; i < len; i++) { typed[i] = nativeArr[i].As<sbyte>(); }
+                            return typed.buffer;
+                        }
+                    case KnownTypeHandle.SystemInt16:
+                        {
+                            var typed = new Window.Int16Array(len);
+                            for (int i = 0; i < len; i++) { typed[i] = nativeArr[i].As<short>(); }
+                            return typed.buffer;
+                        }
+                    case KnownTypeHandle.SystemUInt16:
+                    case KnownTypeHandle.SystemChar:
+                        {
+                            var typed = new Window.Uint16Array(len);
+                            for (int i = 0; i < len; i++) { typed[i] = nativeArr[i].As<ushort>(); }
+                            return typed.buffer;
+                        }
+                    case KnownTypeHandle.SystemInt32:
+                    case KnownTypeHandle.SystemIntPtr:
+                        {
+                            var typed = new Window.Int32Array(len);
+                            for (int i = 0; i < len; i++) { typed[i] = nativeArr[i].As<int>(); }
+                            return typed.buffer;
+                        }
+                    case KnownTypeHandle.SystemUInt32:
+                    case KnownTypeHandle.SystemUIntPtr:
+                        {
+                            var typed = new Window.Uint32Array(len);
+                            for (int i = 0; i < len; i++) { typed[i] = nativeArr[i].As<uint>(); }
+                            return typed.buffer;
+                        }
+                    case KnownTypeHandle.SystemInt64:
+                        {
+                            var typed = new Window.BigInt64Array(len);
+                            for (int i = 0; i < len; i++) { typed[i] = nativeArr[i].As<long>(); }
+                            return typed.buffer;
+                        }
+                    case KnownTypeHandle.SystemUInt64:
+                        {
+                            var typed = new Window.BigUint64Array(len);
+                            for (int i = 0; i < len; i++) { typed[i] = nativeArr[i].As<ulong>(); }
+                            return typed.buffer;
+                        }
+                    case KnownTypeHandle.SystemSingle:
+                        {
+                            var typed = new Window.Float32Array(len);
+                            for (int i = 0; i < len; i++) { typed[i] = nativeArr[i].As<float>(); }
+                            return typed.buffer;
+                        }
+                    case KnownTypeHandle.SystemDouble:
+                        {
+                            var typed = new Window.Float64Array(len);
+                            for (int i = 0; i < len; i++) { typed[i] = nativeArr[i].As<double>(); }
+                            return typed.buffer;
+                        }
+                }
             }
             throw new NotSupportedException("Size not supported");
         }
 
-        public static void WriteDataView<T>(DataView dataView, KnownTypeHandle knownType, T value, int byteStartIndex = 0)
-            where T : allows ref struct
+        //public static ArrayBuffer? ArrayBufferFrom(Array arr, KnownTypeHandle? knownType = null)
+        //{
+        //    if (knownType == null)
+        //    {
+        //        var arrayType = Array.GetArrayElementType(arr).As<RuntimeType>();
+        //        if (arrayType == null)
+        //            return null;
+        //        knownType = arrayType._prototype.KnownType;
+        //    }
+        //    switch (knownType)
+        //    {
+        //        case KnownTypeHandle.SystemBool: return new Window.Uint8Array(arr).buffer;
+        //        case KnownTypeHandle.SystemSByte: return new Window.Int8Array(arr).buffer;
+        //        case KnownTypeHandle.SystemByte: return new Window.Uint8Array(arr).buffer;
+        //        case KnownTypeHandle.SystemInt16: return new Window.Int16Array(arr).buffer;
+        //        case KnownTypeHandle.SystemUInt16: case KnownTypeHandle.SystemChar: return new Window.Uint16Array(arr).buffer;
+        //        case KnownTypeHandle.SystemInt32: case KnownTypeHandle.SystemIntPtr: return new Window.Int32Array(arr).buffer;
+        //        case KnownTypeHandle.SystemUint32: case KnownTypeHandle.SystemUIntPtr: return new Window.Uint32Array(arr).buffer;
+        //        case KnownTypeHandle.SystemInt64: return new Window.BigInt64Array(arr).buffer;
+        //        case KnownTypeHandle.SystemUint64: return new Window.BigUint64Array(arr).buffer;
+        //        case KnownTypeHandle.SystemSingle: return new Window.Float32Array(arr).buffer;
+        //        case KnownTypeHandle.SystemDouble: return new Window.Float64Array(arr).buffer;
+        //    }
+        //    throw new NotSupportedException("Size not supported");
+        //}
+
+        public static void WriteDataView(Type type, DataView dataView, KnownTypeHandle writeAsType, object value, int byteStartIndex = 0)
         {
-            Debug.Assert(knownType.IsNumeric());
-            Debug.Assert(typeof(T) == typeof(object) ||
-                typeof(T).As<RuntimeType>()._prototype.KnownType == knownType ||
-                (typeof(T).As<RuntimeType>()._prototype.KnownType == KnownTypeHandle.SystemEnum && knownType.IsIntegerNumeric()));
-            switch (knownType)
+            Debug.Assert(writeAsType.IsNumeric());
+            Debug.Assert(type == typeof(object) ||
+                type.As<RuntimeType>()._prototype.KnownType == writeAsType ||
+                (type.As<RuntimeType>()._prototype.KnownType == KnownTypeHandle.SystemEnum && writeAsType.IsIntegerNumeric()));
+            switch (writeAsType)
             {
                 case KnownTypeHandle.SystemBool:
-                    dataView.setUint8(byteStartIndex, value.As<T, bool>() ? 1.As<byte>() : 0.As<byte>());
+                    dataView.setUint8(byteStartIndex, value.As<bool>() ? 1.As<byte>() : 0.As<byte>());
                     break;
                 case KnownTypeHandle.SystemByte:
-                    dataView.setUint8(byteStartIndex, value.As<T, byte>());
+                    dataView.setUint8(byteStartIndex, value.As<byte>());
                     break;
                 case KnownTypeHandle.SystemSByte:
-                    dataView.setInt8(byteStartIndex, value.As<T, sbyte>());
+                    dataView.setInt8(byteStartIndex, value.As<sbyte>());
                     break;
                 case KnownTypeHandle.SystemChar:
                 case KnownTypeHandle.SystemUInt16:
-                    dataView.setUint16(byteStartIndex, value.As<T, ushort>(), true);
+                    dataView.setUint16(byteStartIndex, value.As<ushort>(), BitConverter.IsLittleEndian);
                     break;
                 case KnownTypeHandle.SystemInt16:
-                    dataView.setInt16(byteStartIndex, value.As<T, short>(), true);
+                    dataView.setInt16(byteStartIndex, value.As<short>(), BitConverter.IsLittleEndian);
                     break;
-                case KnownTypeHandle.SystemUint32:
+                case KnownTypeHandle.SystemUInt32:
                 case KnownTypeHandle.SystemUIntPtr:
-                    dataView.setUint32(byteStartIndex, value.As<T, uint>(), true);
+                    dataView.setUint32(byteStartIndex, value.As<uint>(), BitConverter.IsLittleEndian);
                     break;
                 case KnownTypeHandle.SystemInt32:
                 case KnownTypeHandle.SystemIntPtr:
-                    dataView.setInt32(byteStartIndex, value.As<T, int>(), true);
+                    dataView.setInt32(byteStartIndex, value.As<int>(), BitConverter.IsLittleEndian);
                     break;
-                case KnownTypeHandle.SystemUint64:
-                    dataView.setBigUint64(byteStartIndex, value.As<T, ulong>(), true);
+                case KnownTypeHandle.SystemUInt64:
+                    dataView.setBigUint64(byteStartIndex, value.As<ulong>(), BitConverter.IsLittleEndian);
                     break;
                 case KnownTypeHandle.SystemInt64:
-                    dataView.setBigInt64(byteStartIndex, value.As<T, long>(), true);
+                    dataView.setBigInt64(byteStartIndex, value.As<long>(), BitConverter.IsLittleEndian);
                     break;
                 case KnownTypeHandle.SystemSingle:
-                    dataView.setFloat32(byteStartIndex, value.As<T, float>(), true);
+                    dataView.setFloat32(byteStartIndex, value.As<float>(), BitConverter.IsLittleEndian);
                     break;
                 case KnownTypeHandle.SystemDouble:
-                    dataView.setFloat64(byteStartIndex, value.As<T, double>(), true);
+                    dataView.setFloat64(byteStartIndex, value.As<double>(), BitConverter.IsLittleEndian);
                     break;
                 default:
                     throw new NotSupportedException("Size not supported");
             }
         }
 
-
-        public static T ReadDataView<T>(DataView dataView, KnownTypeHandle knownType, int byteStartIndex = 0)
+        public static void WriteDataView<T>(DataView dataView, KnownTypeHandle writeAsType, T value, int byteStartIndex = 0)
             where T : allows ref struct
         {
-            Debug.Assert(knownType.IsNumeric());
-            Debug.Assert(typeof(T) == typeof(object) ||
-                typeof(T).As<RuntimeType>()._prototype.KnownType == knownType ||
-                (typeof(T).As<RuntimeType>()._prototype.KnownType == KnownTypeHandle.SystemEnum && knownType.IsIntegerNumeric()));
-            return knownType switch
+            WriteDataView(typeof(T), dataView, writeAsType, value.As<T, object>(), byteStartIndex);
+        }
+
+        public static object ReadDataView(Type type, DataView dataView, KnownTypeHandle readAsType, int byteStartIndex = 0)
+        {
+            Debug.Assert(readAsType.IsNumeric());
+            Debug.Assert(type == typeof(object) ||
+                type.As<RuntimeType>()._prototype.KnownType == readAsType ||
+                (type.As<RuntimeType>()._prototype.KnownType == KnownTypeHandle.SystemEnum && readAsType.IsIntegerNumeric()));
+            return readAsType switch
             {
-                KnownTypeHandle.SystemBool => (dataView.getInt8(byteStartIndex) != 0 ? true : false).As<T>(),
-                KnownTypeHandle.SystemSByte => dataView.getInt8(byteStartIndex).As<T>(),
-                KnownTypeHandle.SystemByte => dataView.getUint8(byteStartIndex).As<T>(),
-                KnownTypeHandle.SystemInt16 => dataView.getInt16(byteStartIndex, true).As<T>(),
-                KnownTypeHandle.SystemUInt16 or KnownTypeHandle.SystemChar => dataView.getUint16(byteStartIndex, true).As<T>(),
-                KnownTypeHandle.SystemInt32 or KnownTypeHandle.SystemIntPtr => dataView.getInt32(byteStartIndex, true).As<T>(),
-                KnownTypeHandle.SystemUint32 or KnownTypeHandle.SystemUIntPtr => dataView.getUint32(byteStartIndex, true).As<T>(),
-                KnownTypeHandle.SystemInt64 => dataView.getBigInt64(byteStartIndex, true).As<T>(),
-                KnownTypeHandle.SystemUint64 => dataView.getBigUint64(byteStartIndex, true).As<T>(),
-                KnownTypeHandle.SystemSingle => dataView.getFloat32(byteStartIndex, true).As<T>(),
-                KnownTypeHandle.SystemDouble => dataView.getFloat64(byteStartIndex, true).As<T>(),
+                KnownTypeHandle.SystemBool => (dataView.getInt8(byteStartIndex) != 0 ? true : false).As<object>(),
+                KnownTypeHandle.SystemSByte => dataView.getInt8(byteStartIndex).As<object>(),
+                KnownTypeHandle.SystemByte => dataView.getUint8(byteStartIndex).As<object>(),
+                KnownTypeHandle.SystemInt16 => dataView.getInt16(byteStartIndex, BitConverter.IsLittleEndian).As<object>(),
+                KnownTypeHandle.SystemUInt16 or KnownTypeHandle.SystemChar => dataView.getUint16(byteStartIndex, BitConverter.IsLittleEndian).As<object>(),
+                KnownTypeHandle.SystemInt32 or KnownTypeHandle.SystemIntPtr => dataView.getInt32(byteStartIndex, BitConverter.IsLittleEndian).As<object>(),
+                KnownTypeHandle.SystemUInt32 or KnownTypeHandle.SystemUIntPtr => dataView.getUint32(byteStartIndex, BitConverter.IsLittleEndian).As<object>(),
+                KnownTypeHandle.SystemInt64 => dataView.getBigInt64(byteStartIndex, BitConverter.IsLittleEndian).As<object>(),
+                KnownTypeHandle.SystemUInt64 => dataView.getBigUint64(byteStartIndex, BitConverter.IsLittleEndian).As<object>(),
+                KnownTypeHandle.SystemSingle => dataView.getFloat32(byteStartIndex, BitConverter.IsLittleEndian).As<object>(),
+                KnownTypeHandle.SystemDouble => dataView.getFloat64(byteStartIndex, BitConverter.IsLittleEndian).As<object>(),
                 _ => throw new NotSupportedException("Size not supported")
             };
         }
 
+        public static T ReadDataView<T>(DataView dataView, KnownTypeHandle readAsType, int byteStartIndex = 0)
+            where T : allows ref struct
+        {
+            return ReadDataView(typeof(T), dataView, readAsType, byteStartIndex).As<T>();
+        }
+
         static DataView? numericCastDataView;
+        public static DataView GetReUsableDataView()
+        {
+            if (numericCastDataView == null)
+            {
+                var arrayBuffer = new ArrayBuffer(8);
+                numericCastDataView = new DataView(arrayBuffer);
+            }
+            return numericCastDataView;
+        }
         public static TTo BitCast<TFrom, TTo>(TFrom value)
             where TFrom : allows ref struct
             where TTo : allows ref struct
         {
-            var fromModel = typeof(TFrom).As<RuntimeType>()._prototype;
-            var toModel = typeof(TTo).As<RuntimeType>()._prototype;
-            if (fromModel == toModel)
+            var from = typeof(TFrom).As<RuntimeType>()._prototype;
+            var to = typeof(TTo).As<RuntimeType>()._prototype;
+            if (from.KnownType == KnownTypeHandle.SystemEnum)
+            {
+                from = from.As<EnumPrototype>().UnderlyingType;
+            }
+            if (to.KnownType == KnownTypeHandle.SystemEnum)
+            {
+                to = to.As<EnumPrototype>().UnderlyingType;
+            }
+            if (from == to)
                 return value.As<TFrom, TTo>();
 
-            if (toModel.KnownType.IsNumeric() && fromModel.KnownType.IsNumeric())
+            if (to.KnownType.IsNumeric() && from.KnownType.IsNumeric())
             {
-                if (numericCastDataView == null)
-                {
-                    var arrayBuffer = new ArrayBuffer(8);
-                    numericCastDataView = new DataView(arrayBuffer);
-                }
-                WriteDataView<TFrom>(numericCastDataView, fromModel.KnownType, value);
-                return ReadDataView<TTo>(numericCastDataView, toModel.KnownType);
+                var dv = GetReUsableDataView();
+                WriteDataView<TFrom>(dv, from.KnownType, value);
+                return ReadDataView<TTo>(dv, to.KnownType);
             }
 
-            //Casting a struct to a numeric should return the fields of the struct 
-            if (value.As<TFrom, object>() != null && fromModel.Flags.TypeHasFlag(TypeFlagsModel.IsValueType | TypeFlagsModel.IsPureStruct) && toModel.KnownType.IsNumeric())
-            {
-                throw null!;
-                //TODO:
-                //return value!.GetFieldRefOrPointer<TTo>(0, false).GetAt(0);
-            }
-
-            //If we are casting a struct to a struct, non primitive
-            //OR
-            //If we are tring to cast a numeric array to a structlayout object,
-            //allow it by pulling the provided array into the backing field array of the target type
-            if ((toModel.Flags.TypeHasFlag(TypeFlagsModel.IsValueType) &&
-            fromModel.Flags.TypeHasFlag(TypeFlagsModel.IsValueType) &&
-            !toModel.KnownType.IsPrimitive() &&
-            !fromModel.KnownType.IsPrimitive())
-            ||
-            (toModel.Flags.TypeHasFlag(TypeFlagsModel.IsValueType | TypeFlagsModel.IsStructLayout) &&
-            !toModel.KnownType.IsNumeric() &&
-            fromModel.KnownType.IsIntegerNumeric()))
-            {
-                throw null!;
-                //Array? array = value is Array a ? a : value.fieldsAsArray;
-                //object? obj = value;
-                //var newObject = toModel.New().As<TTo>()!;
-                //if (obj != null)
-                //    newObject._fields = obj._fields;
-                //else if (array != null)
-                //{
-                //    ArrayBuffer? buffer;
-                //    if (newObject.IsPureStruct && (buffer = RuntimeHelpers.ArrayBufferFrom(array, null)) != null)
-                //    {
-                //        var dataView = new DataView(buffer);
-                //        newObject._fields = dataView;
-                //    }
-                //    else
-                //    {
-                //        newObject._fields = array.As<object[]>();
-                //    }
-                //}
-                //return newObject;
-            }
             throw null!;
         }
 
@@ -1052,91 +1223,91 @@ namespace System.Runtime.CompilerServices
             } while (--maxItems > 0);
         }
 
-        public static byte[] StructToByteArray(object _object)
-        {
-            if (_object.IsPureStruct)
-            {
-                return Array.from(new Uint8Array(_object.fieldsAsDataView.buffer)).As<byte[]>();
-            }
-            var jsArray = _object.fieldsAsArray;
-            var fields = _object.GetType().As<RuntimeType>()._prototype.Metadata!.Fields!;
-            //all fields are byte type, no need to rearrange
-            if (fields.Every(f => f.FieldType.As<int>() == (int)KnownTypeHandle.SystemByte || f.FieldType.As<int>() == (int)KnownTypeHandle.SystemSByte))
-            {
-                return jsArray.As<byte[]>();
-            }
-            byte[] bytes = [];
-            RecursiveStructToByteArray(_object, bytes);
-            return bytes;
-        }
+        //public static byte[] StructToByteArray(object _object)
+        //{
+        //    if (_object.IsPureStruct)
+        //    {
+        //        return Array.from(new Uint8Array(_object.fieldsAsDataView.buffer)).As<byte[]>();
+        //    }
+        //    var jsArray = _object.fieldsAsArray;
+        //    var fields = _object.GetType().As<RuntimeType>()._prototype.Metadata!.Fields!;
+        //    //all fields are byte type, no need to rearrange
+        //    if (fields.every(f => f.FieldType.As<int>() == (int)KnownTypeHandle.SystemByte || f.FieldType.As<int>() == (int)KnownTypeHandle.SystemSByte))
+        //    {
+        //        return jsArray.As<byte[]>();
+        //    }
+        //    byte[] bytes = [];
+        //    RecursiveStructToByteArray(_object, bytes);
+        //    return bytes;
+        //}
 
-        static void RecursiveStructToByteArray(object _object, byte[] bytes)
-        {
-            var jsArray = _object.fieldsAsArray;
-            var fields = _object.GetType().As<RuntimeType>()._prototype.Metadata!.Fields!;
-            int currentByteOffset = 0;
-            for (int i = 0; i < fields.Length; i++)
-            {
-                var fieldType = AppDomain.GetType(fields[i].FieldType.As<uint>()).As<RuntimeType?>() ?? throw null!;
-                var fieldOffset = fields[i].Offset;
-                var fieldSize = fieldType._prototype.Size;
-                var value = jsArray[fieldOffset ?? currentByteOffset];
-                switch (fieldType._prototype.KnownType)
-                {
-                    case KnownTypeHandle.SystemByte:
-                    case KnownTypeHandle.SystemSByte:
-                        Debug.Assert(fieldSize == 1);
-                        bytes.Push(value);
-                        break;
-                    case KnownTypeHandle.SystemChar:
-                    case KnownTypeHandle.SystemInt16:
-                    case KnownTypeHandle.SystemUInt16:
-                        Debug.Assert(fieldSize == 2);
-                        bytes.Push(value.As<short>() & 0xFF);
-                        bytes.Push((value.As<short>() >> 8) & 0xFF);
-                        break;
-                    case KnownTypeHandle.SystemInt32:
-                    case KnownTypeHandle.SystemUint32:
-                    case KnownTypeHandle.SystemIntPtr:
-                    case KnownTypeHandle.SystemUIntPtr:
-                        Debug.Assert(fieldSize == 4);
-                        bytes.Push(value.As<uint>() & 0xFF);
-                        bytes.Push((value.As<uint>() >> 8) & 0xFF);
-                        bytes.Push((value.As<uint>() >> 16) & 0xFF);
-                        bytes.Push((value.As<uint>() >> 24) & 0xFF);
-                        break;
-                    case KnownTypeHandle.SystemInt64:
-                    case KnownTypeHandle.SystemUint64:
-                        Debug.Assert(fieldSize == 8);
-                        bytes.Push((int)(value.As<ulong>() & 0xFF));
-                        bytes.Push((int)((value.As<ulong>() >> 8) & 0xFF));
-                        bytes.Push((int)((value.As<ulong>() >> 16) & 0xFF));
-                        bytes.Push((int)((value.As<ulong>() >> 24) & 0xFF));
-                        bytes.Push((int)((value.As<ulong>() >> 32) & 0xFF));
-                        bytes.Push((int)((value.As<ulong>() >> 40) & 0xFF));
-                        bytes.Push((int)((value.As<ulong>() >> 48) & 0xFF));
-                        bytes.Push((int)((value.As<ulong>() >> 56) & 0xFF));
-                        break;
-                    default:
-                        if (fieldType._prototype.Flags.TypeHasFlag(TypeFlagsModel.IsValueType))
-                        {
-                            RecursiveStructToByteArray(value, bytes);
-                        }
-                        else //reference type, simply safe the js reference itself and skip 4(being our pointer size)
-                        {
-                            bytes.Push(value);
-                            bytes.Push(value);
-                            bytes.Push(value);
-                            bytes.Push(value);
-                        }
-                        break;
-                }
-                if (NetJs.Script.IsDefined(fieldOffset))
-                    currentByteOffset = fieldOffset.As<int>();
-                else
-                    currentByteOffset += fieldSize;
-            }
-        }
+        //static void RecursiveStructToByteArray(object _object, byte[] bytes)
+        //{
+        //    var jsArray = _object.fieldsAsArray;
+        //    var fields = _object.GetType().As<RuntimeType>()._prototype.Metadata!.Fields!;
+        //    int currentByteOffset = 0;
+        //    for (int i = 0; i < fields.Length; i++)
+        //    {
+        //        var fieldType = AppDomain.GetType(fields[i].FieldType.As<uint>()).As<RuntimeType?>() ?? throw null!;
+        //        var fieldOffset = fields[i].Offset;
+        //        var fieldSize = fieldType._prototype.Size;
+        //        var value = jsArray[fieldOffset ?? currentByteOffset];
+        //        switch (fieldType._prototype.KnownType)
+        //        {
+        //            case KnownTypeHandle.SystemByte:
+        //            case KnownTypeHandle.SystemSByte:
+        //                Debug.Assert(fieldSize == 1);
+        //                bytes.push(value);
+        //                break;
+        //            case KnownTypeHandle.SystemChar:
+        //            case KnownTypeHandle.SystemInt16:
+        //            case KnownTypeHandle.SystemUInt16:
+        //                Debug.Assert(fieldSize == 2);
+        //                bytes.push(value.As<short>() & 0xFF);
+        //                bytes.push((value.As<short>() >> 8) & 0xFF);
+        //                break;
+        //            case KnownTypeHandle.SystemInt32:
+        //            case KnownTypeHandle.SystemUInt32:
+        //            case KnownTypeHandle.SystemIntPtr:
+        //            case KnownTypeHandle.SystemUIntPtr:
+        //                Debug.Assert(fieldSize == 4);
+        //                bytes.push(value.As<uint>() & 0xFF);
+        //                bytes.push((value.As<uint>() >> 8) & 0xFF);
+        //                bytes.push((value.As<uint>() >> 16) & 0xFF);
+        //                bytes.push((value.As<uint>() >> 24) & 0xFF);
+        //                break;
+        //            case KnownTypeHandle.SystemInt64:
+        //            case KnownTypeHandle.SystemUInt64:
+        //                Debug.Assert(fieldSize == 8);
+        //                bytes.push((int)(value.As<ulong>() & 0xFF));
+        //                bytes.push((int)((value.As<ulong>() >> 8) & 0xFF));
+        //                bytes.push((int)((value.As<ulong>() >> 16) & 0xFF));
+        //                bytes.push((int)((value.As<ulong>() >> 24) & 0xFF));
+        //                bytes.push((int)((value.As<ulong>() >> 32) & 0xFF));
+        //                bytes.push((int)((value.As<ulong>() >> 40) & 0xFF));
+        //                bytes.push((int)((value.As<ulong>() >> 48) & 0xFF));
+        //                bytes.push((int)((value.As<ulong>() >> 56) & 0xFF));
+        //                break;
+        //            default:
+        //                if (fieldType._prototype.Flags.TypeHasFlag(TypeFlagsModel.IsValueType))
+        //                {
+        //                    RecursiveStructToByteArray(value, bytes);
+        //                }
+        //                else //reference type, simply safe the js reference itself and skip 4(being our pointer size)
+        //                {
+        //                    bytes.push(value);
+        //                    bytes.push(value);
+        //                    bytes.push(value);
+        //                    bytes.push(value);
+        //                }
+        //                break;
+        //        }
+        //        if (NetJs.Script.IsDefined(fieldOffset))
+        //            currentByteOffset = fieldOffset.As<int>();
+        //        else
+        //            currentByteOffset += fieldSize;
+        //    }
+        //}
 
         [IgnoreGeneric]
         public static void AddSpreadToCollection<T>(NativeAction<T> addMethod, IEnumerable<T> spreadItems)

@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Emit;
 using NetJs.Translator.CSharpToJavascript;
+using System.Collections.Concurrent;
 using System.IO;
 using System.IO.Compression;
 using System.Text.Json;
@@ -41,8 +42,8 @@ namespace NetJs.Translator
         bool isRazorProject;
         bool isRCL;
 
-        ISerializer serializer;
-        IDeserializer deSerializer;
+        static ISerializer? serializer; //make static so we can reuse, if doing multiple build
+        static IDeserializer? deSerializer;
 
         //ResXResourceReader;
         bool isSystemPrivateCoreLib;
@@ -74,8 +75,13 @@ namespace NetJs.Translator
             contentFiles = project.GetContentFiles();
             linkerFiles = project.GetLinkerFiles();
             embeddedFiles = project.GetEmbeddedFiles();
-            serializer = new SerializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
-            deSerializer = new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
+            serializer ??= new StaticSerializerBuilder(new YamlSerializationContext())
+                .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                .Build();
+            deSerializer ??= new StaticDeserializerBuilder(new YamlSerializationContext())
+                .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                .IgnoreUnmatchedProperties()
+                .Build();
             isSystemPrivateCoreLib = project.GetAssemblyName() == "NetJs.System.Private.CoreLib";
             projectTempFolder = Path.Combine(_tempFolder, project.GetName());
             wwwrootFolder = project.GetFolder() + Path.DirectorySeparatorChar + "wwwroot" + Path.DirectorySeparatorChar;
@@ -206,13 +212,13 @@ namespace NetJs.Translator
                     int ix = 1;
                     lock (typeof(Translator))
                     {
+                        var ext = Path.GetExtension(tempFile);
+                        var dir = Path.GetDirectoryName(tempFile);
+                        var fileName = Path.GetFileNameWithoutExtension(tempFile);
                         var iTempFile = tempFile;
                         while (File.Exists(iTempFile))
                         {
-                            var ext = Path.GetExtension(tempFile);
-                            var dir = Path.GetDirectoryName(tempFile);
-                            var fileName = Path.GetFileNameWithoutExtension(tempFile);
-                            iTempFile = dir + "/" + fileName + ix.ToString() + ext;
+                            iTempFile = dir + Path.DirectorySeparatorChar + fileName + ix.ToString() + ext;
                             ix++;
                         }
                         tempFile = iTempFile;
@@ -232,8 +238,8 @@ namespace NetJs.Translator
             var packegeReferences = _project.Evaluate("PackageReference", true);
             if (!packegeReferences.Contains("Microsoft.CodeAnalysis.ResxSourceGenerator"))
             {
-                var resourceFiles = contentFiles.Where(e => e.EndsWith(".resx")).ToArray();
-                var rootNamespace = _project.GetNamespace();
+                //var resourceFiles = contentFiles.Where(e => e.EndsWith(".resx")).ToArray();
+                var rootNamespace = _project.GetRootNamespace();
                 var rSources = ResXGenerator.GenerateStaticResource(null, _project.GetName(useNetJsFormat: false), _project.DirectoryPath, useNamespace: (srFile) =>
                 {
                     var folder = Path.GetRelativePath(_project.DirectoryPath, Path.GetDirectoryName(srFile)!);
@@ -241,7 +247,7 @@ namespace NetJs.Translator
                     return rootNamespace + "." + ns;
                 });
                 foreach (var source in rSources)
-                    sources.Add(("", source));
+                    sources.Add((source.Item1, source.Item2));
             }
         }
 
@@ -284,10 +290,12 @@ namespace NetJs.Translator
 
             if (!emitResult!.Success)
             {
+                Console.WriteLine("");
                 Console.WriteLine("Compilation failed!");
                 foreach (var diagnostic in emitResult.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error))
                 {
                     Console.Error.WriteLine(diagnostic.ToString());
+                    Error += diagnostic.ToString() + Environment.NewLine;
                 }
                 return false;
             }
@@ -295,12 +303,36 @@ namespace NetJs.Translator
             return true;
         }
 
+        static ConcurrentDictionary<string, SymbolDescriptor> _cachedSymbolDescriptors = new ConcurrentDictionary<string, SymbolDescriptor>();
         void PrepareToTranspile()
         {
             $"Preparing to transpile".Profile(() =>
             {
-                var importedNames = symbolFiles.Select(s => deSerializer.Deserialize<SymbolDescriptor>(File.ReadAllText(s))).ToList();
-                global = new GlobalCompilationVisitor(csCompilation, _project, isSystemPrivateCoreLib, importedNames);
+                List<SymbolDescriptor> importedNames = default!;
+                $"Unpacking symbol descriptors".Profile(() =>
+                {
+                    importedNames = new List<SymbolDescriptor>();
+                    foreach (var file in symbolFiles)
+                    {
+                        var symbol = _cachedSymbolDescriptors.GetOrAdd(file, (file) =>
+                        {
+                            using var reader = new StreamReader(file);
+                            return deSerializer!.Deserialize<SymbolDescriptor>(reader);
+                        });
+                        importedNames.Add(symbol);
+                    }
+                    //importedNames = symbolFiles
+                    //    .AsParallel()
+                    //    //.WithDegreeOfParallelism(8)
+                    //    .Select(file =>
+                    //    {
+                    //        using var reader = new StreamReader(file);
+                    //        return deSerializer!.Deserialize<SymbolDescriptor>(reader);
+                    //    })
+                    //    .ToList();
+                    //importedNames = symbolFiles.Select(s => deSerializer.Deserialize<SymbolDescriptor>(File.ReadAllText(s))).ToList();
+                });
+                global = new GlobalCompilationVisitor(csCompilation, _project, _output, isSystemPrivateCoreLib, importedNames);
                 metadataBuilder = new ReflectionMetadataBuilder(global, isSystemPrivateCoreLib, contentFiles.Where(e => e.EndsWith(".resx")).ToArray(), embeddedFiles.ToArray());
                 $"Initializing metadata".Profile(() =>
                 {
@@ -351,399 +383,498 @@ namespace NetJs.Translator
         {
             if (dllStream != null && pdbStream != null && docStream != null)
             {
-                //output the dll and pdb
-                dllStream.Position = 0;
-                pdbStream.Position = 0;
-                docStream.Position = 0;
-                pendingTask.Add(_output.Output(global, _project.GetName() + ".js.dll", dllStream));
-                pendingTask.Add(_output.Output(global, _project.GetName() + ".js.pdb", pdbStream));
-                pendingTask.Add(_output.Output(global, _project.GetName() + ".js.xml", docStream));
-
-                packages.Add((_project.GetName() + ".js.dll", dllStream));
-                packages.Add((_project.GetName() + ".js.pdb", pdbStream));
-                packages.Add((_project.GetName() + ".js.xml", docStream));
-                packages.Add(("package.yaml", new MemoryStream(Encoding.UTF8.GetBytes(serializer.Serialize(new PackageModel()
+                "Writing metadata to disk".Profile(() =>
                 {
-                    Dependencies = sortedReferences.Select(s =>
+                    //output the dll and pdb
+                    dllStream.Position = 0;
+                    pdbStream.Position = 0;
+                    docStream.Position = 0;
+                    pendingTask.Add(_output.Output(global, _project.GetAssemblyName() + ".js.dll", dllStream));
+                    pendingTask.Add(_output.Output(global, _project.GetAssemblyName() + ".js.pdb", pdbStream));
+                    pendingTask.Add(_output.Output(global, _project.GetAssemblyName() + ".js.xml", docStream));
+
+                    packages.Add((_project.GetAssemblyName() + ".js.dll", dllStream));
+                    packages.Add((_project.GetAssemblyName() + ".js.pdb", pdbStream));
+                    packages.Add((_project.GetAssemblyName() + ".js.xml", docStream));
+                    packages.Add(("package.yaml", new MemoryStream(Encoding.UTF8.GetBytes(serializer.Serialize(new PackageModel()
                     {
-                        var ret = Path.GetFileNameWithoutExtension(s.Display)!;
-                        if (ret.EndsWith(".js"))
-                            ret = Path.GetFileNameWithoutExtension(ret);
-                        return ret;
-                    })!
-                })))));
+                        Dependencies = sortedReferences.Select(s =>
+                        {
+                            var ret = Path.GetFileNameWithoutExtension(s.Display)!;
+                            if (ret.EndsWith(".js"))
+                                ret = Path.GetFileNameWithoutExtension(ret);
+                            return ret;
+                        })!
+                    })))));
+                });
             }
         }
 
         void CopyDependencies()
         {
-            //copy the wwwroot folder in every reference over to this wwwroot folder
-            foreach (var _ref in sortedReferences)
+            "Copy dependencies".Profile(() =>
             {
-                var refFolder = Path.GetDirectoryName(_ref.Display);
-                if (Directory.Exists(refFolder))
+                HashSet<string> seenFolder = new();
+                //copy the wwwroot folder in every reference over to this wwwroot folder
+                foreach (var _ref in sortedReferences)
                 {
-                    var files = Directory.EnumerateFiles(refFolder, "*.*", SearchOption.AllDirectories).ToList();
-                    var projectAssemblyName = Path.GetFileName(_ref.Display)!;
-                    if (projectAssemblyName.EndsWith(".dll"))
-                        projectAssemblyName = Path.GetFileNameWithoutExtension(projectAssemblyName);
-                    if (projectAssemblyName.EndsWith(".js"))
-                        projectAssemblyName = Path.GetFileNameWithoutExtension(projectAssemblyName);
-                    foreach (var file in files.OrderBy(o =>
+                    var refFolder = Path.GetDirectoryName(_ref.Display);
+                    if (!seenFolder.Add(refFolder!))
+                        continue;
+                    if (_ref.Display.Contains("LivingThing"))
                     {
-                        //order the files such that the ones for this particular reference is processed last, its dependencies first
-                        var fileName = Path.GetFileName(o);
-                        if (fileName.EndsWith(".js"))
-                            fileName = Path.GetFileNameWithoutExtension(fileName);
-                        if (fileName == projectAssemblyName)
-                            return 1;
-                        return 0;
-                    }))
+
+                    }
+                    if (Directory.Exists(refFolder))
                     {
-                        var relativePath = Path.GetRelativePath(refFolder, file);
-                        pendingTask.Add(_output.Output(global, relativePath, file));
-                        var extension = Path.GetExtension(file).ToLower();
-                        if (extension == ".js" && !file.EndsWith(".min.js") && !sortedOutputtedJsFiles.Contains(relativePath))
-                            sortedOutputtedJsFiles.Add(relativePath);
+                        var files = Directory.EnumerateFiles(refFolder, "*.*", SearchOption.AllDirectories);
+                        //var projectAssemblyName = Path.GetFileName(_ref.Display)!;
+                        //if (projectAssemblyName.EndsWith(".dll"))
+                        //    projectAssemblyName = Path.GetFileNameWithoutExtension(projectAssemblyName);
+                        //if (projectAssemblyName.EndsWith(".js"))
+                        //    projectAssemblyName = Path.GetFileNameWithoutExtension(projectAssemblyName);
+                        //files = files.OrderBy(o =>
+                        //{
+                        //    //order the files such that the ones for this particular reference is processed last, its dependencies first
+                        //    var fileName = Path.GetFileName(o);
+                        //    if (fileName.EndsWith(".js"))
+                        //        fileName = Path.GetFileNameWithoutExtension(fileName);
+                        //    if (fileName == projectAssemblyName)
+                        //        return 1;
+                        //    return 0;
+                        //});
+                        foreach (var file in files)
+                        {
+                            var relativePath = Path.GetRelativePath(refFolder, file);
+                            pendingTask.Add(_output.Output(global, relativePath, file));
+                            var extension = Path.GetExtension(file).ToLower();
+                            if (extension == ".js" &&
+                                !file.EndsWith(".min.js") &&
+                                !file.EndsWith(".trimmed.js") &&
+                                !file.EndsWith(".trimmed.min.js") &&
+                                !file.Contains($"{Path.DirectorySeparatorChar}wwwroot{Path.DirectorySeparatorChar}_content{Path.DirectorySeparatorChar}") &&
+                                !sortedOutputtedJsFiles.Contains(relativePath))
+                            {
+                                if (indexFile != null && //skip copy these default blazor files
+                                    (relativePath == "dotnet.js" ||
+                                    relativePath == "dotnet.native.js" ||
+                                    relativePath == "dotnet.runtime.js" ||
+                                    relativePath == $"wwwroot{Path.DirectorySeparatorChar}dotnet.native.js" ||
+                                    relativePath == $"wwwroot{Path.DirectorySeparatorChar}dotnet.runtime.js" ||
+                                    relativePath == $"wwwroot{Path.DirectorySeparatorChar}service-worker-assets.js" ||
+                                    relativePath == $"wwwroot{Path.DirectorySeparatorChar}service-worker.js" ||
+                                    relativePath == $"wwwroot{Path.DirectorySeparatorChar}service-worker.published.js" ||
+                                    relativePath == $"wwwroot{Path.DirectorySeparatorChar}_framework{Path.DirectorySeparatorChar}dotnet.js" ||
+                                    relativePath == $"wwwroot{Path.DirectorySeparatorChar}_framework{Path.DirectorySeparatorChar}blazor.webassembly.js" ||
+                                    relativePath.StartsWith($"wwwroot{Path.DirectorySeparatorChar}_framework{Path.DirectorySeparatorChar}dotnet.native.") ||
+                                    relativePath.StartsWith($"wwwroot{Path.DirectorySeparatorChar}_framework{Path.DirectorySeparatorChar}dotnet.runtime.")))
+                                    continue;
+                                var fileName = Path.GetFileNameWithoutExtension(file);
+                                if (fileName == _project.GetName())
+                                    continue;
+                                sortedOutputtedJsFiles.Add(relativePath);
+                            }
+                        }
                     }
                 }
-            }
+                var referenceOrder = sortedReferences
+                    .Select((refItem, index) =>
+                    {
+                        var name = Path.GetFileNameWithoutExtension(refItem.Display!);
+                        if (name.EndsWith(".js"))
+                            name = Path.GetFileNameWithoutExtension(name);
+                        return new { Name = name, Index = index };
+                    })
+                    .ToDictionary(x => x.Name, x => x.Index);
+                sortedOutputtedJsFiles.Sort((a, b) =>
+                {
+                    string fileNameA = Path.GetFileNameWithoutExtension(a);
+                    string fileNameB = Path.GetFileNameWithoutExtension(b);
+
+                    // Default to int.MinValue so missing items get sorted to the very front
+                    int indexA = referenceOrder.TryGetValue(fileNameA, out int idxA) ? idxA : int.MinValue;
+                    int indexB = referenceOrder.TryGetValue(fileNameB, out int idxB) ? idxB : int.MinValue;
+
+                    return indexA.CompareTo(indexB);
+                });
+            });
         }
 
         void CopyOwnAssets()
         {
-            foreach (var file in wwwrootFiles)
+            "Copy own assets".Profile(() =>
             {
-                var relativePath = Path.GetRelativePath(_project.GetFolder(), file);
-                var outputPath = !relativePath.StartsWith(Constants.OutputFolderName + Path.DirectorySeparatorChar) ? Constants.OutputFolderName + Path.DirectorySeparatorChar + relativePath : relativePath;
-                if (isRCL)
+                foreach (var file in wwwrootFiles)
                 {
-                    outputPath = outputPath.Replace("wwwroot" + Path.DirectorySeparatorChar, $"wwwroot{Path.DirectorySeparatorChar}_content{Path.DirectorySeparatorChar}{_project.GetName()}{Path.DirectorySeparatorChar}");
+                    var relativePath = Path.GetRelativePath(_project.GetFolder(), file);
+                    var outputPath = !relativePath.StartsWith(Constants.OutputFolderName + Path.DirectorySeparatorChar) ? Constants.OutputFolderName + Path.DirectorySeparatorChar + relativePath : relativePath;
+                    if (isRCL)
+                    {
+                        outputPath = outputPath.Replace("wwwroot" + Path.DirectorySeparatorChar, $"wwwroot{Path.DirectorySeparatorChar}_content{Path.DirectorySeparatorChar}{_project.GetName(useNetJsFormat: false)}{Path.DirectorySeparatorChar}");
+                    }
+                    packages.Add((outputPath, file));
+                    pendingTask.Add(_output.Output(global, outputPath, file));
                 }
-                packages.Add((outputPath, file));
-                pendingTask.Add(_output.Output(global, outputPath, file));
-            }
 
-            var scopedCssBundles = contentFiles.Where(e => !e.StartsWith(wwwrootFolder) && e.EndsWith(".styles.css"));
-            foreach (var file in scopedCssBundles)
-            {
-                var relativePath = Path.GetRelativePath(_project.GetFolder(), file);
-                var outputPath = $"wwwroot{Path.DirectorySeparatorChar}{Path.GetFileName(file)}";
-                if (isRCL)
+                var scopedCssBundles = contentFiles.Where(e => !e.StartsWith(wwwrootFolder) && e.EndsWith(".styles.css"));
+                foreach (var file in scopedCssBundles)
                 {
-                    outputPath = outputPath.Replace("wwwroot" + Path.DirectorySeparatorChar, $"wwwroot{Path.DirectorySeparatorChar}_content{Path.DirectorySeparatorChar}{_project.GetName()}{Path.DirectorySeparatorChar}");
+                    var relativePath = Path.GetRelativePath(_project.GetFolder(), file);
+                    var outputPath = $"wwwroot{Path.DirectorySeparatorChar}{Path.GetFileName(file)}";
+                    if (isRCL)
+                    {
+                        outputPath = outputPath.Replace("wwwroot" + Path.DirectorySeparatorChar, $"wwwroot{Path.DirectorySeparatorChar}_content{Path.DirectorySeparatorChar}{_project.GetName(useNetJsFormat: false)}{Path.DirectorySeparatorChar}");
+                    }
+                    packages.Add((outputPath, file));
+                    pendingTask.Add(_output.Output(global, outputPath, file));
                 }
-                packages.Add((outputPath, file));
-                pendingTask.Add(_output.Output(global, outputPath, file));
-            }
+            });
         }
 
         void WriteTranslatedJsToDisk()
         {
-            HashSet<INamedTypeSymbol> outputted = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
-            HashSet<INamedTypeSymbol> outputting = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
-            HashSet<INamedTypeSymbol> stubbed = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
-            void SortedOutputBuild(INamedTypeSymbol root, INamedTypeSymbol symbol, StringBuilder stringBuilder, int formatTabs, ref bool dependsOnSelf)
+            "Write js to disk".Profile(() =>
             {
-                if (global.HasAttribute(symbol, typeof(DependsOnAttribute).FullName!, null, false, out var args))
+                HashSet<INamedTypeSymbol> outputted = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+                HashSet<INamedTypeSymbol> outputting = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+                HashSet<INamedTypeSymbol> stubbed = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+                void SortedOutputBuild(INamedTypeSymbol root, INamedTypeSymbol symbol, StringBuilder stringBuilder, int formatTabs, ref bool dependsOnSelf)
                 {
-                    var types = ((IEnumerable<TypedConstant>)args[0]!).Select(c => (INamedTypeSymbol)c.Value!);
-                    foreach (var type in types)
+                    if (global.HasAttribute(symbol, typeof(DependsOnAttribute).FullName!, null, false, out var args))
                     {
-                        bool _dependsOnSelf = false;
-                        SortedOutputBuild(root, type, stringBuilder, formatTabs, ref _dependsOnSelf);
-                    }
-                }
-                //var dependentTypes = DependentTypes(symbol);
-                //if (dependentTypes.Contains(symbol, SymbolEqualityComparer.Default))
-                //{
-                //    //var metadata = global.GetMetadata(symbol.OriginalDefinition);
-                //    //if (metadata != null)
-                //    //{
-                //    if (global.ShouldExportType(symbol.OriginalDefinition, null) && stubbed.Add(symbol.OriginalDefinition))
-                //        stringBuilder.AppendLine($"        {Constants.AssemblyRegistryName}.{Constants.AssemblyTypeProxyName}(\"{symbol.OriginalDefinition.CreateSignature(global, withGlobalNamespace: false, withAssemblySlugNamespace: true)}\");");
-                //    //}
-                //}
-                IEnumerable<INamedTypeSymbol> GetDirectDependecies(INamedTypeSymbol symbol)
-                {
-                    if (symbol.BaseType != null)
-                    {
-                        yield return symbol.BaseType;
-                        foreach (var ss in symbol.BaseType.TypeArguments)
+                        var types = ((IEnumerable<TypedConstant>)args[0]!).Select(c => (INamedTypeSymbol)c.Value!);
+                        foreach (var type in types)
                         {
-                            if (ss is INamedTypeSymbol nt)
-                            {
-                                yield return nt;
-                                //foreach(var sss in GetDirectDependecies)
-                            }
+                            bool _dependsOnSelf = false;
+                            SortedOutputBuild(root, type, stringBuilder, formatTabs, ref _dependsOnSelf);
                         }
                     }
-                    if (symbol.EnumUnderlyingType != null)
+                    //var dependentTypes = DependentTypes(symbol);
+                    //if (dependentTypes.Contains(symbol, SymbolEqualityComparer.Default))
+                    //{
+                    //    //var metadata = global.GetMetadata(symbol.OriginalDefinition);
+                    //    //if (metadata != null)
+                    //    //{
+                    //    if (global.ShouldExportType(symbol.OriginalDefinition, null) && stubbed.Add(symbol.OriginalDefinition))
+                    //        stringBuilder.AppendLine($"        {Constants.AssemblyRegistryName}.{Constants.AssemblyTypeProxyName}(\"{symbol.OriginalDefinition.CreateSignature(global, withGlobalNamespace: false, withAssemblySlugNamespace: true)}\");");
+                    //    //}
+                    //}
+                    IEnumerable<INamedTypeSymbol> GetDirectDependecies(INamedTypeSymbol symbol)
                     {
-                        yield return symbol.EnumUnderlyingType;
-                    }
-                    foreach (var s in symbol.Interfaces)
-                    {
-                        yield return s;
-                        foreach (var ss in s.TypeArguments)
+                        if (symbol.BaseType != null)
                         {
-                            if (ss is INamedTypeSymbol nt)
+                            yield return symbol.BaseType;
+                            foreach (var ss in symbol.BaseType.TypeArguments)
                             {
-                                yield return nt;
-                                //foreach(var sss in GetDirectDependecies(nt))
-                                //yield return sss;
-                            }
-                        }
-                    }
-                }
-                var directDependency = GetDirectDependecies(symbol);
-                foreach (var dep in directDependency)
-                {
-                    if (dep.ContainingAssembly.Equals(symbol.ContainingAssembly, SymbolEqualityComparer.Default) &&
-                        dep.ContainingSymbol.Kind != SymbolKind.NamedType &&
-                        !symbol.Equals(dep, SymbolEqualityComparer.Default) &&
-                        !outputted.Contains(dep.OriginalDefinition))
-                    {
-                        //var metadata = global.GetMetadata(dep.OriginalDefinition);
-                        //if (metadata != null)
-                        //{
-                        if (global.ShouldExportType(dep.OriginalDefinition, null) && stubbed.Add(dep.OriginalDefinition))
-                        {
-                            var typeMetadata = global.GetRequiredMetadata(dep.OriginalDefinition);// SyntaxSymbols.GetValueOrDefault(node)?.First() ?? default;
-                            string fullClassName;
-                            if (typeMetadata.OverloadName != null)
-                            {
-                                if (dep.OriginalDefinition.Arity > 0)
+                                if (ss is INamedTypeSymbol nt)
                                 {
-                                    fullClassName = typeMetadata.OverloadName.TrimEnd('$') + $"<{string.Join(",", Enumerable.Range(1, dep.OriginalDefinition.Arity).Select(n => ""))}>";
+                                    yield return nt;
+                                    //foreach(var sss in GetDirectDependecies)
+                                }
+                            }
+                            if (symbol.BaseType.ContainingType != null)
+                            {
+                                foreach (var ss in symbol.BaseType.ContainingType.TypeArguments)
+                                {
+                                    if (ss is INamedTypeSymbol nt)
+                                    {
+                                        yield return nt;
+                                        //foreach(var sss in GetDirectDependecies)
+                                    }
+                                }
+                            }
+                        }
+                        if (symbol.EnumUnderlyingType != null)
+                        {
+                            yield return symbol.EnumUnderlyingType;
+                        }
+                        foreach (var s in symbol.Interfaces)
+                        {
+                            yield return s;
+                            foreach (var ss in s.TypeArguments)
+                            {
+                                if (ss is INamedTypeSymbol nt)
+                                {
+                                    yield return nt;
+                                    //foreach(var sss in GetDirectDependecies(nt))
+                                    //yield return sss;
+                                }
+                            }
+                        }
+                    }
+                    var directDependency = GetDirectDependecies(symbol);
+                    foreach (var dep in directDependency)
+                    {
+                        if (dep.ContainingAssembly.Equals(symbol.ContainingAssembly, SymbolEqualityComparer.Default) &&
+                            dep.ContainingSymbol.Kind != SymbolKind.NamedType &&
+                            !symbol.Equals(dep, SymbolEqualityComparer.Default) &&
+                            !outputted.Contains(dep.OriginalDefinition))
+                        {
+                            //var metadata = global.GetMetadata(dep.OriginalDefinition);
+                            //if (metadata != null)
+                            //{
+                            if (global.ShouldExportType(dep.OriginalDefinition, null) && stubbed.Add(dep.OriginalDefinition))
+                            {
+                                var typeMetadata = global.GetRequiredMetadata(dep.OriginalDefinition);// SyntaxSymbols.GetValueOrDefault(node)?.First() ?? default;
+                                string fullClassName;
+                                if (typeMetadata.OverloadName != null)
+                                {
+                                    if (dep.OriginalDefinition.Arity > 0)
+                                    {
+                                        fullClassName = typeMetadata.OverloadName.TrimEnd('$') + $"<{string.Join(",", Enumerable.Range(1, dep.Arity).Select(n => ""))}>";
+                                    }
+                                    else
+                                    {
+                                        fullClassName = typeMetadata.OverloadName;
+                                    }
                                 }
                                 else
                                 {
-                                    fullClassName = typeMetadata.OverloadName;
+                                    fullClassName = typeMetadata.OverloadName!;
                                 }
+                                if (global.BuildFlags.HasFlag(NetJsBuildFlags.Global) && fullClassName.StartsWith(global.GlobalName + "."))
+                                {
+                                    fullClassName = fullClassName.Substring(global.GlobalName.Length + 1);
+                                }
+                                stringBuilder.AppendLine($"        {Constants.AssemblyRegistryName}.{Constants.AssemblyTypeProxyName}(\"{fullClassName}\", \"{dep.OriginalDefinition.CreateSignature(global, withGlobalNamespace: false, withAssemblySlugNamespace: true).RemoveGenericParameterNames(out _)}\");");
                             }
-                            else
-                            {
-                                fullClassName = typeMetadata.OverloadName!;
-                            }
-                            if (global.BuildFlags.HasFlag(NetJsBuildFlags.Global) && fullClassName.StartsWith(global.GlobalName + "."))
-                            {
-                                fullClassName = fullClassName.Substring(global.GlobalName.Length + 1);
-                            }
-                            stringBuilder.AppendLine($"        {Constants.AssemblyRegistryName}.{Constants.AssemblyTypeProxyName}(\"{fullClassName}\");");
-                        }
-                        //}
-                    }
-                }
-                //if (symbol.Arity > 0)
-                //{
-                //    foreach (var t in symbol.TypeArguments)
-                //    {
-                //        if (t is INamedTypeSymbol genericArgument)
-                //        {
-                //            if (genericArgument.OutputRank(0) > symbol.OutputRank(0) && !outputted.Contains(genericArgument.OriginalDefinition))
-                //            {
-                //                var metadata = global.GetMetadata(t);
-                //                if (metadata != null)
-                //                {
-                //                    if (stubbed.Add(genericArgument.OriginalDefinition))
-                //                        stringBuilder.AppendLine($"        {Constants.AssemblyRegistryName}.{Constants.AssemblyTypeProxyName}(\"{metadata.FullName}\");");
-                //                }
-                //            }
-                //            //if (!nt.IsGenericType && t.OriginalDefinition.Equals(root.OriginalDefinition, SymbolEqualityComparer.Default))
-                //            //{
-                //            //    if (!dependsOnSelf)
-                //            //    {
-                //            //        dependsOnSelf = true;
-                //            //        var metadata = global.GetMetadata(t);
-                //            //        if (metadata != null)
-                //            //        {
-                //            //            if (stubbed.Add(nt))
-                //            //                stringBuilder.AppendLine($"        {Constants.AssemblyRegistryName}.{Constants.AssemblyTypeProxyName}(\"{metadata.FullName}\");");
-                //            //        }
-                //            //    }
-                //            //}
-
-                //            //SortedOutputBuild(root, nt, stringBuilder, formatTabs, ref dependsOnSelf);
-                //        }
-                //    }
-                //}
-                ////bool isOutputted = outputted.Contains(symbol.OriginalDefinition);
-                ////if (isOutputted)
-                ////{
-                ////    return;
-                ////}
-                ////bool isOutputting = outputting.Contains(symbol.OriginalDefinition);
-                ////if (isOutputting) //this symbol has dependency on self
-                ////{
-                ////    var metadata = global.GetMetadata(symbol);
-                ////    if (metadata != null)
-                ////    {
-                ////        if (stubbed.Add(symbol))
-                ////            stringBuilder.AppendLine($"        {Constants.AssemblyRegistryName}.{Constants.AssemblyTypeProxyName}(\"{metadata.FullName}\");");
-                ////    }
-                ////    return;
-                ////}
-                ////outputting.Add(symbol.OriginalDefinition);
-                //if (symbol.BaseType != null)
-                //{
-                //    if (symbol.BaseType.Arity > 0)
-                //    {
-                //        foreach (var t in symbol.BaseType.TypeArguments)
-                //        {
-                //            if (t is INamedTypeSymbol genericArgument)
-                //            {
-                //                if (genericArgument.OutputRank(0) > symbol.OutputRank(0) && !outputted.Contains(genericArgument.OriginalDefinition))
-                //                {
-                //                    var metadata = global.GetMetadata(t.OriginalDefinition);
-                //                    if (metadata != null)
-                //                    {
-                //                        if (stubbed.Add(genericArgument.OriginalDefinition))
-                //                            stringBuilder.AppendLine($"        {Constants.AssemblyRegistryName}.{Constants.AssemblyTypeProxyName}(\"{metadata.FullName}\");");
-                //                    }
-                //                }
-                //            }
-                //        }
-                //    }
-                //    //bool mdependsOnSelf = false;
-                //    //SortedOutputBuild(symbol, symbol.BaseType, stringBuilder, formatTabs, ref mdependsOnSelf);
-                //}
-                //foreach (var i in symbol.AllInterfaces)
-                //{
-                //    if (i.Arity > 0)
-                //    {
-                //        foreach (var t in i.TypeArguments)
-                //        {
-                //            if (t is INamedTypeSymbol genericArgument)
-                //            {
-                //                if ((genericArgument.OutputRank(0) > symbol.OutputRank(0) || symbol.Equals(genericArgument, SymbolEqualityComparer.Default)) && !outputted.Contains(genericArgument.OriginalDefinition))
-                //                {
-                //                    var metadata = global.GetMetadata(t.OriginalDefinition);
-                //                    if (metadata != null)
-                //                    {
-                //                        if (stubbed.Add(genericArgument.OriginalDefinition))
-                //                            stringBuilder.AppendLine($"        {Constants.AssemblyRegistryName}.{Constants.AssemblyTypeProxyName}(\"{metadata.FullName}\");");
-                //                    }
-                //                }
-                //            }
-                //        }
-                //    }
-                //    //bool mdependsOnSelf = false;
-                //    //SortedOutputBuild(symbol, i, stringBuilder, formatTabs, ref mdependsOnSelf);
-                //}
-                //var visitor = global.TypeVisitors.GetValueOrDefault(symbol.OriginalDefinition);
-                //if (visitor != null)
-                //{
-                //    foreach (var dep in visitor.Dependencies)
-                //    {
-                //        SortedOutputBuild(root, dep, stringBuilder, formatTabs, ref dependsOnSelf);
-                //    }
-                //}
-                var writer = global.TypeWriters.GetValueOrDefault(symbol.OriginalDefinition);
-                if (writer != null)
-                {
-                    var code = writer.Build(formatTabs);
-                    if (!string.IsNullOrWhiteSpace(code))
-                        stringBuilder.AppendLine(code);
-                }
-                outputted.Add(symbol.OriginalDefinition);
-            }
-
-            if (global.BuildFlags.HasFlag(NetJsBuildFlags.SingleFile))
-            {
-                //var existingFolder = Path.Combine(output.OutputPath, Constants.OutputFolderName);
-                //if (Directory.Exists(existingFolder))
-                //Directory.Delete(existingFolder, true);
-                string bootCodes = "";
-                string codes;
-                if (global.BuildFlags.HasFlag(NetJsBuildFlags.Global))
-                {
-                    StringBuilder stringBuilder = new();
-                    StringBuilder bootStringBuilder = new();
-                    foreach (var type in global.TypeVisitors.Where(e =>
-                    {
-                        return global.IsBootClass(e.Key);
-                    })
-                    .OrderBy(o =>
-                    {
-                        if (global.HasAttribute(o.Key, typeof(OutputOrderAttribute).FullName!, null, false, out var args))
-                        {
-                            int a = int.Parse(args[0]!.ToString()!);
-                            return a;
-                        }
-                        return o.Key.OutputRank(0);
-                        //return 0;
-                    })
-                    //.ThenBy(e => e.Key.ComputeOutputTypeName(global))  //order in a predictable manner so we dont keep losing breakpoint position when debugging
-                    )
-                    {
-                        var writer = global.TypeWriters.GetValueOrDefault(type.Key.OriginalDefinition);
-                        if (writer != null)
-                        {
-                            //var writer = visitor.TypeWriters[type];
-                            //foreach (var writer in visitor.TypeWriters.Values)
-                            //{
-                            var code = writer.Build(1);
-                            if (!string.IsNullOrWhiteSpace(code))
-                                bootStringBuilder.AppendLine(code);
                             //}
-                            outputted.Add(type.Key.OriginalDefinition);
                         }
                     }
-                    foreach (var tw in global.TypeVisitors.Where(e =>
+                    //if (symbol.Arity > 0)
+                    //{
+                    //    foreach (var t in symbol.TypeArguments)
+                    //    {
+                    //        if (t is INamedTypeSymbol genericArgument)
+                    //        {
+                    //            if (genericArgument.OutputRank(0) > symbol.OutputRank(0) && !outputted.Contains(genericArgument.OriginalDefinition))
+                    //            {
+                    //                var metadata = global.GetMetadata(t);
+                    //                if (metadata != null)
+                    //                {
+                    //                    if (stubbed.Add(genericArgument.OriginalDefinition))
+                    //                        stringBuilder.AppendLine($"        {Constants.AssemblyRegistryName}.{Constants.AssemblyTypeProxyName}(\"{metadata.FullName}\");");
+                    //                }
+                    //            }
+                    //            //if (!nt.IsGenericType && t.OriginalDefinition.Equals(root.OriginalDefinition, SymbolEqualityComparer.Default))
+                    //            //{
+                    //            //    if (!dependsOnSelf)
+                    //            //    {
+                    //            //        dependsOnSelf = true;
+                    //            //        var metadata = global.GetMetadata(t);
+                    //            //        if (metadata != null)
+                    //            //        {
+                    //            //            if (stubbed.Add(nt))
+                    //            //                stringBuilder.AppendLine($"        {Constants.AssemblyRegistryName}.{Constants.AssemblyTypeProxyName}(\"{metadata.FullName}\");");
+                    //            //        }
+                    //            //    }
+                    //            //}
+
+                    //            //SortedOutputBuild(root, nt, stringBuilder, formatTabs, ref dependsOnSelf);
+                    //        }
+                    //    }
+                    //}
+                    ////bool isOutputted = outputted.Contains(symbol.OriginalDefinition);
+                    ////if (isOutputted)
+                    ////{
+                    ////    return;
+                    ////}
+                    ////bool isOutputting = outputting.Contains(symbol.OriginalDefinition);
+                    ////if (isOutputting) //this symbol has dependency on self
+                    ////{
+                    ////    var metadata = global.GetMetadata(symbol);
+                    ////    if (metadata != null)
+                    ////    {
+                    ////        if (stubbed.Add(symbol))
+                    ////            stringBuilder.AppendLine($"        {Constants.AssemblyRegistryName}.{Constants.AssemblyTypeProxyName}(\"{metadata.FullName}\");");
+                    ////    }
+                    ////    return;
+                    ////}
+                    ////outputting.Add(symbol.OriginalDefinition);
+                    //if (symbol.BaseType != null)
+                    //{
+                    //    if (symbol.BaseType.Arity > 0)
+                    //    {
+                    //        foreach (var t in symbol.BaseType.TypeArguments)
+                    //        {
+                    //            if (t is INamedTypeSymbol genericArgument)
+                    //            {
+                    //                if (genericArgument.OutputRank(0) > symbol.OutputRank(0) && !outputted.Contains(genericArgument.OriginalDefinition))
+                    //                {
+                    //                    var metadata = global.GetMetadata(t.OriginalDefinition);
+                    //                    if (metadata != null)
+                    //                    {
+                    //                        if (stubbed.Add(genericArgument.OriginalDefinition))
+                    //                            stringBuilder.AppendLine($"        {Constants.AssemblyRegistryName}.{Constants.AssemblyTypeProxyName}(\"{metadata.FullName}\");");
+                    //                    }
+                    //                }
+                    //            }
+                    //        }
+                    //    }
+                    //    //bool mdependsOnSelf = false;
+                    //    //SortedOutputBuild(symbol, symbol.BaseType, stringBuilder, formatTabs, ref mdependsOnSelf);
+                    //}
+                    //foreach (var i in symbol.AllInterfaces)
+                    //{
+                    //    if (i.Arity > 0)
+                    //    {
+                    //        foreach (var t in i.TypeArguments)
+                    //        {
+                    //            if (t is INamedTypeSymbol genericArgument)
+                    //            {
+                    //                if ((genericArgument.OutputRank(0) > symbol.OutputRank(0) || symbol.Equals(genericArgument, SymbolEqualityComparer.Default)) && !outputted.Contains(genericArgument.OriginalDefinition))
+                    //                {
+                    //                    var metadata = global.GetMetadata(t.OriginalDefinition);
+                    //                    if (metadata != null)
+                    //                    {
+                    //                        if (stubbed.Add(genericArgument.OriginalDefinition))
+                    //                            stringBuilder.AppendLine($"        {Constants.AssemblyRegistryName}.{Constants.AssemblyTypeProxyName}(\"{metadata.FullName}\");");
+                    //                    }
+                    //                }
+                    //            }
+                    //        }
+                    //    }
+                    //    //bool mdependsOnSelf = false;
+                    //    //SortedOutputBuild(symbol, i, stringBuilder, formatTabs, ref mdependsOnSelf);
+                    //}
+                    //var visitor = global.TypeVisitors.GetValueOrDefault(symbol.OriginalDefinition);
+                    //if (visitor != null)
+                    //{
+                    //    foreach (var dep in visitor.Dependencies)
+                    //    {
+                    //        SortedOutputBuild(root, dep, stringBuilder, formatTabs, ref dependsOnSelf);
+                    //    }
+                    //}
+                    var writer = global.TypeWriters.GetValueOrDefault(symbol.OriginalDefinition);
+                    if (writer != null)
                     {
-                        return !global.IsBootClass(e.Key);
-                        //return !global.HasAttribute(e, typeof(BootAttribute).FullName, null, false, out _);
-                    })
-                    //.OrderBy(e => e.Key.ComputeOutputTypeName(global))  //order in a predictable manner so we dont keep losing breakpoint position when debugging
-                    .OrderBy(o =>
-                    {
-                        if (global.HasAttribute(o.Key, typeof(OutputOrderAttribute).FullName!, null, false, out var args))
-                        {
-                            int a = int.Parse(args[0]!.ToString()!);
-                            return a;
-                        }
-                        return o.Key.OutputRank(0);
-                    }))
-                    {
-                        bool dependsOnSelf = false;
-                        SortedOutputBuild(tw.Key, tw.Key, stringBuilder, 2, ref dependsOnSelf);
+                        var code = writer.Build(formatTabs);
+                        if (!string.IsNullOrWhiteSpace(code))
+                            stringBuilder.AppendLine(code);
                     }
-                    bootCodes = bootStringBuilder.ToString().Trim();
-                    codes = stringBuilder.ToString().Trim();
+                    outputted.Add(symbol.OriginalDefinition);
                 }
-                else
+
+                if (global.BuildFlags.HasFlag(NetJsBuildFlags.SingleFile))
                 {
-                    codes = string.Join("\r\n", global.Visitors.Select(v => v.Value.Build(2).Trim()).Where(e => !string.IsNullOrEmpty(e)));
-                }
-                //                if (global.ModuleInitializers.Count > 0)
-                //                {
-                //                    codes +=
-                //                        @$"
-                //        static {Constants.RunModuleInitializersName}()
-                //        {{
-                //{string.Join("\r\n", global.ModuleInitializers.Select(e => "            " + e))}
-                //        }}
-                //";
-                //                }
-                //var metadataBuilder = new ReflectionMetadataBuilder(global, isSystemPrivateCoreLib, contentFiles.Where(e => e.EndsWith(".resx")).ToArray(), embeddedFiles.ToArray());
-                var reflectionMetadata = metadataBuilder.FromAssemblySymbol(csCompilation.Assembly);
-                var refAssemblySlugs = string.Join(", ", csCompilation.SourceModule.ReferencedAssemblySymbols.Select(a => global.GetAssemblyGlobalSlug(a)));
-                var refAssemblyNames = string.Join(", ", csCompilation.SourceModule.ReferencedAssemblySymbols.Select(a => "\"" + a.Name + "\""));
-                var outputFileName = Constants.OutputFolderName + Path.DirectorySeparatorChar + _project.GetName() + ".js";
-                var appDomain = isSystemPrivateCoreLib ? (INamedTypeSymbol)global.GetSymbol("System.AppDomain", null) : null;
-                var initDomain = isSystemPrivateCoreLib ? appDomain?.GetMembers("Initialize").Single() : null;
-                var initDomainMetadata = initDomain != null ? global.GetRequiredMetadata(initDomain) : null;
-                var createAssembly = isSystemPrivateCoreLib ? appDomain?.GetMembers("CreateAssembly").Single() : null;
-                var createAssemblyMetadata = createAssembly != null ? global.GetRequiredMetadata(createAssembly) : null;
-                //{ (isSystemPrivateCoreLib ? $"{global.GlobalName}.{Constants.AssemblyRegistryName} = {createAssemblyMetadata?.InvocationName}{global.GlobalName}.{global.GetAssemblyGlobalSlug(global.Compilation.Assembly)}.{(global.BuildFlags.HasFlag(NetJsBuildFlags.MinifyNamespaces) ? "S" : "System")}.AppDomain.{Constants.AssemblyRegistryName};" : "")}
-                //{ (isSystemPrivateCoreLib ? $"{global.GlobalName}.{global.GetAssemblyGlobalSlug(global.Compilation.Assembly)}.{(global.BuildFlags.HasFlag(NetJsBuildFlags.MinifyNamespaces) ? "S" : "System")}.AppDomain.{Constants.AppDomainInitialize}($asm)" : "")}
-                var trimming = global.Compilation.Assembly.TrimmableBoundary(global);
-                var jsCode = global.BuildFlags.HasFlag(NetJsBuildFlags.Global) ? @$"
+                    //var existingFolder = Path.Combine(output.OutputPath, Constants.OutputFolderName);
+                    //if (Directory.Exists(existingFolder))
+                    //Directory.Delete(existingFolder, true);
+                    string bootCodes = "";
+                    string codes;
+                    if (global.BuildFlags.HasFlag(NetJsBuildFlags.Global))
+                    {
+                        StringBuilder stringBuilder = new();
+                        StringBuilder bootStringBuilder = new();
+                        foreach (var type in global.TypeVisitors.Where(e =>
+                        {
+                            return global.IsBootClass(e.Key);
+                        }).SortTypesForJavaScript(e => e.Key)
+                        //.OrderBy(o =>
+                        //{
+                        //    if (global.HasAttribute(o.Key, typeof(OutputOrderAttribute).FullName!, null, false, out var args))
+                        //    {
+                        //        int a = int.Parse(args[0]!.ToString()!);
+                        //        return a;
+                        //    }
+                        //    return o.Key.OutputRank();
+                        //    //return 0;
+                        //})
+                        //.ThenBy(e => e.Key.ComputeOutputTypeName(global))  //order in a predictable manner so we dont keep losing breakpoint position when debugging
+                        )
+                        {
+                            var writer = global.TypeWriters.GetValueOrDefault(type.Key.OriginalDefinition);
+                            if (writer != null)
+                            {
+                                //var writer = visitor.TypeWriters[type];
+                                //foreach (var writer in visitor.TypeWriters.Values)
+                                //{
+                                var code = writer.Build(1);
+                                if (!string.IsNullOrWhiteSpace(code))
+                                    bootStringBuilder.AppendLine(code);
+                                //}
+                                outputted.Add(type.Key.OriginalDefinition);
+                            }
+                        }
+                        List<KeyValuePair<INamedTypeSymbol, TranslatorSyntaxVisitor>> sorted = default!;
+                        "Sorting classes".Profile(() =>
+                        {
+                            sorted = global.TypeVisitors.Where(e =>
+                            {
+                                return !global.IsBootClass(e.Key);
+                                //return !global.HasAttribute(e, typeof(BootAttribute).FullName, null, false, out _);
+                            })
+                            .OrderBy(o =>
+                            {
+                                if (global.HasAttribute(o.Key, typeof(OutputOrderAttribute).FullName!, null, false, out var args))
+                                {
+                                    int a = int.Parse(args[0]!.ToString()!);
+                                    return a;
+                                }
+                                if (isSystemPrivateCoreLib)
+                                {
+                                    if (o.Key.SpecialType != SpecialType.None)
+                                    {
+                                        return (int)o.Key.SpecialType;
+                                    }
+                                }
+                                return o.Key.OutputRank();
+                            })
+                            .SortTypesForJavaScript(e => e.Key);
+                        });
+                        foreach (var tw in sorted
+                        ////.OrderBy(e => e.Key.ComputeOutputTypeName(global))  //order in a predictable manner so we dont keep losing breakpoint position when debugging
+                        //.OrderBy(o =>
+                        //{
+                        //    if (global.HasAttribute(o.Key, typeof(OutputOrderAttribute).FullName!, null, false, out var args))
+                        //    {
+                        //        int a = int.Parse(args[0]!.ToString()!);
+                        //        return a;
+                        //    }
+                        //    return o.Key.OutputRank();
+                        //})
+                        )
+                        {
+                            bool dependsOnSelf = false;
+                            SortedOutputBuild(tw.Key, tw.Key, stringBuilder, 2, ref dependsOnSelf);
+                        }
+                        bootCodes = bootStringBuilder.ToString().Trim();
+                        codes = stringBuilder.ToString().Trim();
+                    }
+                    else
+                    {
+                        codes = string.Join("\r\n", global.Visitors.Select(v => v.Value.Build(2).Trim()).Where(e => !string.IsNullOrEmpty(e)));
+                    }
+                    //                if (global.ModuleInitializers.Count > 0)
+                    //                {
+                    //                    codes +=
+                    //                        @$"
+                    //        static {Constants.RunModuleInitializersName}()
+                    //        {{
+                    //{string.Join("\r\n", global.ModuleInitializers.Select(e => "            " + e))}
+                    //        }}
+                    //";
+                    //                }
+                    //var metadataBuilder = new ReflectionMetadataBuilder(global, isSystemPrivateCoreLib, contentFiles.Where(e => e.EndsWith(".resx")).ToArray(), embeddedFiles.ToArray());
+                    var reflectionMetadata = metadataBuilder.FromAssemblySymbol(csCompilation.Assembly);
+                    var refAssemblySlugs = string.Join(", ", csCompilation.SourceModule.ReferencedAssemblySymbols.Select(a => global.GetAssemblyGlobalSlug(a)));
+                    var refAssemblyJoinedSlugs = string.Join(", ", csCompilation.SourceModule.ReferencedAssemblySymbols.Select(a => "\"" + a.Name + "\""));
+                    var outputFileName = Constants.OutputFolderName + Path.DirectorySeparatorChar + _project.GetAssemblyName() + ".js";
+                    var appDomain = isSystemPrivateCoreLib ? (INamedTypeSymbol)global.GetSymbol("System.AppDomain", null) : null;
+                    var initDomain = isSystemPrivateCoreLib ? appDomain?.GetMembers("Initialize").Single() : null;
+                    var initDomainMetadata = initDomain != null ? global.GetRequiredMetadata(initDomain) : null;
+                    var createAssembly = isSystemPrivateCoreLib ? appDomain?.GetMembers("CreateAssembly").Single() : null;
+                    var createAssemblyMetadata = createAssembly != null ? global.GetRequiredMetadata(createAssembly) : null;
+                    //{ (isSystemPrivateCoreLib ? $"{global.GlobalName}.{Constants.AssemblyRegistryName} = {createAssemblyMetadata?.InvocationName}{global.GlobalName}.{global.GetAssemblyGlobalSlug(global.Compilation.Assembly)}.{(global.BuildFlags.HasFlag(NetJsBuildFlags.MinifyNamespaces) ? "S" : "System")}.AppDomain.{Constants.AssemblyRegistryName};" : "")}
+                    //{ (isSystemPrivateCoreLib ? $"{global.GlobalName}.{global.GetAssemblyGlobalSlug(global.Compilation.Assembly)}.{(global.BuildFlags.HasFlag(NetJsBuildFlags.MinifyNamespaces) ? "S" : "System")}.AppDomain.{Constants.AppDomainInitialize}($asm)" : "")}
+                    var trimming = global.Compilation.Assembly.TrimmableBoundary(global);
+                    var jsCode = global.BuildFlags.HasFlag(NetJsBuildFlags.Global) ? @$"
 {trimming.Start}
+(async function () {{
 (function ($global, {global.GlobalName}{(refAssemblySlugs.Length > 0 ? ", " : "")}{refAssemblySlugs}) {{
     ""use strict"";
     let _;
+{string.Join("\r\n", global.Visitors.Values.SelectMany(e => e.DefineGlobalVariables).Select(v => $"    let {v};"))}
     {(isSystemPrivateCoreLib ? "let $asm; function $setasm(v){ $asm = v; }" : "")}
     {bootCodes}
     {(isSystemPrivateCoreLib ? $"{global.GlobalName}.{Constants.AssemblyRegistryName} = {createAssemblyMetadata?.InvocationName};" : "")}
@@ -756,45 +887,55 @@ namespace NetJs.Translator
         {(isSystemPrivateCoreLib ? $"{initDomainMetadata?.InvocationName}($asm)" : "")}
         {codes}
 	}});
-}})(window, window.{Constants.ProjectName}.{Constants.BootName}(), ...window.{Constants.ProjectName}.$require({refAssemblyNames}))
+}})(window, window.{Constants.ProjectName}.{Constants.BootName}(), ...await window.{Constants.ProjectName}.$require({refAssemblyJoinedSlugs}));
+}})();
 {trimming.End}
 " : codes;
-                var stream = StringToStream(jsCode);
-                pendingTask.Add(_output.Output(global, outputFileName, stream));
-                sortedOutputtedJsFiles.Add(outputFileName);
-                packages.Add((outputFileName, stream));
-
-                var minified = NUglify.Uglify.Js(jsCode, new NUglify.JavaScript.CodeSettings
-                {
-                    IgnoreErrorList = "JS1306"
-                });
-                //if (!minified.HasErrors)
-                {
-                    var laxEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: false);
-                    byte[] fileBytes = laxEncoding.GetBytes(minified.Code);
-                    var uglyStream = new MemoryStream(fileBytes);
-                    var uglyFileName = Path.ChangeExtension(outputFileName, ".min.js");
-                    pendingTask.Add(_output.Output(global, uglyFileName, uglyStream));
-                    //sortedOutputtedJsFiles.Add(uglyFileName);
-                    packages.Add((uglyFileName, uglyStream));
-#if DEBUG
-                    //minified.Code.TokenHistogram();
-#endif
-                }
-            }
-            else
-            {
-                var existingFile = Path.Combine(_output.OutputPath, "js", Path.ChangeExtension(_project.GetName(), ".js"));
-                if (File.Exists(existingFile))
-                    File.Delete(existingFile);
-                foreach (var visitor in global.Visitors)
-                {
-                    var codes = visitor.Value.Build(2).Trim();
-                    if (!string.IsNullOrEmpty(codes))
+                    var stream = StringToStream(jsCode);
+                    pendingTask.Add(_output.Output(global, outputFileName, stream));
+                    sortedOutputtedJsFiles.Add(outputFileName);
+                    packages.Add((outputFileName, stream));
+                    if (global.BuildFlags.HasFlag(NetJsBuildFlags.MinifyJS))
                     {
-                        var relative = Path.GetRelativePath(_project.DirectoryPath, visitor.Key.FilePath);
-                        var filePath = (_project.DirectoryPath.Split('\\', '/').LastOrDefault() ?? "") + Path.ChangeExtension(relative, "js");
-                        pendingTask.Add(_output.Output(global, filePath, StringToStream(global.BuildFlags.HasFlag(NetJsBuildFlags.Global) ? @$"
+                        "Minifying JS".Profile(() =>
+                        {
+                            try
+                            {
+                                var minified = NUglify.Uglify.Js(jsCode, new NUglify.JavaScript.CodeSettings
+                                {
+                                    IgnoreErrorList = "JS1306"
+                                });
+                                //if (!minified.HasErrors)
+                                {
+                                    var laxEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: false);
+                                    byte[] fileBytes = laxEncoding.GetBytes(minified.Code);
+                                    var uglyStream = new MemoryStream(fileBytes);
+                                    var uglyFileName = Path.ChangeExtension(outputFileName, ".min.js");
+                                    pendingTask.Add(_output.Output(global, uglyFileName, uglyStream));
+                                    //sortedOutputtedJsFiles.Add(uglyFileName);
+                                    packages.Add((uglyFileName, uglyStream));
+#if DEBUG
+                                    //minified.Code.TokenHistogram();
+#endif
+                                }
+                            }
+                            catch { }
+                        });
+                    }
+                }
+                else
+                {
+                    var existingFile = Path.Combine(_output.OutputPath, "js", Path.ChangeExtension(_project.GetAssemblyName(), ".js"));
+                    if (File.Exists(existingFile))
+                        File.Delete(existingFile);
+                    foreach (var visitor in global.Visitors)
+                    {
+                        var codes = visitor.Value.Build(2).Trim();
+                        if (!string.IsNullOrEmpty(codes))
+                        {
+                            var relative = Path.GetRelativePath(_project.DirectoryPath, visitor.Key.FilePath);
+                            var filePath = (_project.DirectoryPath.Split('\\', '/').LastOrDefault() ?? "") + Path.ChangeExtension(relative, "js");
+                            pendingTask.Add(_output.Output(global, filePath, StringToStream(global.BuildFlags.HasFlag(NetJsBuildFlags.Global) ? @$"
 (function ({global.GlobalName}, $global) {{
     ""use strict"";
     let _;
@@ -803,52 +944,80 @@ namespace NetJs.Translator
         {codes}
 	}});
 }})(window.{Constants.ProjectName}.{Constants.BootName}(), window)" : codes)));
-                        //var path = Path.Combine(outputPath, "js", filePath);
-                        ////var path = Path.Combine(outputPath, "js", $"{Path.ChangeExtension(Path.GetFileName(visitor.Key.FilePath), "js")}");
-                        //var dir = Path.GetDirectoryName(path);
-                        //if (dir != null && !Directory.Exists(dir))
-                        //    Directory.CreateDirectory(dir);
-                        //File.WriteAllText(Path.Combine(outputPath, path), visitor.Value.ToString());
-                        //outputtedFiles.Add(filePath);
+                            //var path = Path.Combine(outputPath, "js", filePath);
+                            ////var path = Path.Combine(outputPath, "js", $"{Path.ChangeExtension(Path.GetFileName(visitor.Key.FilePath), "js")}");
+                            //var dir = Path.GetDirectoryName(path);
+                            //if (dir != null && !Directory.Exists(dir))
+                            //    Directory.CreateDirectory(dir);
+                            //File.WriteAllText(Path.Combine(outputPath, path), visitor.Value.ToString());
+                            //outputtedFiles.Add(filePath);
+                        }
                     }
                 }
-            }
+            });
         }
 
         void WriteOwnSymbolToDisk()
         {
-            var yaml = serializer.Serialize(global.Symbols);
-            var yamlFileName = _project.GetName() + $".Symbols.yaml";
-            var yamlStream = StringToStream(yaml);
-            pendingTask.Add(_output.Output(global, yamlFileName, yamlStream));
-            packages.Add((yamlFileName, yamlStream));
+            "Write symbol to disk".Profile(() =>
+            {
+                var yaml = serializer!.Serialize(global.Symbols);
+                var yamlFileName = _project.GetAssemblyName() + $".Symbols.yaml";
+                var yamlStream = StringToStream(yaml);
+                pendingTask.Add(_output.Output(global, yamlFileName, yamlStream));
+                packages.Add((yamlFileName, yamlStream));
+            });
         }
 
         void WriteIndexHtml(bool fromTrimming = false, bool minified = false)
         {
             if (global.MainEntry != null)
             {
-                var meta = global.GetRequiredMetadata(global.MainEntry);
+                "Write index.html to disk".Profile(() =>
+                {
+                    var lazyLoad = _project.Evaluate("BlazorWebAssemblyLazyLoad", true);
+                    var meta = global.GetRequiredMetadata(global.MainEntry);
 
-                var jss = sortedOutputtedJsFiles
-                    .Where(o => indexFile == null || !o.EndsWith("blazor.netjs.js"))//dont add blazor file again to index.html, already there
-                    .Where(o => o.StartsWith(Constants.OutputFolderName) && o.EndsWith(".js"))
-                    .Select(o =>
-                    {
-                        var ret = o.Replace(Constants.OutputFolderName + "/", "").Replace(Constants.OutputFolderName + "\\", "");
-                        if (fromTrimming && ret.StartsWith("NetJs.") && ret != "NetJs.Boot.js")
+                    var jss = sortedOutputtedJsFiles
+                        .Where(o => indexFile == null || !o.EndsWith("blazor.netjs.js"))//dont add blazor file again to index.html, already there
+                        .Where(o =>
                         {
-                            ret = Path.ChangeExtension(ret, minified ? ".trimmed.min.js" : ".trimmed.js");
-                        }
-                        return ret;
-                    })
-                    .Distinct()
-                    .ToArray();
-                bool hasBlazorNet = jss.Any(o => o.EndsWith("blazor.netjs.js"));
-                var insertHead = @$"
+                            var name = Path.GetFileNameWithoutExtension(Path.GetFileName(o));
+                            return !lazyLoad.Any(lz =>
+                            {
+                                var sname = name.AsSpan();
+                                if (sname.StartsWith(Constants.ProjectName + "."))
+                                {
+                                    sname = sname[(Constants.ProjectName.Length + 1)..];
+                                }
+                                return sname.SequenceEqual(Path.GetFileNameWithoutExtension(lz));
+                            });
+                        })
+                        .Where(o => o.StartsWith(Constants.OutputFolderName) && o.EndsWith(".js"))
+                        .Select(o =>
+                        {
+                            var ret = o.Replace(Constants.OutputFolderName + "/", "").Replace(Constants.OutputFolderName + "\\", "");
+                            if (ret.StartsWith("NetJs.") && ret != "NetJs.Boot.js")
+                            {
+                                if (fromTrimming)
+                                {
+                                    ret = Path.ChangeExtension(ret, minified ? ".trimmed.min.js" : ".trimmed.js");
+                                }
+                                else
+                                {
+                                    if (minified)
+                                        ret = Path.ChangeExtension(ret, ".min.js");
+                                }
+                            }
+                            return ret;
+                        })
+                        .Distinct()
+                        .ToArray();
+                    bool hasBlazorNet = jss.Any(o => o.EndsWith("blazor.netjs.js"));
+                    var insertHead = @$"
     {(string.Join("\r\n    ", jss.Select(o => $"<script type=\"text/javascript\" src=\"{Path.GetFileName(o)}\"{(o.EndsWith("blazor.netjs.js") ? " autostart=\"false\"" : "")}></script>")))}
 ";
-                var insertScripts = @$"
+                    var insertScripts = @$"
 	<script type=""{(global.BuildFlags.HasFlag(NetJsBuildFlags.Global) ? "text/javascript" : "module")}"">
         ({(global.MainEntry.IsAsync ? "async " : "")}function ({global.GlobalName}, $global) {{
             ""use strict"";
@@ -860,20 +1029,21 @@ namespace NetJs.Translator
         }})(window.{Constants.ProjectName}.{Constants.BootName}(), window)
 	</script>
 ";
-                if (indexFile != null)
-                {
-                    var text = File.ReadAllText(indexFile);
-                    text = text.Replace("</head>", insertHead + "\r\n</head>")
-                        .Replace("</body>", insertScripts + "\r\n</body>")
-                        .Replace("_framework/blazor.webassembly#[.{fingerprint}].js", "_framework/blazor.netjs.js");
-                    var relativePath = Path.GetRelativePath(_project.GetFolder(), fromTrimming ? Path.ChangeExtension(indexFile, minified ? ".trimmed.min.html" : ".trimmed.html") : indexFile);
-                    pendingTask.Add(_output.Output(global,
-                        !relativePath.StartsWith(Constants.OutputFolderName + Path.DirectorySeparatorChar) ? Constants.OutputFolderName + Path.DirectorySeparatorChar + relativePath : relativePath,
-                        new MemoryStream(Encoding.UTF8.GetBytes(text))));
-                }
-                else
-                {
-                    var index = $@"
+                    if (indexFile != null)
+                    {
+                        var text = File.ReadAllText(indexFile);
+                        text = text.Replace("</head>", insertHead + "\r\n</head>")
+                            .Replace("</body>", insertScripts + "\r\n</body>")
+                            .Replace("_framework/blazor.webassembly#[.{fingerprint}].js", "_framework/blazor.netjs.js")
+                            .Replace("_framework/blazor.webassembly.js", "_framework/blazor.netjs.js");
+                        var relativePath = Path.GetRelativePath(_project.GetFolder(), fromTrimming ? Path.ChangeExtension(indexFile, minified ? ".trimmed.min.html" : ".trimmed.html") : (minified ? Path.ChangeExtension(indexFile, ".min.html") : indexFile));
+                        pendingTask.Add(_output.Output(global,
+                            !relativePath.StartsWith(Constants.OutputFolderName + Path.DirectorySeparatorChar) ? Constants.OutputFolderName + Path.DirectorySeparatorChar + relativePath : relativePath,
+                            new MemoryStream(Encoding.UTF8.GetBytes(text))));
+                    }
+                    else
+                    {
+                        var index = $@"
 <!DOCTYPE html>
 <html lang=""en"">
 <head>
@@ -892,8 +1062,9 @@ namespace NetJs.Translator
 </body>
 </html>
 ";
-                    pendingTask.Add(_output.Output(global, Constants.OutputFolderName + Path.DirectorySeparatorChar + (fromTrimming ? (minified ? "index.trimmed.min.html" : "index.trimmed.html") : "index.html"), StringToStream(index)));
-                }
+                        pendingTask.Add(_output.Output(global, Constants.OutputFolderName + Path.DirectorySeparatorChar + (fromTrimming ? (minified ? "index.trimmed.min.html" : "index.trimmed.html") : (minified ? "index.min.html" : "index.html")), StringToStream(index)));
+                    }
+                });
             }
         }
 
@@ -901,71 +1072,78 @@ namespace NetJs.Translator
         {
             if (global.MainEntry != null && global.BuildFlags.HasFlag(NetJsBuildFlags.TrimAssemblies))
             {
-                var trimmer = new StaticAnalysisMarkAndSweepTrimmer(global);
-                await trimmer.RunTrimming(_output, sortedOutputtedJsFiles);
-                WriteIndexHtml(true, false);
-                WriteIndexHtml(true, true);
+                await "Trimming".ProfileAsync(async () =>
+                {
+                    var trimmer = new StaticAnalysisMarkAndSweepTrimmer(global);
+                    await trimmer.RunTrimming(_output, sortedOutputtedJsFiles);
+                    WriteIndexHtml(true, false);
+                    WriteIndexHtml(true, true);
+                });
             }
         }
 
         void WritePackages()
         {
-            var targetFramework = _project.GetTargetFramework();
-            if (!targetFramework.EndsWith("-browser"))
+            "Write package".Profile(() =>
             {
-                targetFramework += "-browser";
-            }
-            var localPackageCacheFolder = $"{metadataProvider.LocalPackageCacheFolder}{Path.DirectorySeparatorChar}{targetFramework}{Path.DirectorySeparatorChar}{_project.GetName()}";
-            if (Directory.Exists(localPackageCacheFolder))
-                Directory.Delete(localPackageCacheFolder, true);
-            Directory.CreateDirectory(localPackageCacheFolder);
-
-            using (var fileStream = new MemoryStream())
-            {
-                using (var zipArchive = new ZipArchive(fileStream, ZipArchiveMode.Create, leaveOpen: true))
+                var targetFramework = _project.GetTargetFramework();
+                if (!targetFramework.EndsWith("-browser"))
                 {
-                    foreach (var kv in packages)
+                    targetFramework += "-browser";
+                }
+                var localPackageCacheFolder = $"{metadataProvider.LocalPackageCacheFolder}{Path.DirectorySeparatorChar}{targetFramework}{Path.DirectorySeparatorChar}{_project.GetAssemblyName()}";
+                if (Directory.Exists(localPackageCacheFolder))
+                    Directory.Delete(localPackageCacheFolder, true);
+                Directory.CreateDirectory(localPackageCacheFolder);
+
+                using (var fileStream = new MemoryStream())
+                {
+                    using (var zipArchive = new ZipArchive(fileStream, ZipArchiveMode.Create, leaveOpen: true))
                     {
-                        var sourceName = kv.IsT0 ? kv.AsT0.Item1 : kv.AsT1.Item1;
-                        using (var sourceStream = kv.IsT0 ? new FileStream(kv.AsT0.Item2, FileMode.Open) : kv.AsT1.Item2)
+                        foreach (var kv in packages)
                         {
-                            sourceStream.Position = 0;
-
-                            var path = $"{localPackageCacheFolder}{Path.DirectorySeparatorChar}{sourceName}";
-                            var dir = Path.GetDirectoryName(path)!;
-                            if (!Directory.Exists(dir))
-                                Directory.CreateDirectory(dir);
-
-                            using (var fs = new FileStream(path, FileMode.Create))
+                            var sourceName = kv.IsT0 ? kv.AsT0.Item1 : kv.AsT1.Item1;
+                            using (var sourceStream = kv.IsT0 ? new FileStream(kv.AsT0.Item2, FileMode.Open, FileAccess.Read, FileShare.Read) : kv.AsT1.Item2)
                             {
-                                sourceStream.CopyTo(fs);
-                            }
+                                sourceStream.Position = 0;
 
-                            sourceStream.Position = 0;
-                            var zipEntry = zipArchive.CreateEntry(sourceName.Replace("\\", "/")); //Without replace, we have issue on MacOs when extracting the archive as path slash \ is interpreted as a valid file char
-                            using (var zipEntryStream = zipEntry.Open())
-                                sourceStream.CopyTo(zipEntryStream);
+                                var path = $"{localPackageCacheFolder}{Path.DirectorySeparatorChar}{sourceName}";
+                                var dir = Path.GetDirectoryName(path)!;
+                                if (!Directory.Exists(dir))
+                                    Directory.CreateDirectory(dir);
+
+                                using (var fs = new FileStream(path, FileMode.Create))
+                                {
+                                    sourceStream.CopyTo(fs);
+                                }
+
+                                sourceStream.Position = 0;
+                                var zipEntry = zipArchive.CreateEntry(sourceName.Replace("\\", "/")); //Without replace, we have issue on MacOs when extracting the archive as path slash \ is interpreted as a valid file char
+                                using (var zipEntryStream = zipEntry.Open())
+                                    sourceStream.CopyTo(zipEntryStream);
+                            }
+                        }
+                    }
+                    var zipPackageFolder = _project.Evaluate("ZipPackageFolder").LastOrDefault() ?? _config.OutputPackageSink;
+                    if (!string.IsNullOrEmpty(zipPackageFolder))
+                    {
+                        if (!Directory.Exists(zipPackageFolder))
+                            Directory.CreateDirectory(zipPackageFolder);
+                        var path = $"{zipPackageFolder}{Path.DirectorySeparatorChar}{targetFramework}{Path.DirectorySeparatorChar}{_project.GetAssemblyName()}.package.zip";
+                        var folder = Path.GetDirectoryName(path)!;
+                        if (!Directory.Exists(folder))
+                            Directory.CreateDirectory(folder);
+                        fileStream.Position = 0;
+                        using (var fs = new FileStream(path, FileMode.Create))
+                        {
+                            fileStream.CopyTo(fs);
                         }
                     }
                 }
-                var zipPackageFolder = _project.Evaluate("ZipPackageFolder").LastOrDefault() ?? _config.OutputPackageSink;
-                if (!string.IsNullOrEmpty(zipPackageFolder))
-                {
-                    if (!Directory.Exists(zipPackageFolder))
-                        Directory.CreateDirectory(zipPackageFolder);
-                    var path = $"{zipPackageFolder}{Path.DirectorySeparatorChar}{targetFramework}{Path.DirectorySeparatorChar}{_project.GetName()}.package.zip";
-                    var folder = Path.GetDirectoryName(path)!;
-                    if (!Directory.Exists(folder))
-                        Directory.CreateDirectory(folder);
-                    fileStream.Position = 0;
-                    using (var fs = new FileStream(path, FileMode.Create))
-                    {
-                        fileStream.CopyTo(fs);
-                    }
-                }
-            }
+            });
         }
 
+        public string? Error { get; set; }
         public async Task<bool> Build()
         {
             metadataProvider = new MetadataProvider(_config, _dotnetPath, _dotnetVersion, _dotnetSdkPath, _dotnetSdkVersion, _datFolder, _tempFolder, deSerializer);
@@ -1005,7 +1183,8 @@ namespace NetJs.Translator
 
             WriteOwnSymbolToDisk();
 
-            WriteIndexHtml();
+            WriteIndexHtml(false, false);
+            WriteIndexHtml(false, true);
 
             await TrimAssemblies();
 

@@ -33,6 +33,9 @@ Whenever we sync our forked dotnet runtime and aspnetcore with official repo, we
 		</ItemGroup>
 	</Project>
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Runtime.InteropServices.JavaScript\src\System.Runtime.InteropServices.JavaScript.csproj">
+		<PropertyGroup>
+			<EmitCompilerGeneratedFiles>false</EmitCompilerGeneratedFiles>
+		</PropertyGroup>
 	</Project>
 	<Project Include="$(DotnetGitRoot)runtime\src\libraries\Microsoft.Bcl.Cryptography\src\Microsoft.Bcl.Cryptography.csproj">
 		<ItemGroup>
@@ -320,6 +323,26 @@ Whenever we sync our forked dotnet runtime and aspnetcore with official repo, we
 			<ProjectReference Include="$(CoreLibProject)" />
 			<ProjectReference Include="$(NewLibrariesProjectRoot)System.Linq\NetJs.System.Linq.csproj" />
 		</ItemGroup>
+	</Project>	
+	<Project Include="$(DotnetGitRoot)runtime\src\libraries\Microsoft.Extensions.Caching.Abstractions\src\Microsoft.Extensions.Caching.Abstractions.csproj">
+		<ItemGroup>
+			<ProjectReference Include="$(NewLibrariesProjectRoot)System.Linq\NetJs.System.Linq.csproj" />
+		</ItemGroup>
+	</Project>
+	<Project Include="$(DotnetGitRoot)runtime\src\libraries\Microsoft.Extensions.Caching.Memory\src\Microsoft.Extensions.Caching.Memory.csproj">
+	</Project>
+	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Net.WebSockets\src\System.Net.WebSockets.csproj">
+	</Project>
+	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Net.WebSockets.Client\src\System.Net.WebSockets.Client.csproj">
+		<PropertyGroup>
+			<EmitCompilerGeneratedFiles>false</EmitCompilerGeneratedFiles>
+		</PropertyGroup>
+	</Project>
+	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Net.WebHeaderCollection\src\System.Net.WebHeaderCollection.csproj">
+	</Project>
+	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Net.Requests\src\System.Net.Requests.csproj">
+	</Project>
+	<Project Include="$(DotnetGitRoot)runtime\src\libraries\System.Net.WebProxy\src\System.Net.WebProxy.csproj">
 	</Project>
 	
 	

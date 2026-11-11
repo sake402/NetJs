@@ -9,7 +9,7 @@ namespace Window
     [NetJs.External]
     public class Element : Node
     {
-        public extern string tagName { get; }
+        //public extern string tagName { get; }
         public extern string? id { get; set; }
         public extern string? className { get; set; }
         public extern DOMTokenList classList { get; }
@@ -29,7 +29,7 @@ namespace Window
         public extern void focus();
         public extern void blur();
 
-        public extern void addEventListener(string type, object listener, object? options = null);
-        public extern void removeEventListener(string type, object listener, object? options = null);
+        //public extern void addEventListener(string type, object listener, object? options = null);
+        //public extern void removeEventListener(string type, object listener, object? options = null);
     }
 }

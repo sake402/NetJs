@@ -196,6 +196,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 mfield.RefKind == RefKind.None &&
                 !mfield.IsStatic &&
                 mfield.ContainingType.IsValueType &&
+                _global.IsPureStructType(mfield.ContainingType) &&
                 IsFieldStructLayout(null, mfield, out var fieldOffset, out var fieldSize))
             {
                 WriteCreateArrayRefOrPointer(node, mfield.Type, new CodeNode(() =>
@@ -211,7 +212,11 @@ namespace NetJs.Translator.CSharpToJavascript
                 (refTarget is IFieldSymbol field && field.RefKind == RefKind.None) ||
                 (refTarget is IParameterSymbol parameter && parameter.RefKind == RefKind.None))
             {
-                WriteCreateRef(node, node.Expression, _global.GetTypeSymbol(refTarget));
+                var type = _global.GetTypeSymbol(refTarget);
+                if (type.IsArray(out _))
+                    WriteCreateRef(node, node.Expression, type);
+                else
+                    WriteCreateSimpleRef(node, node.Expression, type);
             }
             //if we have an array ref expression like ref _array[byteIndex]
             //we need to create a ref than can read and write the array at the specified index

@@ -69,6 +69,10 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 foreach (var interfaceMember in it.GetMembers())
                 {
+                    if (interfaceMember.ToString() == "System.IEquatable<System.RuntimeTypeHandle>.Equals(System.RuntimeTypeHandle)")
+                    {
+
+                    }
                     var implementationMember = type.FindImplementationForInterfaceMember(interfaceMember);
                     if (implementationMember != null)
                     {
@@ -88,7 +92,9 @@ namespace NetJs.Translator.CSharpToJavascript
                         {
                             continue;
                         }
-                        if (!implementationMember.IsExtern && !_global.HasAttribute(implementationMember, typeof(ExternalAttribute).FullName!, this, false, out _) && !_global.HasAttribute(implementationMember.ContainingSymbol, typeof(ExternalAttribute).FullName, this, false, out _))
+                        if (!implementationMember.IsExtern &&
+                            !_global.HasAttribute(implementationMember, typeof(ExternalAttribute).FullName!, this, false, out _) &&
+                            !_global.HasAttribute(implementationMember.ContainingSymbol, typeof(ExternalAttribute).FullName!, this, false, out _))
                         {
                             //var methodMember = ((IMethodSymbol)interfaceMember);
                             //var methodImplementation = implementation;
@@ -136,9 +142,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
                             if (_global.BuildFlags.HasFlag(NetJsBuildFlags.ProfileTraceEntry))
                             {
-                                CurrentTypeWriter.WriteLine(node, $"//--TRIMMABLE-BOUNDARY-START(TRACE)", true);
-                                CurrentTypeWriter.WriteLine(node, $"{Global.GlobalName}.{Constants.TraceEntryName}({interfaceMemberMetadata.Export.Handle});", true);
-                                CurrentTypeWriter.WriteLine(node, $"//--TRIMMABLE-BOUNDARY-END(TRACE)", true);
+                                WriteTraceEntry(node, interfaceMemberMetadata.Export.Handle);
                             }
                             ////For implemented interface members call that may conflict in name:
                             ////eg if a class implement both IComparer<string> and IComparer<char>
@@ -206,33 +210,6 @@ namespace NetJs.Translator.CSharpToJavascript
         void WriteTypeMetadata(CSharpSyntaxNode node, INamedTypeSymbol typeSymbol)
         {
             bool isDefinedTypeParameter = _global.IsDefinedTypeParameter(typeSymbol);
-            string GetFullName(MemberDeclarationSyntax type)
-            {
-                string? parent = null;
-                if (type.Parent is BaseTypeDeclarationSyntax ts)
-                {
-                    parent = GetFullName(ts) + ".";
-                }
-                else if (type.Parent is NamespaceDeclarationSyntax ns)
-                {
-                    parent = _global.ResolveFullNamespace(ns) + ".";
-                }
-                var ret = parent +
-                    (type is BaseTypeDeclarationSyntax bt ?
-                    bt.Identifier.ValueText.Trim().TrimEnd('?') :
-                    type is DelegateDeclarationSyntax dt ? dt.Identifier.ValueText :
-                    throw new InvalidOperationException());
-                string? nameGArgs = null;
-                var nameArg =
-                    type is TypeDeclarationSyntax btt ? btt.TypeParameterList?.Parameters.Select(p => $"${{{p.Identifier.ValueText}?.{Constants.PrototypeFullName}}}") :
-                    type is DelegateDeclarationSyntax dtt ? dtt.TypeParameterList?.Parameters.Select(p => $"${{{p.Identifier.ValueText}?.{Constants.PrototypeFullName}}}") :
-                    null;
-                if (nameArg != null)
-                {
-                    nameGArgs = $"<{string.Join(",", nameArg)}>";
-                }
-                return ret + nameGArgs;
-            }
             //string GetFullName(BaseTypeDeclarationSyntax node)
             //{
             //    string? nameGArgs = null;
@@ -250,7 +227,9 @@ namespace NetJs.Translator.CSharpToJavascript
             //    return $"{name}{nameGArgs}";
             //}
 
-            //lets generic a runtime type handle for a generic type, so we can change it at runtime when a concrete type is made from the generic type
+            //lets generate a runtime type handle for a generic type, so we can change it at runtime when a concrete type is made from the generic type
+            if (typeSymbol.IsGenericType)
+                CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeOriginalTypeHandle} = {_global.Reflection.NumericTypeHandle(typeSymbol)};", true);
             CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeTypeHandle} = {_global.Reflection.NumericTypeHandle(typeSymbol)};", true);
             //if (typeSymbol.BaseType != null)
             //CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeBaseTypeHandle} = {_global.Reflection.NumericTypeHandle(typeSymbol.BaseType)};", true);
@@ -260,10 +239,10 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             if (typeSymbol.IsValueType)
             {
-                var sz = _global.SizeOf(typeSymbol);
-                if (sz != null)
+                var szz = _global.SizeOf(typeSymbol);
+                if (szz != null)
                 {
-                    CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeStructSize} = {sz};", true);
+                    CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeStructSize} = {szz};", true);
                 }
             }
             var knownType = _global.KnownTypeFrom(typeSymbol);
@@ -273,9 +252,19 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeTypeFlags} = 0b{(int)_global.GetTypeFlags(typeSymbol):B};", true);
             CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeKind} = {(int)_global.MapTypeKind(typeSymbol.TypeKind)};", true);
+            if (typeSymbol.BaseType != null && _global.ShouldExportType(typeSymbol.BaseType, this))
+            {
+                CurrentTypeWriter.WriteLine(node, $"static ${Constants.PrototypeBaseType};", true);
+                CurrentTypeWriter.WriteLine(node, $"static get {Constants.PrototypeBaseType}() {{ return this.${Constants.PrototypeBaseType} ??= {typeSymbol.BaseType.ComputeOutputTypeName(_global)}; }}", true);
+            }
             if (typeSymbol.TypeKind == TypeKind.Enum)
             {
                 CurrentTypeWriter.WriteLine(node, $"static get {Constants.EnumUnderlyingName}() {{ return {typeSymbol.EnumUnderlyingType!.ComputeOutputTypeName(_global)}; }}", true);
+            }
+            if (_global.IsInlineArray(typeSymbol, out var sz, out var et))
+            {
+                CurrentTypeWriter.WriteLine(node, $"static get {Constants.InlineArrayElementType}() {{ return {et.ComputeOutputTypeName(_global)}; }}", true);
+                CurrentTypeWriter.WriteLine(node, $"static {Constants.InlineArraySize} = {sz};", true);
             }
             CurrentTypeWriter.WriteLine(node, $"static ${Constants.PrototypeMetadata};", true);
             if (isDefinedTypeParameter || _global.IsReflectable(typeSymbol, null))
@@ -283,26 +272,46 @@ namespace NetJs.Translator.CSharpToJavascript
             else
                 CurrentTypeWriter.WriteLine(node, $"static get {Constants.PrototypeMetadata}() {{ return this.${Constants.PrototypeMetadata} ??= {_global.Reflection.FromTypeSymbolAsJson(typeSymbol, this, minimal: true)}; }}", true);
 
-            if (typeSymbol.BaseType != null && _global.ShouldExportType(typeSymbol.BaseType, this))
-            {
-                CurrentTypeWriter.WriteLine(node, $"static get {Constants.PrototypeBaseType}() {{ return {typeSymbol.BaseType.ComputeOutputTypeName(_global)}; }}", true);
-            }
             //if (useInterfaceMixin == InterfaceMixinMode.None)
             //{
-            var interfaces = typeSymbol.AllInterfaces;
-            bool isAwaitable = typeSymbol.IsAwaitable();
-            var _interfaces = interfaces.Concat(isAwaitable ? [_global.AwaitableInterface] : [])
+            bool isAwaitable = typeSymbol.IsAwaitable(out _, out _);
+            //var interfaces = typeSymbol.Interfaces.Concat(isAwaitable ? [_global.AwaitableInterface] : [])
+            //    .Where(i => _global.ShouldExportType(i, this));
+            //var mInterfaces = interfaces
+            //    .Select(e =>
+            //    {
+            //        var ret = e.ComputeOutputTypeName(_global);
+            //        return ret;
+            //    });
+            //if (mInterfaces.Any())
+            //{
+            //    CurrentTypeWriter.WriteLine(node, $"static ${Constants.PrototypeInterfaces};", true);
+            //    CurrentTypeWriter.WriteLine(node, $"static get {Constants.PrototypeInterfaces}() {{ return this.${Constants.PrototypeInterfaces} ??= [ {string.Join(", ", mInterfaces)} ]; }}", true);
+            //}
+            var allInterfaces = typeSymbol.AllInterfaces.Concat(isAwaitable ? [_global.AwaitableInterface] : [])
                 .Where(i => _global.ShouldExportType(i, this));
-            var mInterfaces = _interfaces
+            var mAllInterfaces = allInterfaces
                 .Select(e =>
                 {
                     var ret = e.ComputeOutputTypeName(_global);
                     return ret;
                 });
-            if (mInterfaces.Any())
+            if (mAllInterfaces.Any())
             {
-                CurrentTypeWriter.WriteLine(node, $"static ${Constants.PrototypeInterfaces};", true);
-                CurrentTypeWriter.WriteLine(node, $"static get {Constants.PrototypeInterfaces}() {{ return this.${Constants.PrototypeInterfaces} ??= [ {string.Join(", ", mInterfaces)} ]; }}", true);
+                CurrentTypeWriter.WriteLine(node, $"static ${Constants.PrototypeAllInterfaces};", true);
+                CurrentTypeWriter.WriteLine(node, $"static get {Constants.PrototypeAllInterfaces}() {{ return this.${Constants.PrototypeAllInterfaces} ??= [ {string.Join(", ", mAllInterfaces)} ]; }}", true);
+            }
+            var nestedTypes = typeSymbol.GetTypeMembers();
+            if (nestedTypes.Any())
+            {
+                var mTypes = nestedTypes
+                    .Select(e =>
+                    {
+                        var ret = e.ComputeOutputTypeName(_global);
+                        return ret;
+                    });
+                CurrentTypeWriter.WriteLine(node, $"static ${Constants.PrototypeNestedTypes};", true);
+                CurrentTypeWriter.WriteLine(node, $"static get {Constants.PrototypeNestedTypes}() {{ return this.${Constants.PrototypeNestedTypes} ??= [ {string.Join(", ", mTypes)} ]; }}", true);
             }
             //}
             //else if (isBootClass)
@@ -322,10 +331,14 @@ namespace NetJs.Translator.CSharpToJavascript
             if (isDefinedTypeParameter)
             {
                 CurrentTypeWriter.WriteLine(node, $"static get {Constants.PrototypeFullName}() {{ return \"\"; }}", true);
+                CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeFullNameWithSpecialSeperator}() {{ return \"\"; }}", true);
             }
             else
             {
-                CurrentTypeWriter.WriteLine(node, $"static get {Constants.PrototypeFullName}() {{ return `{(node is MemberDeclarationSyntax mnode ? GetFullName(mnode) : typeSymbol.Name)}`; }}", true);
+                CurrentTypeWriter.WriteLine(node, $"static ${Constants.PrototypeFullName};", true);
+                CurrentTypeWriter.WriteLine(node, $"static get {Constants.PrototypeFullName}() {{ return this.${Constants.PrototypeFullName} ??= `{(node is MemberDeclarationSyntax mnode ? mnode.GetFullName(_global) : typeSymbol.Name)}`; }}", true);
+                CurrentTypeWriter.WriteLine(node, $"static ${Constants.PrototypeFullNameWithSpecialSeperator} = {{}};", true);
+                CurrentTypeWriter.WriteLine(node, $"static {Constants.PrototypeFullNameWithSpecialSeperator}(separator) {{ return this.${Constants.PrototypeFullNameWithSpecialSeperator}[separator] ??= `{(node is MemberDeclarationSyntax mnode2 ? mnode2.GetFullName(_global, namespaceSeparator: "separator", separatorIsLocalVariable: true).Replace("<", "$").Replace(",", "$").Replace(">", "$") : typeSymbol.Name)}`; }}", true);
             }
             //if (!_static && !typeSymbol.GetMembers("Is", _global).Any())
             //{
@@ -463,7 +476,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 string? mixImplementedInterfaces = null;
                 string[]? implementedInterfaces = null;
                 var useInterfaceMixin = Constants.UseInterfaceMixin;
-                bool isAwaitable = typeSymbol.IsAwaitable();
+                bool isAwaitable = typeSymbol.IsAwaitable(out _, out _);
                 if (isAwaitable)
                 {
                     MarkCurrentClosureDependsOn(_global.AwaitableInterface);
@@ -545,25 +558,37 @@ namespace NetJs.Translator.CSharpToJavascript
                 string? closingClassDeclaration = null;
                 string? closingClassDeclaration2 = null;
                 string originalFullClassName = typeSymbol.Name + (typeSymbol.Arity > 0 ? $"<{string.Join(",", Enumerable.Range(1, typeSymbol.Arity).Select(n => ""))}>" : null);
-                string overloadFullClassName;
+                string overloadReferenceClassName;
                 if (typeMetadata.OverloadName != null)
                 {
-                    if (typeSymbol.Arity > 0)
+                    bool TypeChainHasArity(INamedTypeSymbol nt)
                     {
-                        overloadFullClassName = typeMetadata.OverloadName.TrimEnd('$') + $"<{string.Join(",", Enumerable.Range(1, typeSymbol.Arity).Select(n => ""))}>";
+                        if (nt.Arity > 0)
+                            return true;
+                        if (nt.ContainingType != null)
+                            return TypeChainHasArity(nt.ContainingType);
+                        return false;
+                    }
+                    if (typeSymbol.ContainingType != null && TypeChainHasArity(typeSymbol.ContainingType))
+                    {
+                        overloadReferenceClassName = typeSymbol.GetRuntimeReferenceName(_global, lastSegmentOpenGeneric: true);
+                    }
+                    else if (typeSymbol.Arity > 0)
+                    {
+                        overloadReferenceClassName = typeMetadata.OverloadName.TrimEnd('$') + $"<{string.Join(",", Enumerable.Range(1, typeSymbol.Arity).Select(n => ""))}>";
                     }
                     else
                     {
-                        overloadFullClassName = typeMetadata.OverloadName;
+                        overloadReferenceClassName = typeMetadata.OverloadName;
                     }
                 }
                 else
                 {
-                    overloadFullClassName = (node is BaseTypeDeclarationSyntax bt ? _global.ResolveTypeName(bt) : throw new InvalidOperationException());
+                    overloadReferenceClassName = (node is BaseTypeDeclarationSyntax bt ? _global.ResolveTypeName(bt) : throw new InvalidOperationException());
                 }
-                if (_global.BuildFlags.HasFlag(NetJsBuildFlags.Global) && overloadFullClassName.StartsWith(_global.GlobalName + "."))
+                if (_global.BuildFlags.HasFlag(NetJsBuildFlags.Global) && overloadReferenceClassName.StartsWith(_global.GlobalName + "."))
                 {
-                    overloadFullClassName = overloadFullClassName.Substring(_global.GlobalName.Length + 1);
+                    overloadReferenceClassName = overloadReferenceClassName.Substring(_global.GlobalName.Length + 1);
                 }
                 var exportClassName = originalFullClassName;
                 //var classNameSegments = overloadFullClassName.Split('.');
@@ -575,7 +600,24 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     var systemObject = _global.GetSymbol("System.Object", this/*, out _, out _*/);
                     var systemValueType = _global.GetSymbol("System.ValueType", this/*, out _, out _*/);
-                    if (typeSymbol.BaseType != null)
+                    var baseType = typeSymbol.BaseType;
+                    if (_global.HasAttribute(typeSymbol, typeof(BaseAttribute).FullName!, this, false, out var args))
+                    {
+                        baseType = (INamedTypeSymbol)args[0]!;
+                    }
+                    else if (typeSymbol.TypeKind == TypeKind.Enum) //make all enum inherit from EnumT<,> instead. This type prevent boxing on enum before ToString
+                    {
+                        var underlyingType = typeSymbol.EnumUnderlyingType!.SpecialType switch
+                        {
+                            SpecialType.System_SByte => _global.SystemByte,
+                            SpecialType.System_Int16 => _global.SystemUInt16,
+                            SpecialType.System_Int32 => _global.SystemUInt32,
+                            SpecialType.System_Int64 => _global.SystemUInt64,
+                            _ => typeSymbol.EnumUnderlyingType!
+                        };
+                        baseType = _global.SystemEnumT.Construct(typeSymbol, underlyingType);
+                    }
+                    if (baseType != null)
                     {
                         //if (isBootClass &&
                         //    (typeSymbol.BaseType.Equals(systemObject, SymbolEqualityComparer.Default) || typeSymbol.BaseType.Equals(systemValueType, SymbolEqualityComparer.Default)))
@@ -584,9 +626,9 @@ namespace NetJs.Translator.CSharpToJavascript
                         //}
                         //else
                         //{
-                        Dependencies.Add(typeSymbol.BaseType);
-                        var baseMeta = _global.GetRequiredMetadata(typeSymbol.BaseType);
-                        var baseName = typeSymbol.BaseType.ComputeOutputTypeName(_global);
+                        Dependencies.Add(baseType);
+                        var baseMeta = _global.GetRequiredMetadata(baseType);
+                        var baseName = baseType.ComputeOutputTypeName(_global);
                         if (!string.IsNullOrEmpty(baseName))
                         {
                             //If a class base has a reference to the class, rename the self reference with $self
@@ -614,7 +656,7 @@ namespace NetJs.Translator.CSharpToJavascript
                             {
                                 _base = $" extends $.$mix({baseName}, {string.Join(", ", implementedInterfaces)})";
                             }
-                            else if (typeSymbol.BaseType.Arity > 0)
+                            else if (baseType.Arity > 0)
                             {
                                 //string genericTypes = string.Join(", ", symbol.BaseType.TypeArguments.Select(t => t.ComputeOutputTypeName(global)));
                                 //_base = $" extends {baseName}({genericTypes})";
@@ -682,22 +724,22 @@ namespace NetJs.Translator.CSharpToJavascript
                     //    var path = string.Join(".", classNameSegments.Take(i));
                     //    Writer.WriteLine(node, $"$.{path} ??= {{ }};", true);
                     //}
-                    classDefinition = $"$.{Constants.AssemblyBootClassName}(\"{overloadFullClassName}\", {(typeSymbol.Arity > 0 ? $"({genericArgs}{(hasGenericArguments && isInterface ? ", " : "")}{(isInterface ? "Mixin" : "")}) => " : "")}class {(Constants.ExportClassName ? exportClassName.Replace("<", "$").Replace(",", "$").Replace(">", "$") : "")}{_base}";
+                    classDefinition = $"$.{Constants.AssemblyBootClassName}(`{overloadReferenceClassName}`, {(typeSymbol.Arity > 0 ? $"({genericArgs}{(hasGenericArguments && isInterface ? ", " : "")}{(isInterface ? "Mixin" : "")}) => " : "")}class {(Constants.ExportClassName ? exportClassName.Replace("<", "$").Replace(",", "$").Replace(">", "$") : "")}{_base}";
                     closingClassDeclaration = ");";
                 }
                 else if (hasGenericArguments)
                 {
-                    classDefinition = $"$asm.{classCreate}(\"{overloadFullClassName}\", ({genericArgs}) => $asm.$gt(\"{overloadFullClassName}\", [{genericArgs}], ($self) => class {(Constants.ExportClassName ? exportClassName.Replace("<", "$").Replace(",", "$").Replace(">", "$") : "")}{_base}";
+                    classDefinition = $"$asm.{classCreate}(`{overloadReferenceClassName}`, ({genericArgs}) => $asm.$gt(`{overloadReferenceClassName}`, [{genericArgs}], ($self) => class {(Constants.ExportClassName ? exportClassName.Replace("<", "$").Replace(",", "$").Replace(">", "$") : "")}{_base}";
                     closingClassDeclaration = "));";
                 }
                 else if (!hasGenericArguments)
                 {
-                    classDefinition = $"$asm.{classCreate}(\"{overloadFullClassName}\", ($self) => class {(Constants.ExportClassName ? exportClassName.Replace("<", "$").Replace(",", "$").Replace(">", "$") : "")}{_base}";
+                    classDefinition = $"$asm.{classCreate}(`{overloadReferenceClassName}`, ($self) => class {(Constants.ExportClassName ? exportClassName.Replace("<", "$").Replace(",", "$").Replace(">", "$") : "")}{_base}";
                     closingClassDeclaration = ");";
                 }
                 else
                 {
-                    classDefinition = $"$asm.{classCreate}(\"{overloadFullClassName}\", ({(!hasGenericArguments ? "$self" : "")}{(!hasGenericArguments && !string.IsNullOrEmpty(genericArgs) ? ", " : "")}{genericArgs}) => {(hasGenericArguments ? $"$asm.$gt(\"{overloadFullClassName}\", [{genericArgs}], ($self) => " : "")}class {(Constants.ExportClassName ? exportClassName.Replace("<", "$").Replace(",", "$").Replace(">", "$") : "")}{_base}";
+                    classDefinition = $"$asm.{classCreate}(`{overloadReferenceClassName}`, ({(!hasGenericArguments ? "$self" : "")}{(!hasGenericArguments && !string.IsNullOrEmpty(genericArgs) ? ", " : "")}{genericArgs}) => {(hasGenericArguments ? $"$asm.$gt(`{overloadReferenceClassName}`, [{genericArgs}], ($self) => " : "")}class {(Constants.ExportClassName ? exportClassName.Replace("<", "$").Replace(",", "$").Replace(">", "$") : "")}{_base}";
                     //classDefinition = $"$asm.{classCreate}(\"{fullClassName}\", ({genericArgs}{(hasGeneric && usingInterfaceMixin ? ", " : "")}{(usingInterfaceMixin ? "Mixin" : "")}) => {(hasGeneric || isInterface ? $"$asm.${(isInterface && hasGeneric ? "gm" : isInterface && !hasGeneric ? "mx" : "gt")}(\"{fullClassName}\", [{genericArgs}{(hasGeneric && usingInterfaceMixin ? ", " : "")}{(usingInterfaceMixin ? "Mixin" : "")}], () => " : "")}class {"" ?? className}{_base}";
                     //if (genericArgs?.Length > 0 || isInterface)
                     if (hasGenericArguments)
@@ -712,13 +754,17 @@ namespace NetJs.Translator.CSharpToJavascript
                 string openingClassDefinition = "{";
                 if (isNested)
                 {
-                    var nestedClassName = overloadFullClassName.Split('.').Last().Replace("<", "$").Replace(",", "$").Replace(">", "$");
+                    var nestedClassName = overloadReferenceClassName.Split('.').Last().Replace("<", "$").Replace(",", "$").Replace(">", "$");
                     var parent = _global.GetSymbol(node.Parent!, this);
                     var parentMetadata = _global.GetRequiredMetadata(parent);
                     //isInnerClass = true;
                     CurrentTypeWriter.WriteLine(node, $"static $_{nestedClassName};", true);
                     CurrentTypeWriter.WriteLine(node, $"static {(!hasGenericArguments ? "get " : "")}{nestedClassName}({genericArgs})", true);
                     CurrentTypeWriter.WriteLine(node, $"{{", true);
+                    if (_global.BuildFlags.HasFlag(NetJsBuildFlags.ProfileTraceEntry))
+                    {
+                        WriteTraceEntry(node, typeMetadata.Export.Handle);
+                    }
                     CurrentTypeWriter.WriteLine(node, $"let $cls = {parentMetadata.InvocationName};", true);
                     classDefinition = $"return {(hasGenericArguments ? "(" : "")}$cls.$_{nestedClassName} ??= {classDefinition}";
                     if (hasGenericArguments)
@@ -845,25 +891,30 @@ namespace NetJs.Translator.CSharpToJavascript
 
                 foreach (var m in membersSymbol)
                 {
-                    //foreach (var member in m)
-                    //{
-                    //    if (SymbolEqualityComparer.Default.Equals(member.ContainingType, typeSymbol))
-                    //    {
-                    //        MarkCurrentClosureDependsOn(member.GetTypeSymbol());
-                    //        if (member.Kind == SymbolKind.Method && member is IMethodSymbol ms)
-                    //        {
-                    //            var parameterTypes = ms.Parameters.Select(p => p.Type);
-                    //            foreach (var pt in parameterTypes)
-                    //                MarkCurrentClosureDependsOn(pt);
-                    //        }
-                    //        else if (member.Kind == SymbolKind.Property && member is IPropertySymbol ps && ps.IsIndexer)
-                    //        {
-                    //            var parameterTypes = ps.Parameters.Select(p => p.Type);
-                    //            foreach (var pt in parameterTypes)
-                    //                MarkCurrentClosureDependsOn(pt);
-                    //        }
-                    //    }
-                    //}
+                    foreach (var member in m)
+                    {
+                        if (member.Kind == SymbolKind.Field || member.Kind == SymbolKind.Property || member.Kind == SymbolKind.Event)
+                        {
+                            var type = member.GetTypeSymbol();
+                            MarkCurrentClosureDependsOn(type);
+                        }
+                        //    if (SymbolEqualityComparer.Default.Equals(member.ContainingType, typeSymbol))
+                        //    {
+                        //        MarkCurrentClosureDependsOn(member.GetTypeSymbol());
+                        //        if (member.Kind == SymbolKind.Method && member is IMethodSymbol ms)
+                        //        {
+                        //            var parameterTypes = ms.Parameters.Select(p => p.Type);
+                        //            foreach (var pt in parameterTypes)
+                        //                MarkCurrentClosureDependsOn(pt);
+                        //        }
+                        //        else if (member.Kind == SymbolKind.Property && member is IPropertySymbol ps && ps.IsIndexer)
+                        //        {
+                        //            var parameterTypes = ps.Parameters.Select(p => p.Type);
+                        //            foreach (var pt in parameterTypes)
+                        //                MarkCurrentClosureDependsOn(pt);
+                        //        }
+                        //    }
+                    }
                     if (m.Count() == 1)
                         CurrentClosure.DefineIdentifierType(m.Key, CodeSymbol.From(m.Single()));
                     else
@@ -912,59 +963,75 @@ namespace NetJs.Translator.CSharpToJavascript
 
                 WriteInterfaceImplementations(node, typeSymbol);
 
-                if (!_static && !isDefinedTypeParameter)
+                if (!_static && !isDefinedTypeParameter && typeSymbol.TypeKind != TypeKind.Delegate && typeSymbol.TypeKind != TypeKind.Interface/* && !typeSymbol.IsAbstract*/)
                 {
                     var constructors = members.Where(e => e.IsKind(SyntaxKind.ConstructorDeclaration)/* is ConstructorDeclarationSyntax*/).Cast<ConstructorDeclarationSyntax>()
                         .Where(c => !c.Modifiers.IsStatic());
-                    if (node.IsKind(SyntaxKind.StructDeclaration))
+                    //if (node.IsKind(SyntaxKind.StructDeclaration))
+                    //{
+                    //    //As struct must have a default constructor
+                    //    if (!constructors.Any(e => e.ParameterList.Parameters.Count == 0)) //no default constructor defined, define it
+                    //    {
+                    //        var defaultCtor = typeSymbol.GetMembers(".ctor").Single(e => e is IMethodSymbol ms && ms.Parameters.Length == 0);
+                    //        var ctorMetadata = _global.GetRequiredMetadata(defaultCtor);
+                    //        using var ctorTrimmer = WriteTrimmableBoundaryStart(node, defaultCtor);
+                    //        CurrentTypeWriter.WriteLine(node, $"//default value type constructor", true);
+                    //        CurrentTypeWriter.WriteLine(node, $"{ctorMetadata.OverloadName ?? Constants.DefaultConstructorName}()", true);
+                    //        CurrentTypeWriter.WriteLine(node, "{", true);
+                    //        CurrentTypeWriter.WriteLine(node, "return this;", true);
+                    //        CurrentTypeWriter.WriteLine(node, "}", true);
+                    //    }
+                    //}
+                    //else if (node.IsKind(SyntaxKind.ClassDeclaration))
+                    //{
+                    //A class without any constructor has a a default one generated by the compiler
+                    if ((primaryConstructorParameters == null && !constructors.Any()) ||
+                        ((node.IsKind(SyntaxKind.StructDeclaration) || node.IsKind(SyntaxKind.RecordStructDeclaration)) && !constructors.Any(e => e.ParameterList.Parameters.Count == 0))) //no constructor defined, define default
                     {
-                        //As struct must have a default constructor
-                        if (!constructors.Any(e => e.ParameterList.Parameters.Count == 0)) //no default constructor defined, define it
+                        var defaultCtor = typeSymbol.GetMembers(".ctor").Single(e => e is IMethodSymbol ms && ms.Parameters.Length == 0);
+                        var ctorMetadata = _global.GetRequiredMetadata(defaultCtor);
+                        using var ctorTrimmer = WriteTrimmableBoundaryStart(node, defaultCtor);
+                        CurrentTypeWriter.WriteLine(node, $"//default constructor overload", true);
+                        CurrentTypeWriter.WriteLine(node, $"{(constructorCallConvention == ConstructorCallConvention.StaticCall ? "static " : "")}{ctorMetadata.OverloadName ?? Constants.DefaultConstructorName}()", true);
+                        CurrentTypeWriter.WriteLine(node, "{", true);
+                        OpenClosure(node, defaultCtor);
+                        var baseMembers = typeSymbol.BaseType?.GetMembers(".ctor", _global, true);
+                        //if there is a base constructor with all parameter having default, prioritize that
+                        var defaulBaseConstructor = (IMethodSymbol?)baseMembers?.FirstOrDefault(e => e is IMethodSymbol ms && ms.Parameters.Length > 0 && ms.Parameters.All(e => e.HasExplicitDefaultValue)) ??
+                            (IMethodSymbol?)typeSymbol.BaseType?.GetMembers(".ctor", _global, true)
+                            .SingleOrDefault(e => e is IMethodSymbol ms && ms.Parameters.Length == 0);
+                        if (defaulBaseConstructor != null)
                         {
-                            var defaultCtor = typeSymbol.GetMembers(".ctor").Single(e => e is IMethodSymbol ms && ms.Parameters.Length == 0);
-                            var ctorMetadata = _global.GetRequiredMetadata(defaultCtor);
-                            using var ctorTrimmer = WriteTrimmableBoundaryStart(node, defaultCtor);
-                            CurrentTypeWriter.WriteLine(node, $"//default value type constructor", true);
-                            CurrentTypeWriter.WriteLine(node, $"{ctorMetadata.OverloadName ?? Constants.DefaultConstructorName}()", true);
-                            CurrentTypeWriter.WriteLine(node, "{", true);
-                            CurrentTypeWriter.WriteLine(node, "return this;", true);
-                            CurrentTypeWriter.WriteLine(node, "}", true);
+                            WriteCalledConstructor(node, typeSymbol, defaulBaseConstructor, null);
                         }
+                        if (_global.BuildFlags.HasFlag(NetJsBuildFlags.ProfileTraceEntry))
+                        {
+                            WriteTraceEntry(node, ctorMetadata.Export.Handle);
+                        }
+                        CurrentTypeWriter.WriteLine(node, "return this;", true);
+                        CurrentTypeWriter.WriteLine(node, "}", true);
+                        CloseClosure(node);
                     }
-                    else if (node.IsKind(SyntaxKind.ClassDeclaration))
+                    //If this class has a default ctor, install a generic constructor, that calls the default
+                    var idefaultCtor = typeSymbol.GetMembers(".ctor").SingleOrDefault(e => e is IMethodSymbol ms && ms.Parameters.Length == 0);
+                    if (idefaultCtor != null)
                     {
-                        //A class without any constructor has a a default one generated by the compiler
-                        if (primaryConstructorParameters == null && !constructors.Any()) //no constructor defined, define default
-                        {
-                            var defaultCtor = typeSymbol.GetMembers(".ctor").Single(e => e is IMethodSymbol ms && ms.Parameters.Length == 0);
-                            var ctorMetadata = _global.GetRequiredMetadata(defaultCtor);
-                            using var ctorTrimmer = WriteTrimmableBoundaryStart(node, defaultCtor);
-                            CurrentTypeWriter.WriteLine(node, $"//default reference type constructor overload", true);
-                            CurrentTypeWriter.WriteLine(node, $"{(constructorCallConvention == ConstructorCallConvention.StaticCall ? "static " : "")}{ctorMetadata.OverloadName ?? Constants.DefaultConstructorName}()", true);
-                            CurrentTypeWriter.WriteLine(node, "{", true);
-                            OpenClosure(node, defaultCtor);
-                            var baseMembers = typeSymbol.BaseType?.GetMembers(".ctor", _global, true);
-                            //if there is a base constructor with all parameter having default, prioritize that
-                            var defaulBaseConstructor = (IMethodSymbol?)baseMembers?.FirstOrDefault(e => e is IMethodSymbol ms && ms.Parameters.Length > 0 && ms.Parameters.All(e => e.HasExplicitDefaultValue)) ??
-                                (IMethodSymbol?)typeSymbol.BaseType?.GetMembers(".ctor", _global, true)
-                                .SingleOrDefault(e => e is IMethodSymbol ms && ms.Parameters.Length == 0);
-                            if (defaulBaseConstructor != null)
-                            {
-                                WriteCalledConstructor(node, typeSymbol, defaulBaseConstructor, null);
-                            }
-                            CurrentTypeWriter.WriteLine(node, "return this;", true);
-                            CurrentTypeWriter.WriteLine(node, "}", true);
-                            CloseClosure(node);
-                        }
+                        var ctorMetadata = _global.GetRequiredMetadata(idefaultCtor);
+                        using var ctorTrimmer = WriteTrimmableBoundaryStart(node, idefaultCtor);
+                        CurrentTypeWriter.WriteLine(node, $"//generic new constructor", true);
+                        CurrentTypeWriter.WriteLine(node, $"{Constants.GenericNewConstraintConstructorName}()", true);
+                        CurrentTypeWriter.WriteLine(node, "{", true);
+                        CurrentTypeWriter.WriteLine(node, $"return this.{ctorMetadata.OverloadName}();", true);
+                        CurrentTypeWriter.WriteLine(node, "}", true);
                     }
+                    //}
                 }
 
                 //Generate clone systems for all struct types, if not existing
                 if ((typeSymbol.IsValueType || typeSymbol.IsRecord) &&
                     typeSymbol.EnumUnderlyingType == null/*dont generate for enum type*/ &&
                     !typeSymbol.IsJsPrimitive() &&
-                    !typeSymbol.IsStatic &&
-                    !typeSymbol.GetMembers().Any(a => a is IMethodSymbol m && m.Name == "Clone"))
+                    !typeSymbol.IsStatic)
                 {
                     CurrentTypeWriter.Write(node, Constants.Clone, true);
                     CurrentTypeWriter.WriteLine(node, "($copy)");
@@ -979,10 +1046,10 @@ namespace NetJs.Translator.CSharpToJavascript
                     int arraySize = 0;
                     ITypeSymbol nfieldType;
                     bool misInlineArray = false;
-                    if (misInlineArray = _global.IsInlineArray(typeSymbol, out arraySize, out _))
+                    if (misInlineArray = _global.IsInlineArray(typeSymbol, out arraySize, out var iAT))
                     {
                         if (misInlineArray)
-                            CurrentTypeWriter.WriteLine(node, $"//InlineArray({arraySize})", true);
+                            CurrentTypeWriter.WriteLine(node, $"//InlineArray({iAT}, {arraySize})", true);
                         CurrentTypeWriter.WriteLine(node, $"copy.{Constants.StructFieldsLayoutName} = [...this.{Constants.StructFieldsLayoutName}];", true);
                         CurrentTypeWriter.Write(node, "", true);
                         WriteMethodInvocation(node, "System.Array.CopyMetadata", arguments: [
@@ -1003,17 +1070,24 @@ namespace NetJs.Translator.CSharpToJavascript
                         foreach (var member in typeSymbol.GetMembers())
                         {
                             var metadata = _global.GetRequiredMetadata(member);
+                            var memberName = metadata.OverloadName ?? member.Name;
                             if (!member.IsStatic && (member is IFieldSymbol || (member is IPropertySymbol p && p.IsAutoProperty())))
                             {
                                 if (!member.Name.Contains("<") && !member.Name.Contains("[")) //skip those compiler generated members and indexer
                                 {
                                     if (member is IFieldSymbol ff && _global.IsInlineArray(ff.Type, out arraySize, out nfieldType))
                                     {
-                                        CurrentTypeWriter.WriteLine(node, $"//InlineArray({arraySize})", true);
-                                        CurrentTypeWriter.WriteLine(node, $"copy.{Constants.StructFieldsLayoutName} = [...this.{Constants.StructFieldsLayoutName}];", true);
-                                        CurrentTypeWriter.Write(node, "", true);
-                                        WriteMethodInvocation(node, "System.Array.CopyMetadata", arguments: [
-                                            new CodeNode(()=>
+                                        CurrentTypeWriter.WriteLine(node, $"//InlineArray({nfieldType}, {arraySize})", true);
+                                        if (false)
+                                        {
+                                            CurrentTypeWriter.WriteLine(node, $"copy.{memberName}.{Constants.StructFieldsLayoutName} = this.{memberName}.{Constants.StructFieldsLayoutName};", true);
+                                        }
+                                        else
+                                        {
+                                            CurrentTypeWriter.WriteLine(node, $"copy.{memberName}.{Constants.StructFieldsLayoutName} = [...this.{memberName}.{Constants.StructFieldsLayoutName}];", true);
+                                            CurrentTypeWriter.Write(node, "", true);
+                                            WriteMethodInvocation(node, "System.Array.CopyMetadata", arguments: [
+                                                new CodeNode(()=>
                                             {
                                                 CurrentTypeWriter.Write(node, $"copy.{Constants.StructFieldsLayoutName}");
                                             }),
@@ -1021,17 +1095,23 @@ namespace NetJs.Translator.CSharpToJavascript
                                             {
                                                 CurrentTypeWriter.Write(node, $"this.{Constants.StructFieldsLayoutName}");
                                             })
-                                        ]);
-                                        CurrentTypeWriter.WriteLine(node, "");
+                                            ]);
+                                            CurrentTypeWriter.WriteLine(node, "");
+                                        }
                                     }
-                                    else if (_global.IsFixedSizeField(member, out arraySize, out nfieldType))
+                                    else if (_global.IsFixedSizeField(member, out arraySize, out var tp))
                                     {
-                                        CurrentTypeWriter.WriteLine(node, $"//InlineArray({arraySize})", true);
-                                        var memberName = _global.GetMetadata(member)?.OverloadName ?? member.Name;
-                                        CurrentTypeWriter.WriteLine(node, $"copy.{memberName} = [...this.{memberName}];", true);
-                                        CurrentTypeWriter.Write(node, "", true);
-                                        WriteMethodInvocation(node, "System.Array.CopyMetadata", arguments: [
-                                            new CodeNode(()=>
+                                        CurrentTypeWriter.WriteLine(node, $"//FixedSizeArray({tp}, {arraySize})", true);
+                                        if (false)
+                                        {
+                                            CurrentTypeWriter.WriteLine(node, $"copy.{memberName}.{Constants.StructFieldsLayoutName} = this.{memberName}.{Constants.StructFieldsLayoutName};", true);
+                                        }
+                                        else
+                                        {
+                                            CurrentTypeWriter.WriteLine(node, $"copy.{memberName} = [...this.{memberName}];", true);
+                                            CurrentTypeWriter.Write(node, "", true);
+                                            WriteMethodInvocation(node, "System.Array.CopyMetadata", arguments: [
+                                                new CodeNode(()=>
                                             {
                                                 CurrentTypeWriter.Write(node, $"copy.{memberName}");
                                             }),
@@ -1039,18 +1119,21 @@ namespace NetJs.Translator.CSharpToJavascript
                                             {
                                                 CurrentTypeWriter.Write(node, $"this.{memberName}");
                                             })
-                                        ]);
-                                        CurrentTypeWriter.WriteLine(node, "");
+                                            ]);
+                                            CurrentTypeWriter.WriteLine(node, "");
+                                        }
                                     }
                                     else
                                     {
                                         if (member is IFieldSymbol f && f.Type.IsValueType && !f.Type.IsJsPrimitive())
                                         {
-                                            CurrentTypeWriter.WriteLine(node, $"copy.{metadata.OverloadName} = this.{metadata.OverloadName}.Clone();", true);
+                                            var isNullable = f.Type.IsNullable(out var type);
+                                            CurrentTypeWriter.WriteLine(node, $"copy.{metadata.OverloadName} = this.{metadata.OverloadName}{(isNullable ? "?" : "")}.{Constants.Clone}(){(isNullable ? " ?? null" : "")};", true);
                                         }
                                         else if (member is IPropertySymbol pr && pr.Type.IsValueType && !pr.Type.IsJsPrimitive())
                                         {
-                                            CurrentTypeWriter.WriteLine(node, $"copy.{metadata.OverloadName} = this.{metadata.OverloadName}.Clone();", true);
+                                            var isNullable = pr.Type.IsNullable(out var type);
+                                            CurrentTypeWriter.WriteLine(node, $"copy.{metadata.OverloadName} = this.{metadata.OverloadName}{(isNullable ? "?" : "")}.{Constants.Clone}(){(isNullable ? " ?? null" : "")};", true);
                                         }
                                         else
                                             CurrentTypeWriter.WriteLine(node, $"copy.{metadata.OverloadName} = this.{metadata.OverloadName};", true);
@@ -1131,6 +1214,11 @@ namespace NetJs.Translator.CSharpToJavascript
                     CurrentTypeWriter.WriteLine(node, $"static {Constants.StaticInitializerName}()", true);
                     CurrentTypeWriter.WriteLine(node, $"{{", true);
                     OpenClosure(node, staticCtor);
+                    if (staticCtor != null)
+                    {
+                        var metadata = _global.GetRequiredMetadata(staticCtor);
+                        WriteTraceEntry(node, metadata.Export.Handle);
+                    }
                     var thisClosure = CurrentClosure;
                     if (thisClosure.Symbol == null)
                         thisClosure.GeneratedMethodName = Constants.StaticInitializerName;
@@ -1322,9 +1410,9 @@ namespace NetJs.Translator.CSharpToJavascript
 
                     CurrentTypeWriter.WriteLine(node, $"return {eqCHashCode}{(hashs.Length > 0 ? " && " : "")}{hashs};", true);
                     CurrentTypeWriter.WriteLine(node, "}", true);
-                    CurrentTypeWriter.WriteLine(node, $"static /*bool*/ op_InEquality(/*{typeSymbol.Name}*/ left, /*{typeSymbol.Name}*/ right)", true);
+                    CurrentTypeWriter.WriteLine(node, $"static /*bool*/ op_Inequality(/*{typeSymbol.Name}*/ left, /*{typeSymbol.Name}*/ right)", true);
                     CurrentTypeWriter.WriteLine(node, "{", true);
-                    CurrentTypeWriter.WriteLine(node, "return !(this.op_Equals(left, right));", true);
+                    CurrentTypeWriter.WriteLine(node, "return !(this.op_Equality(left, right));", true);
                     CurrentTypeWriter.WriteLine(node, "}", true);
 
                     CurrentTypeWriter.WriteLine(node, $"static /*bool*/ op_Equality(/*{typeSymbol.Name}*/ left, /*{typeSymbol.Name}*/ right)", true);
@@ -1423,9 +1511,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 CurrentTypeWriter.WriteLine(node, "{", true);
                 if (_global.BuildFlags.HasFlag(NetJsBuildFlags.ProfileTraceEntry))
                 {
-                    CurrentTypeWriter.WriteLine(node, $"//--TRIMMABLE-BOUNDARY-START(TRACE)", true);
-                    CurrentTypeWriter.WriteLine(node, $"{Global.GlobalName}.{Constants.TraceEntryName}({metadata.Export.Handle});", true);
-                    CurrentTypeWriter.WriteLine(node, $"//--TRIMMABLE-BOUNDARY-END(TRACE)", true);
+                    WriteTraceEntry(node, metadata.Export.Handle);
                 }
                 CurrentTypeWriter.WriteLine(node, "return this.$map ??= ", true);
                 CurrentTypeWriter.WriteLine(node, "{", true);
@@ -1438,10 +1524,27 @@ namespace NetJs.Translator.CSharpToJavascript
                     CurrentTypeWriter.Write(node, "\"", true);
                     CurrentTypeWriter.Write(node, member.Identifier.ValueText);
                     CurrentTypeWriter.Write(node, "\": ");
-                    var field = (IFieldSymbol)_global.GetSymbol(member, this/*, out _, out _*/);
+                    var field = (IFieldSymbol)_global.GetSymbol(member, this);
                     if (field.ConstantValue != null)
                     {
-                        CurrentTypeWriter.Write(node, field.ConstantValue.ToString() ?? throw new InvalidOperationException(), false);
+                        var value = field.ConstantValue;
+                        if (value is long l)
+                        {
+                            value = (ulong)l;
+                        }
+                        else if (value is int i)
+                        {
+                            value = (uint)i;
+                        }
+                        else if (value is short s)
+                        {
+                            value = (ushort)s;
+                        }
+                        else if (value is sbyte sb)
+                        {
+                            value = (byte)sb;
+                        }
+                        CurrentTypeWriter.Write(node, value.ToString() ?? throw new InvalidOperationException(), false);
                         CurrentTypeWriter.Write(node, "n", false);
                     }
                     else

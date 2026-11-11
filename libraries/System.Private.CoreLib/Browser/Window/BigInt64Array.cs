@@ -5,7 +5,7 @@ namespace Window
     [NetJs.External]
     public class BigInt64Array
     {
-        public extern BigInt64Array(long length);
+        public extern BigInt64Array(int length);
         public extern BigInt64Array(Union<Array, ArrayBuffer> buffer);
         public extern BigInt64Array(Union<Array, ArrayBuffer> buffer, int byteOffset);
         public extern BigInt64Array(Union<Array, ArrayBuffer> buffer, int byteOffset, int length);

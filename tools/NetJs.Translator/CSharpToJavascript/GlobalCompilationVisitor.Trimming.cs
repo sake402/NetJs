@@ -12,7 +12,7 @@ namespace NetJs.Translator.CSharpToJavascript
 {
     public partial record class GlobalCompilationVisitor
     {
-        private Dictionary<string, ILLinkerAssembly.Type.Member>? _linkerSubstitutionsIndex;
+        private Dictionary<string, ILLinkerAssembly.Member>? _linkerSubstitutionsIndex;
 
         /// <summary>
         /// Mark a symbol as being dependent on another. This makes trimming works
@@ -41,7 +41,11 @@ namespace NetJs.Translator.CSharpToJavascript
                     if (!(sourceExport.WeakDependencies?.Any(e => e.Handle == destinationExport.Handle.Value) ?? false))
                     {
                         sourceExport.WeakDependencies ??= new();
-                        sourceExport.WeakDependencies.Add((destinationExport.Handle.Value, weakReason));
+                        sourceExport.WeakDependencies.Add(new WeakDependency
+                        {
+                            Handle = destinationExport.Handle.Value,
+                            Condition = weakReason
+                        });
                     }
                 }
                 else
@@ -137,25 +141,45 @@ namespace NetJs.Translator.CSharpToJavascript
 
         public void RegisterDynamicallyAccessedMembers(ISymbol source, INamedTypeSymbol destination, ISymbol attributedSymbol)
         {
-            var attributeSymbol = GetSymbol(typeof(DynamicallyAccessedMembersAttribute).FullName!, null);
-            var attributes = attributedSymbol.GetAttributes().Where(a => a.AttributeClass?.Equals(attributeSymbol, SymbolEqualityComparer.Default) ?? false);
-            foreach (var att in attributes)
+            if (HasAttributes(attributedSymbol, typeof(DynamicallyAccessedMembersAttribute).FullName!, null, false, out var cArgs))
             {
-                var memberTypes = (DynamicallyAccessedMemberTypes)(int)att.ConstructorArguments[0].Value!;
-                var members = destination.GetMembers();
-                foreach (var member in destination.Constructors)
+                foreach (var att in cArgs)
                 {
-                    TryRegisterDependency(source, member, memberTypes);
-                }
-                foreach (var member in members)
-                {
-                    TryRegisterDependency(source, member, memberTypes);
+                    var memberTypes = (DynamicallyAccessedMemberTypes)(int)att[0]!;
+                    var members = destination.GetMembers();
+                    foreach (var member in destination.Constructors)
+                    {
+                        TryRegisterDependency(source, member, memberTypes);
+                    }
+                    foreach (var member in members)
+                    {
+                        TryRegisterDependency(source, member, memberTypes);
+                    }
                 }
             }
+            //var attributeSymbol = GetSymbol(typeof(DynamicallyAccessedMembersAttribute).FullName!, null);
+            //var attributes = attributedSymbol.GetAttributes().Where(a => a.AttributeClass?.Equals(attributeSymbol, SymbolEqualityComparer.Default) ?? false);
+            //foreach (var att in attributes)
+            //{
+            //    var memberTypes = (DynamicallyAccessedMemberTypes)(int)att.ConstructorArguments[0].Value!;
+            //    var members = destination.GetMembers();
+            //    foreach (var member in destination.Constructors)
+            //    {
+            //        TryRegisterDependency(source, member, memberTypes);
+            //    }
+            //    foreach (var member in members)
+            //    {
+            //        TryRegisterDependency(source, member, memberTypes);
+            //    }
+            //}
         }
 
         public void RegisterDynamicDependencies(ISymbol source)
         {
+            if (source.Name == "Nullable")
+            {
+
+            }
             if (HasAttributes(source, typeof(DynamicDependencyAttribute).FullName!, null, false, out var args))
             {
                 foreach (var att in args)
@@ -171,12 +195,14 @@ namespace NetJs.Translator.CSharpToJavascript
                                 if (!members.Any())
                                 {
                                     var allMembers = tSource.GetMembers();
-                                    foreach (var member in allMembers)
+                                    foreach (var member in tSource.InstanceConstructors.Concat(tSource.StaticConstructors).Concat(allMembers))
                                     {
                                         var metadata = GetRequiredMetadata(member);
                                         if (memberSignature == "*" || metadata.Signature == memberSignature)
                                         {
                                             RegisterDependencyGraph(source, member);
+                                            if (memberSignature != "*")
+                                                break;
                                         }
                                     }
                                 }
@@ -317,7 +343,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
         void InitializeLinkerSubstitutionsIndex()
         {
-            var index = new Dictionary<string, ILLinkerAssembly.Type.Member>(StringComparer.Ordinal);
+            var index = new Dictionary<string, ILLinkerAssembly.Member>(StringComparer.Ordinal);
 
             foreach (var substitution in Symbols.LinkerSubstitutions.Concat(ImportedSymbols.LinkerSubstitutions))
             {
@@ -340,7 +366,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
             _linkerSubstitutionsIndex = index;
         }
-        public ILLinkerAssembly.Type.Member GetLinkerMemeberSubstitution(string signature)
+        public ILLinkerAssembly.Member GetLinkerMemeberSubstitution(string signature)
         {
             if (_linkerSubstitutionsIndex == null)
             {

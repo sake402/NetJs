@@ -13,5 +13,6 @@ namespace Window
         public extern ArrayBuffer buffer { get; }
         public extern uint this[int index] { get; set; }
         public extern Uint32Array slice(int start = 0, int? end = null);
+        public extern Uint32Array fill(int value);
     }
 }

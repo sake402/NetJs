@@ -134,7 +134,7 @@ namespace NetJs.Translator
                         RazorImports = imports,
                         RazorFile = razorFile,
                         CsFile = csFilePath,
-                        Namespace = _project.GetNamespace() + (relativePath != "." ? ("." + relativePath.Replace("/", ".").Replace("\\", ".")) : ""),
+                        Namespace = _project.GetRootNamespace() + (relativePath != "." ? ("." + relativePath.Replace("/", ".").Replace("\\", ".")) : ""),
                         ClassName = componentClassName,
                         RazorSequenceNumber = random.Next(int.MinValue + 200000, int.MaxValue - 200000), //make sure the sequnce number wont overflow when incrmented
                         ComponentClassSymbol = _componentClassSymbol,
@@ -200,7 +200,7 @@ namespace NetJs.Translator
                     if (outStartupCodes.Any())
                     {
                         File.WriteAllText(Path.Combine(_output.OutputPath, "__Startup.g.cs"), @$"
-namespace {_project.GetNamespace()}
+namespace {_project.GetRootNamespace()}
 {{
     public static class GeneratedStartup
     {{

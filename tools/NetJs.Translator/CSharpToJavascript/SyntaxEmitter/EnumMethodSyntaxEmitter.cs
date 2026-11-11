@@ -1,12 +1,46 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Diagnostics;
 
 namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
 {
     //ENum.Field.ToString() should be inlined to System.Int32.$type nameof(Field)
     sealed class EnumMethodSyntaxEmitter : SyntaxEmitter<InvocationExpressionSyntax>
     {
+        public static void WriteEnumToString(CSharpSyntaxNode node, TranslatorSyntaxVisitor visitor, ExpressionSyntax enumExpression)
+        {
+            var enumField = visitor.Global.GetSymbol(enumExpression, visitor);
+            var enumType = visitor.Global.GetTypeSymbol(enumField);
+            Debug.Assert(enumType.BaseType!.SpecialType == SpecialType.System_Enum);
+            if (enumField.Kind == SymbolKind.Field && ((IFieldSymbol)enumField).HasConstantValue)
+            {
+                visitor.CurrentTypeWriter.Write(node, "\"");
+                visitor.CurrentTypeWriter.Write(node, enumField.Name);
+                visitor.CurrentTypeWriter.Write(node, "\"");
+            }
+            else
+            {
+                //Write Enum.ToStringT<TEnum, TStorage>(TStorage value)
+                var enumToString = (IMethodSymbol)visitor.Global.SystemEnum
+                    .GetMembers("ToStringT")
+                    .Single(e => e is IMethodSymbol ms && ms.TypeParameters.Length == 2 && ms.Parameters.Length == 1 && SymbolEqualityComparer.Default.Equals(ms.Parameters[0].Type, ms.TypeParameters[1]));
+                //Map signed underlying type to unsigned type
+                var underlyingType = ((INamedTypeSymbol)enumType).EnumUnderlyingType!.SpecialType switch
+                {
+                    SpecialType.System_SByte => visitor.Global.SystemByte,
+                    SpecialType.System_Int16 => visitor.Global.SystemUInt16,
+                    SpecialType.System_Int32 => visitor.Global.SystemUInt32,
+                    SpecialType.System_Int64 => visitor.Global.SystemUInt64,
+                    _ => ((INamedTypeSymbol)enumType).EnumUnderlyingType!
+                };
+                enumToString = enumToString.Construct(enumType, underlyingType);
+                visitor.WriteMethodInvocation(node, enumToString, null, [new CodeNode(() => {
+                                    visitor.Visit(enumExpression);
+                                })], null, null);
+            }
+        }
+
         public override bool TryEmit(InvocationExpressionSyntax node, TranslatorSyntaxVisitor visitor)
         {
             if (node.Expression.IsKind(SyntaxKind.SimpleMemberAccessExpression))
@@ -26,32 +60,33 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                             SymbolEqualityComparer.Default.Equals(methodSymbol.ContainingType, visitor.Global.SystemEnum) &&
                             SymbolEqualityComparer.Default.Equals(methodSymbol.ReturnType, visitor.Global.SystemString))
                         {
-                            if (lhs.Kind == SymbolKind.Field && ((IFieldSymbol)lhs).HasConstantValue)
-                            {
-                                visitor.CurrentTypeWriter.Write(node, "\"");
-                                visitor.CurrentTypeWriter.Write(node, lhs.Name);
-                                visitor.CurrentTypeWriter.Write(node, "\"");
-                            }
-                            else
-                            {
-                                //Write Enum.ToStringT<TEnum, TStorage>(TStorage value)
-                                var enumToString = (IMethodSymbol)visitor.Global.SystemEnum
-                                    .GetMembers("ToStringT")
-                                    .Single(e => e is IMethodSymbol ms && ms.TypeParameters.Length == 2 && ms.Parameters.Length == 1 && SymbolEqualityComparer.Default.Equals(ms.Parameters[0].Type, ms.TypeParameters[1]));
-                                //Map signed underlying type to unsigned type
-                                var underlyingType = ((INamedTypeSymbol)lhsType).EnumUnderlyingType!.SpecialType switch
-                                {
-                                    SpecialType.System_SByte => visitor.Global.SystemByte,
-                                    SpecialType.System_Int16 => visitor.Global.SystemUInt16,
-                                    SpecialType.System_Int32 => visitor.Global.SystemUInt32,
-                                    SpecialType.System_Int64 => visitor.Global.SystemUInt64,
-                                    _ => ((INamedTypeSymbol)lhsType).EnumUnderlyingType!
-                                };
-                                enumToString = enumToString.Construct(lhsType, underlyingType);
-                                visitor.WriteMethodInvocation(node, enumToString, null, [new CodeNode(() => {
-                                    visitor.Visit(memberAccess.Expression);
-                                })], null, null);
-                            }
+                            WriteEnumToString(node, visitor, memberAccess.Expression);
+                            //if (lhs.Kind == SymbolKind.Field && ((IFieldSymbol)lhs).HasConstantValue)
+                            //{
+                            //    visitor.CurrentTypeWriter.Write(node, "\"");
+                            //    visitor.CurrentTypeWriter.Write(node, lhs.Name);
+                            //    visitor.CurrentTypeWriter.Write(node, "\"");
+                            //}
+                            //else
+                            //{
+                            //    //Write Enum.ToStringT<TEnum, TStorage>(TStorage value)
+                            //    var enumToString = (IMethodSymbol)visitor.Global.SystemEnum
+                            //        .GetMembers("ToStringT")
+                            //        .Single(e => e is IMethodSymbol ms && ms.TypeParameters.Length == 2 && ms.Parameters.Length == 1 && SymbolEqualityComparer.Default.Equals(ms.Parameters[0].Type, ms.TypeParameters[1]));
+                            //    //Map signed underlying type to unsigned type
+                            //    var underlyingType = ((INamedTypeSymbol)lhsType).EnumUnderlyingType!.SpecialType switch
+                            //    {
+                            //        SpecialType.System_SByte => visitor.Global.SystemByte,
+                            //        SpecialType.System_Int16 => visitor.Global.SystemUInt16,
+                            //        SpecialType.System_Int32 => visitor.Global.SystemUInt32,
+                            //        SpecialType.System_Int64 => visitor.Global.SystemUInt64,
+                            //        _ => ((INamedTypeSymbol)lhsType).EnumUnderlyingType!
+                            //    };
+                            //    enumToString = enumToString.Construct(lhsType, underlyingType);
+                            //    visitor.WriteMethodInvocation(node, enumToString, null, [new CodeNode(() => {
+                            //        visitor.Visit(memberAccess.Expression);
+                            //    })], null, null);
+                            //}
                             return true;
                         }
                         else if (methodSymbol.Name == "GetHashCode" &&

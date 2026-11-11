@@ -1,10 +1,13 @@
-﻿using System;
+﻿using Microsoft.CodeAnalysis;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,6 +16,21 @@ namespace NetJs.Translator
 {
     public static class Utility
     {
+        internal static void ForAll<T>(this IEnumerable<T> values, Action<T> call)
+        {
+            if (values is ParallelQuery<T> p)
+            {
+                ParallelEnumerable.ForAll(p, call);
+            }
+            else
+            {
+                foreach (var a in values)
+                {
+                    call(a);
+                }
+            }
+        }
+
         internal static TValue? GetValueOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> dic, TKey key)
         {
             TValue? value = default!;
@@ -262,3 +280,4 @@ namespace NetJs.Translator
 
     }
 }
+

@@ -18,22 +18,18 @@ namespace NetJs.Translator.CSharpToJavascript
             var statements = new List<StatementSyntax>();
             var parameterVariables = new List<string>();
 
-            // 1. Resolve parameter types from the INamedTypeSymbol (Expression<Func<T, TResult>>)
             var resolvedTypeNames = ExtractParameterTypeNames(expressionTypeSymbol, parameters.Parameters.Count);
 
-            // 2. Declare and cache each ParameterExpression into a local variable
             for (int i = 0; i < parameters.Parameters.Count; i++)
             {
                 var param = parameters.Parameters[i];
                 string paramName = param.Identifier.ValueText;
 
-                // Fallback sequence: Explicit syntax type -> Resolved semantic type symbol name -> default object string
                 string typeName = param.Type?.ToString() ?? resolvedTypeNames.ElementAtOrDefault(i) ?? "object";
 
                 string varName = $"param_{paramName}";
                 parameterVariables.Add(varName);
 
-                // Generates with spaces and correct type: var param_n = System.Linq.Expressions.Expression.Parameter(typeof(TargetType), "n");
                 var paramDeclaration = SyntaxFactory.LocalDeclarationStatement(
                     SyntaxFactory.VariableDeclaration(
                         SyntaxFactory.IdentifierName("var").WithTrailingTrivia(SyntaxFactory.Space),
@@ -58,10 +54,8 @@ namespace NetJs.Translator.CSharpToJavascript
                 statements.Add(paramDeclaration);
             }
 
-            // 3. Convert the body, passing our tracking list
             var bodyExpressionCode = ConvertNodeToFactory(body, parameterVariables);
 
-            // 4. Assemble the final System.Linq.Expressions.Expression.Lambda(body, params)
             var lambdaArguments = new List<ArgumentSyntax> { SyntaxFactory.Argument(bodyExpressionCode) };
             foreach (var varName in parameterVariables)
             {
@@ -70,7 +64,6 @@ namespace NetJs.Translator.CSharpToJavascript
 
             var lambdaCall = CreateFactoryCall("Lambda", lambdaArguments.ToArray());
 
-            // Generates: return System.Linq.Expressions.Expression.Lambda(...);
             var returnStatement = SyntaxFactory.ReturnStatement(
                 SyntaxFactory.Token(SyntaxKind.ReturnKeyword).WithTrailingTrivia(SyntaxFactory.Space),
                 lambdaCall,
@@ -79,7 +72,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
             statements.Add(returnStatement);
 
-            // 5. Wrap in System.Func<System.Linq.Expressions.LambdaExpression>
+            //Wrap in System.Func<System.Linq.Expressions.LambdaExpression>
             var wrapperBlock = SyntaxFactory.Block(
                 SyntaxFactory.Token(SyntaxKind.OpenBraceToken).WithTrailingTrivia(SyntaxFactory.CarriageReturnLineFeed),
                 SyntaxFactory.List(statements),
@@ -88,7 +81,7 @@ namespace NetJs.Translator.CSharpToJavascript
 
             var inlineLambda = SyntaxFactory.ParenthesizedLambdaExpression(wrapperBlock);
 
-            // Constructs: new System.Func<System.Linq.Expressions.LambdaExpression>
+            // Construct new System.Func<System.Linq.Expressions.LambdaExpression>
             var delegateTypeNode = SyntaxFactory.GenericName(
                 SyntaxFactory.Identifier("System.Func"),
                 SyntaxFactory.TypeArgumentList(
@@ -174,10 +167,24 @@ namespace NetJs.Translator.CSharpToJavascript
             return typeNames;
         }
 
+        static T Execute<T>(Func<T> call) => call();
         private ExpressionSyntax ConvertNodeToFactory(SyntaxNode node, List<string> parameterVariables)
         {
             return node switch
             {
+                PostfixUnaryExpressionSyntax postfix when node.IsKind(SyntaxKind.SuppressNullableWarningExpression) =>
+                    ConvertNodeToFactory(postfix.Operand, parameterVariables),
+
+                PrefixUnaryExpressionSyntax unaryNot when unaryNot.IsKind(SyntaxKind.LogicalNotExpression) =>
+                    CreateFactoryCall("Not",
+                        SyntaxFactory.Argument(ConvertNodeToFactory(unaryNot.Operand, parameterVariables))
+                    ),
+
+                PrefixUnaryExpressionSyntax unaryMinus when unaryMinus.IsKind(SyntaxKind.UnaryMinusExpression) =>
+                    CreateFactoryCall("Negate",
+                        SyntaxFactory.Argument(ConvertNodeToFactory(unaryMinus.Operand, parameterVariables))
+                    ),
+
                 ParenthesizedExpressionSyntax parenthesized =>
                     ConvertNodeToFactory(parenthesized.Expression, parameterVariables),
 
@@ -214,23 +221,91 @@ namespace NetJs.Translator.CSharpToJavascript
                     ),
 
                 InvocationExpressionSyntax invocation =>
-                   CreateFactoryCall("Call",
-                       SyntaxFactory.Argument(ConvertNodeToFactory(
-                           ((MemberAccessExpressionSyntax)invocation.Expression).Expression, parameterVariables)),
-                       SyntaxFactory.Argument(CreateStringLiteral(
-                           ((MemberAccessExpressionSyntax)invocation.Expression).Name.Identifier.ValueText)),
+                Execute(() =>
+                {
+                    ExpressionSyntax instanceArg;
+                    string methodName;
+
+                    if (invocation.Expression is MemberAccessExpressionSyntax memberAccess)
+                    {
+                        // Instance method: e.g., obj.Method()
+                        instanceArg = ConvertNodeToFactory(memberAccess.Expression, parameterVariables);
+                        methodName = memberAccess.Name.Identifier.ValueText;
+                    }
+                    else if (invocation.Expression is IdentifierNameSyntax identifier)
+                    {
+                        methodName = identifier.Identifier.ValueText;
+                        var t = GetSymbol(identifier);
+
+                        if (t == null || !t.IsStatic)
+                        {
+                            // Generates code: Expression.Constant(this)
+                            instanceArg = CreateFactoryCall("Constant",
+                                SyntaxFactory.Argument(SyntaxFactory.ThisExpression())
+                            );
+                        }
+                        else
+                        {
+                            // Fallback to null literal if it's strictly a static utility method
+                            instanceArg = SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression);
+                        }
+                    }
+                    else
+                    {
+                        throw new NotSupportedException($"Invocation target '{invocation.Expression.Kind()}' is not supported.");
+                    }
+                    return CreateFactoryCall("Call",
+                       SyntaxFactory.Argument(instanceArg),
+                       SyntaxFactory.Argument(CreateStringLiteral(methodName)),
                        SyntaxFactory.Argument(SyntaxFactory.ParseExpression("Type.EmptyTypes")),
                        SyntaxFactory.Argument(SyntaxFactory.ArrayCreationExpression(
+                           (ArrayTypeSyntax)SyntaxFactory.ParseTypeName("System.Linq.Expressions.Expression[]"),
+                           SyntaxFactory.InitializerExpression(
+                               SyntaxKind.ArrayInitializerExpression,
+                               SyntaxFactory.SeparatedList(
+                                   invocation.ArgumentList.Arguments.Select(arg => ConvertNodeToFactory(arg.Expression, parameterVariables))
+                               )
+                           )
+                       ))
+                   );
+                    //return CreateFactoryCall("Call",
+                    //    SyntaxFactory.Argument(ConvertNodeToFactory(
+                    //        ((MemberAccessExpressionSyntax)invocation.Expression).Expression, parameterVariables)),
+                    //    SyntaxFactory.Argument(CreateStringLiteral(
+                    //        ((MemberAccessExpressionSyntax)invocation.Expression).Name.Identifier.ValueText)),
+                    //    SyntaxFactory.Argument(SyntaxFactory.ParseExpression("Type.EmptyTypes")),
+                    //    SyntaxFactory.Argument(SyntaxFactory.ArrayCreationExpression(
+                    //         (ArrayTypeSyntax)SyntaxFactory.ParseTypeName("System.Linq.Expressions.Expression[]"),
+                    //         SyntaxFactory.InitializerExpression(
+                    //             SyntaxKind.ArrayInitializerExpression,
+                    //             SyntaxFactory.SeparatedList(
+                    //                 invocation.ArgumentList.Arguments.Select(arg => ConvertNodeToFactory(arg.Expression, parameterVariables))
+                    //             )
+                    //         )
+                    //     ))
+                    //);
+                }),
+                ElementAccessExpressionSyntax elementAccess =>
+                    CreateFactoryCall("Property",
+                        // The base object being indexed (e.g., the 'array' or 'dict' expression)
+                        SyntaxFactory.Argument(ConvertNodeToFactory(elementAccess.Expression, parameterVariables)),
+
+                        // The indexer property identifier string (Usually "Item" in C# for standard indexers)
+                        SyntaxFactory.Argument(CreateStringLiteral("Item")),
+
+                        // Pass the indexing arguments (e.g., 'i' or '"key"') as an array of Expressions
+                        SyntaxFactory.Argument(SyntaxFactory.ArrayCreationExpression(
                             (ArrayTypeSyntax)SyntaxFactory.ParseTypeName("System.Linq.Expressions.Expression[]"),
                             SyntaxFactory.InitializerExpression(
                                 SyntaxKind.ArrayInitializerExpression,
                                 SyntaxFactory.SeparatedList(
-                                    invocation.ArgumentList.Arguments.Select(arg => ConvertNodeToFactory(arg.Expression, parameterVariables))
+                                    elementAccess.ArgumentList.Arguments.Select(arg =>
+                                        ConvertNodeToFactory(arg.Expression, parameterVariables)
+                                    )
                                 )
                             )
                         ))
-                   ),
-
+                ),
                 _ => throw new NotSupportedException($"The syntax layout '{node.Kind()}' is not supported yet.")
             };
         }

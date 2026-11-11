@@ -1,14 +1,15 @@
-﻿using NetJs.Translator.CSharpToJavascript;
-using NetJs.Translator.CSharpToJavascript.AssignmentConverter;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using NetJs.Translator.CSharpToJavascript;
+using NetJs.Translator.CSharpToJavascript.AssignmentConverter;
+using NetJs.Translator.CSharpToJavascript.SyntaxEmitter;
+using NUglify.JavaScript.Visitors;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using NetJs.Translator.CSharpToJavascript.SyntaxEmitter;
 
 namespace NetJs.Translator.CSharpToJavascript
 {
@@ -210,6 +211,8 @@ namespace NetJs.Translator.CSharpToJavascript
             //    rhsRefKind = RefKind.Out;
             //}
 
+            bool tupleDestructuring = false;
+            int tupleCount = 0;
             if (lhsExpression != null)
             {
                 Visit(lhsExpression);
@@ -221,7 +224,19 @@ namespace NetJs.Translator.CSharpToJavascript
                     //TryDereference(lhsExpression);
                 }
                 CurrentTypeWriter.Write(node, $" {_operator} ");
-                if (lhsExpression.IsKind(SyntaxKind.DeclarationExpression)/* is DeclarationExpressionSyntax*/)
+                if (lhsExpression.IsKind(SyntaxKind.DeclarationExpression) &&
+                    lhsExpression is DeclarationExpressionSyntax decl &&
+                    decl.Designation.IsKind(SyntaxKind.ParenthesizedVariableDesignation))
+                {
+                    tupleDestructuring = true;
+                    tupleCount = ((ParenthesizedVariableDesignationSyntax)decl.Designation).Variables.Count;
+                }
+                else if (lhsExpression.IsKind(SyntaxKind.TupleExpression) && !rhsAsExpression.IsKind(SyntaxKind.TupleExpression) && IsSimpleTupleDeclaration((TupleExpressionSyntax)lhsExpression))
+                {
+                    tupleDestructuring = true;
+                    tupleCount = ((TupleExpressionSyntax)lhsExpression).Arguments.Count;
+                }
+                if (tupleDestructuring)
                 {
                     CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.DestructureName}(");
                     if (rhsType != null)
@@ -356,8 +371,13 @@ namespace NetJs.Translator.CSharpToJavascript
                 if (doBoxing)
                 {
                     CurrentTypeWriter.Write(node, $", ");
-                    var rhsMetadata = rhsType!.Kind != SymbolKind.TypeParameter ? _global.GetRequiredMetadata(rhsType!) : null;
-                    CurrentTypeWriter.Write(node, rhsMetadata?.InvocationName ?? rhsType.ComputeOutputTypeName(_global));
+                    if (rhsType!.IsNullable(out var itemType))
+                        CurrentTypeWriter.Write(node, itemType!.ComputeOutputTypeName(_global));
+                    else
+                    {
+                        var rhsMetadata = rhsType!.Kind != SymbolKind.TypeParameter ? _global.GetRequiredMetadata(rhsType!) : null;
+                        CurrentTypeWriter.Write(node, rhsMetadata?.InvocationName ?? rhsType.ComputeOutputTypeName(_global));
+                    }
                     CurrentTypeWriter.Write(node, $")");
                 }
                 dispose?.Dispose();
@@ -365,8 +385,10 @@ namespace NetJs.Translator.CSharpToJavascript
 
             if (lhsExpression != null)
             {
-                if (lhsExpression.IsKind(SyntaxKind.DeclarationExpression)/* is DeclarationExpressionSyntax*/)
+                if (tupleDestructuring)
                 {
+                    CurrentTypeWriter.Write(node, ", ");
+                    CurrentTypeWriter.Write(node, tupleCount.ToString());
                     CurrentTypeWriter.Write(node, ")");
                 }
             }

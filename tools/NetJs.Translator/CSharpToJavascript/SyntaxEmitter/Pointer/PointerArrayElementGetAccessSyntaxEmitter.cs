@@ -39,7 +39,10 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Pointer
                         else
                         {
                             visitor.Visit(node.Expression);
-                            visitor.CurrentTypeWriter.Write(node, ".get_Item(");
+                            visitor.CurrentTypeWriter.Write(node, ".");
+                            visitor.WriteMemberName(node, visitor.Global.SystemPointer, "get_Item");
+                            visitor.CurrentTypeWriter.Write(node, "(");
+                            //visitor.CurrentTypeWriter.Write(node, ".get_Item(");
                             if (argType.IsLongNumericType())
                             {
                                 visitor.CurrentTypeWriter.Write(node, "Number(");

@@ -19,7 +19,8 @@ namespace NetJs
         int _length;
 
         public Array Array => _array;
-        public Type? ElementType { get; private set; }
+        Type? _elementType;
+        public Type? ElementType => _elementType ?? Array.GetArrayElementType(_array);
 
         public object? Get(object target, string property, object receiver)
         {
@@ -82,7 +83,7 @@ namespace NetJs
                 if (property.NativeEquals(Array.ElementTypeName))
                 {
                     this[Array.ElementTypeName] = value;
-                    ElementType = value.As<Type>();
+                    _elementType = value.As<Type>();
                 }
                 else if (property.NativeEquals(Array.SizesName))
                 {

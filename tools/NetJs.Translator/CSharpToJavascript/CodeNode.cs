@@ -1,6 +1,7 @@
 ﻿//using CodeLineWriter = System.IO.StringWriter;
 
 using LivingThing.Core.Frameworks.Common.OneOf;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
 namespace NetJs.Translator.CSharpToJavascript

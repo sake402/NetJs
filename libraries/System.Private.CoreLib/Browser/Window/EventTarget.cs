@@ -11,6 +11,8 @@ namespace Window
     {
         public extern void addEventListener(string type, object listener, object? options = null);
         public extern void removeEventListener(string type, object listener, object? options = null);
+        public extern void addEventListener(string type, NativeAction<object> listener, object? options = null);
+        public extern void removeEventListener(string type, NativeAction<object> listener, object? options = null);
         public extern bool dispatchEvent(Event evt);
     }
 }

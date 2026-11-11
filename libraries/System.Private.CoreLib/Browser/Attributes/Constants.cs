@@ -74,6 +74,8 @@
         [InlineConst]
         public const string IfNotNull = "$ifnn";
         [InlineConst]
+        public const string IfNotNullAsync = "$ifnna";
+        [InlineConst]
         public const string IfNotNullParameterName = "$t";
         [InlineConst]
         public const string AssemblyTypeProxyName = "$typeProxy";
@@ -102,11 +104,15 @@
         [InlineConst]
         public const string With = "$with";
         [InlineConst]
+        public const string WithAsync = "$witha";
+        [InlineConst]
         public const string TypeIsAssignableName = "$tis";
         [InlineConst]
         public const string DefaultConstructorName = "$ctor";
         [InlineConst]
         public const string StaticConstructorName = "$cctor";
+        [InlineConst]
+        public const string GenericNewConstraintConstructorName = "$gctor";
         [InlineConst]
         public const string StaticInitializerName = "$sinit";
         [InlineConst]
@@ -115,6 +121,10 @@
         public const string EnumMapName = "$map";
         [InlineConst]
         public const string EnumUnderlyingName = "$eut";
+        [InlineConst]
+        public const string InlineArrayElementType = "$iat";
+        [InlineConst]
+        public const string InlineArraySize = "$iaz";
         [InlineConst]
         public const string Expression = "$exp";
         [InlineConst]
@@ -182,7 +192,9 @@
         [InlineConst]
         public const string PrototypeFullName = "$fullName";
         [InlineConst]
-        public const string PrototypeMetadataFullName = "$mfullName";
+        public const string PrototypeFullNameWithSpecialSeperator = "$getFullName";
+        [InlineConst]
+        public const string PrototypeReferenceFullName = "$mfullName";
         [InlineConst]
         public const string PrototypeTypeFlags = "$f";
         [InlineConst]
@@ -194,6 +206,8 @@
         //[InlineConst]
         //public const string PrototypeBaseTypeHandle = "$b";
         [InlineConst]
+        public const string PrototypeOriginalTypeHandle = "$H";
+        [InlineConst]
         public const string PrototypeTypeHandle = "$h";
         [InlineConst]
         public const string PrototypeOpenGenericPrototype = "$og";
@@ -203,12 +217,20 @@
         public const string PrototypeMetadata = "$md";
         [InlineConst]
         public const string PrototypeBaseType = "$b";
+        //[InlineConst]
+        //public const string PrototypeInterfaces = "$j";
         [InlineConst]
-        public const string PrototypeInterfaces = "$i";
+        public const string PrototypeAllInterfaces = "$i";
+        [InlineConst]
+        public const string PrototypeNestedTypes = "$n";
         [InlineConst]
         public const string NumericShift = "$nsh";
         [InlineConst]
-        public const string Dispatch = "$dsp";
+        public const string DispatchCall = "$dsp";
+        [InlineConst]
+        public const string ConditionalDispatchCall = "$dspc";
+        [InlineConst]
+        public const string StringNotNull = "$strNN";
         [InlineConst]
         public const string DestructureName = "$destructure";
         [InlineConst]
@@ -220,7 +242,7 @@
         [InlineConst]
         public const string FileScopedTypeNameMangling = "$file";
         [InlineConst]
-        public const string Clone = "Clone";
+        public const string Clone = "$clone";
         [InlineConst]
         public const string IsProxy = "$isProxy";
         [InlineConst]
@@ -250,9 +272,15 @@
         [InlineConst]
         public const string AddressToPointer = "$addr2Ptr";
         [InlineConst]
+        public const string VirtualAddress = "$virtualAddress";
+        [InlineConst]
         public const string VirtualAddressOffset = "$vAddrOff";
         [InlineConst]
         public const string RuntimeTypePrototypeName = "$p";
+        [InlineConst]
+        public const string PrototypeImplementsInterface = "$implements";
+        [InlineConst]
+        public const string IntefaceMemberMetadataName = "$iface";
         [InlineConst]
         public const string TraceEntryName = "$trace";
         [InlineConst]

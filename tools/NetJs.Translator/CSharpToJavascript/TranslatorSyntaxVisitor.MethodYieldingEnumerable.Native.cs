@@ -47,17 +47,20 @@ namespace NetJs.Translator.CSharpToJavascript
                 ITypeSymbol? type = null;
                 //if (typeparameters == null)
                 //{
-                var methodInfo = _global.GetSymbol(node, this) as IMethodSymbol;
-                if (methodInfo != null)
+                var symbol = _global.GetSymbol(node, this);
+                var returnType = (symbol as IMethodSymbol)?.ReturnType ?? (symbol as IPropertySymbol)?.Type;
+                if (returnType != null)
                 {
-                    var returnType = methodInfo.ReturnType;
-                    if (returnType.SpecialType == SpecialType.System_Collections_IEnumerable || returnType.IsEnumerable(out type))
+                    ITypeSymbol? ltype = null;
+                    if (returnType.SpecialType == SpecialType.System_Collections_IEnumerable || returnType.IsEnumerable(out ltype))
                     {
                         isObjectEnumerable = true;
+                        type = ltype;
                     }
-                    if (returnType.SpecialType == SpecialType.System_Collections_IEnumerator || returnType.IsEnumerator(out type))
+                    if (returnType.SpecialType == SpecialType.System_Collections_IEnumerator || returnType.IsEnumerator(out ltype))
                     {
                         isObjectEnumerator = true;
+                        type ??= ltype;
                     }
                 }
                 //if (!isObjectEnumerable && !isObjectEnumerator)
@@ -68,7 +71,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     CurrentTypeWriter.WriteLine(node, "{", true);
                 var typeParameter = isObjectEnumerable || isObjectEnumerator ? (type ?? _global.SystemObject) : (ITypeSymbol)_global.GetSymbol(typeparameters.First(), this/*, out _, out _*/);
                 var yieldIterator = (INamedTypeSymbol)_global.GetSymbol("NetJs.YieldToIterator<>", this);
-                
+
                 MarkCurrentClosureDependsOn(yieldIterator);
 
                 var yieldClass = yieldIterator.Construct(typeParameter);

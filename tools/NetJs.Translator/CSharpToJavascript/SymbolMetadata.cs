@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
+using YamlDotNet.Core.Tokens;
 
 namespace NetJs.Translator.CSharpToJavascript
 {
@@ -29,6 +30,97 @@ namespace NetJs.Translator.CSharpToJavascript
         /// Name is unique globally
         /// </summary>
         public string UniqueFullName { get; set; } = default!;
+
+        string? TryUpdateInterfaceDispatchName(string? name)
+        {
+            if (name != null && Symbol.UseIndirectInterfaceMemberDispatch(_global, out var needRuntimeNameLookup, out var arguments))
+            {
+                Span<char> buffer = stackalloc char[1024];
+                ValueStringBuilder sb = new(buffer);
+                if (needRuntimeNameLookup)
+                {
+                    sb.Append("[`");
+                }
+                var memberNameIndex = name.LastIndexOf('$');
+                var nameEnd = memberNameIndex;
+                if (memberNameIndex > 0)
+                {
+                    while (name[nameEnd] == '$')
+                        nameEnd--;
+                    sb.Append(name, 0, nameEnd + 1);
+                }
+                else
+                    sb.Append(name);
+                void WriteTypeSymbol(ITypeSymbol type, ref ValueStringBuilder sb)
+                {
+                    string TypeString(ITypeSymbol type)
+                    {
+                        if (type.Kind == SymbolKind.TypeParameter)
+                        {
+                            return $"${{{type.Name}}}.{Constants.PrototypeFullNameWithSpecialSeperator}('$')";
+                        }
+                        return type.ToString()!.Split('<')[0].TrimEnd('?').ResolvePredefinedTypeName().Replace("+", "$").Replace(".", "$");
+                    }
+                    bool isArray = false;
+                    ITypeSymbol? arrayElementType = null;
+                    var fn = type.SpecialType == SpecialType.System_Array ? "System$Array" :
+                        (isArray = type.IsArray(out arrayElementType)) ? $"System$Array" :
+                        type.IsTupleType ? "System$ValueTuple" : TypeString(type);
+                    sb.Append(fn);
+                    if (isArray && arrayElementType != null)
+                    {
+                        WriteArguments([arrayElementType], ref sb);
+                    }
+                    if (type.Kind == SymbolKind.NamedType && type is INamedTypeSymbol nt && nt.IsGenericType)
+                    {
+                        WriteArguments(nt.TypeArguments, ref sb);
+                    }
+                }
+                void WriteArguments(IEnumerable<ITypeSymbol> arguments, ref ValueStringBuilder sb)
+                {
+                    int ix = 0;
+                    sb.Append("$");
+                    foreach (var arg in arguments)
+                    {
+                        if (ix > 0)
+                            sb.Append("$");
+                        if (arg.Kind == SymbolKind.TypeParameter)
+                        {
+                            sb.Append("${");
+                            sb.Append(arg.Name);
+                            sb.Append(".");
+                            sb.Append(Constants.PrototypeFullNameWithSpecialSeperator);
+                            sb.Append("('$')}");
+                        }
+                        else
+                        {
+                            WriteTypeSymbol(arg, ref sb);
+                        }
+                        ix++;
+                    }
+                    sb.Append("$");
+                }
+                WriteArguments(arguments, ref sb);
+                if (memberNameIndex > 0)
+                    sb.Append(name, memberNameIndex + 1, name.Length - memberNameIndex - 1);
+                if (needRuntimeNameLookup)
+                {
+                    sb.Append("`]");
+                }
+                name = sb.ToString();
+                //if (!needRuntimeNameLookup)
+                //{
+                //    //Must be in sync with what NetJs.$iface(_global.GlobalName.Constants.IntefaceMemberMetadataName) does in NetJs.Boot.js
+                //    name = $"{name}_{string.Join("_", arguments.Select(t => t.CreateSignature(_global, withTypeParameterNames: true, withGlobalNamespace: false, withAssemblySlugNamespace: false).Replace(".", "_")))}";
+                //}
+                //else
+                //    name = $"[{_global.GlobalName}.{Constants.IntefaceMemberMetadataName}(\"{name}\", {string.Join(", ", arguments.Select(t => t.Kind == SymbolKind.TypeParameter ? t.Name : t.ComputeOutputTypeName(_global)))})]";
+            }
+            return name;
+        }
+
+        string? __originalOverloadName;
+        public string? GivenOriginalOverloadName => __originalOverloadName;
         string? _originalOverloadName;
         /// <summary>
         /// If a name is shortened, this hold the original name before being shortened. Otherwise it is the same as the overload name
@@ -40,18 +132,23 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 if (value == null)
                     throw new InvalidOperationException("Original name cannot be null");
-                _originalOverloadName = value;
+                __originalOverloadName = value;
+                _originalOverloadName = TryUpdateInterfaceDispatchName(value);
             }
         }
 
+        string? __overloadName;
+        public string? GivenOverloadName => __overloadName;
         string? _overloadName;
         public string? OverloadName
         {
             get => _overloadName;
             set
             {
-                value.ValidateJsName(allowDot: true);
+                //value.ValidateJsName(allowDot: true, allowComma: true, allowSpace: true);
+                __overloadName = value;
                 _overloadName = value;
+                _overloadName = TryUpdateInterfaceDispatchName(value);
             }
         }
 
@@ -156,6 +253,10 @@ namespace NetJs.Translator.CSharpToJavascript
             set
             {
                 _symbol = value;
+                if (__originalOverloadName != null)
+                    _originalOverloadName = TryUpdateInterfaceDispatchName(__originalOverloadName);
+                if (__overloadName != null)
+                    _overloadName = TryUpdateInterfaceDispatchName(__overloadName);
                 _invocationName = null;
                 _originalInvocationName = null;
             }
@@ -346,7 +447,7 @@ namespace NetJs.Translator.CSharpToJavascript
             string invocationName = overloadName ?? type.Name;
             if (_global.BuildFlags.HasFlag(NetJsBuildFlags.Global))
             {
-                if (type.ContainingSymbol is INamedTypeSymbol container)
+                if (type.ContainingSymbol is INamedTypeSymbol container && !_global.HasAttribute(type, typeof(ExternalAttribute).FullName!, null, false, out _))
                 {
                     //inner type must always bear path to their parent type,
                     //only their name we need to concat to the parent name
@@ -412,8 +513,13 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 var declaringType = eevent.ContainingType;
                 var declaringTypeMetadata = _global.GetRequiredMetadata(declaringType);
-                invocationName = declaringTypeMetadata.InvocationName + "." + overloadName;
+                bool isIndirectInterfaceCall = eevent.UseIndirectInterfaceMemberDispatch(_global, out var needRuntimeNameLookup, out _) && needRuntimeNameLookup;
+                invocationName = declaringTypeMetadata.InvocationName + (!isIndirectInterfaceCall ? "." : "") + overloadName;
             }
+            //if (eevent.ContainingType.TypeKind == TypeKind.Interface && eevent.ContainingType.IsGenericType)
+            //{
+            //    invocationName = $"[{_global.GlobalName}.{Constants.IntefaceMemberMetadataName}(\"{invocationName}\", {string.Join(", ", eevent.ContainingType.TypeArguments.Select(t => t.ComputeOutputTypeName(_global)))})]";
+            //}
             return invocationName;
         }
 
@@ -429,8 +535,13 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 var declaringType = property.ContainingType;
                 var declaringTypeMetadata = _global.GetRequiredMetadata(declaringType);
-                invocationName = declaringTypeMetadata.InvocationName + "." + invocationName;
+                bool isIndirectInterfaceCall = property.UseIndirectInterfaceMemberDispatch(_global, out var needRuntimeNameLookup, out _) && needRuntimeNameLookup;
+                invocationName = declaringTypeMetadata.InvocationName + (!isIndirectInterfaceCall ? "." : "") + invocationName;
             }
+            //if (property.ContainingType.TypeKind == TypeKind.Interface && property.ContainingType.IsGenericType)
+            //{
+            //    invocationName = $"[{_global.GlobalName}.{Constants.IntefaceMemberMetadataName}(\"{invocationName}\", {string.Join(", ", property.ContainingType.TypeArguments.Select(t => t.ComputeOutputTypeName(_global)))})]";
+            //}
             return invocationName;
         }
 
@@ -459,18 +570,24 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
             }
             else*/
-            if (method.IsStatic || method.IsStaticCallConvention(_global))
+            if (method.IsStatic || (method.IsStaticCallConvention(_global) && !method.IsVirtual))
             {
                 var declaringType = method.ContainingType;
                 var declaringTypeMetadata = _global.GetRequiredMetadata(declaringType);
-                invocationName = declaringTypeMetadata.InvocationName + "." + invocationName;
+                bool isIndirectInterfaceCall = method.UseIndirectInterfaceMemberDispatch(_global, out var needRuntimeNameLookup, out _) && needRuntimeNameLookup;
+                invocationName = declaringTypeMetadata.InvocationName + (!isIndirectInterfaceCall ? "." : "") + invocationName;
             }
             else if (method.AssociatedSymbol?.Kind == SymbolKind.Property && method.AssociatedSymbol.IsExtensionPropertyMember(_global) && !method.AssociatedSymbol.IsStatic)
             {
                 var declaringType = method.AssociatedSymbol.ContainingType;
                 var declaringTypeMetadata = _global.GetRequiredMetadata(declaringType);
-                invocationName = declaringTypeMetadata.InvocationName + "." + invocationName;
+                bool isIndirectInterfaceCall = method.UseIndirectInterfaceMemberDispatch(_global, out var needRuntimeNameLookup, out _) && needRuntimeNameLookup;
+                invocationName = declaringTypeMetadata.InvocationName + (!isIndirectInterfaceCall ? "." : "") + invocationName;
             }
+            //if (method.ContainingType.TypeKind == TypeKind.Interface&& method.ContainingType.IsGenericType)
+            //{
+            //    invocationName = $"[{_global.GlobalName}.{Constants.IntefaceMemberMetadataName}(\"{invocationName}\", {string.Join(", ", method.ContainingType.TypeArguments.Select(t => t.ComputeOutputTypeName(_global)))})]";
+            //}
             return invocationName;
         }
 

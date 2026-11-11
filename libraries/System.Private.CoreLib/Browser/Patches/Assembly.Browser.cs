@@ -16,7 +16,7 @@ namespace System.Reflection
         [NetJs.MemberReplace(nameof(GetExecutingAssembly) + "(ref StackCrawlMark)")]
         [NetJs.Template("$asm")]
         public extern static Assembly GetExecutingAssemblyImpl();
-        
+
         [NetJs.MemberReplace(nameof(GetCallingAssembly))]
         internal static RuntimeAssembly GetCallingAssemblyImpl(ref StackCrawlMark stackMark)
         {
@@ -48,8 +48,25 @@ namespace System.Reflection
             }
             else
             {
-                return AppDomain.GetTypeInternal(name, throwOnError, ignoreCase);
+                var res = this.As<RuntimeAssembly_Partial>().GetTypeInternal(name, ignoreCase);
+                if (res == null && throwOnError)
+                    throw new InvalidOperationException("Not found");
+                return res;
+                //return AppDomain.GetTypeInternal(name, throwOnError, ignoreCase);
             }
         }
+
+        [NetJs.MemberReplace(nameof(GetTypes))]
+        public Type[] GetTypesImpl()
+        {
+            var ts = this.As<RuntimeAssembly_Partial>()._types.AsNetArray();
+            ts.forEach(t =>
+            {
+                System.Diagnostics.Debug.Assert(t._parentGenericTypeDefinition is null);
+                t.EnsureSelfInitialized();
+            });
+            return ts;
+        }
+
     }
 }

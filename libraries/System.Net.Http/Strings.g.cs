@@ -1579,6 +1579,19 @@ namespace System
 
 
         /// <summary>
+        /// The HTTP/2 connection was aborted because the size of the frame queue exceeded an internal limit.
+        /// </summary>
+        internal static string net_http_http2_frame_limit_exceeded
+        {
+            get
+            {
+                return "The HTTP/2 connection was aborted because the size of the frame queue exceeded an internal limit.";
+            }
+        }
+
+
+
+        /// <summary>
         /// This method is not implemented by this class.
         /// </summary>
         internal static string net_MethodNotImplementedException

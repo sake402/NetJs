@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Host.Mef;
 using NetJs.Translator.CSharpToJavascript;
 using NUglify;
+using NUglify.JavaScript.Visitors;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -268,6 +269,14 @@ namespace NetJs.Translator.CSharpToJavascript
                     //{
                     //    return CodeType.From(sinfo.Symbol);
                     //}
+                    if (syntaxExpression.IsKind(SyntaxKind.CastExpression))
+                    {
+                        var cinfo = s.GetTypeInfo(syntaxExpression);
+                        if (cinfo.Type != null)
+                        {
+                            return CodeSymbol.From(cinfo.Type);
+                        }
+                    }
                     var target = s.GetSymbolInfo(syntaxExpression).Symbol;
                     if (target != null)
                     {
@@ -276,7 +285,7 @@ namespace NetJs.Translator.CSharpToJavascript
                         return CodeSymbol.From(target);
                     }
                     var info = s.GetTypeInfo(syntaxExpression);
-                    if (expression.IsKind(SyntaxKind.NumericLiteralExpression) && info.ConvertedType != null)
+                    if (syntaxExpression.IsKind(SyntaxKind.NumericLiteralExpression) && info.ConvertedType != null)
                     {
                         return CodeSymbol.From(info.ConvertedType);
                     }
@@ -300,6 +309,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     //    }
                     //    var operations = s.GetOperation(expression);
                     //}
+                    break;
                 }
             }
             //var sym = semanticModel.GetSymbolInfo(expression).Symbol;
@@ -854,6 +864,10 @@ namespace NetJs.Translator.CSharpToJavascript
         /// <param name="destination"></param>
         public void MarkCurrentClosureDependsOn(ISymbol destination, IParameterSymbol? methodCallParameter = null)
         {
+            if (destination.Name == "ReadFromJsonAsync")
+            {
+
+            }
             int i = 0;
             ISymbol? currentSymbol = null;
             do
@@ -906,26 +920,33 @@ namespace NetJs.Translator.CSharpToJavascript
                     _global.RegisterDependencyGraph(currentSymbol, containingType);
                     containingType = containingType.ContainingType;
                 }
-                if (destination.Kind == SymbolKind.NamedType && destination is INamedTypeSymbol nt && nt.IsGenericType)
+                if ((destination.Kind == SymbolKind.Method && destination is IMethodSymbol mt && mt.Arity > 0) ||
+                    (destination.Kind == SymbolKind.NamedType && destination is INamedTypeSymbol nt && nt.Arity > 0))
                 {
-                    foreach (var typeArgument in nt.TypeArguments)
-                    {
-                        if (typeArgument.Kind == SymbolKind.NamedType)
-                            _global.RegisterDependencyGraph(currentSymbol, typeArgument);
-                    }
-                }
-                else if (destination.Kind == SymbolKind.Method && destination is IMethodSymbol mt && mt.Arity > 0)
-                {
+                    Queue<(ITypeSymbol TypeParameter, ITypeSymbol TypeArgument)> typeArguments = new Queue<(ITypeSymbol, ITypeSymbol)>();
                     int ix = 0;
-                    foreach (var typeArgument in mt.TypeArguments)
+                    var args = destination.Kind == SymbolKind.Method ? ((IMethodSymbol)destination).TypeArguments : ((INamedTypeSymbol)destination).TypeArguments;
+                    var parames = destination.Kind == SymbolKind.Method ? ((IMethodSymbol)destination).TypeParameters : ((INamedTypeSymbol)destination).TypeParameters;
+                    foreach (var typeArgument in args)
                     {
-                        if (typeArgument.Kind == SymbolKind.NamedType)
-                        {
-                            _global.RegisterDependencyGraph(currentSymbol, typeArgument);
-                            var tParam = mt.OriginalDefinition.TypeParameters[ix];
-                            _global.RegisterDynamicallyAccessedMembers(currentSymbol, (INamedTypeSymbol)typeArgument, tParam);
-                        }
+                        typeArguments.Enqueue((parames[ix], typeArgument));
                         ix++;
+                    }
+                    while (typeArguments.Count > 0)
+                    {
+                        var type = typeArguments.Dequeue();
+                        if (type.TypeArgument.Kind == SymbolKind.NamedType)
+                        {
+                            var parameter = type.TypeParameter;
+                            var argument = (INamedTypeSymbol)type.TypeArgument;
+                            _global.RegisterDependencyGraph(currentSymbol, argument);
+                            _global.RegisterDynamicallyAccessedMembers(currentSymbol, argument, parameter);
+                            if (argument.Arity > 0)
+                            {
+                                for (int ii = 0; ii < argument.TypeArguments.Length; ii++)
+                                    typeArguments.Enqueue((argument.TypeParameters[ii], argument.TypeArguments[ii]));
+                            }
+                        }
                     }
                 }
 
@@ -987,5 +1008,18 @@ namespace NetJs.Translator.CSharpToJavascript
             });
         }
 
+        public void WriteTraceEntry(SyntaxNode node, ulong? handle)
+        {
+            CurrentTypeWriter.WriteLine(node, $"//--TRIMMABLE-BOUNDARY-START(TRACE)", true);
+            CurrentTypeWriter.WriteLine(node, $"{Global.GlobalName}.{Constants.TraceEntryName}({handle});", true);
+            CurrentTypeWriter.WriteLine(node, $"//--TRIMMABLE-BOUNDARY-END(TRACE)", true);
+        }
+
+        public void WriteTraceExit(SyntaxNode node, ulong? handle)
+        {
+            CurrentTypeWriter.WriteLine(node, $"//--TRIMMABLE-BOUNDARY-START(TRACE)", true);
+            CurrentTypeWriter.WriteLine(node, $"{Global.GlobalName}.{Constants.TraceExitName}({handle});", true);
+            CurrentTypeWriter.WriteLine(node, $"//--TRIMMABLE-BOUNDARY-END(TRACE)", true);
+        }
     }
 }

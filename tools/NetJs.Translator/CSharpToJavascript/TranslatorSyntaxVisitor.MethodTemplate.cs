@@ -29,7 +29,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     if (ix > 0)
                         CurrentTypeWriter.Write(node, ", ");
-                    WriteSingleMethodInvocationArgument(node, ix, remaining, null, method!.Parameters.ElementAt(ix), default, enableBoxing: false);
+                    WriteSingleMethodInvocationArgument(node, remaining, null, method!.Parameters.ElementAt(ix), default, enableBoxing: false);
                     ix++;
                 }
             }
@@ -45,7 +45,7 @@ namespace NetJs.Translator.CSharpToJavascript
             IEnumerable<CodeNode>? parameterArgs,
             AttributeData templateAttribute,
             MethodOverloadResult overloadResult,
-            CodeNode? suffixArguments = null)
+            MethodParameterWriter? suffixArguments = null)
         {
             var methodMetadata = method != null ? _global.GetRequiredMetadata(method) : null;
             var parameterNames = method?.Parameters.Select(p => p.Name).ToList();
@@ -111,7 +111,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 var arg = GetArgument(index);
                 var argSubstitution = overloadResult.ParameterValueSubstitutions?.GetValueOrDefault(parameter);
                 var argType = argSubstitution?.ArgumentType;
-                WriteSingleMethodInvocationArgument(node, index, arg, argType, parameter, overloadResult, enableBoxing: false);
+                WriteSingleMethodInvocationArgument(node, arg, argType, parameter, overloadResult, enableBoxing: false);
                 //if (isExtensionCall)
                 //{
                 //    if (index == 0)
@@ -169,7 +169,7 @@ namespace NetJs.Translator.CSharpToJavascript
                             {
                                 if (ix > 0)
                                     CurrentTypeWriter.Write(node, ", ");
-                                WriteSingleMethodInvocationArgument(node, ix, remaining, null, method.Parameters.ElementAt(ix), overloadResult, enableBoxing: false);
+                                WriteSingleMethodInvocationArgument(node, remaining, null, method.Parameters.ElementAt(ix), overloadResult, enableBoxing: false);
                                 //Visit(remaining);
                                 ix++;
                             }
@@ -229,8 +229,8 @@ namespace NetJs.Translator.CSharpToJavascript
                             var symbol = _global.GetSymbol(token, this);
                             if (symbol != null)
                             {
-                                var metadata = _global.GetRequiredMetadata(symbol);
-                                CurrentTypeWriter.Write(node, metadata.OverloadName ?? token);
+                                var metadata = _global.GetMetadata(symbol);
+                                CurrentTypeWriter.Write(node, metadata?.OverloadName ?? symbol.Name);
                             }
                             else
                             {
@@ -281,13 +281,13 @@ namespace NetJs.Translator.CSharpToJavascript
                         }
                         else if (method != null && name == "value" && method.Parameters.Count() == (parameterArgs?.Count() ?? 0) + 1 && suffixArguments != null) //if we are writing an indexer, suffix is value
                         {
-                            int ix = 0;
-                            WriteAdditionalArgument(node, suffixArguments, ref ix);
+                            int parameterIndex = 0;
+                            WriteAdditionalArgument(node, suffixArguments, ref parameterIndex);
                         }
                         else if (method != null && name == "value" && method.Parameters.Count() == 0 && suffixArguments != null) //if we are writing a property setter
                         {
-                            int ix = 0;
-                            WriteAdditionalArgument(node, suffixArguments, ref ix);
+                            int parameterIndex = 0;
+                            WriteAdditionalArgument(node, suffixArguments, ref parameterIndex);
                         }
                         else if (method != null && int.TryParse(name, out var index))
                         {
@@ -367,35 +367,37 @@ namespace NetJs.Translator.CSharpToJavascript
                                 if (parameter.IsParams)
                                 {
                                     var remainingParams = arguments.Skip(parameterIndex - (isExtensionCall ? 1 : 0));
-                                    if (remainingParams.Count() == 1) //if the last parameter passed is an array than can convert directly to the target type. dont create another array to wrap it again
-                                    {
-                                        var singleParam = remainingParams.Single();
-                                        var singleParamType = singleParam.IsT0 ? _global.TryGetTypeSymbol(singleParam.AsT0, this) : null;
-                                        if (singleParamType?.CanConvertTo(parameter.Type, _global, null, out _) >= 0)
-                                        {
-                                            VisitArgument(parameterIndex, parameter);
-                                            continue;
-                                        }
-                                    }
-                                    //if (hasStarModifier && remainingParams.Count() == 1)
+                                    int ix = 0;
+                                    WriteRemainingArgumentsIntoParams(node, parameter, remainingParams, ref ix);
+                                    //if (remainingParams.Count() == 1) //if the last parameter passed is an array than can convert directly to the target type. dont create another array to wrap it again
                                     //{
-                                    //    WriteSingleMethodInvocationArgument(node, parameterIndex, remainingParams.Single(), null, parameter, overloadResult);
-                                    //    //Visit(remainingParams.Single());
+                                    //    var singleParam = remainingParams.Single();
+                                    //    var singleParamType = singleParam.IsT0 ? _global.TryGetTypeSymbol(singleParam.AsT0, this) : null;
+                                    //    if (singleParamType?.CanConvertTo(parameter.Type, _global, null, out _) >= 0)
+                                    //    {
+                                    //        VisitArgument(parameterIndex, parameter);
+                                    //        continue;
+                                    //    }
                                     //}
-                                    //else
-                                    {
-                                        CurrentTypeWriter.Write(node, "[ ", false);
-                                        int ix = 0;
-                                        foreach (var remaining in remainingParams)
-                                        {
-                                            if (ix > 0)
-                                                CurrentTypeWriter.Write(node, ", ");
-                                            WriteSingleMethodInvocationArgument(node, parameterIndex, remaining, null, parameter, overloadResult, enableBoxing: false);
-                                            //Visit(remaining);
-                                            ix++;
-                                        }
-                                        CurrentTypeWriter.Write(node, " ]", false);
-                                    }
+                                    ////if (hasStarModifier && remainingParams.Count() == 1)
+                                    ////{
+                                    ////    WriteSingleMethodInvocationArgument(node, parameterIndex, remainingParams.Single(), null, parameter, overloadResult);
+                                    ////    //Visit(remainingParams.Single());
+                                    ////}
+                                    ////else
+                                    //{
+                                    //    CurrentTypeWriter.Write(node, "[ ", false);
+                                    //    int ix = 0;
+                                    //    foreach (var remaining in remainingParams)
+                                    //    {
+                                    //        if (ix > 0)
+                                    //            CurrentTypeWriter.Write(node, ", ");
+                                    //        WriteSingleMethodInvocationArgument(node, remaining, null, parameter, overloadResult, enableBoxing: false);
+                                    //        //Visit(remaining);
+                                    //        ix++;
+                                    //    }
+                                    //    CurrentTypeWriter.Write(node, " ]", false);
+                                    //}
                                 }
                                 else
                                 {
@@ -406,7 +408,7 @@ namespace NetJs.Translator.CSharpToJavascript
                     }
                     else
                     {
-                        CurrentTypeWriter.Write(node, template[i]);
+                        CurrentTypeWriter.Write(node, template[i], validate: false);
                         if (template[i] == '{' && i + 1 < template.Length && template[i + 1] == '{')
                             i++;
                         if (template[i] == '}' && i + 1 < template.Length && template[i + 1] == '}')

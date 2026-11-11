@@ -1,2 +1,2 @@
 
-[assembly: NetJs.AssemblyHandle(103)]
+[assembly: NetJs.AssemblyHandle(110)]

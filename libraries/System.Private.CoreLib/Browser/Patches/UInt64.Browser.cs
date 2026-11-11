@@ -32,5 +32,144 @@ namespace System
         //{
         //    return NetJs.Script.TypeOf(value).NativeEquals("bigint");
         //}
+        public static UInt64_Partial? operator +(UInt64_Partial a, UInt64_Partial? b)
+        {
+            if (b.As<ulong?>() == null)
+                return null;
+            return (a.As<ulong>() + b.As<ulong>()).As<UInt64_Partial>();
+        }
+
+        public static UInt64_Partial? operator +(UInt64_Partial? a, UInt64_Partial? b)
+        {
+            if (a.As<ulong?>() == null || b.As<ulong?>() == null)
+                return null;
+            return (a.As<ulong>() + b.As<ulong>()).As<UInt64_Partial>();
+        }
+
+        public static UInt64_Partial? operator -(UInt64_Partial a, UInt64_Partial? b)
+        {
+            if (b.As<ulong?>() == null)
+                return null;
+            return (a.As<ulong>() - b.As<ulong>()).As<UInt64_Partial>();
+        }
+
+        public static UInt64_Partial? operator -(UInt64_Partial? a, UInt64_Partial? b)
+        {
+            if (a.As<ulong?>() == null || b.As<ulong?>() == null)
+                return null;
+            return (a.As<ulong>() - b.As<ulong>()).As<UInt64_Partial>();
+        }
+
+        public static UInt64_Partial? operator *(UInt64_Partial a, UInt64_Partial? b)
+        {
+            if (b.As<ulong?>() == null)
+                return null;
+            return (a.As<ulong>() * b.As<ulong>()).As<UInt64_Partial>();
+        }
+
+        public static UInt64_Partial? operator *(UInt64_Partial? a, UInt64_Partial? b)
+        {
+            if (a.As<ulong?>() == null || b.As<ulong?>() == null)
+                return null;
+            return (a.As<ulong>() * b.As<ulong>()).As<UInt64_Partial>();
+        }
+
+        public static UInt64_Partial? operator /(UInt64_Partial a, UInt64_Partial? b)
+        {
+            if (b.As<ulong?>() == null)
+                return null;
+            return (a.As<ulong>() / b.As<ulong>()).As<UInt64_Partial>();
+        }
+
+        public static UInt64_Partial? operator /(UInt64_Partial? a, UInt64_Partial? b)
+        {
+            if (a.As<ulong?>() == null || b.As<ulong?>() == null)
+                return null;
+            return (a.As<ulong>() / b.As<ulong>()).As<UInt64_Partial>();
+        }
+
+        public static bool operator >(UInt64_Partial a, UInt64_Partial? b)
+        {
+            if (b.As<ulong?>() == null)
+                return false;
+            return a.As<ulong>() > b.As<ulong>();
+        }
+
+        public static bool operator >(UInt64_Partial? a, UInt64_Partial? b)
+        {
+            if (a.As<ulong?>() == null || b.As<ulong?>() == null)
+                return false;
+            return a.As<ulong>() > b.As<ulong>();
+        }
+
+        public static bool operator <(UInt64_Partial a, UInt64_Partial? b)
+        {
+            if (b.As<ulong?>() == null)
+                return false;
+            return a.As<ulong>() < b.As<ulong>();
+        }
+
+        public static bool operator <(UInt64_Partial? a, UInt64_Partial? b)
+        {
+            if (a.As<ulong?>() == null || b.As<ulong?>() == null)
+                return false;
+            return a.As<ulong>() < b.As<ulong>();
+        }
+
+        public static bool operator >=(UInt64_Partial a, UInt64_Partial? b)
+        {
+            if (b.As<ulong?>() == null)
+                return false;
+            return a.As<ulong>() >= b.As<ulong>();
+        }
+
+        public static bool operator >=(UInt64_Partial? a, UInt64_Partial? b)
+        {
+            if (a.As<ulong?>() == null || b.As<ulong?>() == null)
+                return false;
+            return a.As<ulong>() >= b.As<ulong>();
+        }
+
+        public static bool operator <=(UInt64_Partial a, UInt64_Partial? b)
+        {
+            if (b.As<ulong?>() == null)
+                return false;
+            return a.As<ulong>() <= b.As<ulong>();
+        }
+
+        public static bool operator <=(UInt64_Partial? a, UInt64_Partial? b)
+        {
+            if (a.As<ulong?>() == null || b.As<ulong?>() == null)
+                return false;
+            return a.As<ulong>() <= b.As<ulong>();
+        }
+        public static UInt64_Partial? operator &(UInt64_Partial a, UInt64_Partial? b)
+        {
+            if (b.As<ulong?>() == null)
+                return null;
+            return (a.As<ulong>() & b.As<ulong>()).As<UInt64_Partial>();
+        }
+
+        public static UInt64_Partial? operator &(UInt64_Partial? a, UInt64_Partial? b)
+        {
+            if (a.As<ulong?>() == null || b.As<ulong?>() == null)
+                return null;
+            return (a.As<ulong>() & b.As<ulong>()).As<UInt64_Partial>();
+        }
+
+        public static UInt64_Partial? operator |(UInt64_Partial a, UInt64_Partial? b)
+        {
+            if (b.As<ulong?>() == null)
+                return null;
+            return (a.As<ulong>() | b.As<ulong>()).As<UInt64_Partial>();
+        }
+
+        public static UInt64_Partial? operator |(UInt64_Partial? a, UInt64_Partial? b)
+        {
+            if (a.As<ulong?>() == null || b.As<ulong?>() == null)
+                return null;
+            return (a.As<ulong>() | b.As<ulong>()).As<UInt64_Partial>();
+        }
+
     }
 }

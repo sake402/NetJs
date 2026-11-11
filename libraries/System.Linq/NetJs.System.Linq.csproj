@@ -95,7 +95,6 @@
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Numerics.Vectors\NetJs.System.Numerics.Vectors.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Runtime\NetJs.System.Runtime.csproj" />
     <ProjectReference Include="$(NewLibrariesProjectRoot)System.Runtime.InteropServices\NetJs.System.Runtime.InteropServices.csproj" />
-    <ProjectReference Include="$(NewLibrariesProjectRoot)System.Runtime.Intrinsics\NetJs.System.Runtime.Intrinsics.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="$(DotnetRuntimeRoot)src/libraries/Common/src/System/SR.cs" />

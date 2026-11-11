@@ -55,7 +55,7 @@ namespace System.Diagnostics
                         int lineNumber = int.Parse(match[3]);
                         int columnNumber = int.Parse(match[4]);
 
-                        frames.Push(new MonoStackFrame
+                        frames.push(new MonoStackFrame
                         {
                             internalMethodName = methodName,
                             fileName = fileName,

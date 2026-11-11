@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using Window;
 
 namespace NetJs
 {
@@ -14,14 +15,19 @@ namespace NetJs
     {
         [DynamicDependency(nameof(Get))]
         [DynamicDependency(nameof(Set))]
-        public TypeProxyHandler(string metadataFullName)
+        public TypeProxyHandler(string referenceFullName, string prototypeFullName)
         {
-            MetadataFullName = metadataFullName;
+            if (!NetJs.Script.IsDefined(prototypeFullName))
+                prototypeFullName = referenceFullName;
+            ReferenceFullName = referenceFullName;
+            PrototypeFullName = prototypeFullName;
         }
         [Name("$parent")]
         TypeProxyHandler? Parent { get; set; }
-        [Name(Constants.PrototypeMetadataFullName)]
-        internal string MetadataFullName { get; }
+        [Name(Constants.PrototypeReferenceFullName)]
+        internal string ReferenceFullName { get; }
+        [Name(Constants.PrototypeFullName)]
+        internal string PrototypeFullName { get; set; }
         /// <summary>
         /// The finally created type we will proxy to
         /// </summary>
@@ -34,6 +40,8 @@ namespace NetJs
         {
             if (property.NativeEquals(Constants.IsProxy))
                 return true.As<object>();
+            if (property.NativeEquals(Constants.ProxyHandler))
+                return this;
             if (property.NativeEquals(Constants.TypeProxyHandlerPrototype) && Prototype != null)
                 return Prototype;
             if (property.NativeEquals(Constants.TypeProxyHandlerTargetType) && TargetType != null)
@@ -44,29 +52,47 @@ namespace NetJs
                 var v2 = TargetType[property];
                 if (Script.IsDefined(v1) && Script.IsDefined(v2) && v1 != v2)
                 {
-                    throw new AmbiguousMatchException($"Due to a limitation on the type system, Type \"{MetadataFullName}\"(being dependent on itself and implemented via a TypeProxy), cannot have a member whose name clashes with a System.Type member. Name \"{property}\" caused a clash.");
+                    throw new AmbiguousMatchException($"Due to a limitation on the type system, Type \"{PrototypeFullName}\"(being dependent on itself and implemented via a TypeProxy), cannot have a member whose name clashes with a System.Type member. Name \"{property}\" caused a clash.");
                 }
                 return v1 ?? v2;
             }
             //We will need these properties early before the proxy is bound to its type
             if (property.NativeEquals(Constants.PrototypeFullName))
             {
-                if (MetadataFullName.NativeStartsWith("$"))
+                if (PrototypeFullName.NativeStartsWith("$"))
                 {
-                    var dot = MetadataFullName.NativeIndexOf(".");
+                    var dot = PrototypeFullName.NativeIndexOf(".");
                     if (dot >= 0)
-                        return MetadataFullName.NativeSubstring(dot + 1).As<object>();
+                        return PrototypeFullName.NativeSubstring(dot + 1).As<object>();
                 }
-                return MetadataFullName.As<object>();
+                return PrototypeFullName.As<object>();
             }
-            else if (property.NativeEquals(Constants.PrototypeMetadataFullName))
-                return MetadataFullName.As<object>();
-            else if (property.NativeEquals("$type"))
-                return this;
+            else if (property.NativeEquals(Constants.PrototypeFullNameWithSpecialSeperator))
+            {
+                string getFullName(string separator)
+                {
+                    if (PrototypeFullName.NativeStartsWith("$"))
+                    {
+                        var dot = PrototypeFullName.NativeIndexOf(".");
+                        if (dot >= 0)
+                            return PrototypeFullName.NativeSubstring(dot + 1).NativeReplaceAll(".", separator).NativeReplaceAll("+", separator);
+                    }
+                    return PrototypeFullName.NativeReplaceAll(".", separator).NativeReplaceAll("+", separator);
+                }
+                NativeFunction<string, string> ret = getFullName;
+                return ret;
+            }
+            else if (property.NativeEquals(Constants.PrototypeReferenceFullName))
+                return ReferenceFullName.As<object>();
+            else if (property.NativeEquals(Constants.TypeProxyHandlerTargetType))
+                return receiver;
+            else if (property.NativeEquals(nameof(Type.UnderlyingSystemType)))
+                return receiver;
             else if (NetJs.Script.TypeOf(property).NativeEquals("string") && property.NativeStartsWith("$itype$")) //proxy inner types that are not yet defined
             {
-                var metadataFullTypeName = MetadataFullName + "." + property.NativeSubstring(7);
-                var proxyHandler = new TypeProxyHandler(metadataFullTypeName) { Parent = this };
+                var prototypeFullTypeName = PrototypeFullName + "." + property.NativeSubstring(7);
+                var referenceFullTypeName = ReferenceFullName + "." + property.NativeSubstring(7);
+                var proxyHandler = new TypeProxyHandler(referenceFullTypeName, prototypeFullTypeName) { Parent = this };
                 object? proxy = null;
                 NetJs.Script.Write("proxy = new Proxy({}, proxyHandler)");
                 //AppDomain.GlobalPrototypeRegistry.SetNested(metadataFullTypeName.NativeReplaceAll("<", "$").NativeReplaceAll(",", "$").NativeReplaceAll(">", "$"), proxy.As<TypePrototype>());
@@ -75,7 +101,7 @@ namespace NetJs
             else if (property.NativeEquals(Constants.IsProxy))
                 return true.As<object>();
             else if (property.NativeEquals("IsGenericTypeDefinition"))
-                return MetadataFullName.NativeEndsWith(">").As<object>();
+                return PrototypeFullName.NativeEndsWith(">").As<object>();
             else if (property.NativeEquals("_prototype"))
                 return this;
             return null;
@@ -93,6 +119,11 @@ namespace NetJs
             {
                 Prototype = value.As<TypePrototype>();
                 return true;
+            }
+            if (TargetType != null)
+            {
+                if (Reflect.set(TargetType, property, value, TargetType))
+                    return true;
             }
             return false;
         }

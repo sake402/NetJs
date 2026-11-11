@@ -15,8 +15,8 @@ namespace System
         private static void GetEnumValuesAndNamesImpl(QCallTypeHandle enumType, out ulong[] values, out string[] names)
         {
             var prototype = enumType.QCallTypeHandleToRuntimeType()._prototype.As<EnumPrototype>();
-            names = prototype.Map.Keys;
-            values = prototype.Map.Values.As<ulong[]>();
+            names = (prototype["$enumNames"] ??= prototype.Map.Keys.AsNetArray()).As<string[]>();
+            values = (prototype["$enumValues"] ??= prototype.Map.Values.AsNetArray()).As<ulong[]>();
         }
 
         [NetJs.MemberReplace(nameof(InternalGetCorElementType))]
@@ -44,7 +44,7 @@ namespace System
         //}
 
         [NetJs.Name(NetJs.Constants.IsTypeName)]
-        public static bool Is(object value, ref object result)
+        public static bool Is(object value, NativeAction<object>? result)
         {
             var unboxed = NetJs.Script.Unbox(value);
             var t = NetJs.Script.TypeOf(unboxed);
@@ -59,13 +59,16 @@ namespace System
             }
             if (NetJs.Script.IsDefined(underlyingType) && (t.NativeEquals("number") || t.NativeEquals("bigint")))
             {
-                if (t.NativeEquals("number") && (underlyingType.KnownType == KnownTypeHandle.SystemInt64 || underlyingType.KnownType == KnownTypeHandle.SystemUint64))
+                if (result != null)
                 {
-                    result = NetJs.Script.Write<object>("BigInt(unboxed)");
-                }
-                if (t.NativeEquals("bigint") && underlyingType.KnownType != KnownTypeHandle.SystemInt64 && underlyingType.KnownType != KnownTypeHandle.SystemUint64)
-                {
-                    result = NetJs.Script.Write<object>("Number(unboxed)");
+                    if (t.NativeEquals("number") && (underlyingType.KnownType == KnownTypeHandle.SystemInt64 || underlyingType.KnownType == KnownTypeHandle.SystemUInt64))
+                    {
+                        result(NetJs.Script.Write<object>("BigInt(unboxed)"));
+                    }
+                    if (t.NativeEquals("bigint") && underlyingType.KnownType != KnownTypeHandle.SystemInt64 && underlyingType.KnownType != KnownTypeHandle.SystemUInt64)
+                    {
+                        result(NetJs.Script.Write<object>("Number(unboxed)"));
+                    }
                 }
                 return true;
             }
@@ -102,6 +105,48 @@ namespace System
                 return (int)(lvalue1 - lvalue2);
             }
             return enumValue1.As<int>() - enumValue2.As<int>();
+        }
+
+        public static Enum? operator &([NetJs.Box(false)] Enum? left, [NetJs.Box(false)] Enum? right)
+        {
+            if (left == null || right == null)
+                return null;
+            if (NetJs.Script.TypeOf(left).NativeEquals("number"))
+                return (left.As<int>() & right.As<int>()).As<Enum>();
+            return (left.As<long>() & right.As<long>()).As<Enum>();
+        }
+
+        public static Enum? operator |([NetJs.Box(false)] Enum? left, [NetJs.Box(false)] Enum? right)
+        {
+            if (left == null || right == null)
+                return null;
+            if (NetJs.Script.TypeOf(left).NativeEquals("number"))
+                return (left.As<int>() | right.As<int>()).As<Enum>();
+            return (left.As<long>() | right.As<long>()).As<Enum>();
+        }
+    }
+
+    /// <summary>
+    /// This type prevent boxing on enum before ToString, GetHashCode
+    /// </summary>
+    /// <typeparam name="TEnum"></typeparam>
+    /// <typeparam name="TStorage"></typeparam>
+    [NetJs.Base(typeof(Enum))]
+    [NetJs.StaticCallConvention]
+    public class Enum<TEnum, TStorage>
+        where TEnum : struct
+        where TStorage : struct, INumber<TStorage>, IBitwiseOperators<TStorage, TStorage, TStorage>
+    {
+        public override string ToString()
+        {
+            var unboxed = NetJs.Script.Unbox(this);
+            return Enum.ToStringT<TEnum, TStorage>(unboxed.As<TStorage>());
+        }
+
+        public override int GetHashCode()
+        {
+            var unboxed = NetJs.Script.Unbox(this);
+            return Enum.GetHashCodeT<TStorage>(unboxed.As<TStorage>());
         }
     }
 }

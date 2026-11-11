@@ -7,32 +7,39 @@ namespace System.Reflection
     //[NetJs.Reflectable(false)]
     internal sealed partial class RuntimeEventInfo_Partial : ForcedPartialBase<RuntimeEventInfo>
     {
-        internal EventModel _model;
+        MonoEventInfo? _info;
+        //internal EventModel _model;
         internal RuntimeEventInfo_Partial(EventModel model)
         {
-            _model = model;
+            THIS._model = model;
         }
 
         [NetJs.MemberReplace]
         private static void get_event_info(RuntimeEventInfo ev, out MonoEventInfo info)
         {
+            if (ev.As<RuntimeEventInfo_Partial>()._info != null)
+            {
+                info = ev.As<RuntimeEventInfo_Partial>()._info.As<MonoEventInfo>();
+                return;
+            }
             var minfo = new MonoEventInfo();
-            minfo.declaring_type = ev.DeclaringType;
-            minfo.reflected_type = ev.ReflectedType;
-            var model = ev.As<RuntimeEventInfo_Partial>()._model;
+            minfo.declaring_type = AppDomain.GetType(ev._model.DeclaringType.As<uint>()) ?? throw null!;
+            minfo.reflected_type = minfo.declaring_type;//TODO
+            var model = ev.As<RuntimeEventInfo>()._model.As<EventModel>();
             minfo.name = model.Name;
-            minfo.add_method = model.AddMethod != null ? new RuntimeMethodInfo(model.AddMethod) : null!;
-            minfo.remove_method = model.RemoveMethod != null ? new RuntimeMethodInfo(model.RemoveMethod) : null!;
-            minfo.raise_method = model.RaiseMethod != null ? new RuntimeMethodInfo(model.RaiseMethod) : null!;
+            minfo.add_method = NetJs.Script.IsDefined(model.AddMethod) ? new RuntimeMethodInfo(model.AddMethod!) : null!;
+            minfo.remove_method = NetJs.Script.IsDefined(model.RemoveMethod) ? new RuntimeMethodInfo(model.RemoveMethod!) : null!;
+            minfo.raise_method = NetJs.Script.IsDefined(model.RaiseMethod) ? new RuntimeMethodInfo(model.RaiseMethod!) : null!;
             minfo.attrs = EventAttributes.None;
             //minfo.other_methods = null;
+            ev.As<RuntimeEventInfo_Partial>()._info = minfo;
             info = minfo;
         }
 
         [NetJs.MemberReplace]
         internal static int get_metadata_token(RuntimeEventInfo monoEvent)
         {
-            return (int)monoEvent.As<RuntimeEventInfo_Partial>()._model.Handle;
+            return NetJs.Script.IsDefined(monoEvent._model.OriginalHandle) ? monoEvent._model.OriginalHandle.As<int>() : monoEvent._model.Handle.As<int>();
         }
 
         [NetJs.MemberReplace]

@@ -1,5 +1,6 @@
 namespace Window
 {
+    [NetJs.External]
     public class HTMLTextAreaElement : HTMLElement
     {
         public extern string type { get; }

@@ -18,35 +18,35 @@ namespace System
             if (model.Flags.TypeHasFlag(MemberFlagsModel.IsStatic))
             {
                 var prototype = AppDomain.GetType(model.FieldType.As<uint>())!._prototype;
-                prototype![model.Name] = value;
+                prototype![model.GetOutputName()] = NetJs.Script.Unbox(value);
             }
-            obj![model.Name] = value;
+            obj![model.GetOutputName()] = NetJs.Script.Unbox(value);
         }
 
         [NetJs.MemberReplace]
-        internal static  unsafe object GetValueDirect(RuntimeFieldInfo field, RuntimeType fieldType, void* pTypedRef, RuntimeType? contextType)
+        internal static unsafe object GetValueDirect(RuntimeFieldInfo field, RuntimeType fieldType, void* pTypedRef, RuntimeType? contextType)
         {
             var obj = *(object*)pTypedRef;
             var model = field.As<RuntimeFieldInfo>()._model.As<FieldModel>();
             if (model.Flags.TypeHasFlag(MemberFlagsModel.IsStatic))
             {
                 var prototype = AppDomain.GetType(model.FieldType.As<uint>())!._prototype;
-                return prototype![model.Name];
+                return NetJs.Script.Box(prototype![model.GetOutputName()]!, fieldType._prototype);
             }
-            return obj![model.Name];
+            return NetJs.Script.Box(obj![model.GetOutputName()]!, fieldType._prototype);
         }
 
         [NetJs.MemberReplace]
-        internal static  unsafe void SetValueDirect(RuntimeFieldInfo field, RuntimeType fieldType, void* pTypedRef, object value, RuntimeType? contextType)
+        internal static unsafe void SetValueDirect(RuntimeFieldInfo field, RuntimeType fieldType, void* pTypedRef, object value, RuntimeType? contextType)
         {
             var obj = *(object*)pTypedRef;
             var model = field.As<RuntimeFieldInfo>()._model.As<FieldModel>();
             if (model.Flags.TypeHasFlag(MemberFlagsModel.IsStatic))
             {
                 var prototype = fieldType._prototype;
-                prototype![model.Name] = value;
+                prototype![model.GetOutputName()] = NetJs.Script.Unbox(value);
             }
-            obj![model.Name] = value;
+            obj![model.GetOutputName()] = NetJs.Script.Unbox(value);
         }
 
     }

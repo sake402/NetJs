@@ -11,7 +11,7 @@ internal static partial class Interop
          internal static partial void* AlignedAlloc(nuint alignment, nuint size)
         {
             var arr = new object[size];
-            var refs = RuntimeHelpers.CreateArrayReferenceT(arr, -1);
+            var refs = RuntimeHelpers.CreateArrayReferenceT(arr);
             return Script.RefP(refs);
         }
 
@@ -22,17 +22,20 @@ internal static partial class Interop
 
         internal static partial void* AlignedRealloc(void* ptr, nuint alignment, nuint new_size)
         {
+            throw null; //_dataSource cannot be changed after creation
             var refs = Script.Ref((object*)ptr);
             var arr = refs._array;
             Array.Resize<object>(ref arr, (int)new_size);
             refs._dataSource = arr;
+            refs._dataSourceType = RefOrPointer.DataSourceType._array;
             return Script.RefP(refs);
         }
         
         internal static partial void* Calloc(nuint num, nuint size)
         {
             var arr = new object[size.As<int>()];
-            var refs = RuntimeHelpers.CreateArrayReferenceT(arr, -1);
+            var refs = RuntimeHelpers.CreateArrayReferenceT(arr);
+            refs._type = typeof(void);
             return Script.RefP(refs);
         }
 
@@ -44,16 +47,19 @@ internal static partial class Interop
         internal static partial void* Malloc(nuint size)
         {
             var arr = new object[size.As<int>()];
-            var refs = RuntimeHelpers.CreateArrayReferenceT(arr, -1);
+            var refs = RuntimeHelpers.CreateArrayReferenceT(arr);
+            refs._type = typeof(void);
             return Script.RefP(refs);
         }
 
         internal static partial void* Realloc(void* ptr, nuint new_size)
         {
+            throw null;//_dataSource cannot be changed after creation
             var refs = Script.Ref((object*)ptr);
             var arr = refs._array;
             Array.Resize<object>(ref arr, (int)new_size);
             refs._dataSource = arr;
+            refs._dataSourceType = RefOrPointer.DataSourceType._array;
             return Script.RefP(refs);
         }
     }

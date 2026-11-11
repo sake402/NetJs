@@ -23,7 +23,8 @@ namespace NetJs
         Array _array;
         public event EventHandler<ArrayMutationEventArgs>? OnMutated;
         public Array Array => _array;
-        public Type? ElementType { get; private set; }
+        Type? _elementType;
+        public Type? ElementType => _elementType ?? Array.GetArrayElementType(_array);
 
         public object? Get(object target, string propertyName, object receiver)
         {
@@ -66,7 +67,7 @@ namespace NetJs
                 if (propertyName.NativeEquals(Array.ElementTypeName))
                 {
                     this[Array.ElementTypeName] = value;
-                    ElementType = value.As<Type>();
+                    _elementType = value.As<Type>();
                     return true;
                 }
                 else if (propertyName.NativeEquals(Array.SizesName))

@@ -12,7 +12,7 @@ namespace System.Reflection
         {
         }
 
-        internal RuntimeFieldInfo_Partial(FieldModel model) 
+        internal RuntimeFieldInfo_Partial(FieldModel model)
         {
             THIS._model = model;
             NetJs.Script.Write("this.{nameof(System.Reflection.RuntimeFieldInfo.name)} = model.{nameof(NetJs.MemberModel.Name)}");
@@ -23,23 +23,25 @@ namespace System.Reflection
         [NetJs.MemberReplace]
         internal object? UnsafeGetValue(object obj)
         {
+            var fieldTypePrototype = AppDomain.GetType(THIS._model.As<FieldModel>().FieldType.As<uint>())!._prototype;
             if (THIS._model.Flags.TypeHasFlag(MemberFlagsModel.IsStatic))
             {
-                var prototype = AppDomain.GetType(THIS._model.As<FieldModel>().FieldType.As<uint>())!._prototype;
-                return prototype![THIS._model.Name];
+                return NetJs.Script.Box(THIS.DeclaringType.As<RuntimeType>()._prototype[THIS._model.GetOutputName()], fieldTypePrototype);
             }
-            return obj![THIS._model.Name];
+            return NetJs.Script.Box(obj![THIS._model.GetOutputName()], fieldTypePrototype);
         }
 
         [NetJs.MemberReplace]
         private object? GetValueInternal(object? obj)
         {
+            var fieldTypePrototype = AppDomain.GetType(THIS._model.As<FieldModel>().FieldType.As<uint>())?._prototype;
             if (THIS._model.Flags.TypeHasFlag(MemberFlagsModel.IsStatic))
             {
-                var prototype = AppDomain.GetType(THIS._model.As<FieldModel>().FieldType.As<uint>())!._prototype;
-                return prototype![THIS._model.Name];
+                var value = THIS.DeclaringType.As<RuntimeType>()._prototype[THIS._model.GetOutputName()];
+                return fieldTypePrototype != null ? NetJs.Script.Box(value, fieldTypePrototype) : value;
             }
-            return obj![THIS._model.Name];
+            var val = obj![THIS._model.GetOutputName()];
+            return fieldTypePrototype != null ? NetJs.Script.Box(val, fieldTypePrototype) : val;
         }
 
         [NetJs.MemberReplace]
@@ -66,10 +68,9 @@ namespace System.Reflection
             var field = fi.As<RuntimeFieldInfo>();
             if (field._model.Flags.TypeHasFlag(MemberFlagsModel.IsStatic))
             {
-                var prototype = AppDomain.GetType(field._model.As<FieldModel>().FieldType.As<uint>())!._prototype;
-                prototype![field._model.Name] = value;
+                field.DeclaringType.As<RuntimeType>()._prototype[field._model.Name] = NetJs.Script.Unbox(value);
             }
-            obj![field._model.Name] = value;
+            obj![field._model.Name] = NetJs.Script.Unbox(value);
         }
 
         [NetJs.MemberReplace]
@@ -82,7 +83,7 @@ namespace System.Reflection
         [NetJs.MemberReplace]
         internal static int get_metadata_token(RuntimeFieldInfo monoField)
         {
-            return (int)monoField.As<RuntimeFieldInfo>()._model.Handle;
+            return NetJs.Script.IsDefined(monoField._model.OriginalHandle) ? monoField._model.OriginalHandle.As<int>() : monoField._model.Handle.As<int>();
         }
 
         [NetJs.MemberReplace]

@@ -90,8 +90,10 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Indexer
                             {
                                 visitor.CurrentTypeWriter.InsertAbove(node, $"let {resultCacheVariable};", true);
                             }
-                            visitor.WriteMethodInvocation(node, bestSetIndexer, null, arguments.Select(a => new CodeNode(a)), cExpression, lhsSymbol, null, false, suffixArguments: (Action)(() =>
+                            visitor.WriteMethodInvocation(node, bestSetIndexer, null, arguments.Select(a => new CodeNode(a)), cExpression, lhsSymbol, null, false, suffixArguments: (ref int parametersWritten) =>
                             {
+                                if (parametersWritten > 0)
+                                    visitor.CurrentTypeWriter.Write(node, ", ");
                                 if (resultCacheVariable != null)
                                 {
                                     visitor.CurrentTypeWriter.Write(node, resultCacheVariable);
@@ -110,8 +112,9 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Indexer
                                 {
                                     visitor.CurrentTypeWriter.Write(node, ")");
                                 }
+                                parametersWritten++;
                                 //visitor.Visit(node.Right);
-                            }));
+                            });
                             if (resultCacheVariable != null)
                             {
                                 visitor.CurrentTypeWriter.Write(node, ", ");

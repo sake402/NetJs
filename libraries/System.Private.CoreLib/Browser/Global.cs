@@ -32,7 +32,11 @@ public class Global
     [Name("$exp")]
     public static extern TOut Expression<TOut>(NativeFunction<TOut> execute);
 
-    [Template("setTimeout({0}, 1)")]
+    [Template("requestIdleCallback ({0})")]
+    public static extern int RequestIdleCallback(NativeAction handler);
+    [Template("queueMicrotask({0})")]
+    public static extern int QueueMicrotask(NativeAction handler);
+    [Template("setTimeout({0}, {1})")]
     public static extern int SetTimeout(NativeAction handler, int delay);
     [Template("clearTimeout({0})")]
     public static extern void ClearTimeout(int timeoutID);

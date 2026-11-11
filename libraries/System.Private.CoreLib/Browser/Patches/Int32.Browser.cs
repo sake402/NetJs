@@ -138,5 +138,33 @@ namespace System
                 return false;
             return a.As<int>() <= b.As<int>();
         }
+
+        public static Int32_Partial? operator &(Int32_Partial a, Int32_Partial? b)
+        {
+            if (b.As<int?>() == null)
+                return null;
+            return (a.As<int>() & b.As<int>()).As<Int32_Partial>();
+        }
+
+        public static Int32_Partial? operator &(Int32_Partial? a, Int32_Partial? b)
+        {
+            if (a.As<int?>() == null || b.As<int?>() == null)
+                return null;
+            return (a.As<int>() & b.As<int>()).As<Int32_Partial>();
+        }
+
+        public static Int32_Partial? operator |(Int32_Partial a, Int32_Partial? b)
+        {
+            if (b.As<int?>() == null)
+                return null;
+            return (a.As<int>() | b.As<int>()).As<Int32_Partial>();
+        }
+
+        public static Int32_Partial? operator |(Int32_Partial? a, Int32_Partial? b)
+        {
+            if (a.As<int?>() == null || b.As<int?>() == null)
+                return null;
+            return (a.As<int>() | b.As<int>()).As<Int32_Partial>();
+        }
     }
 }

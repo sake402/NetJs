@@ -283,8 +283,31 @@ namespace NetJs.Translator.CSharpToJavascript
             return names;
         }
 
+        bool SwitchStatementHasLabel(SwitchStatementSyntax node)
+        {
+            bool isSimpleSwitchCase = IsSimpleSwitchCase(node);
+            var hasGotoCase = SwitchHasGotoCase(node);
+            bool hasGotoLabel = SwitchCaseHasLabeledStatement(node);
+            if ((!Constants.ComplexSwitchUseIfElse && !isSimpleSwitchCase) || hasGotoCase || hasGotoLabel)
+            {
+                return hasGotoCase || hasGotoLabel;
+            }
+            return false;
+        }
+
         public override void VisitSwitchStatement(SwitchStatementSyntax node)
         {
+            //Find every variable declaration within the cases of this switch that is not a block and pull them up above the switch
+            //This will allow other switch to access the same declaration, c# allows this access by default, but not js
+            var variablesInCases = node.Sections.SelectMany(s => s.Statements.Where(s => s.IsKind(SyntaxKind.LocalDeclarationStatement)).Cast<LocalDeclarationStatementSyntax>().Select(ls => ls.Declaration))
+                //.Where(ss => ss.IsKind(SyntaxKind.VariableDeclaration))
+                .Cast<VariableDeclarationSyntax>();
+            foreach (var v in variablesInCases)
+            {
+                //using var as we may have some clash
+                CurrentTypeWriter.WriteLine(node, $"var {string.Join(", ", v.Variables.Select(vv => vv.Identifier.ResolveIdentifierName()))};", true);
+                MarkSwitchCaseHasDefinedVariable(v);
+            }
             bool isSimpleSwitchCase = IsSimpleSwitchCase(node);
             var hasGotoCase = SwitchHasGotoCase(node);
             bool hasGotoLabel = SwitchCaseHasLabeledStatement(node);

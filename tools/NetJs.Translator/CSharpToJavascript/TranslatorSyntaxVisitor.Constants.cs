@@ -165,7 +165,7 @@ namespace NetJs.Translator.CSharpToJavascript
             if (constantValue.HasValue)
             {
                 var valueType = constantValue.Value?.GetType();
-                ITypeSymbol? valueTypeSymbol = valueType != null && valueType.IsValueType ? (ITypeSymbol?)_global.TryGetSymbol(valueType.FullName, this) : null;
+                ITypeSymbol? valueTypeSymbol = valueType != null ? (ITypeSymbol?)_global.TryGetSymbol(valueType.FullName!, this) : null;
                 bool needBoxing = (valueType?.IsValueType ?? false) && valueTypeSymbol != null && SymbolEqualityComparer.Default.Equals(constantType, _global.SystemObject);
                 if (needBoxing)
                 {
@@ -174,9 +174,13 @@ namespace NetJs.Translator.CSharpToJavascript
                     CurrentTypeWriter.Write(node, Constants.BoxName);
                     CurrentTypeWriter.Write(node, "(");
                 }
-                //var longType = (INamedTypeSymbol)_global.GetTypeSymbol("long", this, out _, out _);
-                //if (longType.Equals(constantType, SymbolEqualityComparer.Default))
-                if (constantType.SpecialType == SpecialType.System_Int64 || constantValue.Value is long)
+                if (constantType.SpecialType == SpecialType.None &&
+                    constantExpression != null &&
+                    valueTypeSymbol != null &&
+                    TryInvokeMethodOperator(node, ImplicitOperatorName, constantType, null, valueTypeSymbol, [constantExpression]))
+                {
+                }
+                else if (constantType.SpecialType == SpecialType.System_Int64 || constantValue.Value is long)
                 {
                     int _base = 10;
                     if (constantExpression.IsKind(SyntaxKind.NumericLiteralExpression) && constantExpression is LiteralExpressionSyntax lt)
@@ -205,12 +209,12 @@ namespace NetJs.Translator.CSharpToJavascript
                     //decimal handling
                     //Long literal is a different beast because js cannot actually handle it precisely
                     //This would have require us to estimate a constant expression in runtime instead of compile time
-                    var val = constantValue.Value!.ToString();
+                    var val = constantValue.Value!.ToString()!;
                     WriteDecimalConstant(node, val);
                 }
                 else if ((constantExpression.IsKind(SyntaxKind.CharacterLiteralExpression) || constantType.SpecialType == SpecialType.System_Char) && constantValue.Value is char)
                 {
-                    var val = constantValue.Value!.ToString().GetLiteralString(SyntaxKind.CharacterLiteralExpression, _global);
+                    var val = constantValue.Value!.ToString()!.GetLiteralString(SyntaxKind.CharacterLiteralExpression, _global);
                     CurrentTypeWriter.Write(node, val);
                 }
                 else
@@ -235,27 +239,39 @@ namespace NetJs.Translator.CSharpToJavascript
                             var c = (int)(char)constantValue.Value;
                             CurrentTypeWriter.Write(node, c.ToString());
                         }
-                        else if (constantType.SpecialType == SpecialType.System_Double && constantValue.Value is double d && d == double.PositiveInfinity)
+                        else if ((constantType.SpecialType == SpecialType.System_Double || (needBoxing && valueTypeSymbol?.SpecialType == SpecialType.System_Double)) &&
+                            constantValue.Value is double d &&
+                            d == double.PositiveInfinity)
                         {
                             CurrentTypeWriter.Write(node, "Number.POSITIVE_INFINITY");
                         }
-                        else if (constantType.SpecialType == SpecialType.System_Double && constantValue.Value is double d2 && d2 == double.NegativeInfinity)
+                        else if ((constantType.SpecialType == SpecialType.System_Double || (needBoxing && valueTypeSymbol?.SpecialType == SpecialType.System_Double)) &&
+                            constantValue.Value is double d2 &&
+                            d2 == double.NegativeInfinity)
                         {
                             CurrentTypeWriter.Write(node, "Number.NEGATIVE_INFINITY");
                         }
-                        else if (constantType.SpecialType == SpecialType.System_Double && constantValue.Value is double d3 && double.IsNaN(d3))
+                        else if ((constantType.SpecialType == SpecialType.System_Double || (needBoxing && valueTypeSymbol?.SpecialType == SpecialType.System_Double)) &&
+                            constantValue.Value is double d3 &&
+                            double.IsNaN(d3))
                         {
                             CurrentTypeWriter.Write(node, "Number.NaN");
                         }
-                        else if (constantType.SpecialType == SpecialType.System_Single && constantValue.Value is float f && f == float.PositiveInfinity)
+                        else if ((constantType.SpecialType == SpecialType.System_Single || (needBoxing && valueTypeSymbol?.SpecialType == SpecialType.System_Single)) &&
+                            constantValue.Value is float f &&
+                            f == float.PositiveInfinity)
                         {
                             CurrentTypeWriter.Write(node, "Number.POSITIVE_INFINITY");
                         }
-                        else if (constantType.SpecialType == SpecialType.System_Single && constantValue.Value is float f2 && f2 == float.NegativeInfinity)
+                        else if ((constantType.SpecialType == SpecialType.System_Single || (needBoxing && valueTypeSymbol?.SpecialType == SpecialType.System_Single)) &&
+                            constantValue.Value is float f2 &&
+                            f2 == float.NegativeInfinity)
                         {
                             CurrentTypeWriter.Write(node, "Number.NEGATIVE_INFINITY");
                         }
-                        else if (constantType.SpecialType == SpecialType.System_Single && constantValue.Value is float f3 && float.IsNaN(f3))
+                        else if ((constantType.SpecialType == SpecialType.System_Single || (needBoxing && valueTypeSymbol?.SpecialType == SpecialType.System_Single)) &&
+                            constantValue.Value is float f3 &&
+                            float.IsNaN(f3))
                         {
                             CurrentTypeWriter.Write(node, "Number.NaN");
                         }
@@ -278,7 +294,10 @@ namespace NetJs.Translator.CSharpToJavascript
                 if (needBoxing)
                 {
                     CurrentTypeWriter.Write(node, ", ");
-                    CurrentTypeWriter.Write(node, valueTypeSymbol!.ComputeOutputTypeName(_global));
+                    if (valueTypeSymbol!.IsNullable(out var itemType))
+                        CurrentTypeWriter.Write(node, itemType!.ComputeOutputTypeName(_global));
+                    else
+                        CurrentTypeWriter.Write(node, valueTypeSymbol!.ComputeOutputTypeName(_global));
                     CurrentTypeWriter.Write(node, ")");
                 }
                 return true;

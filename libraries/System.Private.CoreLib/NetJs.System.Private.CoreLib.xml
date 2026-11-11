@@ -4,6 +4,11 @@
         <name>NetJs.System.Private.CoreLib</name>
     </assembly>
     <members>
+        <member name="T:AnonymousType`1">
+            <summary>
+            A placeholder for generic type arguments
+            </summary>
+        </member>
         <member name="T:NetJs.Arguments">
             <summary>
             Provides access to the arguments of the current function.
@@ -33,6 +38,11 @@
             Attach an attribute indirectly to a type/member defined, but we dont want to attach the attribute directly
             </summary>
         </member>
+        <member name="T:NetJs.BaseAttribute">
+            <summary>
+            Mark a class as base class of  another class
+            </summary>
+        </member>
         <member name="T:NetJs.BootAttribute">
             <summary>
             Mark a class as implementing a boot code
@@ -43,6 +53,11 @@
             Controls boxing of method parameter.
             </summary>
             <param name="allow">False skips generating unboxing.</param>
+        </member>
+        <member name="T:NetJs.CoarseGenericArgument">
+            <summary>
+            Rewrites a generic argument using the provided value
+            </summary>
         </member>
         <member name="T:NetJs.ConventionAttribute">
             <summary>
@@ -324,6 +339,21 @@
             Placeholder used by generator lamdas
             </summary>
         </member>
+        <member name="M:NetJs.AsyncResolver.Result(System.Object,System.Object)">
+            <summary>
+            An async return marker promise that is already fulfilled
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:NetJs.AsyncResolver.Awaiting(System.Object,System.Object)">
+            <summary>
+            An async work is about to be awaited
+            </summary>
+            <param name="asyncResult"></param>
+            <param name="task"></param>
+            <returns></returns>
+        </member>
         <member name="T:NetJs.IAwaitable">
             <summary>
             The compiler will plug this interface automatically into any awaitable object.
@@ -352,6 +382,18 @@
             </summary>
             <typeparam name="T">The Type of object literal to create.</typeparam>
             <returns>An empty object literal of type T.</returns>
+        </member>
+        <member name="M:NetJs.BitCaster.ReInterpretRead(System.Type,System.Type,System.Array,System.Int32)">
+            <summary>
+            Reads a single value of TTo from an array of TFrom starting at a specific byte offset.
+            Performs single-pass batch extractions to completely avoid byte-by-byte loop method overhead.
+            </summary>
+        </member>
+        <member name="M:NetJs.BitCaster.ReInterpretWrite(System.Type,System.Type,System.Array,System.Object,System.Int32)">
+            <summary>
+            Writes a single value of TValue into an array of TTarget starting at a specific byte offset.
+            Extracted into contiguous chunks to minimize method-call bottlenecks.
+            </summary>
         </member>
         <member name="M:NetJs.Script.Return(System.Object)">
             <summary>
@@ -545,629 +587,6 @@
             <summary>
             The finally created type we will proxy to
             </summary>
-        </member>
-        <member name="F:System.Text.Unicode.Utf8Utility.MaxBytesPerScalar">
-            <summary>
-            The maximum number of bytes that can result from UTF-8 transcoding
-            any Unicode scalar value.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.GetIndexOfFirstInvalidUtf8Sequence(System.ReadOnlySpan{System.Byte},System.Boolean@)">
-            <summary>
-            Returns the byte index in <paramref name="utf8Data"/> where the first invalid UTF-8 sequence begins,
-            or -1 if the buffer contains no invalid sequences. Also outs the <paramref name="isAscii"/> parameter
-            stating whether all data observed (up to the first invalid sequence or the end of the buffer, whichever
-            comes first) is ASCII.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.AllBytesInUInt32AreAscii(System.UInt32)">
-            <summary>
-            Returns true iff the UInt32 represents four ASCII UTF-8 characters in machine endianness.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.AllBytesInUInt64AreAscii(System.UInt64)">
-            <summary>
-            Returns true iff the UInt64 represents eighty ASCII UTF-8 characters in machine endianness.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.ConvertAllAsciiBytesInUInt32ToLowercase(System.UInt32)">
-            <summary>
-            Given a UInt32 that represents four ASCII UTF-8 characters, returns the invariant
-            lowercase representation of those characters. Requires the input value to contain
-            four ASCII UTF-8 characters in machine endianness.
-            </summary>
-            <remarks>
-            This is a branchless implementation.
-            </remarks>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.ConvertAllAsciiBytesInUInt32ToUppercase(System.UInt32)">
-            <summary>
-            Given a UInt32 that represents four ASCII UTF-8 characters, returns the invariant
-            uppercase representation of those characters. Requires the input value to contain
-            four ASCII UTF-8 characters in machine endianness.
-            </summary>
-            <remarks>
-            This is a branchless implementation.
-            </remarks>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.ConvertAllAsciiBytesInUInt64ToUppercase(System.UInt64)">
-            <summary>
-            Given a UInt64 that represents eight ASCII UTF-8 characters, returns the invariant
-            uppercase representation of those characters. Requires the input value to contain
-            eight ASCII UTF-8 characters in machine endianness.
-            </summary>
-            <remarks>
-            This is a branchless implementation.
-            </remarks>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.ConvertAllAsciiBytesInUInt64ToLowercase(System.UInt64)">
-            <summary>
-            Given a UInt64 that represents eight ASCII UTF-8 characters, returns the invariant
-            uppercase representation of those characters. Requires the input value to contain
-            eight ASCII UTF-8 characters in machine endianness.
-            </summary>
-            <remarks>
-            This is a branchless implementation.
-            </remarks>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.UInt32OrdinalIgnoreCaseAscii(System.UInt32,System.UInt32)">
-            <summary>
-            Given two UInt32s that represent four ASCII UTF-8 characters each, returns true iff
-            the two inputs are equal using an ordinal case-insensitive comparison.
-            </summary>
-            <remarks>
-            This is a branchless implementation.
-            </remarks>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.UInt64OrdinalIgnoreCaseAscii(System.UInt64,System.UInt64)">
-            <summary>
-            Given two UInt64s that represent eight ASCII UTF-8 characters each, returns true iff
-            the two inputs are equal using an ordinal case-insensitive comparison.
-            </summary>
-            <remarks>
-            This is a branchless implementation.
-            </remarks>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.AllBytesInVector128AreAscii(System.Runtime.Intrinsics.Vector128{System.Byte})">
-            <summary>
-            Returns true iff the Vector128 represents 16 ASCII UTF-8 characters in machine endianness.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.Vector128OrdinalIgnoreCaseAscii(System.Runtime.Intrinsics.Vector128{System.Byte},System.Runtime.Intrinsics.Vector128{System.Byte})">
-            <summary>
-            Given two Vector128 that represent 16 ASCII UTF-8 characters each, returns true iff
-            the two inputs are equal using an ordinal case-insensitive comparison.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.ExtractCharFromFirstThreeByteSequence(System.UInt32)">
-            <summary>
-            Given a machine-endian DWORD which four bytes of UTF-8 data, interprets the
-            first three bytes as a three-byte UTF-8 subsequence and returns the UTF-16 representation.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.ExtractCharFromFirstTwoByteSequence(System.UInt32)">
-            <summary>
-            Given a machine-endian DWORD which four bytes of UTF-8 data, interprets the
-            first two bytes as a two-byte UTF-8 subsequence and returns the UTF-16 representation.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.ExtractCharsFromFourByteSequence(System.UInt32)">
-            <summary>
-            Given a machine-endian DWORD which represents four bytes of UTF-8 data, interprets the input as a
-            four-byte UTF-8 sequence and returns the machine-endian DWORD of the UTF-16 representation.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.ExtractFourUtf8BytesFromSurrogatePair(System.UInt32)">
-            <summary>
-            Given a 32-bit integer that represents a valid packed UTF-16 surrogate pair, all in machine-endian order,
-            returns the packed 4-byte UTF-8 representation of this scalar value, also in machine-endian order.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.ExtractTwoCharsPackedFromTwoAdjacentTwoByteSequences(System.UInt32)">
-            <summary>
-            Given a machine-endian DWORD which represents two adjacent UTF-8 two-byte sequences,
-            returns the machine-endian DWORD representation of that same data as two adjacent
-            UTF-16 byte sequences.
-            </summary>
-            <param name="value"></param>
-            <returns></returns>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.ExtractTwoUtf8TwoByteSequencesFromTwoPackedUtf16Chars(System.UInt32)">
-            <summary>
-            Given a machine-endian DWORD which represents two adjacent UTF-16 sequences,
-            returns the machine-endian DWORD representation of that same data as two
-            adjacent UTF-8 two-byte sequences.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.ExtractUtf8TwoByteSequenceFromFirstUtf16Char(System.UInt32)">
-            <summary>
-            Given a machine-endian DWORD which represents two adjacent UTF-16 sequences,
-            returns the machine-endian DWORD representation of the first UTF-16 char
-            as a UTF-8 two-byte sequence packed into a WORD and zero-extended to DWORD.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.IsFirstCharAscii(System.UInt32)">
-            <summary>
-            Given a 32-bit integer that represents two packed UTF-16 characters, all in machine-endian order,
-            returns true iff the first UTF-16 character is ASCII.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.IsFirstCharAtLeastThreeUtf8Bytes(System.UInt32)">
-            <summary>
-            Given a 32-bit integer that represents two packed UTF-16 characters, all in machine-endian order,
-            returns true iff the first UTF-16 character requires *at least* 3 bytes to encode in UTF-8.
-            This also returns true if the first UTF-16 character is a surrogate character (well-formedness is not validated).
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.IsFirstCharSurrogate(System.UInt32)">
-            <summary>
-            Given a 32-bit integer that represents two packed UTF-16 characters, all in machine-endian order,
-            returns true iff the first UTF-16 character is a surrogate character (either high or low).
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.IsFirstCharTwoUtf8Bytes(System.UInt32)">
-            <summary>
-            Given a 32-bit integer that represents two packed UTF-16 characters, all in machine-endian order,
-            returns true iff the first UTF-16 character would be encoded as exactly 2 bytes in UTF-8.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.IsLowByteUtf8ContinuationByte(System.UInt32)">
-            <summary>
-            Returns <see langword="true"/> iff the low byte of <paramref name="value"/>
-            is a UTF-8 continuation byte.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.IsSecondCharAscii(System.UInt32)">
-            <summary>
-            Given a 32-bit integer that represents two packed UTF-16 characters, all in machine-endian order,
-            returns true iff the second UTF-16 character is ASCII.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.IsSecondCharAtLeastThreeUtf8Bytes(System.UInt32)">
-            <summary>
-            Given a 32-bit integer that represents two packed UTF-16 characters, all in machine-endian order,
-            returns true iff the second UTF-16 character requires *at least* 3 bytes to encode in UTF-8.
-            This also returns true if the second UTF-16 character is a surrogate character (well-formedness is not validated).
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.IsSecondCharSurrogate(System.UInt32)">
-            <summary>
-            Given a 32-bit integer that represents two packed UTF-16 characters, all in machine-endian order,
-            returns true iff the second UTF-16 character is a surrogate character (either high or low).
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.IsSecondCharTwoUtf8Bytes(System.UInt32)">
-            <summary>
-            Given a 32-bit integer that represents two packed UTF-16 characters, all in machine-endian order,
-            returns true iff the second UTF-16 character would be encoded as exactly 2 bytes in UTF-8.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.IsUtf8ContinuationByte(System.Byte@)">
-            <summary>
-            Returns <see langword="true"/> iff <paramref name="value"/> is a UTF-8 continuation byte;
-            i.e., has binary representation 10xxxxxx, where x is any bit.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.IsWellFormedUtf16SurrogatePair(System.UInt32)">
-            <summary>
-            Given a 32-bit integer that represents two packed UTF-16 characters, all in machine-endian order,
-            returns true iff the two characters represent a well-formed UTF-16 surrogate pair.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.ToLittleEndian(System.UInt32)">
-            <summary>
-            Converts a DWORD from machine-endian to little-endian.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.UInt32BeginsWithOverlongUtf8TwoByteSequence(System.UInt32)">
-            <summary>
-            Given a UTF-8 buffer which has been read into a DWORD in machine endianness,
-            returns <see langword="true"/> iff the first two bytes of the buffer are
-            an overlong representation of a sequence that should be represented as one byte.
-            This method *does not* validate that the sequence matches the appropriate
-            2-byte sequence mask (see <see cref="M:System.Text.Unicode.Utf8Utility.UInt32BeginsWithUtf8TwoByteMask(System.UInt32)"/>).
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.UInt32BeginsWithUtf8FourByteMask(System.UInt32)">
-            <summary>
-            Given a UTF-8 buffer which has been read into a DWORD in machine endianness,
-            returns <see langword="true"/> iff the first four bytes of the buffer match
-            the UTF-8 4-byte sequence mask [ 11110www 10zzzzzz 10yyyyyy 10xxxxxx ]. This
-            method *does not* validate that the sequence is well-formed; the caller must
-            still perform overlong form or out-of-range checking.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.UInt32BeginsWithUtf8ThreeByteMask(System.UInt32)">
-            <summary>
-            Given a UTF-8 buffer which has been read into a DWORD in machine endianness,
-            returns <see langword="true"/> iff the first three bytes of the buffer match
-            the UTF-8 3-byte sequence mask [ 1110zzzz 10yyyyyy 10xxxxxx ]. This method *does not*
-            validate that the sequence is well-formed; the caller must still perform
-            overlong form or surrogate checking.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.UInt32BeginsWithUtf8TwoByteMask(System.UInt32)">
-            <summary>
-            Given a UTF-8 buffer which has been read into a DWORD in machine endianness,
-            returns <see langword="true"/> iff the first two bytes of the buffer match
-            the UTF-8 2-byte sequence mask [ 110yyyyy 10xxxxxx ]. This method *does not*
-            validate that the sequence is well-formed; the caller must still perform
-            overlong form checking.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.UInt32EndsWithOverlongUtf8TwoByteSequence(System.UInt32)">
-            <summary>
-            Given a UTF-8 buffer which has been read into a DWORD in machine endianness,
-            returns <see langword="true"/> iff the first two bytes of the buffer are
-            an overlong representation of a sequence that should be represented as one byte.
-            This method *does not* validate that the sequence matches the appropriate
-            2-byte sequence mask (see <see cref="M:System.Text.Unicode.Utf8Utility.UInt32BeginsWithUtf8TwoByteMask(System.UInt32)"/>).
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.UInt32EndsWithUtf8TwoByteMask(System.UInt32)">
-            <summary>
-            Given a UTF-8 buffer which has been read into a DWORD in machine endianness,
-            returns <see langword="true"/> iff the last two bytes of the buffer match
-            the UTF-8 2-byte sequence mask [ 110yyyyy 10xxxxxx ]. This method *does not*
-            validate that the sequence is well-formed; the caller must still perform
-            overlong form checking.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.UInt32BeginsWithValidUtf8TwoByteSequenceLittleEndian(System.UInt32)">
-            <summary>
-            Given a UTF-8 buffer which has been read into a DWORD on a little-endian machine,
-            returns <see langword="true"/> iff the first two bytes of the buffer are a well-formed
-            UTF-8 two-byte sequence. This wraps the mask check and the overlong check into a
-            single operation. Returns <see langword="false"/> if running on a big-endian machine.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.UInt32EndsWithValidUtf8TwoByteSequenceLittleEndian(System.UInt32)">
-            <summary>
-            Given a UTF-8 buffer which has been read into a DWORD on a little-endian machine,
-            returns <see langword="true"/> iff the last two bytes of the buffer are a well-formed
-            UTF-8 two-byte sequence. This wraps the mask check and the overlong check into a
-            single operation. Returns <see langword="false"/> if running on a big-endian machine.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.UInt32FirstByteIsAscii(System.UInt32)">
-            <summary>
-            Given a UTF-8 buffer which has been read into a DWORD in machine endianness,
-            returns <see langword="true"/> iff the first byte of the buffer is ASCII.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.UInt32FourthByteIsAscii(System.UInt32)">
-            <summary>
-            Given a UTF-8 buffer which has been read into a DWORD in machine endianness,
-            returns <see langword="true"/> iff the fourth byte of the buffer is ASCII.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.UInt32SecondByteIsAscii(System.UInt32)">
-            <summary>
-            Given a UTF-8 buffer which has been read into a DWORD in machine endianness,
-            returns <see langword="true"/> iff the second byte of the buffer is ASCII.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.UInt32ThirdByteIsAscii(System.UInt32)">
-            <summary>
-            Given a UTF-8 buffer which has been read into a DWORD in machine endianness,
-            returns <see langword="true"/> iff the third byte of the buffer is ASCII.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.WriteTwoUtf16CharsAsTwoUtf8ThreeByteSequences(System.Byte@,System.UInt32)">
-            <summary>
-            Given a DWORD which represents a buffer of 2 packed UTF-16 values in machine endianness,
-            converts those scalar values to their 3-byte UTF-8 representation and writes the
-            resulting 6 bytes to the destination buffer.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.WriteFirstUtf16CharAsUtf8ThreeByteSequence(System.Byte@,System.UInt32)">
-            <summary>
-            Given a DWORD which represents a buffer of 2 packed UTF-16 values in machine endianness,
-            converts the first UTF-16 value to its 3-byte UTF-8 representation and writes the
-            resulting 3 bytes to the destination buffer.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8Utility.GetPointerToFirstInvalidByte(System.Byte*,System.Int32,System.Int32@,System.Int32@)">
-            <summary>
-            Given an input buffer <paramref name="pInputBuffer"/> of byte length <paramref name="inputLength"/>,
-            returns a pointer to where the first invalid data appears in <paramref name="pInputBuffer"/>.
-            </summary>
-            <remarks>
-            Returns a pointer to the end of <paramref name="pInputBuffer"/> if the buffer is well-formed.
-            </remarks>
-        </member>
-        <member name="T:System.Text.Unicode.TextSegmentationUtility">
-            <summary>
-            Provides helper utilities for computing text segmentation boundaries
-            as specified in UAX#29 (https://www.unicode.org/reports/tr29/).
-            </summary>
-            <remarks>
-            The current implementation is compliant per Rev. 35, https://www.unicode.org/reports/tr29/tr29-35.html.
-            </remarks>
-        </member>
-        <member name="M:System.Text.Unicode.TextSegmentationUtility.GetLengthOfFirstUtf16ExtendedGraphemeCluster(System.ReadOnlySpan{System.Char})">
-            <summary>
-            Given UTF-16 input text, returns the length (in chars) of the first extended grapheme cluster.
-            The slice [0..length] represents the first standalone extended grapheme cluster in the text.
-            If the input is empty, returns 0.
-            </summary>
-        </member>
-        <member name="P:System.Text.Unicode.TextSegmentationUtility.Processor`1.CurrentType">
-            <summary>
-            Will be <see cref="F:System.Text.Unicode.GraphemeClusterBreakType.Other"/> if invalid data or EOF reached.
-            Caller shouldn't need to special-case this since the normal rules will halt on this condition.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf16Utility.AllCharsInUInt32AreAscii(System.UInt32)">
-            <summary>
-            Returns true iff the UInt32 represents two ASCII UTF-16 characters in machine endianness.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf16Utility.AllCharsInUInt64AreAscii(System.UInt64)">
-            <summary>
-            Returns true iff the UInt64 represents four ASCII UTF-16 characters in machine endianness.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf16Utility.ConvertAllAsciiCharsInUInt32ToLowercase(System.UInt32)">
-            <summary>
-            Given a UInt32 that represents two ASCII UTF-16 characters, returns the invariant
-            lowercase representation of those characters. Requires the input value to contain
-            two ASCII UTF-16 characters in machine endianness.
-            </summary>
-            <remarks>
-            This is a branchless implementation.
-            </remarks>
-        </member>
-        <member name="M:System.Text.Unicode.Utf16Utility.ConvertAllAsciiCharsInUInt32ToUppercase(System.UInt32)">
-            <summary>
-            Given a UInt32 that represents two ASCII UTF-16 characters, returns the invariant
-            uppercase representation of those characters. Requires the input value to contain
-            two ASCII UTF-16 characters in machine endianness.
-            </summary>
-            <remarks>
-            This is a branchless implementation.
-            </remarks>
-        </member>
-        <member name="M:System.Text.Unicode.Utf16Utility.ConvertAllAsciiCharsInUInt64ToUppercase(System.UInt64)">
-            <summary>
-            Given a UInt64 that represents four ASCII UTF-16 characters, returns the invariant
-            uppercase representation of those characters. Requires the input value to contain
-            four ASCII UTF-16 characters in machine endianness.
-            </summary>
-            <remarks>
-            This is a branchless implementation.
-            </remarks>
-        </member>
-        <member name="M:System.Text.Unicode.Utf16Utility.ConvertAllAsciiCharsInUInt64ToLowercase(System.UInt64)">
-            <summary>
-            Given a UInt64 that represents four ASCII UTF-16 characters, returns the invariant
-            lowercase representation of those characters. Requires the input value to contain
-            four ASCII UTF-16 characters in machine endianness.
-            </summary>
-            <remarks>
-            This is a branchless implementation.
-            </remarks>
-        </member>
-        <member name="M:System.Text.Unicode.Utf16Utility.UInt32ContainsAnyLowercaseAsciiChar(System.UInt32)">
-            <summary>
-            Given a UInt32 that represents two ASCII UTF-16 characters, returns true iff
-            the input contains one or more lowercase ASCII characters.
-            </summary>
-            <remarks>
-            This is a branchless implementation.
-            </remarks>
-        </member>
-        <member name="M:System.Text.Unicode.Utf16Utility.UInt32ContainsAnyUppercaseAsciiChar(System.UInt32)">
-            <summary>
-            Given a UInt32 that represents two ASCII UTF-16 characters, returns true iff
-            the input contains one or more uppercase ASCII characters.
-            </summary>
-            <remarks>
-            This is a branchless implementation.
-            </remarks>
-        </member>
-        <member name="M:System.Text.Unicode.Utf16Utility.UInt32OrdinalIgnoreCaseAscii(System.UInt32,System.UInt32)">
-            <summary>
-            Given two UInt32s that represent two ASCII UTF-16 characters each, returns true iff
-            the two inputs are equal using an ordinal case-insensitive comparison.
-            </summary>
-            <remarks>
-            This is a branchless implementation.
-            </remarks>
-        </member>
-        <member name="M:System.Text.Unicode.Utf16Utility.UInt64OrdinalIgnoreCaseAscii(System.UInt64,System.UInt64)">
-            <summary>
-            Given two UInt64s that represent four ASCII UTF-16 characters each, returns true iff
-            the two inputs are equal using an ordinal case-insensitive comparison.
-            </summary>
-            <remarks>
-            This is a branchless implementation.
-            </remarks>
-        </member>
-        <member name="M:System.Text.Unicode.Utf16Utility.AllCharsInVectorAreAscii``1(``0)">
-            <summary>
-            Returns true iff the TVector represents ASCII UTF-16 characters in machine endianness.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf16Utility.GetPointerToFirstInvalidChar(System.Char*,System.Int32,System.Int64@,System.Int32@)">
-            <summary>
-            Given an input buffer <paramref name="pInputBuffer"/> of char length <paramref name="inputLength"/>,
-            returns a pointer to where the first invalid data appears in <paramref name="pInputBuffer"/>.
-            </summary>
-            <remarks>
-            Returns a pointer to the end of <paramref name="pInputBuffer"/> if the buffer is well-formed.
-            </remarks>
-        </member>
-        <member name="T:System.Text.Unicode.Utf8">
-            <summary>
-            Provides static methods that convert chunked data between UTF-8 and UTF-16 encodings.
-            </summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8.FromUtf16(System.ReadOnlySpan{System.Char},System.Span{System.Byte},System.Int32@,System.Int32@,System.Boolean,System.Boolean)">
-            <summary>
-            Transcodes the UTF-16 <paramref name="source"/> buffer to <paramref name="destination"/> as UTF-8.
-            </summary>
-            <remarks>
-            If <paramref name="replaceInvalidSequences"/> is <see langword="true"/>, invalid UTF-16 sequences
-            in <paramref name="source"/> will be replaced with U+FFFD in <paramref name="destination"/>, and
-            this method will not return <see cref="F:System.Buffers.OperationStatus.InvalidData"/>.
-            </remarks>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8.ToUtf16(System.ReadOnlySpan{System.Byte},System.Span{System.Char},System.Int32@,System.Int32@,System.Boolean,System.Boolean)">
-            <summary>
-            Transcodes the UTF-8 <paramref name="source"/> buffer to <paramref name="destination"/> as UTF-16.
-            </summary>
-            <remarks>
-            If <paramref name="replaceInvalidSequences"/> is <see langword="true"/>, invalid UTF-8 sequences
-            in <paramref name="source"/> will be replaced with U+FFFD in <paramref name="destination"/>, and
-            this method will not return <see cref="F:System.Buffers.OperationStatus.InvalidData"/>.
-            </remarks>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8.TryWrite(System.Span{System.Byte},System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler@,System.Int32@)">
-            <summary>Writes the specified interpolated string to the UTF-8 byte span.</summary>
-            <param name="destination">The span to which the interpolated string should be formatted.</param>
-            <param name="handler">The interpolated string.</param>
-            <param name="bytesWritten">The number of characters written to the span.</param>
-            <returns>true if the entire interpolated string could be formatted successfully; otherwise, false.</returns>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8.TryWrite(System.Span{System.Byte},System.IFormatProvider,System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler@,System.Int32@)">
-            <summary>Writes the specified interpolated string to the UTF-8 byte span.</summary>
-            <param name="destination">The span to which the interpolated string should be formatted.</param>
-            <param name="provider">An object that supplies culture-specific formatting information.</param>
-            <param name="handler">The interpolated string.</param>
-            <param name="bytesWritten">The number of characters written to the span.</param>
-            <returns>true if the entire interpolated string could be formatted successfully; otherwise, false.</returns>
-        </member>
-        <member name="T:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler">
-            <summary>Provides a handler used by the language compiler to format interpolated strings into UTF-8 byte spans.</summary>
-        </member>
-        <member name="F:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler._destination">
-            <summary>The destination UTF-8 buffer.</summary>
-        </member>
-        <member name="F:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler._provider">
-            <summary>Optional provider to pass to IFormattable.ToString, ISpanFormattable.TryFormat, and IUtf8SpanFormattable.TryFormat calls.</summary>
-        </member>
-        <member name="F:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler._pos">
-            <summary>The number of bytes written to <see cref="F:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler._destination"/>.</summary>
-        </member>
-        <member name="F:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler._success">
-            <summary>true if all formatting operations have succeeded; otherwise, false.</summary>
-        </member>
-        <member name="F:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler._hasCustomFormatter">
-            <summary>Whether <see cref="F:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler._provider"/> provides an ICustomFormatter.</summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.#ctor(System.Int32,System.Int32,System.Span{System.Byte},System.Boolean@)">
-            <summary>Creates a handler used to write an interpolated string into a UTF-8 <see cref="T:System.Span`1"/>.</summary>
-            <param name="literalLength">The number of constant characters outside of interpolation expressions in the interpolated string.</param>
-            <param name="formattedCount">The number of interpolation expressions in the interpolated string.</param>
-            <param name="destination">The destination buffer.</param>
-            <param name="shouldAppend">Upon return, true if the destination may be long enough to support the formatting, or false if it won't be.</param>
-            <remarks>This is intended to be called only by compiler-generated code. Arguments are not validated as they'd otherwise be for members intended to be used directly.</remarks>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.#ctor(System.Int32,System.Int32,System.Span{System.Byte},System.IFormatProvider,System.Boolean@)">
-            <summary>Creates a handler used to write an interpolated string into a UTF-8 <see cref="T:System.Span`1"/>.</summary>
-            <param name="literalLength">The number of constant characters outside of interpolation expressions in the interpolated string.</param>
-            <param name="formattedCount">The number of interpolation expressions in the interpolated string.</param>
-            <param name="destination">The destination buffer.</param>
-            <param name="provider">An object that supplies culture-specific formatting information.</param>
-            <param name="shouldAppend">Upon return, true if the destination may be long enough to support the formatting, or false if it won't be.</param>
-            <remarks>This is intended to be called only by compiler-generated code. Arguments are not validated as they'd otherwise be for members intended to be used directly.</remarks>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendLiteral(System.String)">
-            <summary>Writes the specified string to the handler.</summary>
-            <param name="value">The string to write.</param>
-            <returns>true if the value could be formatted to the span; otherwise, false.</returns>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendFormatted``1(``0)">
-            <summary>Writes the specified value to the handler.</summary>
-            <param name="value">The value to write.</param>
-            <typeparam name="T">The type of the value to write.</typeparam>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendFormatted``1(``0,System.String)">
-            <summary>Writes the specified value to the handler.</summary>
-            <param name="value">The value to write.</param>
-            <param name="format">The format string.</param>
-            <typeparam name="T">The type of the value to write.</typeparam>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendFormatted``1(``0,System.Int32)">
-            <summary>Writes the specified value to the handler.</summary>
-            <param name="value">The value to write.</param>
-            <param name="alignment">Minimum number of characters that should be written for this value.  If the value is negative, it indicates left-aligned and the required minimum is the absolute value.</param>
-            <typeparam name="T">The type of the value to write.</typeparam>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendFormatted``1(``0,System.Int32,System.String)">
-            <summary>Writes the specified value to the handler.</summary>
-            <param name="value">The value to write.</param>
-            <param name="format">The format string.</param>
-            <param name="alignment">Minimum number of characters that should be written for this value.  If the value is negative, it indicates left-aligned and the required minimum is the absolute value.</param>
-            <typeparam name="T">The type of the value to write.</typeparam>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendFormatted(System.ReadOnlySpan{System.Char})">
-            <summary>Writes the specified character span to the handler.</summary>
-            <param name="value">The span to write.</param>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendFormatted(System.ReadOnlySpan{System.Char},System.Int32,System.String)">
-            <summary>Writes the specified string of chars to the handler.</summary>
-            <param name="value">The span to write.</param>
-            <param name="alignment">Minimum number of characters that should be written for this value.  If the value is negative, it indicates left-aligned and the required minimum is the absolute value.</param>
-            <param name="format">The format string.</param>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendFormatted(System.ReadOnlySpan{System.Byte})">
-            <summary>Writes the specified span of UTF-8 bytes to the handler.</summary>
-            <param name="utf8Value">The span to write.</param>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendFormatted(System.ReadOnlySpan{System.Byte},System.Int32,System.String)">
-            <summary>Writes the specified span of UTF-8 bytes to the handler.</summary>
-            <param name="utf8Value">The span to write.</param>
-            <param name="alignment">Minimum number of characters that should be written for this value.  If the value is negative, it indicates left-aligned and the required minimum is the absolute value.</param>
-            <param name="format">The format string.</param>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendFormatted(System.String)">
-            <summary>Writes the specified value to the handler.</summary>
-            <param name="value">The value to write.</param>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendFormatted(System.String,System.Int32,System.String)">
-            <summary>Writes the specified value to the handler.</summary>
-            <param name="value">The value to write.</param>
-            <param name="alignment">Minimum number of characters that should be written for this value.  If the value is negative, it indicates left-aligned and the required minimum is the absolute value.</param>
-            <param name="format">The format string.</param>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendFormatted(System.Object,System.Int32,System.String)">
-            <summary>Writes the specified value to the handler.</summary>
-            <param name="value">The value to write.</param>
-            <param name="alignment">Minimum number of characters that should be written for this value.  If the value is negative, it indicates left-aligned and the required minimum is the absolute value.</param>
-            <param name="format">The format string.</param>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendCustomFormatter``1(``0,System.String)">
-            <summary>Formats the value using the custom formatter from the provider.</summary>
-            <param name="value">The value to write.</param>
-            <param name="format">The format string.</param>
-            <typeparam name="T">The type of the value to write.</typeparam>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendSpanFormattable``1(``0,System.String)">
-            <summary>Writes the specified ISpanFormattable to the handler.</summary>
-            <param name="value">The value to write. It must be an ISpanFormattable but isn't constrained because the caller doesn't have a constraint.</param>
-            <param name="format">The format string.</param>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendEnum``1(``0,System.String)">
-            <summary>Writes the specified enum to the handler.</summary>
-            <param name="value">The value to write. It must be an enum but isn't constrained because the caller doesn't have a constraint.</param>
-            <param name="format">The format string.</param>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.TryAppendOrInsertAlignmentIfNeeded(System.Int32,System.Int32)">
-            <summary>Handles adding any padding required for aligning a formatted value in an interpolation expression.</summary>
-            <param name="startingPos">The position at which the written value started.</param>
-            <param name="alignment">Non-zero minimum number of characters that should be written for this value.  If the value is negative, it indicates left-aligned and the required minimum is the absolute value.</param>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.Fail">
-            <summary>Marks formatting as having failed and returns false.</summary>
-        </member>
-        <member name="M:System.Text.Unicode.Utf8.IsValid(System.ReadOnlySpan{System.Byte})">
-            <summary>
-            Validates that the value is well-formed UTF-8.
-            </summary>
-            <param name="value">The <see cref="T:System.ReadOnlySpan`1"/> string.</param>
-            <returns><c>true</c> if value is well-formed UTF-8, <c>false</c> otherwise.</returns>
         </member>
         <member name="M:System.Text.Ascii.IsValid(System.ReadOnlySpan{System.Byte})">
             <summary>
@@ -3044,6 +2463,629 @@
             Trim from both the beginning and the end of the string.
             </summary>
         </member>
+        <member name="T:System.Text.Unicode.TextSegmentationUtility">
+            <summary>
+            Provides helper utilities for computing text segmentation boundaries
+            as specified in UAX#29 (https://www.unicode.org/reports/tr29/).
+            </summary>
+            <remarks>
+            The current implementation is compliant per Rev. 35, https://www.unicode.org/reports/tr29/tr29-35.html.
+            </remarks>
+        </member>
+        <member name="M:System.Text.Unicode.TextSegmentationUtility.GetLengthOfFirstUtf16ExtendedGraphemeCluster(System.ReadOnlySpan{System.Char})">
+            <summary>
+            Given UTF-16 input text, returns the length (in chars) of the first extended grapheme cluster.
+            The slice [0..length] represents the first standalone extended grapheme cluster in the text.
+            If the input is empty, returns 0.
+            </summary>
+        </member>
+        <member name="P:System.Text.Unicode.TextSegmentationUtility.Processor`1.CurrentType">
+            <summary>
+            Will be <see cref="F:System.Text.Unicode.GraphemeClusterBreakType.Other"/> if invalid data or EOF reached.
+            Caller shouldn't need to special-case this since the normal rules will halt on this condition.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf16Utility.AllCharsInUInt32AreAscii(System.UInt32)">
+            <summary>
+            Returns true iff the UInt32 represents two ASCII UTF-16 characters in machine endianness.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf16Utility.AllCharsInUInt64AreAscii(System.UInt64)">
+            <summary>
+            Returns true iff the UInt64 represents four ASCII UTF-16 characters in machine endianness.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf16Utility.ConvertAllAsciiCharsInUInt32ToLowercase(System.UInt32)">
+            <summary>
+            Given a UInt32 that represents two ASCII UTF-16 characters, returns the invariant
+            lowercase representation of those characters. Requires the input value to contain
+            two ASCII UTF-16 characters in machine endianness.
+            </summary>
+            <remarks>
+            This is a branchless implementation.
+            </remarks>
+        </member>
+        <member name="M:System.Text.Unicode.Utf16Utility.ConvertAllAsciiCharsInUInt32ToUppercase(System.UInt32)">
+            <summary>
+            Given a UInt32 that represents two ASCII UTF-16 characters, returns the invariant
+            uppercase representation of those characters. Requires the input value to contain
+            two ASCII UTF-16 characters in machine endianness.
+            </summary>
+            <remarks>
+            This is a branchless implementation.
+            </remarks>
+        </member>
+        <member name="M:System.Text.Unicode.Utf16Utility.ConvertAllAsciiCharsInUInt64ToUppercase(System.UInt64)">
+            <summary>
+            Given a UInt64 that represents four ASCII UTF-16 characters, returns the invariant
+            uppercase representation of those characters. Requires the input value to contain
+            four ASCII UTF-16 characters in machine endianness.
+            </summary>
+            <remarks>
+            This is a branchless implementation.
+            </remarks>
+        </member>
+        <member name="M:System.Text.Unicode.Utf16Utility.ConvertAllAsciiCharsInUInt64ToLowercase(System.UInt64)">
+            <summary>
+            Given a UInt64 that represents four ASCII UTF-16 characters, returns the invariant
+            lowercase representation of those characters. Requires the input value to contain
+            four ASCII UTF-16 characters in machine endianness.
+            </summary>
+            <remarks>
+            This is a branchless implementation.
+            </remarks>
+        </member>
+        <member name="M:System.Text.Unicode.Utf16Utility.UInt32ContainsAnyLowercaseAsciiChar(System.UInt32)">
+            <summary>
+            Given a UInt32 that represents two ASCII UTF-16 characters, returns true iff
+            the input contains one or more lowercase ASCII characters.
+            </summary>
+            <remarks>
+            This is a branchless implementation.
+            </remarks>
+        </member>
+        <member name="M:System.Text.Unicode.Utf16Utility.UInt32ContainsAnyUppercaseAsciiChar(System.UInt32)">
+            <summary>
+            Given a UInt32 that represents two ASCII UTF-16 characters, returns true iff
+            the input contains one or more uppercase ASCII characters.
+            </summary>
+            <remarks>
+            This is a branchless implementation.
+            </remarks>
+        </member>
+        <member name="M:System.Text.Unicode.Utf16Utility.UInt32OrdinalIgnoreCaseAscii(System.UInt32,System.UInt32)">
+            <summary>
+            Given two UInt32s that represent two ASCII UTF-16 characters each, returns true iff
+            the two inputs are equal using an ordinal case-insensitive comparison.
+            </summary>
+            <remarks>
+            This is a branchless implementation.
+            </remarks>
+        </member>
+        <member name="M:System.Text.Unicode.Utf16Utility.UInt64OrdinalIgnoreCaseAscii(System.UInt64,System.UInt64)">
+            <summary>
+            Given two UInt64s that represent four ASCII UTF-16 characters each, returns true iff
+            the two inputs are equal using an ordinal case-insensitive comparison.
+            </summary>
+            <remarks>
+            This is a branchless implementation.
+            </remarks>
+        </member>
+        <member name="M:System.Text.Unicode.Utf16Utility.AllCharsInVectorAreAscii``1(``0)">
+            <summary>
+            Returns true iff the TVector represents ASCII UTF-16 characters in machine endianness.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf16Utility.GetPointerToFirstInvalidChar(System.Char*,System.Int32,System.Int64@,System.Int32@)">
+            <summary>
+            Given an input buffer <paramref name="pInputBuffer"/> of char length <paramref name="inputLength"/>,
+            returns a pointer to where the first invalid data appears in <paramref name="pInputBuffer"/>.
+            </summary>
+            <remarks>
+            Returns a pointer to the end of <paramref name="pInputBuffer"/> if the buffer is well-formed.
+            </remarks>
+        </member>
+        <member name="T:System.Text.Unicode.Utf8">
+            <summary>
+            Provides static methods that convert chunked data between UTF-8 and UTF-16 encodings.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8.FromUtf16(System.ReadOnlySpan{System.Char},System.Span{System.Byte},System.Int32@,System.Int32@,System.Boolean,System.Boolean)">
+            <summary>
+            Transcodes the UTF-16 <paramref name="source"/> buffer to <paramref name="destination"/> as UTF-8.
+            </summary>
+            <remarks>
+            If <paramref name="replaceInvalidSequences"/> is <see langword="true"/>, invalid UTF-16 sequences
+            in <paramref name="source"/> will be replaced with U+FFFD in <paramref name="destination"/>, and
+            this method will not return <see cref="F:System.Buffers.OperationStatus.InvalidData"/>.
+            </remarks>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8.ToUtf16(System.ReadOnlySpan{System.Byte},System.Span{System.Char},System.Int32@,System.Int32@,System.Boolean,System.Boolean)">
+            <summary>
+            Transcodes the UTF-8 <paramref name="source"/> buffer to <paramref name="destination"/> as UTF-16.
+            </summary>
+            <remarks>
+            If <paramref name="replaceInvalidSequences"/> is <see langword="true"/>, invalid UTF-8 sequences
+            in <paramref name="source"/> will be replaced with U+FFFD in <paramref name="destination"/>, and
+            this method will not return <see cref="F:System.Buffers.OperationStatus.InvalidData"/>.
+            </remarks>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8.TryWrite(System.Span{System.Byte},System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler@,System.Int32@)">
+            <summary>Writes the specified interpolated string to the UTF-8 byte span.</summary>
+            <param name="destination">The span to which the interpolated string should be formatted.</param>
+            <param name="handler">The interpolated string.</param>
+            <param name="bytesWritten">The number of characters written to the span.</param>
+            <returns>true if the entire interpolated string could be formatted successfully; otherwise, false.</returns>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8.TryWrite(System.Span{System.Byte},System.IFormatProvider,System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler@,System.Int32@)">
+            <summary>Writes the specified interpolated string to the UTF-8 byte span.</summary>
+            <param name="destination">The span to which the interpolated string should be formatted.</param>
+            <param name="provider">An object that supplies culture-specific formatting information.</param>
+            <param name="handler">The interpolated string.</param>
+            <param name="bytesWritten">The number of characters written to the span.</param>
+            <returns>true if the entire interpolated string could be formatted successfully; otherwise, false.</returns>
+        </member>
+        <member name="T:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler">
+            <summary>Provides a handler used by the language compiler to format interpolated strings into UTF-8 byte spans.</summary>
+        </member>
+        <member name="F:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler._destination">
+            <summary>The destination UTF-8 buffer.</summary>
+        </member>
+        <member name="F:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler._provider">
+            <summary>Optional provider to pass to IFormattable.ToString, ISpanFormattable.TryFormat, and IUtf8SpanFormattable.TryFormat calls.</summary>
+        </member>
+        <member name="F:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler._pos">
+            <summary>The number of bytes written to <see cref="F:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler._destination"/>.</summary>
+        </member>
+        <member name="F:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler._success">
+            <summary>true if all formatting operations have succeeded; otherwise, false.</summary>
+        </member>
+        <member name="F:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler._hasCustomFormatter">
+            <summary>Whether <see cref="F:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler._provider"/> provides an ICustomFormatter.</summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.#ctor(System.Int32,System.Int32,System.Span{System.Byte},System.Boolean@)">
+            <summary>Creates a handler used to write an interpolated string into a UTF-8 <see cref="T:System.Span`1"/>.</summary>
+            <param name="literalLength">The number of constant characters outside of interpolation expressions in the interpolated string.</param>
+            <param name="formattedCount">The number of interpolation expressions in the interpolated string.</param>
+            <param name="destination">The destination buffer.</param>
+            <param name="shouldAppend">Upon return, true if the destination may be long enough to support the formatting, or false if it won't be.</param>
+            <remarks>This is intended to be called only by compiler-generated code. Arguments are not validated as they'd otherwise be for members intended to be used directly.</remarks>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.#ctor(System.Int32,System.Int32,System.Span{System.Byte},System.IFormatProvider,System.Boolean@)">
+            <summary>Creates a handler used to write an interpolated string into a UTF-8 <see cref="T:System.Span`1"/>.</summary>
+            <param name="literalLength">The number of constant characters outside of interpolation expressions in the interpolated string.</param>
+            <param name="formattedCount">The number of interpolation expressions in the interpolated string.</param>
+            <param name="destination">The destination buffer.</param>
+            <param name="provider">An object that supplies culture-specific formatting information.</param>
+            <param name="shouldAppend">Upon return, true if the destination may be long enough to support the formatting, or false if it won't be.</param>
+            <remarks>This is intended to be called only by compiler-generated code. Arguments are not validated as they'd otherwise be for members intended to be used directly.</remarks>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendLiteral(System.String)">
+            <summary>Writes the specified string to the handler.</summary>
+            <param name="value">The string to write.</param>
+            <returns>true if the value could be formatted to the span; otherwise, false.</returns>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendFormatted``1(``0)">
+            <summary>Writes the specified value to the handler.</summary>
+            <param name="value">The value to write.</param>
+            <typeparam name="T">The type of the value to write.</typeparam>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendFormatted``1(``0,System.String)">
+            <summary>Writes the specified value to the handler.</summary>
+            <param name="value">The value to write.</param>
+            <param name="format">The format string.</param>
+            <typeparam name="T">The type of the value to write.</typeparam>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendFormatted``1(``0,System.Int32)">
+            <summary>Writes the specified value to the handler.</summary>
+            <param name="value">The value to write.</param>
+            <param name="alignment">Minimum number of characters that should be written for this value.  If the value is negative, it indicates left-aligned and the required minimum is the absolute value.</param>
+            <typeparam name="T">The type of the value to write.</typeparam>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendFormatted``1(``0,System.Int32,System.String)">
+            <summary>Writes the specified value to the handler.</summary>
+            <param name="value">The value to write.</param>
+            <param name="format">The format string.</param>
+            <param name="alignment">Minimum number of characters that should be written for this value.  If the value is negative, it indicates left-aligned and the required minimum is the absolute value.</param>
+            <typeparam name="T">The type of the value to write.</typeparam>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendFormatted(System.ReadOnlySpan{System.Char})">
+            <summary>Writes the specified character span to the handler.</summary>
+            <param name="value">The span to write.</param>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendFormatted(System.ReadOnlySpan{System.Char},System.Int32,System.String)">
+            <summary>Writes the specified string of chars to the handler.</summary>
+            <param name="value">The span to write.</param>
+            <param name="alignment">Minimum number of characters that should be written for this value.  If the value is negative, it indicates left-aligned and the required minimum is the absolute value.</param>
+            <param name="format">The format string.</param>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendFormatted(System.ReadOnlySpan{System.Byte})">
+            <summary>Writes the specified span of UTF-8 bytes to the handler.</summary>
+            <param name="utf8Value">The span to write.</param>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendFormatted(System.ReadOnlySpan{System.Byte},System.Int32,System.String)">
+            <summary>Writes the specified span of UTF-8 bytes to the handler.</summary>
+            <param name="utf8Value">The span to write.</param>
+            <param name="alignment">Minimum number of characters that should be written for this value.  If the value is negative, it indicates left-aligned and the required minimum is the absolute value.</param>
+            <param name="format">The format string.</param>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendFormatted(System.String)">
+            <summary>Writes the specified value to the handler.</summary>
+            <param name="value">The value to write.</param>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendFormatted(System.String,System.Int32,System.String)">
+            <summary>Writes the specified value to the handler.</summary>
+            <param name="value">The value to write.</param>
+            <param name="alignment">Minimum number of characters that should be written for this value.  If the value is negative, it indicates left-aligned and the required minimum is the absolute value.</param>
+            <param name="format">The format string.</param>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendFormatted(System.Object,System.Int32,System.String)">
+            <summary>Writes the specified value to the handler.</summary>
+            <param name="value">The value to write.</param>
+            <param name="alignment">Minimum number of characters that should be written for this value.  If the value is negative, it indicates left-aligned and the required minimum is the absolute value.</param>
+            <param name="format">The format string.</param>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendCustomFormatter``1(``0,System.String)">
+            <summary>Formats the value using the custom formatter from the provider.</summary>
+            <param name="value">The value to write.</param>
+            <param name="format">The format string.</param>
+            <typeparam name="T">The type of the value to write.</typeparam>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendSpanFormattable``1(``0,System.String)">
+            <summary>Writes the specified ISpanFormattable to the handler.</summary>
+            <param name="value">The value to write. It must be an ISpanFormattable but isn't constrained because the caller doesn't have a constraint.</param>
+            <param name="format">The format string.</param>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.AppendEnum``1(``0,System.String)">
+            <summary>Writes the specified enum to the handler.</summary>
+            <param name="value">The value to write. It must be an enum but isn't constrained because the caller doesn't have a constraint.</param>
+            <param name="format">The format string.</param>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.TryAppendOrInsertAlignmentIfNeeded(System.Int32,System.Int32)">
+            <summary>Handles adding any padding required for aligning a formatted value in an interpolation expression.</summary>
+            <param name="startingPos">The position at which the written value started.</param>
+            <param name="alignment">Non-zero minimum number of characters that should be written for this value.  If the value is negative, it indicates left-aligned and the required minimum is the absolute value.</param>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8.TryWriteInterpolatedStringHandler.Fail">
+            <summary>Marks formatting as having failed and returns false.</summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8.IsValid(System.ReadOnlySpan{System.Byte})">
+            <summary>
+            Validates that the value is well-formed UTF-8.
+            </summary>
+            <param name="value">The <see cref="T:System.ReadOnlySpan`1"/> string.</param>
+            <returns><c>true</c> if value is well-formed UTF-8, <c>false</c> otherwise.</returns>
+        </member>
+        <member name="F:System.Text.Unicode.Utf8Utility.MaxBytesPerScalar">
+            <summary>
+            The maximum number of bytes that can result from UTF-8 transcoding
+            any Unicode scalar value.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.GetIndexOfFirstInvalidUtf8Sequence(System.ReadOnlySpan{System.Byte},System.Boolean@)">
+            <summary>
+            Returns the byte index in <paramref name="utf8Data"/> where the first invalid UTF-8 sequence begins,
+            or -1 if the buffer contains no invalid sequences. Also outs the <paramref name="isAscii"/> parameter
+            stating whether all data observed (up to the first invalid sequence or the end of the buffer, whichever
+            comes first) is ASCII.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.AllBytesInUInt32AreAscii(System.UInt32)">
+            <summary>
+            Returns true iff the UInt32 represents four ASCII UTF-8 characters in machine endianness.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.AllBytesInUInt64AreAscii(System.UInt64)">
+            <summary>
+            Returns true iff the UInt64 represents eighty ASCII UTF-8 characters in machine endianness.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.ConvertAllAsciiBytesInUInt32ToLowercase(System.UInt32)">
+            <summary>
+            Given a UInt32 that represents four ASCII UTF-8 characters, returns the invariant
+            lowercase representation of those characters. Requires the input value to contain
+            four ASCII UTF-8 characters in machine endianness.
+            </summary>
+            <remarks>
+            This is a branchless implementation.
+            </remarks>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.ConvertAllAsciiBytesInUInt32ToUppercase(System.UInt32)">
+            <summary>
+            Given a UInt32 that represents four ASCII UTF-8 characters, returns the invariant
+            uppercase representation of those characters. Requires the input value to contain
+            four ASCII UTF-8 characters in machine endianness.
+            </summary>
+            <remarks>
+            This is a branchless implementation.
+            </remarks>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.ConvertAllAsciiBytesInUInt64ToUppercase(System.UInt64)">
+            <summary>
+            Given a UInt64 that represents eight ASCII UTF-8 characters, returns the invariant
+            uppercase representation of those characters. Requires the input value to contain
+            eight ASCII UTF-8 characters in machine endianness.
+            </summary>
+            <remarks>
+            This is a branchless implementation.
+            </remarks>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.ConvertAllAsciiBytesInUInt64ToLowercase(System.UInt64)">
+            <summary>
+            Given a UInt64 that represents eight ASCII UTF-8 characters, returns the invariant
+            uppercase representation of those characters. Requires the input value to contain
+            eight ASCII UTF-8 characters in machine endianness.
+            </summary>
+            <remarks>
+            This is a branchless implementation.
+            </remarks>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.UInt32OrdinalIgnoreCaseAscii(System.UInt32,System.UInt32)">
+            <summary>
+            Given two UInt32s that represent four ASCII UTF-8 characters each, returns true iff
+            the two inputs are equal using an ordinal case-insensitive comparison.
+            </summary>
+            <remarks>
+            This is a branchless implementation.
+            </remarks>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.UInt64OrdinalIgnoreCaseAscii(System.UInt64,System.UInt64)">
+            <summary>
+            Given two UInt64s that represent eight ASCII UTF-8 characters each, returns true iff
+            the two inputs are equal using an ordinal case-insensitive comparison.
+            </summary>
+            <remarks>
+            This is a branchless implementation.
+            </remarks>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.AllBytesInVector128AreAscii(System.Runtime.Intrinsics.Vector128{System.Byte})">
+            <summary>
+            Returns true iff the Vector128 represents 16 ASCII UTF-8 characters in machine endianness.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.Vector128OrdinalIgnoreCaseAscii(System.Runtime.Intrinsics.Vector128{System.Byte},System.Runtime.Intrinsics.Vector128{System.Byte})">
+            <summary>
+            Given two Vector128 that represent 16 ASCII UTF-8 characters each, returns true iff
+            the two inputs are equal using an ordinal case-insensitive comparison.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.ExtractCharFromFirstThreeByteSequence(System.UInt32)">
+            <summary>
+            Given a machine-endian DWORD which four bytes of UTF-8 data, interprets the
+            first three bytes as a three-byte UTF-8 subsequence and returns the UTF-16 representation.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.ExtractCharFromFirstTwoByteSequence(System.UInt32)">
+            <summary>
+            Given a machine-endian DWORD which four bytes of UTF-8 data, interprets the
+            first two bytes as a two-byte UTF-8 subsequence and returns the UTF-16 representation.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.ExtractCharsFromFourByteSequence(System.UInt32)">
+            <summary>
+            Given a machine-endian DWORD which represents four bytes of UTF-8 data, interprets the input as a
+            four-byte UTF-8 sequence and returns the machine-endian DWORD of the UTF-16 representation.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.ExtractFourUtf8BytesFromSurrogatePair(System.UInt32)">
+            <summary>
+            Given a 32-bit integer that represents a valid packed UTF-16 surrogate pair, all in machine-endian order,
+            returns the packed 4-byte UTF-8 representation of this scalar value, also in machine-endian order.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.ExtractTwoCharsPackedFromTwoAdjacentTwoByteSequences(System.UInt32)">
+            <summary>
+            Given a machine-endian DWORD which represents two adjacent UTF-8 two-byte sequences,
+            returns the machine-endian DWORD representation of that same data as two adjacent
+            UTF-16 byte sequences.
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.ExtractTwoUtf8TwoByteSequencesFromTwoPackedUtf16Chars(System.UInt32)">
+            <summary>
+            Given a machine-endian DWORD which represents two adjacent UTF-16 sequences,
+            returns the machine-endian DWORD representation of that same data as two
+            adjacent UTF-8 two-byte sequences.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.ExtractUtf8TwoByteSequenceFromFirstUtf16Char(System.UInt32)">
+            <summary>
+            Given a machine-endian DWORD which represents two adjacent UTF-16 sequences,
+            returns the machine-endian DWORD representation of the first UTF-16 char
+            as a UTF-8 two-byte sequence packed into a WORD and zero-extended to DWORD.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.IsFirstCharAscii(System.UInt32)">
+            <summary>
+            Given a 32-bit integer that represents two packed UTF-16 characters, all in machine-endian order,
+            returns true iff the first UTF-16 character is ASCII.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.IsFirstCharAtLeastThreeUtf8Bytes(System.UInt32)">
+            <summary>
+            Given a 32-bit integer that represents two packed UTF-16 characters, all in machine-endian order,
+            returns true iff the first UTF-16 character requires *at least* 3 bytes to encode in UTF-8.
+            This also returns true if the first UTF-16 character is a surrogate character (well-formedness is not validated).
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.IsFirstCharSurrogate(System.UInt32)">
+            <summary>
+            Given a 32-bit integer that represents two packed UTF-16 characters, all in machine-endian order,
+            returns true iff the first UTF-16 character is a surrogate character (either high or low).
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.IsFirstCharTwoUtf8Bytes(System.UInt32)">
+            <summary>
+            Given a 32-bit integer that represents two packed UTF-16 characters, all in machine-endian order,
+            returns true iff the first UTF-16 character would be encoded as exactly 2 bytes in UTF-8.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.IsLowByteUtf8ContinuationByte(System.UInt32)">
+            <summary>
+            Returns <see langword="true"/> iff the low byte of <paramref name="value"/>
+            is a UTF-8 continuation byte.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.IsSecondCharAscii(System.UInt32)">
+            <summary>
+            Given a 32-bit integer that represents two packed UTF-16 characters, all in machine-endian order,
+            returns true iff the second UTF-16 character is ASCII.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.IsSecondCharAtLeastThreeUtf8Bytes(System.UInt32)">
+            <summary>
+            Given a 32-bit integer that represents two packed UTF-16 characters, all in machine-endian order,
+            returns true iff the second UTF-16 character requires *at least* 3 bytes to encode in UTF-8.
+            This also returns true if the second UTF-16 character is a surrogate character (well-formedness is not validated).
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.IsSecondCharSurrogate(System.UInt32)">
+            <summary>
+            Given a 32-bit integer that represents two packed UTF-16 characters, all in machine-endian order,
+            returns true iff the second UTF-16 character is a surrogate character (either high or low).
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.IsSecondCharTwoUtf8Bytes(System.UInt32)">
+            <summary>
+            Given a 32-bit integer that represents two packed UTF-16 characters, all in machine-endian order,
+            returns true iff the second UTF-16 character would be encoded as exactly 2 bytes in UTF-8.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.IsUtf8ContinuationByte(System.Byte@)">
+            <summary>
+            Returns <see langword="true"/> iff <paramref name="value"/> is a UTF-8 continuation byte;
+            i.e., has binary representation 10xxxxxx, where x is any bit.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.IsWellFormedUtf16SurrogatePair(System.UInt32)">
+            <summary>
+            Given a 32-bit integer that represents two packed UTF-16 characters, all in machine-endian order,
+            returns true iff the two characters represent a well-formed UTF-16 surrogate pair.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.ToLittleEndian(System.UInt32)">
+            <summary>
+            Converts a DWORD from machine-endian to little-endian.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.UInt32BeginsWithOverlongUtf8TwoByteSequence(System.UInt32)">
+            <summary>
+            Given a UTF-8 buffer which has been read into a DWORD in machine endianness,
+            returns <see langword="true"/> iff the first two bytes of the buffer are
+            an overlong representation of a sequence that should be represented as one byte.
+            This method *does not* validate that the sequence matches the appropriate
+            2-byte sequence mask (see <see cref="M:System.Text.Unicode.Utf8Utility.UInt32BeginsWithUtf8TwoByteMask(System.UInt32)"/>).
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.UInt32BeginsWithUtf8FourByteMask(System.UInt32)">
+            <summary>
+            Given a UTF-8 buffer which has been read into a DWORD in machine endianness,
+            returns <see langword="true"/> iff the first four bytes of the buffer match
+            the UTF-8 4-byte sequence mask [ 11110www 10zzzzzz 10yyyyyy 10xxxxxx ]. This
+            method *does not* validate that the sequence is well-formed; the caller must
+            still perform overlong form or out-of-range checking.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.UInt32BeginsWithUtf8ThreeByteMask(System.UInt32)">
+            <summary>
+            Given a UTF-8 buffer which has been read into a DWORD in machine endianness,
+            returns <see langword="true"/> iff the first three bytes of the buffer match
+            the UTF-8 3-byte sequence mask [ 1110zzzz 10yyyyyy 10xxxxxx ]. This method *does not*
+            validate that the sequence is well-formed; the caller must still perform
+            overlong form or surrogate checking.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.UInt32BeginsWithUtf8TwoByteMask(System.UInt32)">
+            <summary>
+            Given a UTF-8 buffer which has been read into a DWORD in machine endianness,
+            returns <see langword="true"/> iff the first two bytes of the buffer match
+            the UTF-8 2-byte sequence mask [ 110yyyyy 10xxxxxx ]. This method *does not*
+            validate that the sequence is well-formed; the caller must still perform
+            overlong form checking.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.UInt32EndsWithOverlongUtf8TwoByteSequence(System.UInt32)">
+            <summary>
+            Given a UTF-8 buffer which has been read into a DWORD in machine endianness,
+            returns <see langword="true"/> iff the first two bytes of the buffer are
+            an overlong representation of a sequence that should be represented as one byte.
+            This method *does not* validate that the sequence matches the appropriate
+            2-byte sequence mask (see <see cref="M:System.Text.Unicode.Utf8Utility.UInt32BeginsWithUtf8TwoByteMask(System.UInt32)"/>).
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.UInt32EndsWithUtf8TwoByteMask(System.UInt32)">
+            <summary>
+            Given a UTF-8 buffer which has been read into a DWORD in machine endianness,
+            returns <see langword="true"/> iff the last two bytes of the buffer match
+            the UTF-8 2-byte sequence mask [ 110yyyyy 10xxxxxx ]. This method *does not*
+            validate that the sequence is well-formed; the caller must still perform
+            overlong form checking.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.UInt32BeginsWithValidUtf8TwoByteSequenceLittleEndian(System.UInt32)">
+            <summary>
+            Given a UTF-8 buffer which has been read into a DWORD on a little-endian machine,
+            returns <see langword="true"/> iff the first two bytes of the buffer are a well-formed
+            UTF-8 two-byte sequence. This wraps the mask check and the overlong check into a
+            single operation. Returns <see langword="false"/> if running on a big-endian machine.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.UInt32EndsWithValidUtf8TwoByteSequenceLittleEndian(System.UInt32)">
+            <summary>
+            Given a UTF-8 buffer which has been read into a DWORD on a little-endian machine,
+            returns <see langword="true"/> iff the last two bytes of the buffer are a well-formed
+            UTF-8 two-byte sequence. This wraps the mask check and the overlong check into a
+            single operation. Returns <see langword="false"/> if running on a big-endian machine.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.UInt32FirstByteIsAscii(System.UInt32)">
+            <summary>
+            Given a UTF-8 buffer which has been read into a DWORD in machine endianness,
+            returns <see langword="true"/> iff the first byte of the buffer is ASCII.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.UInt32FourthByteIsAscii(System.UInt32)">
+            <summary>
+            Given a UTF-8 buffer which has been read into a DWORD in machine endianness,
+            returns <see langword="true"/> iff the fourth byte of the buffer is ASCII.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.UInt32SecondByteIsAscii(System.UInt32)">
+            <summary>
+            Given a UTF-8 buffer which has been read into a DWORD in machine endianness,
+            returns <see langword="true"/> iff the second byte of the buffer is ASCII.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.UInt32ThirdByteIsAscii(System.UInt32)">
+            <summary>
+            Given a UTF-8 buffer which has been read into a DWORD in machine endianness,
+            returns <see langword="true"/> iff the third byte of the buffer is ASCII.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.WriteTwoUtf16CharsAsTwoUtf8ThreeByteSequences(System.Byte@,System.UInt32)">
+            <summary>
+            Given a DWORD which represents a buffer of 2 packed UTF-16 values in machine endianness,
+            converts those scalar values to their 3-byte UTF-8 representation and writes the
+            resulting 6 bytes to the destination buffer.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.WriteFirstUtf16CharAsUtf8ThreeByteSequence(System.Byte@,System.UInt32)">
+            <summary>
+            Given a DWORD which represents a buffer of 2 packed UTF-16 values in machine endianness,
+            converts the first UTF-16 value to its 3-byte UTF-8 representation and writes the
+            resulting 3 bytes to the destination buffer.
+            </summary>
+        </member>
+        <member name="M:System.Text.Unicode.Utf8Utility.GetPointerToFirstInvalidByte(System.Byte*,System.Int32,System.Int32@,System.Int32@)">
+            <summary>
+            Given an input buffer <paramref name="pInputBuffer"/> of byte length <paramref name="inputLength"/>,
+            returns a pointer to where the first invalid data appears in <paramref name="pInputBuffer"/>.
+            </summary>
+            <remarks>
+            Returns a pointer to the end of <paramref name="pInputBuffer"/> if the buffer is well-formed.
+            </remarks>
+        </member>
         <member name="M:System.Text.UnicodeDebug.ToHexString(System.UInt32)">
             <summary>
             Formats a code point as the hex string "U+XXXX".
@@ -3840,11 +3882,12 @@
         <member name="M:System.Reflection.MethodInfo.CreateDelegate``1(System.Object)">
             <summary>Creates a delegate of the given type 'T' with the specified target from this method.</summary>
         </member>
-        <member name="M:System.Reflection.RuntimeAssembly_Partial.TypeProxy(System.String)">
+        <member name="M:System.Reflection.RuntimeAssembly_Partial.TypeProxy(System.String,System.String)">
             <summary>
             Define a proxy to a type/prototype not yet created. 
             </summary>
-            <param name="metadataFullTypeName"></param>
+            <param name="referenceFullTypeName"></param>
+            <param name="prototypeFullTypeName"></param>
         </member>
         <member name="T:System.Reflection.ConstructorInvoker">
             <summary>
@@ -4283,6 +4326,14 @@
             </summary>
             <typeparam name="T"></typeparam>
             <param name="jsArray"></param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Runtime.CompilerServices.RuntimeHelpers.EnsureIsNetArray(System.Array,System.Type)">
+            <summary>
+            Ensure the array is constructed from NetJS array type, not js array
+            </summary>
+            <param name="jsArray"></param>
+            <param name="elementType"></param>
             <returns></returns>
         </member>
         <member name="M:System.Runtime.CompilerServices.RuntimeHelpers.TryGetHashCode(System.Object)">
@@ -86845,6 +86896,13 @@
         </member>
         <member name="M:System.Enum.EnumInfo`1.CloneValues``1">
             <summary>Create a copy of <see cref="F:System.Enum.EnumInfo`1.Values"/>.</summary>
+        </member>
+        <member name="T:System.Enum`2">
+            <summary>
+            This type prevent boxing on enum before ToString, GetHashCode
+            </summary>
+            <typeparam name="TEnum"></typeparam>
+            <typeparam name="TStorage"></typeparam>
         </member>
         <member name="T:System.Environment.ProcessCpuUsage">
             <summary>

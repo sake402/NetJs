@@ -13,6 +13,8 @@ namespace System
         public extern string NativeSubstring(int startIndex);
         [NetJs.Template("{this}.substr({startIndex}, {length})")]
         public extern string NativeSubstring(int startIndex, int length);
+        [NetJs.Template("{this}.slice({startIndex})")]
+        public extern string NativeSlice(int startIndex);
         [NetJs.Template("{this}.slice({startIndex}, {length})")]
         public extern string NativeSlice(int startIndex, int length);
         [NetJs.Template("{this}.indexOf({value})")]
@@ -25,8 +27,6 @@ namespace System
         public extern string NativeReplace(NetJs.Union<string, RegExp> pattern, string value);
         [NetJs.Template("{this}.replaceAll({pattern}, {value})")]
         public extern string NativeReplaceAll(NetJs.Union<string, RegExp> pattern, string value);
-        [NetJs.Template("{this}.split({separator})")]
-        public extern string[] NativeSplit(NetJs.Union<string, RegExp> separator);
         [NetJs.Template("{this}.startsWith({pattern})")]
         public extern bool NativeStartsWith(string pattern);
         [NetJs.Template("{this}.endsWith({pattern})")]
@@ -52,8 +52,25 @@ namespace System
         public extern string NativeToLower();
         [NetJs.Template("{this}.toUpperCase()")]
         public extern string NativeToUpper();
+        [NetJs.Template("{this}.toLocaleLowerCase()")]
+        public extern string NativeToLocaleLower();
+        [NetJs.Template("{this}.toLocaleUpperCase()")]
+        public extern string NativeToLocaleUpper();
+        [NetJs.Template("{this}.trim()")]
+        public extern string NativeTrim();
+        [NetJs.Template("{this}.trimStart()")]
+        public extern string NativeTrimStart();
+        [NetJs.Template("{this}.trimEnd()")]
+        public extern string NativeTrimEnd();
+        [NetJs.Template("{this}.includes({value})")]
+        public extern bool NativeContains(string value);
+        [NetJs.Template("{this}.split({separator})")]
+        public extern string[] NativeSplit(NetJs.Union<string, RegExp> separator);
+        [NetJs.Template("{this}.split({value}, {limit})")]
+        public extern string[] NativeSplit(NetJs.Union<string, RegExp> value, int limit);
 
         [NetJs.MemberReplace(nameof(Empty))]
+        //[NetJs.Template("\"\"")]
         public static readonly string EmptyImpl = "";
 
         [NetJs.Name(NetJs.Constants.IsTypeName)]
@@ -64,7 +81,7 @@ namespace System
                 return false;
             if (NetJs.Script.TypeOf(value).NativeEquals("string"))
                 return true;
-            if (NetJs.Script.InstanceOf(value, typeof(string))) //boxed string
+            if (NetJs.Script.InstanceOf<string>(value)) //boxed string
             {
                 result(NetJs.Script.Write<string>("value"));
                 return true;
@@ -78,7 +95,7 @@ namespace System
             var value = NetJs.Script.Write<string>("this");
             if (NetJs.Script.TypeOf(value).NativeEquals("string"))
                 return value;
-            if (NetJs.Script.InstanceOf(value, typeof(string))) //boxed string
+            if (NetJs.Script.InstanceOf<string>(value)) //boxed string
             {
                 return NetJs.Script.Write<string>("value.m_value");
             }
@@ -214,8 +231,18 @@ namespace System
             else
             {
                 var _this = NetJs.Script.Unbox(this).As<string>();
-                var array = NetJs.Script.Write<char[]>("Array.from(_this, char => char.charCodeAt(0))");
-                array.Push(0);// add the dotnet expected null terminator, some algorithms expect to read from this location a zero
+                var len = _this.Length;
+                var array = NetJs.Script.NewArray<char>(len + 1);
+                unchecked
+                {
+                    for (int i = 0; i < len; i++)
+                    {
+                        array[i] = _this.NativeCharCodeAt(i);
+                    }
+                    array[len] = '\0'; // add the dotnet expected null terminator, some algorithms expect to read from this location a zero
+                }
+                //var array = NetJs.Script.Write<char[]>("Array.from(_this, char => char.charCodeAt(0))");
+                //array.push(0);// add the dotnet expected null terminator, some algorithms expect to read from this location a zero
                 Array.AddMetadata(array, typeof(char));
                 var rref = RuntimeHelpers.CreateArrayReferenceT(array);
                 //rref["$originalString"] = this.As<object>();
@@ -235,21 +262,20 @@ namespace System
             else
             {
                 var _this = NetJs.Script.Unbox(this).As<string>();
-                var array = NetJs.Script.Write<char[]>("Array.from(_this, char => char.charCodeAt(0))");
-                Array.AddMetadata(array, typeof(char));
-                var bArray = new byte[array.Length * 2];
+                var len = _this.Length;
                 unchecked
                 {
-                    for (int i = 0; i < array.Length; i++)
+                    var bArray = new byte[len * 2];
+                    for (int i = 0; i < len; i++)
                     {
-                        bArray[i * 2] = (array[i] & 0xFF).As<byte>();
-                        bArray[i * 2 + 1] = ((array[i] >> 8) & 0xFF).As<byte>();
+                        char c = _this.NativeCharCodeAt(i);
+                        bArray[i * 2] = (c & 0xFF).As<byte>();
+                        bArray[i * 2 + 1] = ((c >> 8) & 0xFF).As<byte>();
                     }
+                    Array.AddMetadata(bArray, typeof(byte));
+                    var rref = RuntimeHelpers.CreateArrayReferenceT(bArray);
+                    NetJs.Script.Write("return rref");
                 }
-                array.Push(0);// add the dotnet expected null terminator, some algorithms expect to read from this location a zero
-                array.Push(0);// add the dotnet expected null terminator, some algorithms expect to read from this location a zero
-                var rref = RuntimeHelpers.CreateArrayReferenceT(bArray);
-                NetJs.Script.Write("return rref");
                 throw null!;
             }
         }
@@ -266,8 +292,18 @@ namespace System
             else
             {
                 var _this = NetJs.Script.Unbox(this).As<string>();
-                var array = NetJs.Script.Write<char[]>("Array.from(_this, char => char.charCodeAt(0))");
-                array.Push(0);// add the dotnet expected null terminator, some algorithms expect to read from this location a zero
+                var len = _this.Length;
+                var array = NetJs.Script.NewArray<char>(len + 1);
+                unchecked
+                {
+                    for (int i = 0; i < len; i++)
+                    {
+                        array[i] = _this.NativeCharCodeAt(i);
+                    }
+                    array[len] = '\0'; // add the dotnet expected null terminator, some algorithms expect to read from this location a zero
+                }
+                //var array = NetJs.Script.Write<char[]>("Array.from(_this, char => char.charCodeAt(0))");
+                //array.push(0);// add the dotnet expected null terminator, some algorithms expect to read from this location a zero
                 Array.AddMetadata(array, typeof(char));
                 var rref = RuntimeHelpers.CreateArrayReferenceT(array);
                 NetJs.Script.Write("return rref");
@@ -287,9 +323,21 @@ namespace System
             else
             {
                 var _this = NetJs.Script.Unbox(this).As<string>();
-                array = NetJs.Script.Write<char[]>("Array.from(_this, char => char.charCodeAt(0))");
+                var len = _this.Length;
+                array = NetJs.Script.NewArray<char>(len);
+                unchecked
+                {
+                    for (int i = 0; i < len; i++)
+                    {
+                        array[i] = _this.NativeCharCodeAt(i);
+                    }
+                }
+                Array.AddMetadata(array, typeof(char));
+                //array[len] = '\0'; // add the dotnet expected null terminator, some algorithms expect to read from this location a zero
+                //array = NetJs.Script.Write<char[]>("Array.from(_this, char => char.charCodeAt(0))");
             }
-            return RuntimeHelpers.CreateArrayT<char>(array);
+            return array;
+            //return RuntimeHelpers.CreateArrayT<char>(array);
         }
 
         [NetJs.MemberReplace(nameof(ToCharArray) + "(int, int)")]
@@ -304,9 +352,19 @@ namespace System
             else
             {
                 var _this = NetJs.Script.Unbox(this).As<string>();
-                array = NetJs.Script.Write<char[]>("Array.from(_this, char => char.charCodeAt(0))");
+                var len = _this.Length;
+                array = NetJs.Script.NewArray<char>(len);
+                unchecked
+                {
+                    for (int i = 0; i < len; i++)
+                    {
+                        array[i] = _this.NativeCharCodeAt(i);
+                    }
+                }
+                //array[len] = '\0'; // add the dotnet expected null terminator, some algorithms expect to read from this location a zero
+                //array = NetJs.Script.Write<char[]>("Array.from(_this, char => char.charCodeAt(0))");
             }
-            return RuntimeHelpers.CreateArrayT<char>(array.ArraySlice(startIndex, length).As<char[]>());
+            return RuntimeHelpers.CreateArrayT<char>(array.slice(startIndex, length).As<char[]>());
         }
 
         [NetJs.Template("window.String.fromCharCode({code})")]

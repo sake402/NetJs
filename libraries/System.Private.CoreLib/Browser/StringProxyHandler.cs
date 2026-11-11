@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace NetJs
@@ -12,22 +13,25 @@ namespace NetJs
         {
             _chars = str.ToCharArray();
             //Add a null terminator to this char, some pointer/ref usage requires this
-            _chars.Push('\0');
+            _chars.push('\0');
             reff = new Ref<char>((i) =>
             {
                 unchecked
                 {
+                    Debug.Assert((i ?? 0) < _chars.Length);
                     return _chars[(i ?? 0)];
                 }
             }, (v, i) =>
             {
                 unchecked
                 {
+                    Debug.Assert((i ?? 0) < _chars.Length);
                     _chars[(i ?? 0)] = v;
                     strDirty = true;
                 }
             });
             reff._dataSource = _chars;
+            reff._dataSourceType = RefOrPointer.DataSourceType._array;
         }
 
         public StringProxyHandler(int length)
@@ -40,12 +44,14 @@ namespace NetJs
             {
                 unchecked
                 {
+                    Debug.Assert((i ?? 0) < _chars.Length);
                     return _chars[(i ?? 0)];
                 }
             }, (v, i) =>
             {
                 unchecked
                 {
+                    Debug.Assert((i ?? 0) < _chars.Length);
                     _chars[(i ?? 0)] = v;
                     strDirty = true;
                 }
@@ -53,6 +59,7 @@ namespace NetJs
             //If someone mutate this array behind the scene, we need to know and update our dirty flag
             //Which is why it is a proxy exposed
             reff._dataSource = _proxyChars;
+            reff._dataSourceType = RefOrPointer.DataSourceType._array;
             handler.OnMutated += (s, e) =>
             {
                 //if (reff._dataView != null)
@@ -84,12 +91,19 @@ namespace NetJs
             {
                 if (strDirty || str.Length == 0)
                 {
-                    str = string.NativeFromCharCode(_chars, 0, _chars.Length - 1);
+                    str = new Window.TextDecoder("utf-16").decode(new Window.Uint16Array(_chars.slice(0, -1)));
+                    //str = string.NativeFromCharCode(_chars, 0, _chars.Length - 1);
                     strDirty = false;
                 }
                 return str;
             }
         }
+
+        public string toString()
+        {
+            return Collect;
+        }
+
         public object? Get(object target, string property, object receiver)
         {
             if (property.NativeEquals(Constants.IsProxy))
@@ -106,7 +120,7 @@ namespace NetJs
             }
             if (property.NativeEquals("length"))
             {
-                return (_chars.Length-1).As<object>();
+                return (_chars.Length - 1).As<object>();
             }
             if (property.NativeEquals(nameof(Reference)))
             {
@@ -114,12 +128,23 @@ namespace NetJs
             }
             if (strDirty)
             {
-                str = string.NativeFromCharCode(_chars, 0, _chars.Length-1);
+                str = new Window.TextDecoder("utf-16").decode(new Window.Uint16Array(_chars.slice(0, -1)));
+                //str = string.NativeFromCharCode(_chars, 0, _chars.Length - 1);
                 strDirty = false;
             }
             if (property.NativeEquals(nameof(Collect)))
             {
                 return Collect.As<object>();
+            }
+            if (property.NativeEquals("toString"))
+            {
+                NativeFunction<string> s = toString;
+                return s.As<object>();
+            }
+            if (property.NativeEquals("valueOf"))
+            {
+                NativeFunction<string> s = toString;
+                return s.As<object>();
             }
             return str[property];
         }
@@ -137,7 +162,8 @@ namespace NetJs
             }
             if (strDirty)
             {
-                str = string.NativeFromCharCode(_chars, 0, _chars.Length - 1);
+                str = new Window.TextDecoder("utf-16").decode(new Window.Uint16Array(_chars.slice(0, -1)));
+                //str = string.NativeFromCharCode(_chars, 0, _chars.Length - 1);
                 strDirty = false;
             }
             str[property] = value;

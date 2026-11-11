@@ -55,7 +55,7 @@ namespace NetJs.Translator.CSharpToJavascript
             }
         }
 
-        public void WritePointerSubtration(CSharpSyntaxNode node, ExpressionSyntax left, ExpressionSyntax right)
+        public void WritePointerSubtration(CSharpSyntaxNode node, ExpressionSyntax left, ExpressionSyntax right, bool byteOffset = false)
         {
             //var returnType = _global.GetTypeSymbol(node, this).GetTypeSymbol();
             ////Pointer sub typically return long, If the parent is a cast though(more likely to int), ignore this cast to long, from
@@ -74,6 +74,8 @@ namespace NetJs.Translator.CSharpToJavascript
             WriteMemberName(node, refOrPointer, subtract);
             CurrentTypeWriter.Write(node, $"(");
             VisitNode(right);
+            CurrentTypeWriter.Write(node, ", ");
+            CurrentTypeWriter.Write(node, byteOffset ? "true" : "false");
             CurrentTypeWriter.Write(node, $")");
             //if (!ignoreCast && SymbolEqualityComparer.Default.Equals(returnType, _global.SystemInt64))
             //{

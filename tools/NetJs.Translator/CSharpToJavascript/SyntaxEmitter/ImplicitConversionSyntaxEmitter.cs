@@ -2,6 +2,7 @@
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Operations;
+using NUglify.JavaScript.Visitors;
 using System.Threading;
 
 namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
@@ -88,20 +89,72 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                 }
                 if (snode != null)
                     nodes.Add(snode);
-                _disabled.Value.AddRange(nodes);
+                _disabled.Value!.AddRange(nodes);
                 return new DelegateDispose(() => nodes.ForEach(node => _disabled.Value.Remove(node)));
             }
             else
             {
-                _disabled.Value.Add(node);
+                _disabled.Value!.Add(node);
                 return new DelegateDispose(() => _disabled.Value.Remove(node));
             }
         }
+
+        public static bool IsCandidate(CSharpSyntaxNode node, TranslatorSyntaxVisitor visitor)
+        {
+            var sm = visitor.GetSemanticModel(node);
+            if (sm == null)
+                return false;
+            var conversion = sm.GetConversion(node);
+            if (conversion.Exists &&
+                        conversion.IsImplicit &&
+                        conversion.IsUserDefined &&
+                        conversion.MethodSymbol != null &&
+                        visitor.Global.ShouldExportType(conversion.MethodSymbol.ContainingType, visitor))
+            {
+                return true;
+            }
+            if (conversion.Exists && conversion.IsImplicit && conversion.IsSpan)
+                return true;
+            if (conversion.Exists && conversion.IsImplicit && conversion.IsInlineArray)
+                return true;
+            if (conversion.Exists && conversion.IsImplicit && conversion.IsCollectionExpression)
+                return true;
+            if ((node.IsKind(SyntaxKind.NumericLiteralExpression) || node.IsKind(SyntaxKind.CharacterLiteralExpression)) &&
+                        node is LiteralExpressionSyntax lt &&
+                        !lt.Token.Text.EndsWith("UL") &&
+                        !lt.Token.Text.EndsWith("L") &&
+                        conversion.Exists &&
+                        conversion.IsImplicit/* && 
+                        !conversion.IsBoxing*/)
+                return true;
+            if (NumberImplicitlyConvertsToLong(node, sm, visitor, conversion))
+                return true;
+            if (LongImplicitlyConvertsToNumber(node, sm, visitor, conversion))
+                return true;
+            if (conversion.Exists &&
+                        conversion.IsImplicit &&
+                        conversion.IsNumeric)
+                return true;
+            return false;
+        }
         public override bool TryEmit(CSharpSyntaxNode node, TranslatorSyntaxVisitor visitor)
         {
+            if (node.IsKind(SyntaxKind.SuppressNullableWarningExpression))
+                return false;
+            if (_disabled.Value!.Contains(node))
+                return false;
+            if (node.IsKind(SyntaxKind.ParenthesizedExpression))
+            {
+                CSharpSyntaxNode snode = node;
+                while (snode.IsKind(SyntaxKind.ParenthesizedExpression))
+                {
+                    snode = ((ParenthesizedExpressionSyntax)snode).Expression;
+                }
+                node = snode;
+            }
             if (_disabled.Value.Contains(node))
                 return false;
-            if (_processing.Value.TryPeek(out var top) && top == node)
+            if (_processing.Value!.TryPeek(out var top) && top == node)
                 return false;
             foreach (var sm in visitor.SemanticModels)
             {
@@ -210,7 +263,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                                 {
                                     visitor.WriteMethodInvocation(node, implicitConverter, null, [new CodeNode(() =>
                                     {
-                                        bool isBootCode = visitor.Global.HasAttribute(visitor.CurrentTypeSymbol, typeof(BootAttribute).FullName, visitor, false, out _);
+                                        bool isBootCode = visitor.Global.HasAttribute(visitor.CurrentTypeSymbol, typeof(BootAttribute).FullName!, visitor, false, out _);
                                         if (!isBootCode)
                                         {
                                             visitor.WriteCreateArray(node, elementType!, null, null, new CodeNode(() => {
@@ -254,11 +307,12 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                         !lt.Token.Text.EndsWith("UL") &&
                         !lt.Token.Text.EndsWith("L") &&
                         conversion.Exists &&
-                        conversion.IsImplicit /*&& conversion.IsConstantExpression*/)
+                        conversion.IsImplicit/* && 
+                        !conversion.IsBoxing*/)
                     {
                         var literalOperation = sm.GetOperation(node) as ILiteralOperation;
                         var convertOperation = literalOperation?.Parent as IConversionOperation;
-                        var assignOperation = literalOperation?.Parent as ICompoundAssignmentOperation;
+                        //var assignOperation = literalOperation?.Parent as ICompoundAssignmentOperation;
                         var convertType = convertOperation?.Type;
                         if (convertType?.TypeKind == TypeKind.Enum)
                         {
@@ -269,9 +323,9 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                             ||
                             (convertOperation != null &&
                             (SymbolEqualityComparer.Default.Equals(convertType, visitor.Global.SystemUInt64) || SymbolEqualityComparer.Default.Equals(convertType, visitor.Global.SystemInt64)))
-                            ||
-                            (assignOperation != null &&
-                            (SymbolEqualityComparer.Default.Equals(assignOperation.Type, visitor.Global.SystemUInt64) || SymbolEqualityComparer.Default.Equals(assignOperation.Type, visitor.Global.SystemInt64)))
+                            //||
+                            //(assignOperation != null &&
+                            //(SymbolEqualityComparer.Default.Equals(assignOperation.Type, visitor.Global.SystemUInt64) || SymbolEqualityComparer.Default.Equals(assignOperation.Type, visitor.Global.SystemInt64)))
                             )
                         {
                             _processing.Value.Push(node);
@@ -352,6 +406,7 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter
                             }
                         }
                     }
+                    break;
                 }
             }
             return false;

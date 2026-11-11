@@ -29,13 +29,13 @@ namespace System.Runtime.InteropServices
             //return reference.As<IntPtr>();
         }
 
-        internal static IntPtr MarshalObject(object? value, IntPtr handle = 0, bool deleteOld = false)
+        internal static IntPtr MarshalObject(object? value, IntPtr handle = 0, bool overwriteExisting = false)
         {
             //if (value == null)
             //return 0;
             if (Script.TypeOf(value).NativeEquals("number"))
                 return value.As<IntPtr>();
-            return InteropUtility.castObject2Address(value, handle.As<uint>(), deleteOld).As<IntPtr>();
+            return InteropUtility.castObject2Address(value, handle.As<uint>(), overwriteExisting, weakReference: false).As<IntPtr>();
             //if (handle == 0)
             //{
             //    handle = (MarshalledPointerFlag + Random.Shared.Next(1, 0x7FFFFFFF)).As<IntPtr>();
@@ -152,7 +152,7 @@ namespace System.Runtime.InteropServices
         {
             if (!type.IsValueType)
                 return IntPtr.Size;
-            if (NetJs.Script.IsDefined(type._prototype.Size))
+            if (NetJs.Script.IsDefined(type._prototype.Size) || type._prototype.Size == 0)
             {
                 return type._prototype.Size;
             }

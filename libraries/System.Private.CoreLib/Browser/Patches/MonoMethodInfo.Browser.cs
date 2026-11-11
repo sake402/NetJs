@@ -38,7 +38,7 @@ namespace System.Reflection
             var method = (MethodBase)AppDomain.GetMember(handle.As<uint>())!;
             if (method._monoInfo != null)
             {
-                info = method._monoInfo.Value;
+                info = method._monoInfo.As<MonoMethodInfo>();
                 return;
             }
             MonoMethodInfo minfo = default!;
@@ -46,7 +46,7 @@ namespace System.Reflection
             var returnTypeHandle = method._model.As<MethodModel>().ReturnType;
             if (NetJs.Script.TypeOf(returnTypeHandle).NativeEquals("function"))
             {
-                var args = method.As<RuntimeMethodInfo>()._typeArguments!.Map(t => t.As<RuntimeType>()._prototype);
+                var args = method.As<RuntimeMethodInfo>()._typeArguments?.map(t => t.As<RuntimeType>()._prototype) ?? AppDomain.GenericTypeParameters;
                 returnTypeHandle = NetJs.Script.Write<uint>("returnTypeHandle( ...args)");
             }
             var rt = (NetJs.Script.IsDefined(returnTypeHandle) ? AppDomain.GetType(returnTypeHandle.As<uint>()) : null) ?? typeof(void);
@@ -82,7 +82,7 @@ namespace System.Reflection
             if (method._parameters != null)
                 return method._parameters;
             var parameters = method._model.As<MethodModel>().Parameters ?? null;
-            var infos = parameters?.Map((p, i, all) =>
+            var infos = parameters?.map((p, i, all) =>
             {
                 var parameterTypeHandle = p.ParameterType.ResolveHandle(method._typeArguments);
                 return new RuntimeParameterInfo_Partial(p, AppDomain.GetType(parameterTypeHandle.As<uint>()) ?? throw new InvalidOperationException(), method, i).As<RuntimeParameterInfo>();

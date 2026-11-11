@@ -20,10 +20,11 @@ namespace NetJs.Translator
         string IntermediateOutputPath { get; }
         IEnumerable<string> Evaluate(string propertyName, bool allItems = false);
         string GetAssemblyName();
-        string GetNamespace();
+        string GetRootNamespace();
         string GetOutputPath();
         string GetTargetFramework();
         string GetPlatform();
+        string GetConfiguration();
         NetJsBuildFlags GetBuildFlags();
         IList<string> GetSourceFiles();
         IList<string> GetContentFiles();

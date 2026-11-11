@@ -52,33 +52,35 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             if (!Constants.RewriteConditionalAccessExpressions)
                 return false;
-            //if (node.WhenNotNull.IsKind(SyntaxKind.ConditionalAccessExpression))
-            //    return true;
-            //var rhsSymbol = _global.GetSymbol(node.WhenNotNull, this);
-            //if (rhsSymbol is IMethodSymbol m && (m.IsExtensionMethod /*|| m.IsStaticCallConvention(_global)*/))
-            //{
-            //    //We only rewite for extension method
-            //    return true;
-            //}
+            var rhsSymbol = GetSymbol(node.WhenNotNull);
+            if (rhsSymbol is IMethodSymbol m && (m.IsExtensionMethod || m.IsStaticCallConvention()))
+            {
+                //We only rewite for extension method
+                return true;
+            }
             //return false;
-            if (node.WhenNotNull.IsKind(SyntaxKind.ConditionalAccessExpression))
+            if (node.WhenNotNull.IsKind(SyntaxKind.ConditionalAccessExpression) && node.WhenNotNull is ConditionalAccessExpressionSyntax ca && IsConditionalAccessRewriteCandidate(ca))
                 return true;
             var rhsExpression = node.WhenNotNull;
             if (rhsExpression.IsKind(SyntaxKind.ElementAccessExpression) && rhsExpression is ElementAccessExpressionSyntax el)
             {
                 rhsExpression = el.Expression;
             }
+            if (rhsExpression.IsKind(SyntaxKind.ConditionalAccessExpression) && rhsExpression is ConditionalAccessExpressionSyntax cd)
+            {
+                rhsExpression = cd.Expression;
+            }
             var invoke = rhsExpression;
             while (invoke.IsKind(SyntaxKind.InvocationExpression))
             {
-                var rhsSymbol = GetSymbol(invoke);
-                if (rhsSymbol is IMethodSymbol m && (m.IsExtensionMethod/* || m.IsStaticCallConvention()*/))
+                rhsSymbol = GetSymbol(invoke);
+                if (rhsSymbol is IMethodSymbol mm && (mm.IsExtensionMethod || mm.IsStaticCallConvention()))
                 {
                     //We only rewite for extension method and static call convensions
                     return true;
                 }
                 //Dealing with something like oldBytes?.AsSpan(0, _offset).Clear();
-                //The clear is not an extension method, but AsSpan is
+                //The Clear is not an extension method, but AsSpan is
                 if (((InvocationExpressionSyntax)invoke).Expression.IsKind(SyntaxKind.SimpleMemberAccessExpression))
                 {
                     var sm = (MemberAccessExpressionSyntax)((InvocationExpressionSyntax)invoke).Expression;
@@ -136,6 +138,10 @@ namespace NetJs.Translator.CSharpToJavascript
         //StatementSyntax? previousStatement;
         public override SyntaxNode? Visit(SyntaxNode? node)
         {
+            if (node?.ToString().Contains("k?.Equals(p.Name, StringComparison.InvariantCultureIgnoreCase)") ?? false)
+            {
+
+            }
             //if (node is StatementSyntax ss)
             //    currentStatement = ss;
             var newNode = base.Visit(node);
@@ -707,12 +713,80 @@ namespace NetJs.Translator.CSharpToJavascript
             return node;
         }
 
+        public override SyntaxNode? VisitCompilationUnit(CompilationUnitSyntax node)
+        {
+            if (node.ChildNodes().Any(e => e.IsKind(SyntaxKind.GlobalStatement)))
+            {
+                if (node.FindDescendant<ConditionalAccessExpressionSyntax>().Any(e => IsConditionalAccessRewriteCandidate(e)))
+                {
+                    BeginBlockVariables();
+                    var statement = base.VisitCompilationUnit(node);
+                    var newNode = EndBlockVariables((CSharpSyntaxNode)statement!);
+                    return newNode;
+                }
+            }
+            return base.VisitCompilationUnit(node);
+        }
+
+        //public override SyntaxNode? VisitGlobalStatement(GlobalStatementSyntax node)
+        //{
+        //    if ( node.FindDescendant<ConditionalAccessExpressionSyntax>().Any(e => IsConditionalAccessRewriteCandidate(e)))
+        //    {
+        //        BeginBlockVariables();
+        //        var statement = base.VisitGlobalStatement(node);
+        //        var newNode = EndBlockVariables((CSharpSyntaxNode)statement!);
+        //        return newNode;
+        //    }
+        //    return  base.VisitGlobalStatement(node);
+        //}
+        public override SyntaxNode? VisitOperatorDeclaration(OperatorDeclarationSyntax node)
+        {
+            if (node.ExpressionBody != null && node.ExpressionBody.FindDescendant<ConditionalAccessExpressionSyntax>().Any(e => IsConditionalAccessRewriteCandidate(e)))
+            {
+                BeginBlockVariables();
+                var expression = Visit(node.ExpressionBody.Expression)!;
+                var newBlock = EndBlockVariables((CSharpSyntaxNode)expression, true, true);
+
+                // Replace the expression body and the arrow token with the new block
+                // Also, remove the semicolon token that was part of the expression body
+                var newNode = node
+                    .WithBody(newBlock as BlockSyntax)
+                    .WithExpressionBody(newBlock as ArrowExpressionClauseSyntax);
+                if (newBlock.IsKind(SyntaxKind.Block))
+                {
+                    newNode = newNode.WithSemicolonToken(SyntaxFactory.MissingToken(SyntaxKind.SemicolonToken)); // Remove the standalone semicolon
+                }
+                // Use the Formatter annotation to let Roslyn handle the indentation/formatting of the new block
+                return newNode;//.WithAdditionalAnnotations(Formatter.Annotation);
+            }
+            return base.VisitOperatorDeclaration(node);
+        }
+
+        public override SyntaxNode? VisitConversionOperatorDeclaration(ConversionOperatorDeclarationSyntax node)
+        {
+            if (node.ExpressionBody != null && node.ExpressionBody.FindDescendant<ConditionalAccessExpressionSyntax>().Any(e => IsConditionalAccessRewriteCandidate(e)))
+            {
+                BeginBlockVariables();
+                var expression = Visit(node.ExpressionBody.Expression)!;
+                var newBlock = EndBlockVariables((CSharpSyntaxNode)expression, true, true);
+
+                // Replace the expression body and the arrow token with the new block
+                // Also, remove the semicolon token that was part of the expression body
+                var newNode = node
+                    .WithBody(newBlock as BlockSyntax)
+                    .WithExpressionBody(newBlock as ArrowExpressionClauseSyntax);
+                if (newBlock.IsKind(SyntaxKind.Block))
+                {
+                    newNode = newNode.WithSemicolonToken(SyntaxFactory.MissingToken(SyntaxKind.SemicolonToken)); // Remove the standalone semicolon
+                }
+                // Use the Formatter annotation to let Roslyn handle the indentation/formatting of the new block
+                return newNode;//.WithAdditionalAnnotations(Formatter.Annotation);
+            }
+            return base.VisitConversionOperatorDeclaration(node);
+        }
+
         public override SyntaxNode? VisitMethodDeclaration(MethodDeclarationSyntax node)
         {
-            if (node.Identifier.ValueText == "GetStreamedResponseBytesUnsafe")
-            {
-
-            }
             var memberOverride = (MethodDeclarationSyntax?)GetMemberOverride(node)?.SingleOrDefault().Value;
             // Check if the property is an expression-bodied property (has an arrow clause)
             // and there is a conditional expression in the body.
@@ -721,24 +795,6 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 BeginBlockVariables();
                 var expression = Visit(node.ExpressionBody.Expression)!;
-
-                //StatementSyntax statement;
-
-                //if (expression is StatementSyntax ss)
-                //{
-                //    statement = ss;
-                //}
-                //// If the method returns void, the expression becomes an expression statement
-                //else if (node.ReturnType.Kind() == SyntaxKind.VoidKeyword)
-                //{
-                //    statement = SyntaxFactory.ExpressionStatement((ExpressionSyntax)expression);
-                //}
-                //// Otherwise, it becomes a return statement
-                //else
-                //{
-                //    statement = SyntaxFactory.ReturnStatement((ExpressionSyntax)expression);
-                //}
-
                 var newBlock = EndBlockVariables((CSharpSyntaxNode)expression, true, node.ReturnType.ToString() != "void");
 
                 // Replace the expression body and the arrow token with the new block
@@ -837,10 +893,10 @@ namespace NetJs.Translator.CSharpToJavascript
                 var expression = (ExpressionSyntax)Visit(node.ExpressionBody.Expression)!;
                 var block = (BlockSyntax)EndBlockVariables(expression, true, node.IsKind(SyntaxKind.GetAccessorDeclaration));
                 var modifiers = node.Modifiers;
-                var getAccessor = SyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration)
+                var accessor = SyntaxFactory.AccessorDeclaration(node.Kind())
                     .WithBody(block)
                     .WithAttributeLists(node.AttributeLists);
-                return getAccessor.WithTriviaFrom(node);
+                return accessor.WithTriviaFrom(node);
             }
             else
                 return base.VisitAccessorDeclaration(node);
@@ -1169,6 +1225,8 @@ namespace NetJs.Translator.CSharpToJavascript
             public ITypeSymbol? Type;
             public ExpressionSyntax? Initializer;
             public bool InitializerTypeInferenceOnly;
+
+            public SyntaxNode? InsertIntoParent;
             public int? InsertionIndex;
         }
         Stack<Dictionary<string, DefineBlockVariable>> defineBlockVariables = new();
@@ -1187,7 +1245,7 @@ namespace NetJs.Translator.CSharpToJavascript
             var variables = defineBlockVariables.Pop();
             if (variables.Count > 0 || (convertToBlock && !node.IsKind(SyntaxKind.Block)))
             {
-                List<(string, int, LocalDeclarationStatementSyntax)> declarations = new();
+                List<(string, DefineBlockVariable, LocalDeclarationStatementSyntax)> declarations = new();
                 foreach (var variable in variables)
                 {
                     LocalDeclarationStatementSyntax _var_;
@@ -1254,18 +1312,20 @@ namespace NetJs.Translator.CSharpToJavascript
                         .WithLeadingTrivia(SyntaxFactory.TriviaList(SyntaxFactory.Tab, SyntaxFactory.Tab, SyntaxFactory.Tab))
                         .WithTrailingTrivia(SyntaxFactory.CarriageReturnLineFeed);
                     }
-                    declarations.Add((variable.Key, variable.Value.InsertionIndex ?? -1, _var_));
+                    declarations.Add((variable.Key, variable.Value, _var_));
                 }
                 if (convertToBlock)
                 {
                     node = SyntaxFactory.Block((StatementSyntax[])[
                             .. declarations.Select(s => s.Item3),
-                            blockHasReturn ? SyntaxFactory.ReturnStatement((ExpressionSyntax)node.WithLeadingTrivia(SyntaxFactory.Space)): node is StatementSyntax ss ? ss : SyntaxFactory.ExpressionStatement((ExpressionSyntax)node.WithLeadingTrivia(SyntaxFactory.Space))
+                            blockHasReturn ? SyntaxFactory.ReturnStatement((ExpressionSyntax)node.WithLeadingTrivia(SyntaxFactory.Space)): node is StatementSyntax ss ? ss : SyntaxFactory.ExpressionStatement((ExpressionSyntax)(node.IsKind(SyntaxKind.ArrowExpressionClause)?((ArrowExpressionClauseSyntax)node).Expression:node).WithLeadingTrivia(SyntaxFactory.Space))
                         ]);
                 }
                 else if (node.IsKind(SyntaxKind.ArrowExpressionClause))
                 {
-                    node = SyntaxFactory.Block((StatementSyntax[])[.. declarations.Select(s => s.Item3), SyntaxFactory.ReturnStatement(((ArrowExpressionClauseSyntax)node).Expression.WithLeadingTrivia(SyntaxFactory.Space))]);
+                    node = SyntaxFactory.Block((StatementSyntax[])[
+                        .. declarations.Select(s => s.Item3),
+                        SyntaxFactory.ReturnStatement(((ArrowExpressionClauseSyntax)node).Expression.WithLeadingTrivia(SyntaxFactory.Space))]);
                 }
                 else if (node.IsKind(SyntaxKind.SimpleLambdaExpression))
                 {
@@ -1349,19 +1409,24 @@ namespace NetJs.Translator.CSharpToJavascript
                 else
                 {
                     //make sure we insert right above the statement that needs the local variable
-                    if (node.IsKind(SyntaxKind.Block))
+                    if (node.IsKind(SyntaxKind.Block) || node.IsKind(SyntaxKind.CompilationUnit))
                     {
-                        foreach (var v in declarations.Where(d => d.Item2 >= 0).OrderByDescending(d => d.Item2).ThenByDescending(d => d.Item1))
+                        foreach (var v in declarations.Where(d => (d.Item2.InsertionIndex ?? -1) >= 0).OrderByDescending(d => d.Item2.InsertionIndex ?? -1).ThenByDescending(d => d.Item1))
                         {
-                            var reference = node!.ChildNodes().ElementAtOrDefault(v.Item2);
+                            SyntaxNode decl = v.Item3;
+                            if (node.IsKind(SyntaxKind.CompilationUnit))
+                            {
+                                decl = SyntaxFactory.GlobalStatement((StatementSyntax)decl);
+                            }
+                            var reference = node!.ChildNodes().ElementAtOrDefault(v.Item2.InsertionIndex ?? -1);
                             if (reference == null)
                             {
-                                node = node.InsertNodesBefore(node!.ChildNodes().First(), [v.Item3]);
+                                node = node.InsertNodesBefore(node!.ChildNodes().First(), [decl]);
                             }
                             else
-                                node = node.InsertNodesBefore(reference, [v.Item3]);
+                                node = node.InsertNodesBefore(reference, [decl]);
                         }
-                        node = node.InsertNodesBefore(node!.ChildNodes().First(), declarations.Where(d => d.Item2 < 0).Select(s => s.Item3));
+                        node = node.InsertNodesBefore(node!.ChildNodes().First(), declarations.Where(d => (d.Item2.InsertionIndex ?? -1) < 0).Select(s => s.Item3));
                     }
                     else
                         node = node.InsertNodesBefore(node!.ChildNodes().First(), declarations.Select(s => s.Item3));
@@ -1533,13 +1598,13 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             return VisitConditionalAccessExpression(node, null);
         }
-
+        List<ConditionalAccessExpressionSyntax> skipRewriteConditional = new();
         public SyntaxNode? VisitConditionalAccessExpression(
             ConditionalAccessExpressionSyntax node,
             ConditionalAccessExpressionSyntax? parentCondition = null,
             Stack<ITypeSymbol>? nodeExpressionTypes = null)
         {
-            if (parentCondition == null && !IsConditionalAccessRewriteCandidate(node))
+            if (skipRewriteConditional.Contains(node) || (parentCondition == null && !IsConditionalAccessRewriteCandidate(node)))
                 return base.VisitConditionalAccessExpression(node);
             //no block to define temp variable in
             if (defineBlockVariables.Count == 0)
@@ -1552,6 +1617,10 @@ namespace NetJs.Translator.CSharpToJavascript
             //bool hasResult = true;
             ExpressionSyntax Combine(ExpressionSyntax lhs, ExpressionSyntax rhs)
             {
+                if (rhs.IsKind(SyntaxKind.SuppressNullableWarningExpression) && rhs is PostfixUnaryExpressionSyntax post)
+                {
+                    rhs = post.Operand;
+                }
                 if (rhs is InvocationExpressionSyntax conditionalInvoke)
                 {
                     if (conditionalInvoke.Expression is MemberBindingExpressionSyntax mb)
@@ -1561,6 +1630,7 @@ namespace NetJs.Translator.CSharpToJavascript
                             lhs,
                             SyntaxFactory.Token(SyntaxKind.DotToken), mb.Name);
                         var ret = SyntaxFactory.InvocationExpression(memberAccess, conditionalInvoke.ArgumentList);
+                        //AssociateSyntaxFactoryNode(conditionalInvoke.Expression, ret.Expression);
                         AssociateSyntaxFactoryNode(conditionalInvoke.ArgumentList, ret.ArgumentList);
                         return ret;
                     }
@@ -1571,6 +1641,15 @@ namespace NetJs.Translator.CSharpToJavascript
                             Combine(lhs, ma.Expression),
                             SyntaxFactory.Token(SyntaxKind.DotToken), ma.Name);
                         var ret = SyntaxFactory.InvocationExpression(memberAccess, conditionalInvoke.ArgumentList);
+                        //AssociateSyntaxFactoryNode(conditionalInvoke.Expression, ret.Expression);
+                        AssociateSyntaxFactoryNode(conditionalInvoke.ArgumentList, ret.ArgumentList);
+                        return ret;
+                    }
+                    else if (conditionalInvoke.Expression is ElementBindingExpressionSyntax eb)
+                    {
+                        var memberAccess = SyntaxFactory.ElementAccessExpression(lhs, eb.ArgumentList);
+                        var ret = SyntaxFactory.InvocationExpression(memberAccess, conditionalInvoke.ArgumentList);
+                        AssociateSyntaxFactoryNode(conditionalInvoke.Expression, ret.Expression);
                         AssociateSyntaxFactoryNode(conditionalInvoke.ArgumentList, ret.ArgumentList);
                         return ret;
                     }
@@ -1581,7 +1660,7 @@ namespace NetJs.Translator.CSharpToJavascript
                         SyntaxKind.SimpleMemberAccessExpression,
                         lhs,
                         SyntaxFactory.Token(SyntaxKind.DotToken), member.Name);
-                    AssociateSyntaxFactoryNode(ret.Name, member.Name);
+                    AssociateSyntaxFactoryNode(member.Name, ret.Name);
                     return ret;
                 }
                 else if (rhs is MemberAccessExpressionSyntax ma)
@@ -1590,35 +1669,35 @@ namespace NetJs.Translator.CSharpToJavascript
                             SyntaxKind.SimpleMemberAccessExpression,
                             Combine(lhs, ma.Expression),
                             SyntaxFactory.Token(SyntaxKind.DotToken), ma.Name);
-                    AssociateSyntaxFactoryNode(ret.Name, ma.Name);
+                    AssociateSyntaxFactoryNode(ma.Name, ret.Name);
                     return ret;
                 }
                 else if (rhs is ConditionalAccessExpressionSyntax cd)
                 {
                     var m = Combine(lhs, cd.Expression);
                     var ret = cd.ReplaceNode(cd.Expression, m);
-                    //AssociateSyntaxFactoryNode(ret.Expression, cd.Expression);
+                    //AssociateSyntaxFactoryNode(cd.Expression, ret.Expression);
                     return ret;
                 }
                 else if (rhs is ElementAccessExpressionSyntax ae)
                 {
                     var newNode = Combine(lhs, ae.Expression);
                     var ret = ae.ReplaceNode(ae.Expression, newNode);
-                    //AssociateSyntaxFactoryNode(ret.Expression, ae.Expression);
+                    //AssociateSyntaxFactoryNode(ae.Expression, ret.Expression);
                     return ret;
                 }
                 else if (rhs is ElementBindingExpressionSyntax ab)
                 {
-                    var m = SyntaxFactory.ElementAccessExpression(lhs, ab.ArgumentList);
-                    AssociateSyntaxFactoryNode(m.ArgumentList, ab.ArgumentList);
-                    return m;
+                    var ret = SyntaxFactory.ElementAccessExpression(lhs, ab.ArgumentList);
+                    AssociateSyntaxFactoryNode(ab.ArgumentList, ret.ArgumentList);
+                    return ret;
                 }
                 else if (rhs is AssignmentExpressionSyntax asm)
                 {
                     //hasResult = false;
                     var newNode = Combine(lhs, asm.Left);
                     var ret = asm.ReplaceNode(asm.Left, newNode);
-                    AssociateSyntaxFactoryNode(ret.Right, asm.Right);
+                    AssociateSyntaxFactoryNode(asm.Right, ret.Right);
                     return ret;
                 }
                 throw null!;
@@ -1640,13 +1719,23 @@ namespace NetJs.Translator.CSharpToJavascript
             {
 
             }
+            var whenNotNullType = GetTypeSymbol(targetNode.WhenNotNull);
+            var finalWhenNotNullType = whenNotNullType;
+            var wnn = targetNode.WhenNotNull;
+            while (wnn.IsKind(SyntaxKind.ConditionalAccessExpression) && wnn is ConditionalAccessExpressionSyntax cdd)
+            {
+                finalWhenNotNullType = GetTypeSymbol(cdd.WhenNotNull);
+                wnn = cdd.WhenNotNull;
+            }
             var nodeType = GetTypeSymbol(targetNode);
             bool typeIsVoid = nodeType != null && nodeType.SpecialType == SpecialType.System_Void;
             ExpressionSyntax? whenNull = null;
+            bool isCoalesce = false;
             if (targetNode.Parent.IsKind(SyntaxKind.CoalesceExpression) && ((BinaryExpressionSyntax)targetNode.Parent!).Left == targetNode)
             {
                 var binary = (BinaryExpressionSyntax)targetNode.Parent!;
-                whenNull = binary.Right;
+                whenNull = (ExpressionSyntax)Visit(binary.Right)!;
+                isCoalesce = true;
             }
             else
             {
@@ -1668,32 +1757,16 @@ namespace NetJs.Translator.CSharpToJavascript
                         {
                             whenNull = SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression);
                         }
-                        else
-                        {
-                            //if (targetNode.ToString().Contains(" o.StartsWithSequence(name, \"=\") || o.StartsWithSequence(\"//\""))
-                            //{
-
-                            //}
-                            var typeName = nodeType.ToString();
-                            //if (typeName == "bool?")
-                            //{
-                            //    var coalesceParent = targetNode.FindClosestParent<BinaryExpressionSyntax>(e => e.IsKind(SyntaxKind.CoalesceExpression));
-                            //    if (coalesceParent == null)
-                            //    {
-                            //        typeName = typeName.Trim('?');
-                            //    }
-                            //    else
-                            //    {
-                            //        var conditional = targetNode.FindClosestParent<ConditionalExpressionSyntax>();
-                            //        if (conditional != null && (conditional.WhenFalse.IsKind(SyntaxKind.TrueLiteralExpression) || conditional.WhenFalse.IsKind(SyntaxKind.FalseLiteralExpression)))
-                            //        {
-                            //            typeName = typeName.Trim('?');
-                            //        }
-                            //    }
-                            //}
-                            whenNull = nodeType.IsValueType ? SyntaxFactory.DefaultExpression(SyntaxFactory.IdentifierName(typeName)) :
-                                SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression);
-                        }
+                    }
+                }
+                if (whenNull == null)
+                {
+                    var type =/* whenNotNullType ??*/ nodeType;
+                    if (type != null)
+                    {
+                        var typeName = type.ToString();
+                        whenNull = type.IsValueType ? SyntaxFactory.DefaultExpression(SyntaxFactory.IdentifierName(typeName)) :
+                            SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression);
                     }
                 }
             }
@@ -1737,19 +1810,32 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             if (statementContainer != null)
             {
-                if (!statementContainer.Parent.IsKind(SyntaxKind.Block))
+                if (!statementContainer.Parent.IsKind(SyntaxKind.Block) && !statementContainer.Parent.IsKind(SyntaxKind.GlobalStatement))
                 {
                     while (statementContainer.Parent is StatementSyntax st)
                     {
                         statementContainer = st;
-                        if (statementContainer.Parent.IsKind(SyntaxKind.Block))
+                        if (statementContainer.Parent.IsKind(SyntaxKind.Block) || statementContainer.Parent.IsKind(SyntaxKind.GlobalStatement))
                             break;
                     }
-                    if (!statementContainer.Parent.IsKind(SyntaxKind.Block))
+                    while (statementContainer.Parent is GlobalStatementSyntax gst)
+                    {
+                        statementContainer = gst.Statement;
+                        break;
+                    }
+                    if (!statementContainer.Parent.IsKind(SyntaxKind.Block) && !statementContainer.Parent.IsKind(SyntaxKind.GlobalStatement))
                         statementContainer = null;
                 }
             }
+            SyntaxNode? insertInto = null;
+            insertInto = statementContainer;
             int? insertAt = statementContainer != null ? Array.IndexOf(statementContainer.Parent!.ChildNodes().ToArray(), statementContainer) : null;
+            if (statementContainer != null && statementContainer.Parent.IsKind(SyntaxKind.GlobalStatement))
+            {
+                var compilationUnit = statementContainer.Parent.Parent!;
+                insertInto = compilationUnit;
+                insertAt = Array.IndexOf(compilationUnit.ChildNodes().ToArray(), statementContainer.Parent);
+            }
             var currentBlockVariables = defineBlockVariables.Peek();
             if (insertAt == null)
             {
@@ -1767,6 +1853,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 Type = nodeExpressionType,
                 Initializer = node.Expression,
                 InitializerTypeInferenceOnly = true,
+                InsertIntoParent = insertInto,
                 InsertionIndex = insertAt
             });
 
@@ -1778,6 +1865,7 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             if (node.WhenNotNull.IsKind(SyntaxKind.ConditionalAccessExpression))
             {
+                var innerConditional = (ConditionalAccessExpressionSyntax)node.WhenNotNull;
                 Stack<ITypeSymbol> lwhenNotNullExpressionTypeChainStack;
                 if (nodeExpressionTypes == null)
                 {
@@ -1799,11 +1887,40 @@ namespace NetJs.Translator.CSharpToJavascript
                     lwhenNotNullExpressionTypeChainStack = nodeExpressionTypes;
                 //var whenNotNullType = GetTypeSymbol(node.WhenNotNull);
                 //var whenNotNullExpressionType = GetTypeSymbol(((ConditionalAccessExpressionSyntax)node.WhenNotNull).Expression);
-                whenNotNull = (CSharpSyntaxNode)VisitConditionalAccessExpression((ConditionalAccessExpressionSyntax)Combine(SyntaxFactory.IdentifierName(derefVariableName), node.WhenNotNull)!, parentCondition ?? node, nodeExpressionTypes: lwhenNotNullExpressionTypeChainStack)!;
+                List<ConditionalAccessExpressionSyntax> skipConditional = new();
+                CSharpSyntaxNode cd = innerConditional;
+                while (cd.IsKind(SyntaxKind.ConditionalAccessExpression))
+                {
+                    var ccd = (ConditionalAccessExpressionSyntax)cd;
+                    skipConditional.Add(ccd);
+                    cd = ccd.WhenNotNull;
+                }
+                skipRewriteConditional.AddRange(skipConditional);
+                var mInner = VisitConditionalAccessExpression(innerConditional);
+                skipConditional.ForEach(e => skipRewriteConditional.Remove(e));
+                var exp = (ConditionalAccessExpressionSyntax)Combine(SyntaxFactory.IdentifierName(derefVariableName), (ExpressionSyntax)mInner!)!;
+                whenNotNull = (CSharpSyntaxNode)VisitConditionalAccessExpression(exp, parentCondition ?? node, nodeExpressionTypes: lwhenNotNullExpressionTypeChainStack)!;
             }
             else
             {
                 whenNotNull = Combine(SyntaxFactory.IdentifierName(derefVariableName), (ExpressionSyntax)Visit(node.WhenNotNull)!)!;
+            }
+            //Given Contacts?.Sum(s => s.CallEngagementTime) ?? 0; where the lhs of the coalese is nullable type(int? or class)
+            //We are rewriting it as  ? __ca10__.Sum(s => s.CallEngagementTime) : 0
+            //but if the path __ca10__.Sum(s => s.CallEngagementTime) is taken, we want to make sure we still return default coalesce value(0) if sum returns null
+            //Let's rewrite as  ? (__ca10__.Sum(s => s.CallEngagementTime)??0) : 0
+            if (isCoalesce &&
+                finalWhenNotNullType != null &&
+                (!finalWhenNotNullType.IsValueType || (finalWhenNotNullType.IsNullable(out var nt) && nt!.IsValueType)) &&
+                whenNull != null &&
+                whenNotNull is ExpressionSyntax expression)
+            {
+                whenNotNull = SyntaxFactory.ParenthesizedExpression(
+                    SyntaxFactory.BinaryExpression(
+                        SyntaxKind.CoalesceExpression,
+                        expression,
+                        whenNull))
+                .NormalizeWhitespace();
             }
             bool isIfStatement = node.Parent is ExpressionStatementSyntax;
             bool hasReturn = false;
@@ -1919,7 +2036,7 @@ namespace NetJs.Translator.CSharpToJavascript
         {
             //remove null forgivings as it will confuse some writers logic
             //if (node.IsKind(SyntaxKind.SuppressNullableWarningExpression))
-                //return Visit(node.Operand);
+            //return Visit(node.Operand);
             return base.VisitPostfixUnaryExpression(node);
         }
 

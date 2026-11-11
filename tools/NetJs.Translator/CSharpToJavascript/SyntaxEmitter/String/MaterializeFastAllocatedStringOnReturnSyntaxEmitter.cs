@@ -17,7 +17,9 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.String
     {
         public override bool TryEmit(ReturnStatementSyntax node, TranslatorSyntaxVisitor visitor)
         {
-            if (node.Expression != null && node.Expression.IsKind(SyntaxKind.IdentifierName) && node.Expression is IdentifierNameSyntax id)
+            if (node.Expression != null &&
+                node.Expression.IsKind(SyntaxKind.IdentifierName) &&
+                node.Expression is IdentifierNameSyntax id)
             {
                 var type = visitor.Global.TryGetTypeSymbol(node.Expression, visitor);
                 if (SymbolEqualityComparer.Default.Equals(type, visitor.Global.SystemString))
@@ -47,9 +49,89 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.String
                                         visitor.WriteReturn(node, new CodeNode(() =>
                                         {
                                             visitor.Visit(node.Expression);
-                                            visitor.CurrentTypeWriter.Write(node, ".Collect");
+                                            visitor.CurrentTypeWriter.Write(node, "?.Collect ?? null");
                                         }));
                                         //visitor.CurrentTypeWriter.Write(node, )
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+
+                        var stringAssignment = (method?.DescendantNodes() ?? property!.DescendantNodes()).FirstOrDefault(n =>
+                        {
+                            if (n.IsKind(SyntaxKind.SimpleAssignmentExpression) && n is AssignmentExpressionSyntax ass && ass.Left.IsKind(SyntaxKind.IdentifierName) && ass.Left is IdentifierNameSyntax id2)
+                            {
+                                return id2.Identifier.ValueText == id.Identifier.ValueText;
+                            }
+                            return false;
+                        });
+                        if (stringAssignment != null && stringAssignment.ToString().Contains("FastAllocateString"))
+                        {
+                            visitor.WriteReturn(node, new CodeNode(() =>
+                            {
+                                visitor.Visit(node.Expression);
+                                visitor.CurrentTypeWriter.Write(node, "?.Collect ?? ");
+                                visitor.Visit(node.Expression);
+                            }));
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+    }
+
+    sealed class MaterializeFastAllocatedStringOnReturnSyntaxEmitter2 : SyntaxEmitter<CSharpSyntaxNode>
+    {
+        public override bool TryEmit(CSharpSyntaxNode node, TranslatorSyntaxVisitor visitor)
+        {
+            if (node.IsKind(SyntaxKind.IdentifierName) &&
+                node.Parent.IsKind(SyntaxKind.ConditionalExpression) &&
+                node.Parent.Parent.IsKind(SyntaxKind.ReturnStatement))
+            {
+                IdentifierNameSyntax id = (IdentifierNameSyntax)node;
+                ReturnStatementSyntax returns = (ReturnStatementSyntax)node.Parent.Parent;
+
+                if (_processing.Value!.Contains(id))
+                    return false;
+
+                var type = visitor.Global.TryGetTypeSymbol(returns.Expression!, visitor);
+                if (SymbolEqualityComparer.Default.Equals(type, visitor.Global.SystemString))
+                {
+                    var method = node.FindClosestParent<MethodDeclarationSyntax>();
+                    var property = node.FindClosestParent<PropertyDeclarationSyntax>();
+                    if (method != null || property != null)
+                    {
+                        //find the variable declarator for the storage identifier of the string we are returning
+                        var stringDeclaration = (method?.DescendantNodes() ?? property!.DescendantNodes()).FirstOrDefault(n =>
+                        {
+                            if (n.IsKind(SyntaxKind.VariableDeclarator) && n is VariableDeclaratorSyntax vd)
+                            {
+                                return vd.Identifier.ValueText == id.Identifier.ValueText;
+                            }
+                            return false;
+                        });
+                        if (stringDeclaration != null)
+                        {
+                            if (stringDeclaration is VariableDeclaratorSyntax vd)
+                            {
+                                if (vd.Initializer != null)
+                                {
+                                    //if the initializer is a call to string.FastAllocateString, we need to unwrap this return by calling Collect on the proxy;
+                                    if (vd.Initializer.ToString().Contains("FastAllocateString"))
+                                    {
+                                        _processing.Value.Push(id);
+                                        try
+                                        {
+                                            visitor.Visit(id);
+                                            visitor.CurrentTypeWriter.Write(node, ".Collect");
+                                        }
+                                        finally
+                                        {
+                                            _processing.Value.Pop();
+                                        }
                                         return true;
                                     }
                                 }

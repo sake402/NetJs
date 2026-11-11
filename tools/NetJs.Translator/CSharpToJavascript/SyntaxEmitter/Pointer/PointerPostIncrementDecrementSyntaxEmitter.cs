@@ -29,9 +29,10 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.Pointer
                         {
                             visitor.CurrentTypeWriter.Write(node, "var $old = ", true);
                             visitor.Visit(node.Operand);
-                            visitor.CurrentTypeWriter.Write(node, ".");
-                            visitor.WriteMemberName(node, visitor.Global.SystemBaseRefOrPointer, "Clone");
-                            visitor.CurrentTypeWriter.WriteLine(node, "();");
+                            //visitor.CurrentTypeWriter.Write(node, ".");
+                            //visitor.WriteMemberName(node, visitor.Global.SystemBaseRefOrPointer, "Clone");
+                            //visitor.CurrentTypeWriter.WriteLine(node, "();");
+                            visitor.CurrentTypeWriter.WriteLine(node, ";");
                             visitor.CurrentTypeWriter.Write(node, "", true);
                             visitor.WritePointerSelfAdvance(node, node.Operand, new CodeNode(() =>
                             {

@@ -1,10 +1,12 @@
-﻿using NetJs.Translator.CSharpToJavascript;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using NetJs.Translator.CSharpToJavascript;
+using NUglify.JavaScript.Visitors;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -52,6 +54,21 @@ namespace NetJs.Translator.CSharpToJavascript
             return false;
         }
 
+        public void WriteBoxing(CSharpSyntaxNode node, CodeNode expression, ITypeSymbol expressionType)
+        {
+            CurrentTypeWriter.Write(node, _global.GlobalName);
+            CurrentTypeWriter.Write(node, ".");
+            CurrentTypeWriter.Write(node, Constants.BoxName);
+            CurrentTypeWriter.Write(node, "(");
+            VisitNode(expression);
+            CurrentTypeWriter.Write(node, ", ");
+            if (expressionType.IsNullable(out var itemType))
+                CurrentTypeWriter.Write(node, itemType!.ComputeOutputTypeName(_global));
+            else
+                CurrentTypeWriter.Write(node, expressionType.ComputeOutputTypeName(_global));
+            CurrentTypeWriter.Write(node, ")");
+        }
+
         public override void VisitCastExpression(CastExpressionSyntax node)
         {
             var castToType = _global.GetTypeSymbol(node.Type, this);
@@ -93,14 +110,31 @@ namespace NetJs.Translator.CSharpToJavascript
                     ((numFromType.IsIntegerNumericType() && castToType.IsIntegerNumericType()) ||
                     (numFromType.IsLongNumericType() && castToType.IsLongNumericType())))
                 {
-                    //this type can just be assigned, no cast/conversion neccessary in js
                     int fromRank = numFromType.GetNumericRangeRank();
                     int toRank = castToType.GetNumericRangeRank();
                     if (numFromType.IsSignedNumericType() == castToType.IsSignedNumericType())
                     {
+                        //(int)short => this type can just be assigned, no cast/conversion neccessary in js
                         if (toRank >= fromRank)
                         {
                             Visit(node.Expression);
+                            return;
+                        }
+                        else
+                        {
+                            //(byte)intValue => mask only => (intValue & mask) | 0
+                            var mask = castToType.GetNumericMask();
+                            CurrentTypeWriter.Write(node, "((");
+                            Visit(node.Expression);
+                            CurrentTypeWriter.Write(node, $" & 0x{mask:X})");
+                            if (castToType.IsSignedNumericType())
+                            {
+                                CurrentTypeWriter.Write(node, " | 0)");
+                            }
+                            else
+                            {
+                                CurrentTypeWriter.Write(node, " >>> 0)");
+                            }
                             return;
                         }
                     }
@@ -142,13 +176,17 @@ namespace NetJs.Translator.CSharpToJavascript
                     fromType != null && 
                     NeedBoxing(castToType, fromType))
                 {
-                    var metadata = fromType.Kind != SymbolKind.TypeParameter ? _global.GetRequiredMetadata(fromType) : null;
-                    CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.BoxName}(");
-                    Visit(node.Expression);
-                    CurrentTypeWriter.Write(node, ", ");
-                    CurrentTypeWriter.Write(node, metadata?.InvocationName ?? fromType.ComputeOutputTypeName(_global));
-                    //Visit(node.Type);
-                    CurrentTypeWriter.Write(node, ")");
+                    WriteBoxing(node, node.Expression, fromType);
+                    //var metadata = fromType.Kind != SymbolKind.TypeParameter ? _global.GetRequiredMetadata(fromType) : null;
+                    //CurrentTypeWriter.Write(node, $"{_global.GlobalName}.{Constants.BoxName}(");
+                    //Visit(node.Expression);
+                    //CurrentTypeWriter.Write(node, ", ");
+                    //if (fromType.IsNullable(out var itemType))
+                    //    CurrentTypeWriter.Write(node, itemType!.ComputeOutputTypeName(_global));
+                    //else
+                    //    CurrentTypeWriter.Write(node, metadata?.InvocationName ?? fromType.ComputeOutputTypeName(_global));
+                    ////Visit(node.Type);
+                    //CurrentTypeWriter.Write(node, ")");
                 }
                 else
                 {

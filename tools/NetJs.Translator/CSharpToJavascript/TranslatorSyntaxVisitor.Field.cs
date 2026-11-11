@@ -40,7 +40,7 @@ namespace NetJs.Translator.CSharpToJavascript
             else
             {
                 LayoutKind layoutKind = field.ContainingType.IsValueType ? LayoutKind.Sequential : LayoutKind.Auto;
-                if (_global.HasAttribute(field.ContainingType, typeof(StructLayoutAttribute).FullName, this, false, out var structLayoutAttribute))
+                if (_global.HasAttribute(field.ContainingType, typeof(StructLayoutAttribute).FullName!, this, false, out var structLayoutAttribute))
                 {
                     layoutKind = (LayoutKind)(int)structLayoutAttribute![0]!;
                 }
@@ -139,22 +139,29 @@ namespace NetJs.Translator.CSharpToJavascript
 
         bool TryWriteFieldLayout(CSharpSyntaxNode member, ISymbol field, ITypeSymbol fieldType, string fieldName, string? modifier, string? comment)
         {
+            if (!field.ContainingType.IsValueType || field.ContainingType.IsJsPrimitive())
+                return false;
+            LayoutKind? layoutKind = null;
+            if (_global.HasAttribute(field.ContainingType, typeof(StructLayoutAttribute).FullName!, this, false, out var structLayoutAttribute))
+            {
+                layoutKind = (LayoutKind)(int)structLayoutAttribute![0]!;
+            }
             //bool isBootClass = _global.HasAttribute(field.ContainingSymbol, typeof(BootAttribute).FullName, this, true, out _);
             int fieldOffset = 0;
             int fieldSize = 0;
-            int inlineSize = 0;
+            //int inlineSize = 0;
             var isFieldStructLayout = IsFieldStructLayout(member, field, out fieldOffset, out fieldSize);
-            bool fieldClassIsInineArray = _global.IsInlineArray(field.ContainingType, out inlineSize, out _);
-            bool isFixedArray = _global.IsFixedSizeField(field, out inlineSize, out _);
-            bool fieldTypeIsInlineArrayStruct = _global.IsInlineArray(fieldType, out inlineSize, out _);
+            bool fieldClassIsInineArray = _global.IsInlineArray(field.ContainingType, out var inlineArraySize, out _);
+            bool isFixedArrayField = _global.IsFixedSizeField(field, out var fixedArraySize, out var fixedElementType);
+            bool fieldTypeIsInlineArrayStruct = _global.IsInlineArray(fieldType, out var inlineArrayFieldSize, out var inlineElementType);
             //Dont use field layout for boot classes, as they dont inherit from System.Object really
             if (
                 //!isBootClass &&
                 !field.IsStatic &&
-                (isFieldStructLayout || fieldClassIsInineArray || isFixedArray) &&
+                (isFieldStructLayout || fieldClassIsInineArray || isFixedArrayField) &&
                 !field.ContainingType.IsType("System.Exception")/*Exception inherit native JS error, not object*/)
             {
-                if (fieldClassIsInineArray && inlineSize > 0)
+                if (fieldClassIsInineArray && inlineArraySize > 0)
                 {
                     //No one is going to reference this fields, no point in creating them
                     //for (int i = 0; i < inlineSize; i++)
@@ -165,15 +172,29 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
                 else
                 {
-                    var isPureStruct = _global.IsPureStructType(field.ContainingType);
-                    if (isPureStruct || fieldTypeIsInlineArrayStruct)
+                    var isPureStructMember = _global.IsPureStructType(field.ContainingType);
+                    if (/*isPureStructMember || */layoutKind == LayoutKind.Explicit || layoutKind == LayoutKind.Sequential)
                     {
                         _global.RegisterDependencyGraph(field, fieldType);
-                        CurrentTypeWriter.WriteLine(member, $"/*{comment}*/ {modifier} get {fieldName}() {{ return this.{(field.IsStatic ? Constants.ObjectGetStaticField : Constants.ObjectGetField)}({fieldOffset}, {fieldType.ComputeOutputTypeName(_global)}); }}", true);
-                        CurrentTypeWriter.WriteLine(member, $"/*{comment}*/ {modifier} set {fieldName}(value) {{ this.{(field.IsStatic ? Constants.ObjectSetStaticField : Constants.ObjectSetField)}({fieldOffset}, {fieldType.ComputeOutputTypeName(_global)}, value); }}", true);
+                        if (isFixedArrayField)
+                        {
+                            CurrentTypeWriter.WriteLine(member, $"/*{comment}{(isFixedArrayField ? $"[{fixedArraySize}]" : "")}*/ {modifier} get {fieldName}() {{ return this.{(field.IsStatic ? Constants.ObjectGetStaticField : Constants.ObjectGetField)}({fieldOffset}, [{fixedElementType.ComputeOutputTypeName(_global)}, {fixedArraySize}]); }}", true);
+                            CurrentTypeWriter.WriteLine(member, $"/*{comment}{(isFixedArrayField ? $"[{fixedArraySize}]" : "")}*/ {modifier} set {fieldName}(value) {{ this.{(field.IsStatic ? Constants.ObjectSetStaticField : Constants.ObjectSetField)}({fieldOffset}, [{fixedElementType.ComputeOutputTypeName(_global)}, {fixedArraySize}], value); }}", true);
+                        }
+                        else if (fieldTypeIsInlineArrayStruct)
+                        {
+                            CurrentTypeWriter.WriteLine(member, $"/*{comment}{(isFixedArrayField ? $"[{fieldSize}]" : "")}*/ {modifier} get {fieldName}() {{ return this.{(field.IsStatic ? Constants.ObjectGetStaticField : Constants.ObjectGetField)}({fieldOffset}, [{inlineElementType.ComputeOutputTypeName(_global)}, {inlineArrayFieldSize}]); }}", true);
+                            CurrentTypeWriter.WriteLine(member, $"/*{comment}{(isFixedArrayField ? $"[{fieldSize}]" : "")}*/ {modifier} set {fieldName}(value) {{ this.{(field.IsStatic ? Constants.ObjectSetStaticField : Constants.ObjectSetField)}({fieldOffset}, [{inlineElementType.ComputeOutputTypeName(_global)}, {inlineArrayFieldSize}], value); }}", true);
+                        }
+                        else
+                        {
+                            CurrentTypeWriter.WriteLine(member, $"/*{comment}{(isFixedArrayField ? $"[{fieldSize}]" : "")}*/ {modifier} get {fieldName}() {{ return this.{(field.IsStatic ? Constants.ObjectGetStaticField : Constants.ObjectGetField)}({fieldOffset}, {fieldType.ComputeOutputTypeName(_global)}); }}", true);
+                            CurrentTypeWriter.WriteLine(member, $"/*{comment}{(isFixedArrayField ? $"[{fieldSize}]" : "")}*/ {modifier} set {fieldName}(value) {{ this.{(field.IsStatic ? Constants.ObjectSetStaticField : Constants.ObjectSetField)}({fieldOffset}, {fieldType.ComputeOutputTypeName(_global)}, value); }}", true);
+                        }
                     }
                     else
                     {
+                        return false;
                         var knownType = _global.KnownTypeFrom(fieldType);
                         string? flagFieldOffsetPrefix = null;
                         string? flagFieldSizePrefix = null;
@@ -182,12 +203,12 @@ namespace NetJs.Translator.CSharpToJavascript
                         //    flagFieldSizePrefix = "0x" + (((int)knownType) << (32 - 6)).ToString("X") + "|";
                         //}
                         //else 
-                        if (isFixedArray)
+                        if (isFixedArrayField)
                         {
                             flagFieldSizePrefix = "0x80000000|";
                         }
-                        CurrentTypeWriter.WriteLine(member, $"/*{comment}{(isFixedArray ? $"[{fieldSize}]" : "")}*/ {modifier} get {fieldName}() {{ return this.{(field.IsStatic ? Constants.ObjectGetStaticField : Constants.ObjectGetField)}({flagFieldOffsetPrefix}{fieldOffset}, {flagFieldSizePrefix}{fieldSize}); }}", true);
-                        CurrentTypeWriter.WriteLine(member, $"/*{comment}{(isFixedArray ? $"[{fieldSize}]" : "")}*/ {modifier} set {fieldName}(value) {{ this.{(field.IsStatic ? Constants.ObjectSetStaticField : Constants.ObjectSetField)}({flagFieldOffsetPrefix}{fieldOffset}, {flagFieldSizePrefix}{fieldSize}, value); }}", true);
+                        CurrentTypeWriter.WriteLine(member, $"/*{comment}{(isFixedArrayField ? $"[{fieldSize}]" : "")}*/ {modifier} get {fieldName}() {{ return this.{(field.IsStatic ? Constants.ObjectGetStaticField : Constants.ObjectGetField)}({flagFieldOffsetPrefix}{fieldOffset}, {flagFieldSizePrefix}{fieldSize}); }}", true);
+                        CurrentTypeWriter.WriteLine(member, $"/*{comment}{(isFixedArrayField ? $"[{fieldSize}]" : "")}*/ {modifier} set {fieldName}(value) {{ this.{(field.IsStatic ? Constants.ObjectSetStaticField : Constants.ObjectSetField)}({flagFieldOffsetPrefix}{fieldOffset}, {flagFieldSizePrefix}{fieldSize}, value); }}", true);
                     }
                 }
                 return true;
@@ -232,13 +253,12 @@ namespace NetJs.Translator.CSharpToJavascript
                 CurrentClosure.DefineIdentifierType(baseFieldSymbol.Name, CodeSymbol.From(baseFieldSymbol));
                 //else
                 //    CurrentClosure.DefineIdentifierType(fieldName, CodeType.From(node.Declaration.Type, SymbolKind.Field));
+                if (fieldSymbol?.Name == "_reference")
+                {
 
+                }
                 var refKind = baseFieldSymbol.GetRefKind() ?? RefKind.None;
-                //if (refKind != RefKind.None)
-                //{
-
-                //}
-                var defaultValue = _global.GetDefaultValue(node.Declaration.Type, this);
+                var defaultValue = (fieldSymbol?.IsFixedSizeBuffer ?? false) ? "[]" : _global.GetDefaultValue(node.Declaration.Type, this);
                 bool useStaticPropertyFunction = false;
                 //if ((node.Modifiers.IsStatic() || node.Modifiers.IsConst()) &&
                 //    (defaultValue.EndsWith("()")/*eg T.default() ot Guid.default()*/ ||
@@ -262,7 +282,10 @@ namespace NetJs.Translator.CSharpToJavascript
                     {
                         bool isStaticInit = node.Modifiers.IsStatic() || node.Modifiers.IsConst();
                         var initLocation = isStaticInit ? TypeInitializerLocation.DefaultStaticConstructor : TypeInitializerLocation.DefaultInstanceConstructor;
+                        if (fieldName == "_source" && (fieldSymbol?.ContainingType.Name == "CastICollectionIterator" || fieldSymbol?.ContainingType.Name == "OfTypeIterator"))
+                        {
 
+                        }
                         // if class has primary constructor and the field being initialized needs a parameter from the constructor, we initialize that field in the primary constructor
                         if (var.Initializer?.Value != null && ((CurrentType is ClassDeclarationSyntax cls && cls.ParameterList != null) || (CurrentType is StructDeclarationSyntax str && str.ParameterList != null)))
                         {
@@ -388,7 +411,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
 
                 bool memberInitialized = false;
-                if (var.Initializer != null || (fieldType.IsValueType && !fieldType.IsJsPrimitive()))
+                if (var.Initializer != null || (fieldType.IsValueType && !fieldType.IsJsPrimitive()) || refKind != RefKind.None)
                 {
                     //If we initialize a field from a primary constructor parameter, this is already handled in the primary constructor generator (WritePrimaryConstructor)
                     //We should skip it here
@@ -413,7 +436,7 @@ namespace NetJs.Translator.CSharpToJavascript
                 }
                 else if (!fieldContainingTypeIsInlineArray)
                 {
-                    CurrentTypeWriter.Write(node, $"/*{node.Declaration.Type.ToString().Trim()}*/ {modifier}{(useStaticPropertyFunction ? "get " : "")}{fieldMetadata.OverloadName ?? fieldName}", true);
+                    CurrentTypeWriter.Write(node, $"/*{node.Declaration.Type.ToString().Trim()}{((fieldSymbol?.IsFixedSizeBuffer ?? false) ? $"[{fieldSymbol.FixedSize}]" : "")}*/ {modifier}{(useStaticPropertyFunction ? "get " : "")}{fieldMetadata.OverloadName ?? fieldName}", true);
                     //if (useStaticPropertyFunction)
                     //{
                     //    Writer.Write(node, $"() {{ return {(node.Modifiers.IsConst() || node.Modifiers.IsStatic() ? $"{declaringSymbolMeta.InvocationName}." : "")}$_{fieldMetadata.OverloadName ?? fieldName} ??= ");
@@ -488,8 +511,6 @@ namespace NetJs.Translator.CSharpToJavascript
                 using var trimmer = WriteTrimmableBoundaryStart(node, eventSymbol);
 
                 var metadata = _global.GetRequiredMetadata(eventSymbol);
-                var addMetadata = eventSymbol.AddMethod != null ? _global.GetMetadata(eventSymbol.AddMethod) : null;
-                var removeMetadata = eventSymbol.RemoveMethod != null ? _global.GetMetadata(eventSymbol.RemoveMethod) : null;
 
                 CodeNode left = new CodeNode(() =>
                 {
@@ -506,10 +527,12 @@ namespace NetJs.Translator.CSharpToJavascript
 
                 if (eventSymbol.AddMethod != null)
                 {
+                    var addMetadata = _global.GetMetadata(eventSymbol.AddMethod);
                     using var trimmerAdd = WriteTrimmableBoundaryStart(node, eventSymbol.AddMethod);
                     CurrentTypeWriter.WriteLine(node, $"{modifier}{addMetadata?.OverloadName ?? ("add_" + (metadata?.OverloadName ?? eventSymbol.Name))}(/*{node.Declaration.Type.ToString().Trim()}*/ value)", true);
                     CurrentTypeWriter.WriteLine(node, "{", true);
                     OpenClosure(node, eventSymbol.AddMethod);
+                    WriteTraceEntry(node, addMetadata?.Export.Handle);
                     CurrentTypeWriter.Write(node, "", true);
                     WriteDelegateCombine(node, left, right);
                     CurrentTypeWriter.WriteLine(node, ";");
@@ -519,10 +542,12 @@ namespace NetJs.Translator.CSharpToJavascript
 
                 if (eventSymbol.RemoveMethod != null)
                 {
+                    var removeMetadata = _global.GetMetadata(eventSymbol.RemoveMethod);
                     using var trimmerRemove = WriteTrimmableBoundaryStart(node, eventSymbol.RemoveMethod);
                     CurrentTypeWriter.WriteLine(node, $"{modifier}{removeMetadata?.OverloadName ?? ("remove_" + (metadata?.OverloadName ?? eventSymbol.Name))}(/*{node.Declaration.Type.ToString().Trim()}*/ value)", true);
                     CurrentTypeWriter.WriteLine(node, "{", true);
                     OpenClosure(node, eventSymbol.RemoveMethod);
+                    WriteTraceEntry(node, removeMetadata?.Export.Handle);
                     CurrentTypeWriter.Write(node, "", true);
                     WriteDelegateRemove(node, left, right);
                     CurrentTypeWriter.WriteLine(node, ";");

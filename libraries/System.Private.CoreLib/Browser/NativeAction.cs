@@ -48,6 +48,9 @@ namespace NetJs
         [NetJs.Template("{action}.call({thisArg})")]
         public static extern void InvokeCall(this NativeAction action, object? thisArg = null);
         [NetJs.IgnoreGeneric]
+        [NetJs.Template("{action}.call({thisArg}, {parameter})")]
+        public static extern void InvokeCall<T>(this NativeAction<T> action, object? thisArg, T parameter);
+        [NetJs.IgnoreGeneric]
         [NetJs.Template("{func}.call({thisArg})")]
         public static extern T InvokeCall<T>(this NativeFunction<T> func, object? thisArg = null);
 

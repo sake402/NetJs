@@ -17,7 +17,7 @@ namespace System.Net.Http
 {
     internal static partial class BrowserHttpInterop
     {
-        class RequestSession : IDisposable
+        class RequestSession : JSObject, IDisposable
         {
             public Window.Promise<Response>? responsePromise;
             public Response? response;
@@ -27,10 +27,10 @@ namespace System.Net.Http
             public ReadableStreamDefaultReader<byte>? streamReader;
             public GeneratorIteratorResult<Uint8Array>? currentStreamReaderChunk;
             public int currentBufferOffset;
-            public bool IsDisposed { get; }
-            public void Dispose()
-            {
-            }
+            //public bool IsDisposed { get; }
+            //public override void Dispose()
+            //{
+            //}
         }
 
         [NetJs.NoJSImport]
@@ -136,7 +136,7 @@ namespace System.Net.Http
             var method = "GET";
             if (optionValues != null)
             {
-                var methodIndex = optionNames.ArrayIndexOf("method");
+                var methodIndex = optionNames.indexOf("method");
                 unchecked
                 {
                     if (methodIndex >= 0)
@@ -156,8 +156,8 @@ namespace System.Net.Http
             {
                 unchecked
                 {
-                    responseHeaderNames.Push(k[0]);
-                    responseHeaderValues.Push(k[1]);
+                    responseHeaderNames.push(k[0]);
+                    responseHeaderValues.push(k[1]);
                 }
             });
             session.responsePromise = promise;
@@ -234,6 +234,11 @@ namespace System.Net.Http
                 span[i] = uint8Array[i];
             }
             session.currentBufferOffset += lenToRead;
+            if (lenToRead == newLen)
+            {
+                session.currentStreamReaderChunk = null;
+                session.currentBufferOffset = 0;
+            }
             return lenToRead;
         }
 

@@ -8,7 +8,7 @@ namespace NetJs
     //[Name("dotnetJs")]
     public static class Script
     {
-        [Template("{global.}"+Constants.RefCreateName+"({getter}, {setter})")]
+        [Template("{global.}" + Constants.RefCreateName + "({getter}, {setter})")]
         public static extern RefOrPointer<T> CreateReference<T>(NativeFunction<T> getter, NativeAction<T> setter);
         [Template("{0}")]
         public static extern ref T Ref<T>(RefOrPointer<T> value);
@@ -109,8 +109,8 @@ namespace NetJs
         public static extern T[] NewArray<T>();
         [Template("new Array({length})")]
         public static extern T[] NewArray<T>(int length);
-        [Template("{values}")]
-        public static extern T[] CreateArrayFromValues<T>(params T[] values);
+        [Template("[{values}]")]
+        public static extern T[] CreateArrayFromValues<T>([Spread] params T[] values);
 
         public static extern T Identity<T>(T arg, params object[] args);
 
@@ -363,6 +363,10 @@ namespace NetJs
         [Template("encodeURIComponent({0})")]
         public static extern string EncodeURIComponent(string component);
 
+        [Template("BigInt({0})")]
+        public static extern long BigInt(int number);
+        [Template("Number({0})")]
+        public static extern int Number(long number);
         [Template("{global.}" + Constants.BoxName + "({0}, {1})")]
         public static extern object Box(object? value, TypePrototype type);
         [Template("{global.}" + NetJs.Constants.UnboxName + "({0})")]
@@ -376,6 +380,8 @@ namespace NetJs
         public static extern bool InstanceOf(object? obj, TypePrototype type);
         [Template("({obj} instanceof {type}." + Constants.RuntimeTypePrototypeName + ")")]
         public static extern bool InstanceOf(object? obj, Type type);
+        [Template("({obj} instanceof {T})")]
+        public static extern bool InstanceOf<T>(object? obj);
 
         [Template("this")]
         public static extern T This<T>();

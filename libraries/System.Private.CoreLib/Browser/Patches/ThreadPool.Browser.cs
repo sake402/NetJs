@@ -11,6 +11,17 @@ namespace System.Threading
         {
             var call = NetJs.Script.Write<NativeAction>("callback." + NetJs.Constants.RefValueName);
             Global.SetTimeout(call, 0);
+            //Global.SetTimeout(() =>
+            //{
+            //    try
+            //    {
+            //        call();
+            //    }
+            //    catch (Exception e)
+            //    {
+            //        Window.Window.console.log(e);
+            //    }
+            //}, 0);
         }
     }
 }

@@ -64,19 +64,19 @@ namespace System
                     this._target = _target;
                     prototype = NetJs.Script.GetClassPrototypeOf(_target);
                 }
-                var nativeFunctionName = _delegate[Constants.NativeDelagateFunctionName]!["name"].As<string>();
-                if (nativeFunctionName.Length > 0)
-                {
-                    unchecked
-                    {
-                        _model = prototype.Metadata!.Methods!.Filter(f => f.Name.NativeEquals(nativeFunctionName))[0] ?? throw null!;
-                    }
-                }
-                else
-                {
-                    //anonymous method
-                    _model = anonymousMethodModel;
-                }
+                //var nativeFunctionName = _delegate[Constants.NativeDelagateFunctionName]!["name"].As<string>();
+                //if (nativeFunctionName.Length > 0)
+                //{
+                //    unchecked
+                //    {
+                //        _model = prototype.Metadata!.Methods!.filter(f => f.Name.NativeEquals(nativeFunctionName))[0];
+                //    }
+                //}
+                //else
+                //{
+                //anonymous method
+                _model = anonymousMethodModel;
+                //}
             }
         }
 
@@ -129,7 +129,7 @@ namespace System
             if (_parameters != null)
                 return _parameters;
             var parameters = _model.As<MethodModel>().Parameters ?? null;
-            var infos = parameters?.Map((p, i, all) =>
+            var infos = parameters?.map((p, i, all) =>
             {
                 var parameterTypeHandle = p.ParameterType;
                 //if (NetJs.Script.TypeOf(parameterTypeHandle).NativeEquals("function"))
@@ -145,7 +145,7 @@ namespace System
         public override object? Invoke(object? obj, BindingFlags invokeAttr, Binder? binder, object?[]? parameters, CultureInfo? culture)
         {
             var jsFunction = this._delegate[Constants.NativeDelagateFunctionName];
-            parameters = parameters?.Map(p => NetJs.Script.Unbox(p));
+            parameters = parameters?.map(p => NetJs.Script.Unbox(p));
             return NetJs.Script.Write<object>("jsFunction.apply(obj, parameters)");
         }
 
@@ -190,7 +190,7 @@ namespace System
                     unchecked
                     {
                         var del = delegates[i];
-                        var invokeMethodModel = del.GetClassPrototype().Metadata?.Methods?.Filter(m => m.Name.NativeEquals("Invoke"))[0];
+                        var invokeMethodModel = del.GetClassPrototype().Metadata?.Methods?.filter(m => m.Name.NativeEquals("Invoke"))[0];
                         var invokeName = invokeMethodModel?.GetOutputName() ?? "Invoke";
                         var invokeMethod = del[invokeName].As<NativeFunction<object?>>();
                         result = invokeMethod.InvokeApply(del, args);
@@ -220,25 +220,25 @@ namespace System
                 object[] args = NetJs.Script.NewArray<object>();
                 unchecked
                 {
-                    if (NetJs.Script.IsDefined(info._model.As<MethodModel>().GenericArguments) &&
-                        info._model.As<MethodModel>().GenericArguments!.Length > 0)
-                    {
-                        args = NetJs.Script.NewArray<object>();
-                        for (int i = 0; i < info.As<RuntimeMethodInfo>()._typeArguments!.Length; i++)
-                        {
-                            args.Push(info.As<RuntimeMethodInfo>()._typeArguments![i].As<RuntimeType>()._prototype);
-                        }
-                    }
+                    //if (NetJs.Script.IsDefined(info._model.As<MethodModel>().GenericArguments) &&
+                    //    info._model.As<MethodModel>().GenericArguments!.Length > 0)
+                    //{
+                    //    args = NetJs.Script.NewArray<object>();
+                    //    for (int i = 0; i < info.As<RuntimeMethodInfo>()._typeArguments!.Length; i++)
+                    //    {
+                    //        args.push(info.As<RuntimeMethodInfo>()._typeArguments![i].As<RuntimeType>()._prototype);
+                    //    }
+                    //}
                     var methodArgs = NetJs.Script.Arguments();
                     if (info._model.Flags.TypeHasFlag(MemberFlagsModel.IsStatic)
                         && NetJs.Script.IsDefined(info._model.As<MethodModel>().Parameters)
                         && methodArgs.Length == info._model.As<MethodModel>().Parameters!.Length - 1)//method expect an extra(this) parameter not known by the delegate signature, bind it to target
                     {
-                        args.Push(target);
+                        args.push(target);
                     }
                     for (int i = 0; i < methodArgs.Length; i++)
                     {
-                        args.Push(methodArgs[i]);
+                        args.push(methodArgs[i]);
                     }
                 }
                 return RuntimeHelpers.NativeFunctionDispatch(info._model.Flags.TypeHasFlag(MemberFlagsModel.IsStatic) ? prototype : target, info._model, args);
@@ -288,7 +288,7 @@ namespace System
                     {
                         MethodModel[] allMethods = NetJs.Script.NewArray<MethodModel>();
                         prototype.CollectMethods(allMethods);
-                        var methodModel = allMethods!.Filter(f => (f.GetOutputName()).NativeEquals(nativeFunctionName))[0] ?? null;
+                        var methodModel = allMethods!.filter(f => (f.GetOutputName()).NativeEquals(nativeFunctionName))[0] ?? null;
                         if (NetJs.Script.IsDefined(methodModel))
                         {
                             var info = (MethodInfo?)AppDomain.GetMember(methodModel!.Handle.As<uint>());
@@ -303,7 +303,9 @@ namespace System
             }
             var model = this[Constants.NativeDelagateAnonymousFunctionModel].As<MethodModel>();
             Debug.Assert((model ?? null) != null);
-            method_info = new AnonymousFunctionMethodInfo(this, target, model!);
+            //the model is stored in a global variable, safe to keep the methodinfo there
+            method_info = /*model!["__methodInfo__"].As<AnonymousFunctionMethodInfo>() ??*/ new AnonymousFunctionMethodInfo(this, target, model!);
+            //model["__methodInfo__"] = method_info;
             return method_info;
         }
 
@@ -376,6 +378,15 @@ namespace System
             if (thisPrototype == thatPrototype)
             {
                 return true;
+            }
+            var current = thatPrototype.Base;
+            while (NetJs.Script.IsDefined(current))
+            {
+                if (current == thisPrototype)
+                {
+                    return true;
+                }
+                current = current!.Base;
             }
             //if a generic delegate like Func<int> and Func<long>, they wont equate, but the originals (Func<> and Func<>) must equate for this to pass
             if (NetJs.Script.IsDefined(thisPrototype.OpenGenericPrototype) && NetJs.Script.IsDefined(thatPrototype.OpenGenericPrototype))

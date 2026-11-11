@@ -9,6 +9,12 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.SystemIndex
     //Rewrite as ArrayLike[ArrayLike.Lenght-1]
     sealed class SystemIndexToGetElementSyntaxEmitter : SyntaxEmitter<ElementAccessExpressionSyntax>
     {
+        //static void WriteIndex(CSharpSyntaxNode node, TranslatorSyntaxVisitor visitor, CodeNode expression, PrefixUnaryExpressionSyntax prefix)
+        //{
+        //    visitor.WriteMemberAccess(node, expressionNode, targetType, null, lenGetProperty);
+        //    visitor.CurrentTypeWriter.Write(node, " - ");
+        //    visitor.Visit(prefixIndex.Operand);
+        //}
         public override bool TryEmit(ElementAccessExpressionSyntax node, TranslatorSyntaxVisitor visitor)
         {
             var targetType = visitor.Global.TryGetTypeSymbol(node.Expression, visitor);
@@ -35,8 +41,8 @@ namespace NetJs.Translator.CSharpToJavascript.SyntaxEmitter.SystemIndex
                                 var lenGetProperty = ((IPropertySymbol)(targetType.GetMembers("Length", visitor.Global).SingleOrDefault() ?? targetType.GetMembers("Count", visitor.Global).Single()));
                                 if (lenGetProperty != null)
                                 {
-                                    bool isStaticCall = lenGetProperty.IsStaticCallConvention(visitor.Global);
-                                    bool hasTemplate = lenGetProperty.GetMethod?.GetTemplateAttribute(visitor.Global, visitor) != null;
+                                    //bool isStaticCall = lenGetProperty.IsStaticCallConvention(visitor.Global);
+                                    //bool hasTemplate = lenGetProperty.GetMethod?.GetTemplateAttribute(visitor.Global, visitor) != null;
                                     //if (true)
                                     //{
                                     CodeNode expressionNode;

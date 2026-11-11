@@ -35,6 +35,10 @@ namespace System
         public const string LowerBoundsName = "$lb";
 
         public static extern Array from(Uint8Array arr);
+        public static extern Array from(object arrayLike);
+        public extern Array sort(NativeFunction<object, object, object> sortFunction);
+        [NetJs.IgnoreGeneric]
+        public extern T[] sort<T>(NativeFunction<T, T, int> sortFunction);
         //Type ElementType
         //{
         //    get => this[ElementTypeName].As<TypePrototype>()?.Type;
@@ -362,12 +366,24 @@ namespace System
             var et = array[ElementTypeName].As<RuntimeType?>();
             if (NetJs.Script.IsUndefined(et))
             {
+                if (array[Constants.IsProxy].As<bool>() == true)
+                {
+                    var handler = array[Constants.ProxyHandler];
+                    if (NetJs.Script.InstanceOf<ArrayWindowProxyHandler>(handler))
+                    {
+                        return handler.As<ArrayWindowProxyHandler>().ElementType;
+                    }
+                    if (NetJs.Script.InstanceOf<ArrayMutationProxyHandler>(handler))
+                    {
+                        return handler.As<ArrayMutationProxyHandler>().ElementType;
+                    }
+                }
                 et = null;
             }
             return et;
         }
 
-        public static void AddMetadata(Array arr, Type elementType, int[]? sizes = null, int[]? lowerBounds = null)
+        public static Array AddMetadata(Array arr, Type elementType, int[]? sizes = null, int[]? lowerBounds = null)
         {
             arr[SizesName] = sizes ?? NetJs.Script.CreateArrayFromValues(arr.Length);
             arr[ElementTypeName] = elementType;
@@ -375,6 +391,7 @@ namespace System
             {
                 arr[LowerBoundsName] = lowerBounds;
             }
+            return arr;
         }
 
         public static void CopyMetadata(Array arr, Array source)
@@ -399,7 +416,7 @@ namespace System
                     for (int i = 0; i < sizes[depth]; i++)
                     {
                         var innerArray = CreateFinal(type, sizes, lowerBounds, fill, depth + 1);
-                        arr.Push(innerArray);
+                        arr.push(innerArray);
                     }
                 }
                 else
@@ -408,7 +425,7 @@ namespace System
                     if (!createJaggedArray)
                     {
                         len = 1;
-                        sizes.ForEach(s =>
+                        sizes.forEach(s =>
                         {
                             //if (NetJs.Script.TypeOf(s) == "bigint")
                             //    s = NetJs.Script.Write<int>("Number(s)");
@@ -439,9 +456,9 @@ namespace System
                                 for (int i = 0; i < len; i++)
                                 {
                                     if (i < fillArr.Length)
-                                        arr.Push(fillArr[i]);
+                                        arr.push(fillArr[i]);
                                     else
-                                        arr.Push(defaultValue ?? NetJs.Script.Write<object>($"$.{NetJs.Constants.DefaultTypeName}(prototype)"));
+                                        arr.push(defaultValue ?? NetJs.Script.Write<object>($"$.{NetJs.Constants.DefaultTypeName}(prototype)"));
                                 }
                             }
                             //NetJs.Script.Write<bool>("arr.length = {0}", len);
@@ -451,7 +468,7 @@ namespace System
                         {
                             for (int i = 0; i < len; i++)
                             {
-                                arr.Push(fill);
+                                arr.push(fill);
                             }
                         }
                     }
@@ -459,7 +476,7 @@ namespace System
                     {
                         for (int i = 0; i < len; i++)
                         {
-                            arr.Push(defaultValue ?? NetJs.Script.Write<object>($"$.{NetJs.Constants.DefaultTypeName}(prototype)"));
+                            arr.push(defaultValue ?? NetJs.Script.Write<object>($"$.{NetJs.Constants.DefaultTypeName}(prototype)"));
                         }
                     }
                 }
@@ -720,7 +737,7 @@ namespace System
                     arr(instance.As<Array>());
                 return true;
             }
-            if (NetJs.Script.InstanceOf(instance, typeof(Array)))
+            if (NetJs.Script.InstanceOf<Array>(instance))
             {
                 if (arr != null)
                     arr(instance.As<Array>());
@@ -917,7 +934,7 @@ namespace System
                 return false;
             if (NetJs.Script.Write<bool>("window.Array.isArray(instance)"))
                 return true;
-            if (NetJs.Script.InstanceOf(instance, typeof(Array)))
+            if (NetJs.Script.InstanceOf<Array>(instance))
             {
                 var elementType = Array.GetArrayElementType(instance.As<Array>());
                 if (elementType == typeof(T))

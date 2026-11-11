@@ -48,8 +48,8 @@ namespace System.Reflection
                     if (NetJs.Script.IsDefined(model.IndexParameters))
                     {
                         var newArray = NetJs.Script.NewArray<ParameterModel>();
-                        newArray.Push(model.IndexParameters!);
-                        newArray.Push(new ParameterModel
+                        newArray.push(model.IndexParameters!);
+                        newArray.push(new ParameterModel
                         {
                             Name = "value",
                             ParameterType = model.PropertyType
@@ -104,8 +104,7 @@ namespace System.Reflection
         [NetJs.MemberReplace]
         internal static int get_metadata_token(RuntimePropertyInfo monoProperty)
         {
-            var model = monoProperty.As<RuntimePropertyInfo>()._model;
-            return (int)model.Handle;
+            return NetJs.Script.IsDefined(monoProperty._model.OriginalHandle) ? monoProperty._model.OriginalHandle.As<int>() : monoProperty._model.Handle.As<int>();
         }
 
         [NetJs.MemberReplace]

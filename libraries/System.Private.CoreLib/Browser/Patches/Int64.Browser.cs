@@ -32,5 +32,145 @@ namespace System
         //{
         //    return NetJs.Script.TypeOf(value).NativeEquals("bigint");
         //}
+
+        public static Int64_Partial? operator +(Int64_Partial a, Int64_Partial? b)
+        {
+            if (b.As<long?>() == null)
+                return null;
+            return (a.As<long>() + b.As<long>()).As<Int64_Partial>();
+        }
+
+        public static Int64_Partial? operator +(Int64_Partial? a, Int64_Partial? b)
+        {
+            if (a.As<long?>() == null || b.As<long?>() == null)
+                return null;
+            return (a.As<long>() + b.As<long>()).As<Int64_Partial>();
+        }
+
+        public static Int64_Partial? operator -(Int64_Partial a, Int64_Partial? b)
+        {
+            if (b.As<long?>() == null)
+                return null;
+            return (a.As<long>() - b.As<long>()).As<Int64_Partial>();
+        }
+
+        public static Int64_Partial? operator -(Int64_Partial? a, Int64_Partial? b)
+        {
+            if (a.As<long?>() == null || b.As<long?>() == null)
+                return null;
+            return (a.As<long>() - b.As<long>()).As<Int64_Partial>();
+        }
+
+        public static Int64_Partial? operator *(Int64_Partial a, Int64_Partial? b)
+        {
+            if (b.As<long?>() == null)
+                return null;
+            return (a.As<long>() * b.As<long>()).As<Int64_Partial>();
+        }
+
+        public static Int64_Partial? operator *(Int64_Partial? a, Int64_Partial? b)
+        {
+            if (a.As<long?>() == null || b.As<long?>() == null)
+                return null;
+            return (a.As<long>() * b.As<long>()).As<Int64_Partial>();
+        }
+
+        public static Int64_Partial? operator /(Int64_Partial a, Int64_Partial? b)
+        {
+            if (b.As<long?>() == null)
+                return null;
+            return (a.As<long>() / b.As<long>()).As<Int64_Partial>();
+        }
+
+        public static Int64_Partial? operator /(Int64_Partial? a, Int64_Partial? b)
+        {
+            if (a.As<long?>() == null || b.As<long?>() == null)
+                return null;
+            return (a.As<long>() / b.As<long>()).As<Int64_Partial>();
+        }
+
+        public static bool operator >(Int64_Partial a, Int64_Partial? b)
+        {
+            if (b.As<long?>() == null)
+                return false;
+            return a.As<long>() > b.As<long>();
+        }
+
+        public static bool operator >(Int64_Partial? a, Int64_Partial? b)
+        {
+            if (a.As<long?>() == null || b.As<long?>() == null)
+                return false;
+            return a.As<long>() > b.As<long>();
+        }
+
+        public static bool operator <(Int64_Partial a, Int64_Partial? b)
+        {
+            if (b.As<long?>() == null)
+                return false;
+            return a.As<long>() < b.As<long>();
+        }
+
+        public static bool operator <(Int64_Partial? a, Int64_Partial? b)
+        {
+            if (a.As<long?>() == null || b.As<long?>() == null)
+                return false;
+            return a.As<long>() < b.As<long>();
+        }
+
+        public static bool operator >=(Int64_Partial a, Int64_Partial? b)
+        {
+            if (b.As<long?>() == null)
+                return false;
+            return a.As<long>() >= b.As<long>();
+        }
+
+        public static bool operator >=(Int64_Partial? a, Int64_Partial? b)
+        {
+            if (a.As<long?>() == null || b.As<long?>() == null)
+                return false;
+            return a.As<long>() >= b.As<long>();
+        }
+
+        public static bool operator <=(Int64_Partial a, Int64_Partial? b)
+        {
+            if (b.As<long?>() == null)
+                return false;
+            return a.As<long>() <= b.As<long>();
+        }
+
+        public static bool operator <=(Int64_Partial? a, Int64_Partial? b)
+        {
+            if (a.As<long?>() == null || b.As<long?>() == null)
+                return false;
+            return a.As<long>() <= b.As<long>();
+        }
+        public static Int64_Partial? operator &(Int64_Partial a, Int64_Partial? b)
+        {
+            if (b.As<long?>() == null)
+                return null;
+            return (a.As<long>() & b.As<long>()).As<Int64_Partial>();
+        }
+
+        public static Int64_Partial? operator &(Int64_Partial? a, Int64_Partial? b)
+        {
+            if (a.As<long?>() == null || b.As<long?>() == null)
+                return null;
+            return (a.As<long>() & b.As<long>()).As<Int64_Partial>();
+        }
+
+        public static Int64_Partial? operator |(Int64_Partial a, Int64_Partial? b)
+        {
+            if (b.As<long?>() == null)
+                return null;
+            return (a.As<long>() | b.As<long>()).As<Int64_Partial>();
+        }
+
+        public static Int64_Partial? operator |(Int64_Partial? a, Int64_Partial? b)
+        {
+            if (a.As<long?>() == null || b.As<long?>() == null)
+                return null;
+            return (a.As<long>() | b.As<long>()).As<Int64_Partial>();
+        }
+
     }
 }

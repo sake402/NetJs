@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NetJs.Translator.CSharpToJavascript.SyntaxEmitter;
+using System.Diagnostics;
 
 namespace NetJs.Translator.CSharpToJavascript
 {
@@ -16,12 +18,25 @@ namespace NetJs.Translator.CSharpToJavascript
         public const string ImplicitOperatorName = "op_Implicit";
         //operators we can safely rewite like a += b => a = a + b
         static readonly string[] RewitableOperators = ["+=", "-=", "*=", "/=", "%=", ">>=", "<<=", "|=", "&=", "^="];
+
+        public IMethodSymbol? GetConverterMethod(ITypeSymbol fromType, ITypeSymbol toType)
+        {
+            IMethodSymbol? converterMethod = toType.GetMembers(ImplicitOperatorName)
+                .Cast<IMethodSymbol>()
+                .FirstOrDefault(e => SymbolEqualityComparer.Default.Equals(e.ReturnType, toType) && e.Parameters.Length == 1 && SymbolEqualityComparer.Default.Equals(e.Parameters[0].Type, fromType))
+                ??
+                fromType.GetMembers(ImplicitOperatorName)
+                .Cast<IMethodSymbol>()
+                .FirstOrDefault(e => SymbolEqualityComparer.Default.Equals(e.ReturnType, toType) && e.Parameters.Length == 1 && SymbolEqualityComparer.Default.Equals(e.Parameters[0].Type, fromType));
+            return converterMethod;
+        }
+
         public bool TryInvokeMethodOperator(CSharpSyntaxNode node,
-            string _operator, 
-            ITypeSymbol? leftOperandType, 
+            string _operator,
+            ITypeSymbol? leftOperandType,
             CSharpSyntaxNode? leftOperand,
             ITypeSymbol? rightOperandType,
-            IEnumerable<CSharpSyntaxNode> arguments, 
+            IEnumerable<CSharpSyntaxNode> arguments,
             Action? prologue = null)
         {
             var conversion = node.FindClosestParent<ConversionOperatorDeclarationSyntax>();
@@ -57,6 +72,22 @@ namespace NetJs.Translator.CSharpToJavascript
                 (leftOperandType.IsNumberNumericType() || leftOperandType.IsLongNumericType()) &&
                 (rightOperandType.IsNumberNumericType() || rightOperandType.IsLongNumericType()))
                 return false;
+            if (leftOperandType != null &&
+                rightOperandType != null &&
+                (_operator == "==" || _operator == "!=") &&
+                leftOperandType.SpecialType == SpecialType.System_String &&
+                rightOperandType.SpecialType == SpecialType.System_String)
+                return false;
+
+            //Micro optimization. No need using equality operator for System.Type. All out types are RuntimeType
+            if (leftOperandType != null &&
+                rightOperandType != null &&
+                (_operator == "==" || _operator == "!=") &&
+                leftOperandType.IsType("System.Type") &&
+                rightOperandType.IsType("System.Type"))
+                return false;
+
+
             bool IsAssignmentRewriteCandidate()
             {
                 return true;
@@ -150,8 +181,16 @@ namespace NetJs.Translator.CSharpToJavascript
             }
             if (leftOperandType is ITypeSymbol ts)
             {
+                bool isNullable = false;
                 if (ts.IsNullable(out var t))
+                {
                     ts = t!;
+                    isNullable = true;
+                }
+                if (isNullable && ts.TypeKind == TypeKind.Enum)
+                {
+                    ts = _global.SystemEnum;
+                }
                 bool isChecked = _global.Evaluate("checked", this) != null;
                 List<IMethodSymbol>? operators = null;
                 if (isChecked)
@@ -172,11 +211,19 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     prologue?.Invoke();
                     localPrologue?.Invoke();
+                    List<IDisposable>? dispose = null;
+                    if (_operator == ImplicitOperatorName)
+                    {
+                        dispose = new();
+                        foreach (var a in arguments)
+                            dispose.Add(ImplicitConversionSyntaxEmitter.Disable(a));
+                    }
                     //If the operator is defined static on a Typeparameter, we make sure we write it as T.method()
                     WriteMethodInvocation(node, ms, null, arguments.Select(a => new CodeNode(a)), ms.IsStatic && ts is ITypeParameterSymbol ttp ? new CodeNode(() =>
                     {
                         CurrentTypeWriter.Write(node, ts.Name);
                     }) : null, ms.IsStatic ? ts as ITypeParameterSymbol : null, null, false);
+                    dispose?.ForEach(e => e.Dispose());
                     localEpilogue?.Invoke();
                     return true;
                 }
@@ -187,8 +234,16 @@ namespace NetJs.Translator.CSharpToJavascript
             {
                 if (rightOperandType is ITypeSymbol rts)
                 {
+                    bool isNullable = false;
                     if (rts.IsNullable(out var t))
+                    {
                         rts = t!;
+                        isNullable = true;
+                    }
+                    if (isNullable && rts.TypeKind == TypeKind.Enum)
+                    {
+                        rts = _global.SystemEnum;
+                    }
                     bool isChecked = _global.Evaluate("checked", this) != null;
                     List<IMethodSymbol>? operators = null;
                     if (isChecked)
@@ -206,7 +261,15 @@ namespace NetJs.Translator.CSharpToJavascript
                     {
                         prologue?.Invoke();
                         localPrologue?.Invoke();
+                        List<IDisposable>? dispose = null;
+                        if (_operator == ImplicitOperatorName)
+                        {
+                            dispose = new();
+                            foreach (var a in arguments)
+                                dispose.Add(ImplicitConversionSyntaxEmitter.Disable(a));
+                        }
                         WriteMethodInvocation(node, ms, null, arguments.Select(a => new CodeNode(a)), null, null, null, false);
+                        dispose?.ForEach(e => e.Dispose());
                         localEpilogue?.Invoke();
                         return true;
                     }
@@ -218,6 +281,10 @@ namespace NetJs.Translator.CSharpToJavascript
                 {
                     if (rts.IsNullable(out var t))
                         rts = t!;
+                    if (rts.TypeKind == TypeKind.Enum)
+                    {
+                        rts = _global.SystemEnum;
+                    }
                     bool isChecked = _global.Evaluate("checked", this) != null;
                     List<IMethodSymbol>? operators = null;
                     if (isChecked)
@@ -235,7 +302,15 @@ namespace NetJs.Translator.CSharpToJavascript
                     {
                         prologue?.Invoke();
                         localPrologue?.Invoke();
+                        List<IDisposable>? dispose = null;
+                        if (_operator == ImplicitOperatorName)
+                        {
+                            dispose = new();
+                            foreach (var a in arguments)
+                                dispose.Add(ImplicitConversionSyntaxEmitter.Disable(a));
+                        }
                         WriteMethodInvocation(node, ms, null, arguments.Select(a => new CodeNode(a)), null, null, null, false);
+                        dispose?.ForEach(e => e.Dispose());
                         localEpilogue?.Invoke();
                         return true;
                     }
